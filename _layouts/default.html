@@ -65,7 +65,7 @@
   </div>
 </header>
 
-<div class="stage"><main id="app" class="turn">
+<div class="stage"><main id="app">
 {{ content }}
 </main></div>
 
@@ -86,9 +86,19 @@
   label();
   btn.addEventListener("click", function () {
     var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    root.classList.add("theme-fade");
-    root.setAttribute("data-theme", next);
-    setTimeout(function () { root.classList.remove("theme-fade"); }, 700);
+    var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (document.startViewTransition && !reduce) {
+      var r = btn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      root.style.setProperty("--rx", x + "px"); root.style.setProperty("--ry", y + "px");
+      root.style.setProperty("--rr", Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + "px");
+      root.classList.add("theme-reveal");
+      var vt = document.startViewTransition(function () { root.setAttribute("data-theme", next); });
+      vt.finished.finally(function () { root.classList.remove("theme-reveal"); });
+    } else {
+      root.classList.add("theme-fade");
+      root.setAttribute("data-theme", next);
+      setTimeout(function () { root.classList.remove("theme-fade"); }, 600);
+    }
     try {
       if (next === XJTheme.autoTheme()) localStorage.removeItem("xj-theme");
       else localStorage.setItem("xj-theme", JSON.stringify({ theme: next, until: XJTheme.nextBoundary() }));

@@ -37,7 +37,7 @@
   color-scheme: dark;
 }
 /* 切換時整頁緩緩換色 */
-html.theme-fade, html.theme-fade * { transition: background-color .6s ease, color .6s ease, border-color .6s ease !important; }
+html.theme-fade body, html.theme-fade header.top, html.theme-fade footer { transition: background-color .5s ease, color .5s ease, border-color .5s ease; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -266,13 +266,6 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 /* 翻頁 */
 .stage { perspective: 1600px; }
 @media (prefers-reduced-motion: no-preference) {
-  main.turn { animation: turn .5s cubic-bezier(.2,.7,.2,1); transform-origin: left center; }
-  @keyframes turn {
-    from { transform: rotateY(-9deg) translateX(14px); box-shadow: -30px 0 40px -30px rgba(0,0,0,.25); }
-    to   { transform: none; box-shadow: none; }
-  }
-  .hero .plaque { animation: unroll .9s cubic-bezier(.2,.7,.2,1); }
-  @keyframes unroll { from { clip-path: inset(0 0 35% 0); } to { clip-path: inset(0 0 0 0); } }
 }
 @media (prefers-reduced-motion: reduce) {
   .list li::before, .cat { transition: none; }
@@ -285,10 +278,6 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .wall figure:hover img { transform: scale(1.02); filter: brightness(1.03); }
 .wall button { all: unset; display: block; cursor: zoom-in; }
 .wall button:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
-@media (prefers-reduced-motion: no-preference) {
-  .wall img { animation: develop .9s ease-out both; }
-  @keyframes develop { from { filter: grayscale(.6) brightness(1.08); } to { filter: none; } }
-}
 .empty-wall { display: grid; place-items: center; padding: 96px 0 48px; }
 .empty-wall .plaque { border-left: 0; padding: 0; color: var(--ink-soft); font-size: 72px; }
 
@@ -353,10 +342,6 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .slide { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity 1.2s ease; }
 .slide.is-on { opacity: 1; }
 .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-@media (prefers-reduced-motion: no-preference) {
-  .slide.is-on img { animation: drift 9s ease-out both; }
-  @keyframes drift { from { transform: scale(1.04); } to { transform: scale(1); } }
-}
 .slide figcaption { position: absolute; right: 22px; bottom: 18px; font-size: 13px; letter-spacing: .1em; color: #f1efe8; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
 .slide-nav {
   position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; border-radius: 50%;
@@ -388,7 +373,6 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 }
 .slide { inset: 0 24px; }
 .slide img { object-fit: contain; }
-.slide.is-on img { animation: none; }
 .slide figcaption { right: 0; bottom: -26px; color: var(--ink-soft); text-shadow: none; }
 .slide-nav { background: color-mix(in srgb, var(--paper) 70%, transparent); color: var(--ink); opacity: .85; }
 .slide-nav:hover { background: var(--paper); }
@@ -405,3 +389,46 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   .slide-nav { display: none; }
 }
 .page-head h1 { margin-bottom: 0; }
+
+/* ===== 動畫（優化版）：只動 transform 與 opacity，時間短、曲線柔 ===== */
+:root { --ease: cubic-bezier(.22,.61,.36,1); }
+
+/* 換頁：瀏覽器支援時，整頁淡出淡入、內容輕輕上浮 */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: vt-out .22s var(--ease) both; }
+::view-transition-new(root) { animation: vt-in .38s var(--ease) both; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* 首頁照片：交叉淡化 */
+.slide { transition: opacity .9s var(--ease); will-change: opacity; }
+
+/* 文章列表：載入時依序浮現（從可見狀態開始，只位移） */
+@media (prefers-reduced-motion: no-preference) {
+  .list li { animation: rise-in .5s var(--ease) both; }
+  .list li:nth-child(2) { animation-delay: .05s; }
+  .list li:nth-child(3) { animation-delay: .1s; }
+  .list li:nth-child(4) { animation-delay: .15s; }
+  .list li:nth-child(n+5) { animation-delay: .2s; }
+  @keyframes rise-in { from { transform: translateY(8px); opacity: .35; } }
+}
+
+/* 選單底線：從中間展開 */
+nav a::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--seal); transform: scaleX(0); transition: transform .3s var(--ease); }
+nav a:hover::after, nav a[aria-current="page"]::after { transform: scaleX(1); }
+
+/* 書籤落下改用 transform，較順 */
+.list li::before { height: 34px !important; transform: scaleY(0); transform-origin: top; transition: transform .3s var(--ease); }
+.list li:hover::before { transform: scaleY(1); }
+
+/* 日夜切換：圓形從按鈕展開 */
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
+html.theme-reveal::view-transition-old(root) { animation: none; }
+html.theme-reveal::view-transition-new(root) { animation: reveal .6s var(--ease) both; }
+@keyframes reveal { from { clip-path: circle(0 at var(--rx, 100%) var(--ry, 0)); } to { clip-path: circle(var(--rr, 150vmax) at var(--rx, 100%) var(--ry, 0)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+  .slide { transition: none; }
+  nav a::after, .list li::before { transition: none; }
+}

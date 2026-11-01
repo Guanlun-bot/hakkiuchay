@@ -19,6 +19,12 @@ content:
         label: 標題
         type: string
         required: true
+      - name: subtitle
+        label: 副標題（可留空，例如英文標題）
+        type: string
+      - name: author
+        label: 作者（留空就用基本資料的名字）
+        type: string
       - name: slug
         label: 網址代稱
         type: string
@@ -70,6 +76,7 @@ content:
         label: 參考書目
         type: string
         list: true
+        description: 一條一筆。要分類時，另起一條寫「## 分類名稱」，例如「## 近人專書」。
 
   - name: photos
     label: 首頁照片

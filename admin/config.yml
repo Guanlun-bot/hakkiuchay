@@ -42,6 +42,8 @@ collections:
         field: cat
     fields:
       - { name: title, label: 標題, widget: string }
+      - { name: subtitle, label: 副標題（可留空）, widget: string, required: false }
+      - { name: author, label: 作者（留空就用基本資料的名字）, widget: string, required: false }
       - name: slug
         label: 網址代稱
         widget: string

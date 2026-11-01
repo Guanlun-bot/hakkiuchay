@@ -3,6 +3,7 @@ layout: default
 ---
 {%- assign S = site.data.site -%}
 {%- assign c = site.data.categories[page.cat] -%}
+{%- assign author = page.author | default: S.owner -%}
 {%- assign same = site.posts | where: "cat", page.cat -%}
 {%- assign idx = -1 -%}
 {%- for q in same -%}{%- if q.url == page.url -%}{%- assign idx = forloop.index0 -%}{%- endif -%}{%- endfor -%}
@@ -11,34 +12,43 @@ layout: default
 {%- if newer_i >= 0 -%}{%- assign newer = same[newer_i] -%}{%- endif -%}
 {%- assign older = same[older_i] -%}
 {%- assign fixed_src = 'src="' | append: site.baseurl | append: '/assets/' -%}
+{%- assign words = content | strip_html | strip_newlines | size -%}
+{%- assign minutes = words | divided_by: 450 | plus: 1 -%}
 <div class="wrap" style="--c:{{ c.color }}">
+  <div class="post-grid">
   <article class="article">
     <div class="crumbs"><a href="{{ '/' | append: page.cat | append: '/' | relative_url }}">{{ c.name }}</a></div>
     <h1>{{ page.title }}</h1>
+    {% if page.subtitle and page.subtitle != "" %}<p class="subtitle" lang="en">{{ page.subtitle }}</p>{% endif %}
     <div class="byline">
-      <span>{{ S.owner }}</span>
+      <span>{{ author }}</span>
       <time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: "%Y・%m・%d" }}</time>
+      <span>約 {{ minutes }} 分鐘閱讀</span>
       {% include callno.html post=page %}
       {% if page.source and page.source != "" %}<span>出處：{{ page.source }}</span>{% endif %}
     </div>
 
     {% if page.cat == "academic" and page.summary %}
-    <div class="abstract"><b>摘要</b>{{ page.summary }}
-      {% if page.keywords and page.keywords.size > 0 %}<div class="meta-line" style="margin-top:10px">關鍵詞 {% for k in page.keywords %}<span class="kw">{{ k }}</span>{% endfor %}</div>{% endif %}
+    <div class="abstract"><b>摘要</b><div class="abstract-text">{{ page.summary }}</div>
+      {% if page.keywords and page.keywords.size > 0 %}<div class="meta-line" style="margin-top:12px">關鍵詞 {% for k in page.keywords %}<span class="kw">{{ k }}</span>{% endfor %}</div>{% endif %}
     </div>
     {% endif %}
+
+    <details class="toc toc-inline" id="toc-inline" hidden><summary>目錄</summary><ol></ol></details>
 
     <div class="prose">{{ content | replace: 'src="/assets/', fixed_src }}</div>
 
     {% if page.notes.size > 0 or page.refs.size > 0 %}
     <div class="notes-block">
-      {% if page.notes.size > 0 %}<h2>註釋</h2><ol>{% for n in page.notes %}<li id="fn-{{ forloop.index }}">{{ n | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endfor %}</ol>{% endif %}
-      {% if page.refs.size > 0 %}<h2>參考書目</h2><ul>{% for r in page.refs %}<li>{{ r | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endfor %}</ul>{% endif %}
+      {% if page.notes.size > 0 %}<h2 id="notes">註釋</h2><ol>{% for n in page.notes %}<li id="fn-{{ forloop.index }}">{{ n | markdownify | remove: '<p>' | remove: '</p>' | strip }} <a class="fn-back" href="#fnref-{{ forloop.index }}" aria-label="回到內文">↩</a></li>{% endfor %}</ol>{% endif %}
+      {% if page.refs.size > 0 %}<h2 id="refs">參考書目</h2>
+        <ul>{% for r in page.refs %}{% assign head = r | slice: 0, 3 %}{% if head == "## " %}</ul><h3>{{ r | remove_first: "## " }}</h3><ul>{% else %}<li>{{ r | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endif %}{% endfor %}</ul>
+      {% endif %}
     </div>
     {% endif %}
 
     {% if page.cat == "academic" %}
-    {%- capture cite -%}{{ S.owner }}：〈{{ page.title }}〉，《學鳩齋》，{{ page.date | date: "%Y/%m/%d" }}，{{ page.url | absolute_url }}。{%- endcapture -%}
+    {%- capture cite -%}{{ author }}：〈{{ page.title }}〉，《學鳩齋》，{{ page.date | date: "%Y/%m/%d" }}，{{ page.url | absolute_url }}。{%- endcapture -%}
     <div class="cite-box"><b>引用本文</b><p id="cite-text">{{ cite }}</p>
       <button class="btn" id="copy-cite" type="button">複製引用格式</button></div>
     {% endif %}
@@ -48,19 +58,63 @@ layout: default
       <div class="next">{% if newer %}<a href="{{ newer.url | relative_url }}"><small>下一篇 →</small>{{ newer.title }}</a>{% else %}<a href="{{ '/' | append: page.cat | append: '/' | relative_url }}"><small>回到</small>{{ c.name }}</a>{% endif %}</div>
     </nav>
   </article>
+  <aside class="toc-side" id="toc-side" hidden aria-label="目錄"><b>目錄</b><ol></ol></aside>
+  </div>
 </div>
+
+<div class="fn-pop" id="fn-pop" role="dialog" aria-live="polite" hidden><div class="fn-pop-body"></div><a class="fn-pop-more" href="#notes">看全部註釋</a></div>
 
 <script>
 (function () {
-  /* 內文寫 [註1]、[註2]，自動變成可點的註腳號碼 */
-  const prose = document.querySelector(".prose");
-  prose.innerHTML = prose.innerHTML.replace(/\\?\[註\s*(\d+)\\?\]/g, (m, n) =>
-    `<button class="fn" type="button" data-fn="${n}" aria-label="註 ${n}">${n}</button>`);
-  prose.querySelectorAll(".fn").forEach(b => b.addEventListener("click", () => {
-    const li = document.getElementById("fn-" + b.dataset.fn); if (!li) return;
-    li.scrollIntoView({ behavior: "smooth", block: "center" });
-    li.classList.add("flash"); setTimeout(() => li.classList.remove("flash"), 1600);
-  }));
+  /* 內文與摘要中的 [註1] 變成可點的註腳號碼 */
+  let k = 0;
+  document.querySelectorAll(".prose, .abstract-text").forEach(el => {
+    el.innerHTML = el.innerHTML.replace(/\\?\[註\s*(\d+)\\?\]/g, (m, n) =>
+      `<button class="fn" type="button" id="fnref-${n}" data-fn="${n}" aria-label="註 ${n}">${n}</button>`);
+  });
+
+  /* 註腳小卡片 */
+  const pop = document.getElementById("fn-pop"), popBody = pop.querySelector(".fn-pop-body");
+  let openBtn = null;
+  function closePop() { pop.hidden = true; openBtn = null; }
+  function showPop(btn) {
+    const li = document.getElementById("fn-" + btn.dataset.fn);
+    if (!li) return;
+    const clone = li.cloneNode(true); clone.querySelector(".fn-back")?.remove();
+    popBody.innerHTML = `<span class="fn-pop-n">${btn.dataset.fn}</span>` + clone.innerHTML;
+    pop.querySelector(".fn-pop-more").href = "#fn-" + btn.dataset.fn;
+    pop.hidden = false;
+    const r = btn.getBoundingClientRect(), w = Math.min(380, innerWidth - 24);
+    pop.style.width = w + "px";
+    let left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), innerWidth - w - 12);
+    pop.style.left = (left + scrollX) + "px";
+    const below = r.bottom + 10 + pop.offsetHeight < innerHeight;
+    pop.style.top = (below ? r.bottom + 10 + scrollY : r.top - pop.offsetHeight - 10 + scrollY) + "px";
+    openBtn = btn;
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".fn");
+    if (b) { e.preventDefault(); openBtn === b ? closePop() : showPop(b); return; }
+    if (!e.target.closest("#fn-pop")) closePop();
+  });
+  addEventListener("keydown", e => { if (e.key === "Escape") closePop(); });
+  addEventListener("resize", closePop);
+  pop.querySelector(".fn-pop-more").addEventListener("click", closePop);
+
+  /* 目錄：有三個以上段落標題時出現 */
+  const hs = [...document.querySelectorAll(".prose h2")];
+  if (hs.length >= 3) {
+    const items = hs.map((h, i) => { h.id = h.id || "sec-" + (i + 1); return `<li><a href="#${h.id}">${h.textContent}</a></li>`; });
+    if (document.getElementById("notes")) items.push('<li class="toc-tail"><a href="#notes">註釋</a></li>');
+    if (document.getElementById("refs")) items.push('<li class="toc-tail"><a href="#refs">參考書目</a></li>');
+    ["toc-side", "toc-inline"].forEach(id => { const t = document.getElementById(id); t.querySelector("ol").innerHTML = items.join(""); t.hidden = false; });
+    const links = [...document.querySelectorAll("#toc-side a")];
+    const io = new IntersectionObserver(es => es.forEach(en => {
+      if (en.isIntersecting) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id));
+    }), { rootMargin: "0px 0px -70% 0px" });
+    hs.forEach(h => io.observe(h));
+  }
+
   const cb = document.getElementById("copy-cite");
   if (cb) cb.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(document.getElementById("cite-text").textContent); cb.textContent = "已複製"; }

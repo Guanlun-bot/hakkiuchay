@@ -765,11 +765,14 @@ body.has-bg footer { background: color-mix(in srgb, var(--paper) 78%, transparen
 @media (max-width: 1200px) { body.has-bg main#app { margin: 28px 20px 40px; } }
 @media (max-width: 700px) { body.has-bg main#app { margin: 16px 10px 28px; } }
 
-/* 直幅畫：整幅顯示（大樹跤）。寬螢幕畫在左、紙面在右；窄螢幕畫置中、紙面疊上 */
-body.bg-whole::before { background: var(--bgimg) center bottom / contain no-repeat, var(--bgfill, var(--paper-2)); }
+/* 整幅顯示：寬螢幕畫在一側、文字在另一側；窄螢幕畫置中、紙面疊上 */
+body.bg-whole::before { background: var(--bgimg) center / contain no-repeat, var(--bgfill, var(--paper-2)); }
 @media (min-aspect-ratio: 13/10) and (min-width: 1000px) {
-  body.bg-whole { --art-w: calc((100vh - 72px) * .76); }
-  body.bg-whole::before { background-position: left 5vw bottom, 0 0; background-size: auto calc(100vh - 72px), auto; }
-  body.bg-whole main#app { margin: 40px 4vw 56px calc(5vw + var(--art-w) + 28px); max-width: none; }
+  body.bg-whole { --top: 72px; --gap: 4vw; --art-w: min(var(--art-max, 58vw), calc((100vh - var(--top) - 32px) * var(--ar, .76))); }
+  body.bg-whole.text-left { --art-max: 52vw; }
+  body.bg-whole::before { top: var(--top); background-size: var(--art-w) auto, auto; background-position: left var(--gap) bottom, 0 0; }
+  body.bg-whole.text-left::before { background-position: right var(--gap) center, 0 0; }
+  body.bg-whole main#app { margin: 40px var(--gap) 56px calc(var(--gap) + var(--art-w) + 28px); max-width: none; }
+  body.bg-whole.text-left main#app { margin: 40px calc(var(--gap) + var(--art-w) + 28px) 56px var(--gap); }
   body.bg-whole main#app .wrap { max-width: none; }
 }

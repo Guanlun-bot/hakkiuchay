@@ -1,15 +1,18 @@
 academic:
   name: 近思室
   desc: 這裡放的是學術文章
+  prefix: KIN
   color: var(--c-academic)
   en: ACADEMIC
 study-talks:
   name: 拈花記
   desc: 這裡放學佛筆記
+  prefix: LIAM
   color: var(--c-talks)
   en: STUDY TALKS
 life:
   name: 大樹跤
   desc: 日常的片段
+  prefix: TUA
   color: var(--c-life)
   en: NOTEBOOK

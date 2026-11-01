@@ -1,25 +1,30 @@
 academic:
-  name: 近思室
+  name: 自反軒
   desc: 這裡放的是學術文章
-  prefix: KIN
-  color: var(--c-academic)
-  en: ACADEMIC
+  prefix: CHI
   cover: /assets/uploads/covers/nianchatu.jpg
   cover_caption: 宋　劉松年〈攆茶圖〉，國立故宮博物院藏
+  bg_whole: true
+  bg_gray: true
+  color: var(--c-academic)
+  en: ACADEMIC
 study-talks:
   name: 拈花記
   desc: 這裡放學佛筆記
   prefix: LIAM
-  color: var(--c-talks)
-  en: STUDY TALKS
   cover: /assets/uploads/covers/sengai-circle-triangle-square.jpg
   cover_caption: 江戶　仙厓義梵〈○△□〉，出光美術館藏
+  bg_whole: true
+  bg_gray: true
+  color: var(--c-talks)
+  en: STUDY TALKS
 life:
   name: 大樹跤
   desc: 日常的片段
   prefix: TUA
+  cover: /assets/uploads/covers/nanyang-scroll.jpg
+  cover_caption: 大正 今村紫紅〈熱國之卷〉，國立東京博物館藏
+  bg_whole: true
+  bg_gray: true
   color: var(--c-life)
   en: NOTEBOOK
-  cover: /assets/uploads/covers/nanyang-scroll.jpg
-  cover_caption: ""
-  bg_gray: true

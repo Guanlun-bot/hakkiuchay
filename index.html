@@ -317,8 +317,8 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 const SITE = {
   owner: "齋主",                 // 你的名字或字號
   ownerBio: "讀書人。在學院裡做研究，也在學院外讀雜書、問學、過日子。", // 一兩句自我介紹
-  email: "（請填入）",
-  place: "（請填入）",
+  email: "khoguanlun@gmail.com",
+  place: "臺北、雲林",
   tajiyuUrl: ""                  // 獺祭魚的網址，例如 "https://example.com"
 };
 
@@ -613,7 +613,7 @@ function viewAbout() {
         <div class="body">
           <p>歡迎來信交流，討論文章、指正錯誤，或只是打聲招呼。</p>
           <dl class="contact-grid">
-            <dt>電子郵件</dt><dd>${esc(SITE.email)}</dd>
+            <dt>電子郵件</dt><dd><a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></dd>
             <dt>所在</dt><dd>${esc(SITE.place)}</dd>
           </dl>
         </div>

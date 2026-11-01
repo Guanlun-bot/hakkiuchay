@@ -1,0 +1,96 @@
+# 學鳩齋後台（Sveltia CMS）。照片在你的瀏覽器裡先縮到長邊 2000 像素、轉成 WebP，再上傳。
+app_title: 學鳩齋後台
+backend:
+  name: github
+  repo: Guanlun-bot/hakkiuchay
+  branch: main
+  auth_methods: [token]
+  commit_messages:
+    create: "新增 {{collection}}：{{slug}}"
+    update: "修改 {{collection}}：{{slug}}"
+    delete: "刪除 {{collection}}：{{slug}}"
+    uploadMedia: "上傳 {{path}}"
+    deleteMedia: "刪除 {{path}}"
+media_folder: assets/uploads
+public_folder: /assets/uploads
+media_libraries:
+  default:
+    config:
+      slugify_filename: true
+      transformations:
+        raster_image:
+          format: webp
+          quality: 82
+          width: 2000
+          height: 2000
+
+collections:
+  - name: posts
+    label: 文章
+    label_singular: 文章
+    folder: _posts
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{fields.slug}}"
+    summary: "{{title}}（{{date}}）"
+    sortable_fields:
+      fields: [date, title]
+      default:
+        field: date
+        direction: descending
+    view_groups:
+      - label: 分類
+        field: cat
+    fields:
+      - { name: title, label: 標題, widget: string }
+      - name: slug
+        label: 網址代稱
+        widget: string
+        hint: 只能用英文小寫、數字和連字號，例如 three-speeds。建立後不要再改。
+        pattern: ["^[a-z0-9-]+$", "只能用英文小寫、數字和連字號（-）"]
+      - name: cat
+        label: 分類
+        widget: select
+        options:
+          - { label: 學術, value: academic }
+          - { label: 參學瑣談, value: study-talks }
+          - { label: 生活札記, value: life }
+      - { name: date, label: 日期, widget: datetime, format: YYYY-MM-DD, time_format: false }
+      - { name: summary, label: 摘要, widget: text, required: false, hint: 列表上顯示的一兩句話。學術文章會當作摘要放在文章開頭。 }
+      - { name: keywords, label: 關鍵詞（學術文章用）, widget: list, required: false }
+      - { name: source, label: 出處（參學瑣談用）, widget: string, required: false }
+      - { name: body, label: 內文, widget: markdown, hint: "要加註腳時，在內文寫 [註1]、[註2]……，再到下方「註釋」依序填寫。" }
+      - name: notes
+        label: 註釋
+        widget: list
+        required: false
+        field: { name: note, label: 註, widget: text }
+      - name: refs
+        label: 參考書目
+        widget: list
+        required: false
+        field: { name: ref, label: 書目, widget: string }
+
+  - name: settings
+    label: 照片與基本資料
+    files:
+      - name: photos
+        label: 首頁照片
+        file: _data/photos.yml
+        fields:
+          - name: photos
+            label: 照片（可拖曳調整順序）
+            widget: list
+            summary: "{{fields.caption}}"
+            fields:
+              - { name: image, label: 照片, widget: image }
+              - { name: caption, label: 說明（可留空）, widget: string, required: false }
+      - name: site
+        label: 基本資料
+        file: _data/site.yml
+        fields:
+          - { name: owner, label: 名字或字號, widget: string }
+          - { name: avatar, label: 大頭貼, widget: image, required: false }
+          - { name: owner_bio, label: 自我介紹, widget: text, required: false }
+          - { name: email, label: 電子郵件, widget: string, required: false }
+          - { name: place, label: 所在, widget: string, required: false }
+          - { name: tajiyu_url, label: 獺祭魚網址, widget: string, required: false }

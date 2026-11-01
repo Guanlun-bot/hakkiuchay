@@ -198,8 +198,6 @@ content:
           - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, type: boolean }
           - { name: bg_fill, label: 背景空白處顏色（可留空）, type: string }
-          - { name: bg_ratio, label: 畫的寬高比（寬÷高，例 1.4）, type: string }
-          - { name: bg_text_side, label: 文字放哪邊, type: select, options: { values: [left, right] } }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }
       - name: study-talks
@@ -213,8 +211,6 @@ content:
           - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, type: boolean }
           - { name: bg_fill, label: 背景空白處顏色（可留空）, type: string }
-          - { name: bg_ratio, label: 畫的寬高比（寬÷高，例 1.4）, type: string }
-          - { name: bg_text_side, label: 文字放哪邊, type: select, options: { values: [left, right] } }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }
       - name: life
@@ -228,7 +224,5 @@ content:
           - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, type: boolean }
           - { name: bg_fill, label: 背景空白處顏色（可留空）, type: string }
-          - { name: bg_ratio, label: 畫的寬高比（寬÷高，例 1.4）, type: string }
-          - { name: bg_text_side, label: 文字放哪邊, type: select, options: { values: [left, right] } }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }

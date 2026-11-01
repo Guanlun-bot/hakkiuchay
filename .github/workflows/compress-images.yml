@@ -1,30 +1,47 @@
-# 從後台上傳的照片若太大，自動縮到長邊 2000 像素、品質 82，讓網站開得快。
-name: 壓縮上傳的照片
+# 照片上傳後自動處理：
+# 1. iPhone 的 HEIC 轉成 JPG
+# 2. 超過 600KB 的照片縮到長邊 2000 像素、品質 82
+# 3. 放在 assets/uploads/home/ 的照片，自動加進首頁輪播（_data/photos.yml）
+name: 處理上傳的照片
 on:
   push:
     branches: [main]
     paths: ["assets/uploads/**"]
+  workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: photos
+  cancel-in-progress: false
 jobs:
-  compress:
+  photos:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 安裝工具
+        run: sudo apt-get -qq update && sudo apt-get -qq install -y imagemagick libheif-examples >/dev/null
+      - name: HEIC 轉 JPG
+        run: |
+          find assets/uploads -type f \( -iname '*.heic' -o -iname '*.heif' \) -print0 |
+            while IFS= read -r -d '' f; do
+              heif-convert -q 90 "$f" "${f%.*}.jpg" && rm "$f" && echo "轉檔：$f"
+            done
       - name: 壓縮
         run: |
-          sudo apt-get -qq update && sudo apt-get -qq install -y imagemagick >/dev/null
           find assets/uploads -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -size +600k -print0 |
             while IFS= read -r -d '' f; do
               mogrify -auto-orient -resize '2000x2000>' -strip -quality 82 "$f"
               echo "壓縮：$f"
             done
+      - name: 加進首頁輪播
+        run: python3 .github/scripts/add_home_photos.py
       - name: 存回儲存庫
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add assets/uploads
-            git commit -m "自動壓縮照片"
+            git add -A assets/uploads _data/photos.yml
+            git commit -m "自動處理照片並加進首頁"
+            git pull --rebase origin main
             git push
           fi

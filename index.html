@@ -85,7 +85,7 @@ nav a[aria-current="page"]::after { content: ""; position: absolute; left: 10px;
 /* 首屏 */
 .hero { position: relative; border-bottom: 1px solid var(--rule); overflow: hidden; }
 .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.hero .wrap { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 56px; padding-top: 64px; padding-bottom: 156px; align-items: start; }
+.hero .wrap { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 56px; padding-top: 56px; padding-bottom: 150px; align-items: start; }
 .plaque {
   writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 400;
   font-size: clamp(64px, 8.5vw, 108px); line-height: 1; letter-spacing: 0.14em;
@@ -212,6 +212,16 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   .pager { grid-template-columns: 1fr; }
   .pager .next { text-align: left; }
 }
+
+/* 簡潔版：分類列 */
+.cat-row { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--rule); }
+.cat-link { display: flex; flex-direction: column; gap: 2px; padding: 26px 20px 24px 0; text-decoration: none; border-top: 2px solid transparent; transition: border-color .2s; }
+.cat-link b { font-family: var(--font-display); font-weight: 400; font-size: 22px; letter-spacing: 0.06em; }
+.cat-link span { font-size: 14px; color: var(--ink-soft); }
+.cat-link:hover { border-top-color: var(--c); color: var(--ink); }
+.cat-link:hover b { color: var(--c); }
+.cat-tag { font-size: 13px; color: var(--c); text-decoration: none; }
+@media (max-width: 720px) { .cat-row { grid-template-columns: 1fr 1fr; } }
 /* ===== 書庫風格：索書號、書籤、抽書、借閱卡、翻頁 ===== */
 .callno {
   font-family: var(--font-body); font-size: 12px; letter-spacing: 0.08em; color: var(--c);
@@ -436,15 +446,12 @@ function setupTajiLink() {
 
 function listItem(p, showCat) {
   const c = CATS[p.cat];
-  let meta = showCat ? `<a class="chip" href="#${p.cat}">${c.name}</a>` : "";
-  if (p.cat === "academic" && p.keywords) meta += p.keywords.map(k => `<span class="kw">${esc(k)}</span>`).join("");
-  if (p.cat === "study-talks" && p.source) meta += `<span>出處：${esc(p.source)}</span>`;
   return `<li style="--c:${c.color}">
     <time datetime="${p.date}">${fmt(p.date)}<span class="callno" title="索書號">${callNo(p)}</span></time>
     <div>
       <h3><a href="#${p.id}">${esc(p.title)}</a></h3>
       <p>${esc(p.summary)}</p>
-      ${meta ? `<div class="meta-line">${meta}</div>` : ""}
+      ${showCat ? `<div class="meta-line"><a class="cat-tag" href="#${p.cat}">${c.name}</a></div>` : ""}
     </div></li>`;
 }
 
@@ -457,55 +464,29 @@ function viewHome() {
       <h1 class="plaque">學鳩齋</h1>
       <div class="hero-text">
         <p class="lead">不羨九萬里，<br>只在榆枋之間，日日學飛。</p>
-        <p>這裡是${esc(SITE.owner)}的個人書齋。收的是學術文字、參學途中的瑣談，和一些生活札記；另有「獺祭魚」，專放讀書摘錄。</p>
-        <div class="owner">
-          <div class="avatar" aria-hidden="true">鳩</div>
-          <div><b>${esc(SITE.owner)}</b><span>${esc(SITE.ownerBio)}</span></div>
-        </div>
+        <p>${esc(SITE.owner)}的個人書齋。</p>
       </div>
     </div>
   </section>`;
   drawInk(true);
 
-  const cards = Object.entries(CATS).map(([key, c]) => {
-    if (key === "tajiyu") {
-      const ext = SITE.tajiyuUrl ? ` target="_blank" rel="noopener"` : "";
-      return `<article class="cat" data-spine="${c.name}" style="--c:${c.color}">
-        <h3><a href="${tajiHref()}"${ext}>${c.name}<span class="ext" aria-hidden="true"> ↗</span></a></h3>
-        <p class="desc">${c.desc}</p>
-        <ul><li style="color:var(--ink-soft);font-size:14px;line-height:1.8">另設專站，收錄摘抄、典故與資料，隨讀隨記，像水獺把魚一尾尾排在岸上。</li></ul>
-        <a class="more" href="${tajiHref()}"${ext}>前往獺祭魚 →</a>
-      </article>`;
-    }
-    const ps = postsOf(key).slice(0, 3);
-    return `<article class="cat" data-spine="${c.name}" style="--c:${c.color}">
-      <h3><a href="#${key}">${c.name}</a></h3>
-      <p class="desc">${c.desc}</p>
-      <ul>${ps.map(p => `<li><a href="#${p.id}"><time datetime="${p.date}">${fmt(p.date)}</time>${esc(p.title)}</a></li>`).join("")}</ul>
-      <a class="more" href="#${key}">看全部 ${postsOf(key).length} 篇 →</a>
-    </article>`;
+  const cats = Object.entries(CATS).map(([key, c]) => {
+    const isTaji = key === "tajiyu";
+    const href = isTaji ? tajiHref() : "#" + key;
+    const ext = isTaji && SITE.tajiyuUrl ? ` target="_blank" rel="noopener"` : "";
+    const short = { "academic": "論文與考證", "study-talks": "讀書問學的心得", "life": "日常片段", "tajiyu": "讀書摘錄與典故" }[key];
+    return `<a class="cat-link" style="--c:${c.color}" href="${href}"${ext}>
+      <b>${c.name}${isTaji ? `<span class="ext" aria-hidden="true"> ↗</span>` : ""}</b>
+      <span>${short}</span></a>`;
   }).join("");
 
   const latest = [...POSTS].sort(byDate).slice(0, 5);
   $app.innerHTML = `
   <div class="wrap">
+    <nav class="cat-row" aria-label="分類">${cats}</nav>
     <section class="section">
-      <div class="sec-head"><h2>齋中四類</h2><small>CATEGORIES</small></div>
-      <div class="cats">${cards}</div>
-    </section>
-    <section class="section">
-      <div class="sec-head"><h2>最近寫的</h2><small>LATEST</small></div>
+      <div class="sec-head"><h2>近作</h2></div>
       <ul class="list">${latest.map(p => listItem(p, true)).join("")}</ul>
-      <p class="sample-note">目前的文章皆為範例內容。</p>
-    </section>
-    <section class="section">
-      <div class="about-grid">
-        <h2>齋名由來</h2>
-        <div class="body">
-          <p>〈逍遙遊〉裡，大鵬飛上九萬里，樹下的蟬與學鳩笑牠何必飛那麼遠。莊子拿這隻小鳥來說「小知不及大知」，本齋偏偏取牠作名字：自知眼界有限，也喜歡那個「學」字。</p>
-          <a class="more" style="--c:var(--seal)" href="#about">關於學鳩齋 →</a>
-        </div>
-      </div>
     </section>
   </div>`;
 }

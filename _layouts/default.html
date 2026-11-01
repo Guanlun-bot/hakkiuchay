@@ -35,7 +35,8 @@
 <meta property="og:image" content="{{ '/assets/img/seal-512.png' | absolute_url }}">
 <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}?v={{ site.time | date: '%s' }}">
 </head>
-<body>
+{%- if page.cat == "academic" -%}{%- assign mark = "nianchatu" -%}{%- else -%}{%- assign mark = "none" -%}{%- endif -%}
+<body data-mark="{{ mark }}">
 {% assign S = site.data.site %}{% assign T = site.data.text %}{% assign CATS = site.data.categories %}
 {% assign nav = page.nav | default: page.cat %}
 <div id="progress" aria-hidden="true"></div>

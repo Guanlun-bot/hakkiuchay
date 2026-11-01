@@ -526,3 +526,14 @@ html.theme-reveal::view-transition-new(root) { animation: reveal .6s var(--ease)
 @media (max-width: 860px) { .home-hero { gap: 48px; } }
 /* 不顯示輪播下方的圓點 */
 .slide-dots { display: none !important; }
+
+/* 首頁引文：照片下方，安靜的一段宋體 */
+.home-quote { max-width: 40em; margin: 4px auto 56px; padding: 0 24px; text-align: center; }
+.home-quote blockquote { margin: 0; padding: 0; border: 0; background: none; }
+.home-quote p { margin: 0 0 .5em; font-family: var(--font-body); font-size: 15.5px; line-height: 2.1; letter-spacing: .12em; color: var(--ink-soft); text-wrap: balance; }
+.home-quote figcaption { margin-top: 10px; font-size: 12.5px; letter-spacing: .3em; color: var(--dove); }
+.home-quote figcaption::before { content: ""; display: block; width: 28px; height: 1px; background: var(--rule); margin: 0 auto 12px; }
+@media (max-width: 720px) { .home-quote { padding: 0 20px; margin-bottom: 40px; } .home-quote p { font-size: 14.5px; letter-spacing: .06em; text-align: left; text-wrap: pretty; } }
+.home-quote { max-width: 46em; }
+.home-quote p { text-wrap: wrap; }
+@media (max-width: 720px) { .home-quote .br-d { display: none; } }

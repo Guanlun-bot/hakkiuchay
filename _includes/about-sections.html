@@ -1,0 +1,21 @@
+{%- assign S = site.data.site -%}{%- assign T = site.data.text -%}
+<section class="study" id="owner">
+  <h2 class="study-title">{{ T.owner_heading }}</h2>
+  <div class="study-body owner-row">
+    {% if S.avatar and S.avatar != "" %}<img class="avatar-img" src="{{ S.avatar | relative_url }}" alt="{{ S.owner }}的大頭貼" width="200" height="200">{% endif %}
+    <div><p class="owner-name">{{ S.owner }}</p>{% if S.owner_bio and S.owner_bio != "" %}{{ S.owner_bio | markdownify }}{% endif %}</div>
+  </div>
+</section>
+
+<section class="study" id="contact">
+  <h2 class="study-title">{{ T.contact_heading }}</h2>
+  <div class="study-body">
+    {% if T.contact_note and T.contact_note != "" %}<p>{{ T.contact_note }}</p>{% endif %}
+    <ul class="contact-list">
+      {% if S.email and S.email != "" %}<li><span class="contact-k">{{ T.email_label }}</span><a href="mailto:{{ S.email }}">{{ S.email }}</a></li>{% endif %}
+      {% if S.place and S.place != "" %}<li><span class="contact-k">{{ T.place_label }}</span><span>{{ S.place }}</span></li>{% endif %}
+      {% if S.discord and S.discord != "" %}<li><span class="contact-k contact-icon">{% include icon-discord.svg %}</span><a href="{{ S.discord }}" target="_blank" rel="noopener">{{ T.discord_label | default: "Discord" }}</a></li>{% endif %}
+      {% if S.signal and S.signal != "" %}<li><span class="contact-k contact-icon">{% include icon-signal.svg %}</span><a href="{{ S.signal }}" target="_blank" rel="noopener">{{ T.signal_label | default: "Signal" }}</a></li>{% endif %}
+    </ul>
+  </div>
+</section>

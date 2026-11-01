@@ -1,40 +1,11 @@
 ---
-layout: default
-title: 關於
-nav: about
+layout: null
 permalink: /about/
+sitemap: false
 ---
-{%- assign S = site.data.site -%}{%- assign T = site.data.text -%}
-<div class="wrap" style="--c:var(--seal)">
-  <header class="page-head">
-    <h1>{{ T.about_title }}</h1>
-  </header>
-  <section class="section">
-    <div class="about-grid">
-      <h2>{{ T.owner_heading }}</h2>
-      <div class="body owner-row">
-        {% if S.avatar and S.avatar != "" %}<img class="avatar-img" src="{{ S.avatar | relative_url }}" alt="{{ S.owner }}的大頭貼" width="200" height="200">{% else %}<img src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="88" height="88" style="flex:none">{% endif %}
-        <div><p><b>{{ S.owner }}</b></p>{% if S.owner_bio and S.owner_bio != "" %}{{ S.owner_bio | markdownify }}{% endif %}</div>
-      </div>
-    </div>
-  </section>
-  <section class="section">
-    <div class="about-grid">
-      <h2>{{ T.contact_heading }}</h2>
-      <div class="body">
-        {% if T.contact_note and T.contact_note != "" %}<p>{{ T.contact_note }}</p>{% endif %}
-        <dl class="contact-grid">
-          {% if S.email and S.email != "" %}<dt>{{ T.email_label }}</dt><dd><a href="mailto:{{ S.email }}">{{ S.email }}</a></dd>{% endif %}
-          {% if S.place and S.place != "" %}<dt>{{ T.place_label }}</dt><dd>{{ S.place }}</dd>{% endif %}
-        </dl>
-        {%- assign has_social = false -%}{%- if S.discord and S.discord != "" -%}{%- assign has_social = true -%}{%- endif -%}{%- if S.signal and S.signal != "" -%}{%- assign has_social = true -%}{%- endif -%}
-        {% if has_social %}
-        <div class="social-row" aria-label="{{ T.social_label | default: '社群' }}">
-          {% if S.discord and S.discord != "" %}<a class="social-btn" href="{{ S.discord }}" target="_blank" rel="noopener">{% include icon-discord.svg %}<span>{{ T.discord_label | default: "Discord" }}</span></a>{% endif %}
-          {% if S.signal and S.signal != "" %}<a class="social-btn" href="{{ S.signal }}" target="_blank" rel="noopener">{% include icon-signal.svg %}<span>{{ T.signal_label | default: "Signal" }}</span></a>{% endif %}
-        </div>
-        {% endif %}
-      </div>
-    </div>
-  </section>
-</div>
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url={{ '/#owner' | relative_url }}">
+<link rel="canonical" href="{{ '/' | absolute_url }}">
+<title>關於書齋</title></head>
+<body><p><a href="{{ '/#owner' | relative_url }}">前往關於書齋</a></p></body></html>

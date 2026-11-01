@@ -702,3 +702,20 @@ footer .wrap { align-items: center; }
 .social-btn:hover { border-color: var(--seal); color: var(--seal); }
 .social-btn:hover svg { color: var(--seal); }
 .foot-icons { display: inline-flex; gap: 10px; }
+
+/* 首頁的齋主、聯絡（原關於頁） */
+.owner-row { display: flex; gap: 36px; align-items: flex-start; }
+.owner-name { font-size: 19px; font-weight: 600; letter-spacing: .12em; margin-bottom: .6em !important; }
+.contact-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.contact-list li { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); align-items: center; gap: 12px; font-size: 16px; }
+.contact-k { color: var(--dove); font-size: 14px; letter-spacing: .1em; }
+.contact-icon { display: inline-flex; color: var(--ink-soft); }
+.contact-icon svg { width: 22px; height: 22px; }
+.contact-list a { color: var(--ink); text-decoration-color: var(--rule); }
+.contact-list a:hover { color: var(--seal); }
+.study + .study { padding-top: 56px; }
+#owner, #contact { scroll-margin-top: 90px; }
+@media (max-width: 720px) { .owner-row { flex-direction: column; gap: 20px; } }
+.study { padding-bottom: 0; }
+#contact { padding-bottom: 96px; }
+@media (max-width: 900px) { #contact { padding-bottom: 64px; } }

@@ -166,16 +166,14 @@ content:
     format: yaml
     fields:
       - { name: site_name, label: 齋名（頁首左上）, type: string }
-      - { name: nav_home, label: 選單：首頁, type: string }
+      - { name: nav_home, label: 選單：關於書齋（首頁）, type: string }
       - { name: nav_tajiyu, label: 選單：獺祭魚, type: string }
-      - { name: nav_about, label: 選單：關於, type: string }
       - { name: footer, label: 頁尾文字（© 年份之後）, type: string }
-      - { name: about_title, label: 關於頁：大標題, type: string }
-      - { name: owner_heading, label: 關於頁：齋主欄標題, type: string }
-      - { name: contact_heading, label: 關於頁：聯絡欄標題, type: string }
-      - { name: contact_note, label: 關於頁：聯絡說明, type: text }
-      - { name: email_label, label: 關於頁：電子郵件標籤, type: string }
-      - { name: place_label, label: 關於頁：所在標籤, type: string }
+      - { name: owner_heading, label: 齋主／聯絡：齋主欄標題, type: string }
+      - { name: contact_heading, label: 齋主／聯絡：聯絡欄標題, type: string }
+      - { name: contact_note, label: 齋主／聯絡：聯絡說明, type: text }
+      - { name: email_label, label: 齋主／聯絡：電子郵件標籤, type: string }
+      - { name: place_label, label: 齋主／聯絡：所在標籤, type: string }
       - { name: discord_label, label: Discord 標籤, type: string }
       - { name: signal_label, label: Signal 標籤, type: string }
       - { name: empty_category, label: 分類沒有文章時顯示, type: string }

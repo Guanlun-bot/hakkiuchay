@@ -45,7 +45,7 @@
     <div class="top-right">
     <nav aria-label="主選單">
       <ul id="nav">
-        <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>{{ T.nav_home | default: "首頁" }}</a></li>
+        <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>{{ T.nav_home | default: "關於書齋" }}</a></li>
         <li><a href="{{ '/academic/' | relative_url }}"{% if nav == 'academic' %} aria-current="page"{% endif %}>{{ CATS.academic.name }}</a></li>
         <li><a href="{{ '/study-talks/' | relative_url }}"{% if nav == 'study-talks' %} aria-current="page"{% endif %}>{{ CATS['study-talks'].name }}</a></li>
         <li><a href="{{ '/life/' | relative_url }}"{% if nav == 'life' %} aria-current="page"{% endif %}>{{ CATS.life.name }}</a></li>
@@ -54,7 +54,6 @@
         {% else %}
         <li><a href="{{ '/tajiyu/' | relative_url }}"{% if nav == 'tajiyu' %} aria-current="page"{% endif %}>{{ T.nav_tajiyu | default: "獺祭魚" }}<span class="ext" aria-hidden="true">↗</span></a></li>
         {% endif %}
-        <li><a href="{{ '/about/' | relative_url }}"{% if nav == 'about' %} aria-current="page"{% endif %}>{{ T.nav_about | default: "關於" }}</a></li>
       </ul>
     </nav>
     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切換白天／夜間模式">

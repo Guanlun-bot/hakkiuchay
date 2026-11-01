@@ -194,8 +194,8 @@ content:
           - { name: name, label: 名稱（選單與標題）, type: string }
           - { name: desc, label: 說明, type: string }
           - { name: prefix, label: 索書號字頭, type: string }
-          - { name: cover, label: 主視覺圖片, type: image }
-          - { name: cover_caption, label: 主視覺說明, type: string }
+          - { name: cover, label: 背景圖片, type: image }
+          - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }
       - name: study-talks
@@ -205,8 +205,8 @@ content:
           - { name: name, label: 名稱（選單與標題）, type: string }
           - { name: desc, label: 說明, type: string }
           - { name: prefix, label: 索書號字頭, type: string }
-          - { name: cover, label: 主視覺圖片, type: image }
-          - { name: cover_caption, label: 主視覺說明, type: string }
+          - { name: cover, label: 背景圖片, type: image }
+          - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }
       - name: life
@@ -216,7 +216,7 @@ content:
           - { name: name, label: 名稱（選單與標題）, type: string }
           - { name: desc, label: 說明, type: string }
           - { name: prefix, label: 索書號字頭, type: string }
-          - { name: cover, label: 主視覺圖片, type: image }
-          - { name: cover_caption, label: 主視覺說明, type: string }
+          - { name: cover, label: 背景圖片, type: image }
+          - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }

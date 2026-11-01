@@ -3,12 +3,6 @@ layout: default
 ---
 {%- assign c = site.data.categories[page.cat] -%}
 {%- assign posts = site.posts | where: "cat", page.cat -%}
-{%- if c.cover and c.cover != "" -%}
-<figure class="cat-cover">
-  <img src="{{ c.cover | relative_url }}" alt="{{ c.cover_caption | default: c.name }}">
-  {%- if c.cover_caption and c.cover_caption != "" %}<figcaption>{{ c.cover_caption }}</figcaption>{% endif %}
-</figure>
-{%- endif %}
 <div class="wrap" style="--c:{{ c.color }}">
   <header class="page-head">
     <h1>{{ c.name }}</h1>

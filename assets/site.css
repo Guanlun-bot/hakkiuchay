@@ -524,3 +524,5 @@ html.theme-reveal::view-transition-new(root) { animation: reveal .6s var(--ease)
 }
 .motto-col:nth-child(n) { padding-top: 0; }
 @media (max-width: 860px) { .home-hero { gap: 48px; } }
+/* 不顯示輪播下方的圓點 */
+.slide-dots { display: none !important; }

@@ -761,10 +761,10 @@ main .study { display: none; }
 body[data-mark]::before {
   content: ""; position: fixed; z-index: -1; pointer-events: none;
   right: 0; bottom: 0; width: min(78vw, 1000px); aspect-ratio: 989 / 703;
-  background: var(--mark) right bottom / contain no-repeat; opacity: .14;
+  background: var(--mark) right bottom / contain no-repeat; opacity: .28;
 }
 body[data-mark="none"]::before { display: none; }
 body[data-mark="nianchatu"] { --mark: url("marks/nianchatu.webp"); }
-[data-theme="dark"] body[data-mark]::before { filter: invert(1); opacity: .09; }
-@media (max-width: 700px) { body[data-mark]::before { width: 120vw; right: -10vw; opacity: .12; } }
+[data-theme="dark"] body[data-mark]::before { filter: invert(1); opacity: .18; }
+@media (max-width: 700px) { body[data-mark]::before { width: 120vw; right: -10vw; opacity: .22; } }
 @media print { body[data-mark]::before { display: none; } }

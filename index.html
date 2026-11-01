@@ -6,6 +6,7 @@ nav: home
 {%- assign photos = site.data.photos.photos | where_exp: "p", "p.image" -%}
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">學鳩齋</h1>
 {% if photos.size > 0 %}
+<div class="home-hero">
 <section class="slides" id="slides" aria-roledescription="輪播" aria-label="照片">
   {% for ph in photos %}
   <figure class="slide{% if forloop.first %} is-on{% endif %}" aria-hidden="{% unless forloop.first %}true{% else %}false{% endunless %}">
@@ -21,6 +22,8 @@ nav: home
   </div>
   {% endif %}
 </section>
+<p class="motto" aria-label="蜩與學鳩笑之曰：我決起而飛，槍榆枋，時則不至而控於地而已矣，奚以之九萬里而南為？（《莊子・逍遙遊》）"><span aria-hidden="true"><span class="motto-col"><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/01.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/02.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/03.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/04.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/05.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/06.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/07.png')"></i></span><span class="motto-col"><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/08.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/09.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/10.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/11.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/12.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/13.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/14.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/15.png')"></i></span><span class="motto-col"><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/16.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/17.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/18.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/19.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/20.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/21.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/22.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/23.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/24.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/25.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/26.png')"></i></span><span class="motto-col"><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/27.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/28.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/29.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/30.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/31.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/32.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/33.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/34.png')"></i><i style="--g:url('{{ site.baseurl }}/assets/img/glyphs/35.png')"></i></span></span></p>
+</div>
 {% if photos.size > 1 %}
 <script>
 (function () {

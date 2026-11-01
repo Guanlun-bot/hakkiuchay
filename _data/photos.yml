@@ -1,78 +1,44 @@
 photos:
-- image: /assets/uploads/file.jpg
-- image: /assets/uploads/img5526.jpg
-- image: /assets/uploads/img7266.jpg
-- image: /assets/uploads/home/IMG_5837.jpg
-- image: /assets/uploads/home/IMG_0116.jpg
-- image: /assets/uploads/home/IMG_0377.jpg
-- image: /assets/uploads/home/IMG_0610.jpg
-- image: /assets/uploads/home/IMG_4953.jpg
-- image: /assets/uploads/home/IMG_5013.jpg
-- image: /assets/uploads/home/IMG_5091.jpg
-- image: /assets/uploads/home/IMG_5221.jpg
-- image: /assets/uploads/home/IMG_5333.jpg
-- image: /assets/uploads/home/IMG_5363.jpg
-- image: /assets/uploads/home/IMG_5374.jpg
-- image: /assets/uploads/home/IMG_5452.jpg
-- image: /assets/uploads/home/IMG_5526.jpg
-- image: /assets/uploads/home/IMG_5548.jpg
-- image: /assets/uploads/home/IMG_5551.jpg
-- image: /assets/uploads/home/IMG_5650.jpg
-- image: /assets/uploads/home/IMG_5656.jpg
-- image: /assets/uploads/home/IMG_5719.jpg
-- image: /assets/uploads/home/IMG_5743.jpg
-- image: /assets/uploads/home/IMG_5896.jpg
-- image: /assets/uploads/home/IMG_5909.jpg
-- image: /assets/uploads/home/IMG_6215.jpg
-- image: /assets/uploads/home/IMG_6271.jpg
-- image: /assets/uploads/home/IMG_6389.jpg
-- image: /assets/uploads/home/IMG_6412.jpg
-- image: /assets/uploads/home/IMG_6657.jpg
-- image: /assets/uploads/home/IMG_6702.2.jpg
-- image: /assets/uploads/home/IMG_6820.jpg
-- image: /assets/uploads/home/IMG_6838.jpg
-- image: /assets/uploads/home/IMG_6849.jpg
-- image: /assets/uploads/home/IMG_6955.jpg
-- image: /assets/uploads/home/IMG_7025.jpg
-- image: /assets/uploads/home/IMG_7055.jpg
-- image: /assets/uploads/home/IMG_7166.jpg
-- image: /assets/uploads/home/IMG_7266.jpg
-- image: /assets/uploads/home/IMG_7523.jpg
-- image: /assets/uploads/home/IMG_7543.jpg
-- image: /assets/uploads/home/IMG_7824.jpg
-- image: /assets/uploads/home/IMG_7901.jpg
-- image: /assets/uploads/home/IMG_8015.jpg
-- image: /assets/uploads/home/IMG_8140.jpg
-- image: /assets/uploads/home/IMG_8233.jpg
-- image: /assets/uploads/home/IMG_8295.jpg
-- image: /assets/uploads/home/IMG_8344.jpg
-- image: /assets/uploads/home/IMG_8414.1.jpg
-- image: /assets/uploads/home/IMG_8483.2.jpg
-- image: /assets/uploads/home/IMG_8483.jpg
-- image: /assets/uploads/home/IMG_8490.2.jpg
-- image: /assets/uploads/home/IMG_8490.jpg
-- image: /assets/uploads/home/IMG_8595.jpg
-- image: /assets/uploads/home/IMG_8619.jpg
-- image: /assets/uploads/home/IMG_8643.jpg
-- image: /assets/uploads/home/IMG_8721.jpg
-- image: /assets/uploads/home/IMG_8777.jpg
-- image: /assets/uploads/home/IMG_8864.jpg
-- image: /assets/uploads/home/IMG_9161.2.jpg
-- image: /assets/uploads/home/IMG_9161.jpg
-- image: /assets/uploads/home/IMG_9257.jpg
-- image: /assets/uploads/home/IMG_9404.jpg
-- image: /assets/uploads/home/IMG_9453.jpg
-- image: /assets/uploads/home/IMG_9490.jpg
-- image: /assets/uploads/home/IMG_9499.2.jpg
-- image: /assets/uploads/home/IMG_9499.jpg
-- image: /assets/uploads/home/IMG_9557.jpg
-- image: /assets/uploads/home/IMG_9661.2.jpg
-- image: /assets/uploads/home/IMG_9661.jpg
-- image: /assets/uploads/home/IMG_9701.2.jpg
-- image: /assets/uploads/home/IMG_9701.jpg
-- image: /assets/uploads/home/IMG_9762.2.jpg
-- image: /assets/uploads/home/IMG_9762.jpg
-- image: /assets/uploads/home/IMG_9788.2.jpg
-- image: /assets/uploads/home/IMG_9788.jpg
-- image: /assets/uploads/home/IMG_9872.jpg
-- image: /assets/uploads/home/IMG_9961.jpg
+  - image: /assets/uploads/home/IMG_5363.jpg
+    caption: 白馬祠
+  - image: /assets/uploads/img5526.jpg
+  - image: /assets/uploads/img7266.jpg
+  - image: /assets/uploads/home/IMG_5837.jpg
+  - image: /assets/uploads/home/IMG_0116.jpg
+  - image: /assets/uploads/home/IMG_0377.jpg
+  - image: /assets/uploads/home/IMG_0610.jpg
+  - image: /assets/uploads/home/IMG_4953.jpg
+  - image: /assets/uploads/home/IMG_5013.jpg
+  - image: /assets/uploads/home/IMG_5091.jpg
+  - image: /assets/uploads/home/IMG_5221.jpg
+  - image: /assets/uploads/home/IMG_5333.jpg
+  - image: /assets/uploads/home/IMG_5374.jpg
+  - image: /assets/uploads/home/IMG_5452.jpg
+  - image: /assets/uploads/home/IMG_5526.jpg
+  - image: /assets/uploads/home/IMG_5656.jpg
+  - image: /assets/uploads/home/IMG_5719.jpg
+  - image: /assets/uploads/home/IMG_5909.jpg
+  - image: /assets/uploads/home/IMG_6215.jpg
+  - image: /assets/uploads/home/IMG_6702.2.jpg
+  - image: /assets/uploads/home/IMG_6820.jpg
+  - image: /assets/uploads/home/IMG_7523.jpg
+  - image: /assets/uploads/home/IMG_7824.jpg
+  - image: /assets/uploads/home/IMG_7901.jpg
+  - image: /assets/uploads/home/IMG_8015.jpg
+  - image: /assets/uploads/home/IMG_8140.jpg
+  - image: /assets/uploads/home/IMG_8233.jpg
+  - image: /assets/uploads/home/IMG_8295.jpg
+  - image: /assets/uploads/home/IMG_8344.jpg
+  - image: /assets/uploads/home/IMG_8414.1.jpg
+  - image: /assets/uploads/home/IMG_8490.2.jpg
+  - image: /assets/uploads/home/IMG_8643.jpg
+  - image: /assets/uploads/home/IMG_8721.jpg
+  - image: /assets/uploads/home/IMG_8864.jpg
+  - image: /assets/uploads/home/IMG_9161.2.jpg
+  - image: /assets/uploads/home/IMG_9404.jpg
+  - image: /assets/uploads/home/IMG_9453.jpg
+  - image: /assets/uploads/home/IMG_9499.2.jpg
+  - image: /assets/uploads/home/IMG_9557.jpg
+  - image: /assets/uploads/home/IMG_9661.2.jpg
+  - image: /assets/uploads/home/IMG_9701.2.jpg
+  - image: /assets/uploads/home/IMG_9961.jpg

@@ -758,7 +758,7 @@ main .study { display: none; }
 }
 
 /* ===== 分類背景（原圖），文字放在半透明紙面上 ===== */
-body.has-bg::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--bgimg) center / cover no-repeat; }
+body.has-bg::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--bgimg) center 35% / cover no-repeat; }
 body.has-bg header.top { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 body.has-bg main#app { max-width: 1148px; margin: 40px auto 56px; padding-bottom: 40px; background: color-mix(in srgb, var(--paper) 74%, transparent); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); box-shadow: 0 18px 50px -24px rgba(0,0,0,.45); }
 body.has-bg footer { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }

@@ -1,0 +1,22 @@
+# 手動工具：GitHub Pages 發布卡住時，取消卡住的那一次發布。
+name: 取消卡住的網站發布
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 卡住的那次發布的 commit SHA（錯誤訊息裡 "Please cancel" 後面那串）
+        required: true
+permissions:
+  pages: write
+  contents: read
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取消
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -sS -X POST -w "\nHTTP %{http_code}\n" \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}/cancel"

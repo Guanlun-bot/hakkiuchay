@@ -94,6 +94,7 @@ content:
             type: image
             options:
               rename: safe
+              extensions: [jpg, jpeg, png, webp, gif, JPG, JPEG, PNG, WEBP]
           - name: caption
             label: 說明（可留空，放大時顯示在角落）
             type: string

@@ -404,3 +404,4 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   .slides { height: auto; aspect-ratio: 4 / 3; min-height: 0; }
   .slide-nav { display: none; }
 }
+.page-head h1 { margin-bottom: 0; }

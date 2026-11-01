@@ -41,7 +41,7 @@
 <div id="progress" aria-hidden="true"></div>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="{{ '/' | relative_url }}"><img class="logo" src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="44" height="44"><span class="brand-name">學鳩齋</span></a>
+    <a class="brand" href="{{ '/' | relative_url }}"><span class="brand-name">學鳩齋</span></a>
     <div class="top-right">
     <nav aria-label="主選單">
       <ul id="nav">
@@ -69,10 +69,8 @@
 {{ content }}
 </main></div>
 
-<div class="shelf" aria-hidden="true"><canvas id="ink"></canvas></div>
 <footer>
   <div class="wrap">
-    <span>學鳩齋 ・ 決起而飛，搶榆枋而止</span>
     <span>© {{ site.time | date: "%Y" }} 學鳩齋</span>
   </div>
 </footer>
@@ -108,72 +106,7 @@
   }, 60000);
 })();
 
-/* 書架：頁尾一排書脊，載入時一冊冊歸位 */
 (function () {
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let SHELF = null, shelfW = 0;
-  function build(W) {
-    let seed = 11;
-    const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-    const books = []; let x = 8;
-    while (x < W - 8) {
-      const k = rnd();
-      if (k < 0.12) {
-        const n = 3 + Math.floor(rnd() * 4), w = 46 + rnd() * 30;
-        for (let i = 0; i < n; i++) books.push({ type: "flat", x: x + rnd() * 4, w: w - rnd() * 6, h: 7 + rnd() * 3, level: i, tone: Math.floor(rnd() * 4) });
-        x += w + 10;
-      } else if (k < 0.18) { x += 14 + rnd() * 30; }
-      else {
-        const w = 10 + rnd() * 16, h = 54 + rnd() * 50;
-        books.push({ type: "spine", x, w, h, lean: (k > 0.95 && books.length) ? -0.18 : 0, tone: Math.floor(rnd() * 4), bands: rnd() < 0.5 });
-        x += w + 1 + rnd() * 2;
-      }
-    }
-    books.forEach((b, i) => b.delay = i * 14);
-    return books;
-  }
-  function draw(animate) {
-    const cv = document.getElementById("ink"); if (!cv) return;
-    const r = cv.getBoundingClientRect(), W = r.width, H = r.height;
-    if (!SHELF || Math.abs(W - shelfW) > 40) { SHELF = build(W); shelfW = W; }
-    const dpr = devicePixelRatio || 1;
-    cv.width = W * dpr; cv.height = H * dpr;
-    const g = cv.getContext("2d"), css = getComputedStyle(document.documentElement);
-    const tones = ["--dove", "--c-academic", "--c-talks", "--c-life"].map(v => css.getPropertyValue(v).trim());
-    const rule = css.getPropertyValue("--ink-soft").trim(), base = H - 14, start = performance.now(), dur = 650;
-    function frame(now) {
-      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-      let done = true;
-      SHELF.forEach(b => {
-        let t = 1;
-        if (animate && !reduce) { t = Math.min(1, Math.max(0, (now - start - b.delay) / dur)); if (t < 1) done = false; }
-        const e = 1 - Math.pow(1 - t, 3);
-        g.globalAlpha = 0.07 + 0.11 * e; g.fillStyle = tones[b.tone];
-        if (b.type === "spine") {
-          g.save(); g.translate(b.x, base + (1 - e) * b.h * 0.7); g.rotate(b.lean);
-          g.fillRect(0, -b.h, b.w, b.h); g.globalAlpha *= 1.6;
-          g.fillRect(2, -b.h + 10, b.w - 4, 2);
-          if (b.bands) { g.fillRect(2, -20, b.w - 4, 2); g.fillRect(2, -b.h * 0.55, b.w - 4, 1.5); }
-          g.restore();
-        } else {
-          const y = base - (b.level + 1) * 10 - (1 - e) * 24;
-          g.fillRect(b.x, y, b.w, b.h); g.globalAlpha *= 1.6;
-          for (let k = 1; k <= 4; k++) g.fillRect(b.x + b.w * k / 5, y + b.h - 2, 1.2, 2);
-        }
-      });
-      g.globalAlpha = 0.22; g.fillStyle = rule; g.fillRect(0, base, W, 2);
-      g.globalAlpha = 0.08; g.fillRect(0, base + 2, W, 10); g.globalAlpha = 1;
-      if (!done) requestAnimationFrame(frame);
-    }
-    if (animate && !reduce) {
-      const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { io.disconnect(); requestAnimationFrame(frame); } });
-      frame(start); io.observe(cv);
-    } else frame(performance.now());
-  }
-  addEventListener("resize", () => draw(false));
-    new MutationObserver(() => draw(false)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  draw(true);
-
   /* 閱讀進度 */
   const bar = document.getElementById("progress");
   if (document.querySelector(".article")) {

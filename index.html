@@ -31,17 +31,16 @@ nav: home
       {% endif %}
     </div>
     {% endif %}
+    {% if H.quote and H.quote != "" %}
+    <figure class="epigraph">
+      <blockquote>
+        {%- assign qlines = H.quote | newline_to_br | split: "<br />" -%}
+        {%- for l in qlines -%}{%- assign t = l | strip -%}{%- if t != "" -%}<p>{{ t }}</p>{%- endif -%}{%- endfor -%}
+      </blockquote>
+      {% if H.quote_source and H.quote_source != "" %}<figcaption>{{ H.quote_source }}</figcaption>{% endif %}
+    </figure>
+    {% endif %}
   </div>
-
-  {% if H.quote and H.quote != "" %}
-  <div class="leaf leaf-text">
-    <div class="colophon">
-      {%- assign qlines = H.quote | newline_to_br | split: "<br />" -%}
-      {%- for l in qlines -%}{%- assign t = l | strip -%}{%- if t != "" -%}<p>{{ t }}</p>{%- endif -%}{%- endfor -%}
-      {% if H.quote_source and H.quote_source != "" %}<p class="colophon-src">{{ H.quote_source }}</p>{% endif %}
-    </div>
-  </div>
-  {% endif %}
 </section>
 
 <!-- 書齋 -->

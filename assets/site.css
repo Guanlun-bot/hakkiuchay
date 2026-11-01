@@ -644,3 +644,14 @@ a.contents-latest:hover { color: var(--c); }
 @media (max-width: 900px) { .spread { padding: 0 16px; } .study, .contents { grid-template-columns: minmax(0, 1fr); padding-left: 20px; padding-right: 20px; } }
 .study { padding-bottom: 96px; }
 @media (max-width: 900px) { .study { padding-bottom: 64px; } }
+
+/* 照片下方的引文：橫排兩行，靠左 */
+.spread { grid-template-columns: minmax(0, 1fr); }
+.leaf-plate { padding-right: 0; }
+.epigraph { margin: 40px 0 8px; padding: 0; }
+.epigraph::before { content: ""; display: block; width: 28px; height: 1px; background: var(--seal); margin-bottom: 18px; }
+.epigraph blockquote { margin: 0; padding: 0; border: 0; background: none; }
+.epigraph p { margin: 0; font-size: 16px; line-height: 2.15; letter-spacing: .1em; color: var(--ink); text-indent: 0; }
+.epigraph figcaption { margin-top: 10px; font-size: 13px; letter-spacing: .25em; color: var(--dove); }
+@media (max-width: 900px) { .epigraph { margin-top: 28px; } .epigraph p { font-size: 15px; letter-spacing: .05em; } }
+@media (max-width: 900px) { .spread { --plate-h: min(80vw, 62svh); } }

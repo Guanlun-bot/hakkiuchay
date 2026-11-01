@@ -134,9 +134,9 @@ content:
     format: yaml
     fields:
       - name: quote
-        label: 右頁直排題跋
+        label: 照片下方引文
         type: text
-        description: 一行就是一直行；留空則不顯示右頁。
+        description: 一行就是一行；留空則不顯示。
       - name: quote_source
         label: 題跋出處
         type: string

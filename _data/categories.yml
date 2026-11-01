@@ -4,6 +4,8 @@ academic:
   prefix: KIN
   color: var(--c-academic)
   en: ACADEMIC
+  cover: /assets/uploads/covers/nianchatu.jpg
+  cover_caption: 宋　劉松年〈攆茶圖〉，國立故宮博物院藏
 study-talks:
   name: 拈花記
   desc: 這裡放學佛筆記
@@ -16,3 +18,5 @@ life:
   prefix: TUA
   color: var(--c-life)
   en: NOTEBOOK
+  cover: /assets/uploads/covers/magritte-tree.jpg
+  cover_caption: 馬格利特〈九月十六日〉

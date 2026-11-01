@@ -136,6 +136,8 @@ collections:
               - { name: name, label: 名稱（選單與標題）, widget: string }
               - { name: desc, label: 說明, widget: string, required: false }
               - { name: prefix, label: 索書號字頭, widget: string }
+              - { name: cover, label: 主視覺圖片, widget: image, required: false }
+              - { name: cover_caption, label: 主視覺說明, widget: string, required: false }
               - { name: color, label: 顏色, widget: hidden }
               - { name: en, label: en, widget: hidden }
           - name: study-talks
@@ -145,6 +147,8 @@ collections:
               - { name: name, label: 名稱（選單與標題）, widget: string }
               - { name: desc, label: 說明, widget: string, required: false }
               - { name: prefix, label: 索書號字頭, widget: string }
+              - { name: cover, label: 主視覺圖片, widget: image, required: false }
+              - { name: cover_caption, label: 主視覺說明, widget: string, required: false }
               - { name: color, label: 顏色, widget: hidden }
               - { name: en, label: en, widget: hidden }
           - name: life
@@ -154,5 +158,7 @@ collections:
               - { name: name, label: 名稱（選單與標題）, widget: string }
               - { name: desc, label: 說明, widget: string, required: false }
               - { name: prefix, label: 索書號字頭, widget: string }
+              - { name: cover, label: 主視覺圖片, widget: image, required: false }
+              - { name: cover_caption, label: 主視覺說明, widget: string, required: false }
               - { name: color, label: 顏色, widget: hidden }
               - { name: en, label: en, widget: hidden }

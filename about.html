@@ -25,6 +25,7 @@ permalink: /about/
         {% if T.contact_note and T.contact_note != "" %}<p>{{ T.contact_note }}</p>{% endif %}
         <dl class="contact-grid">
           {% if S.email and S.email != "" %}<dt>{{ T.email_label }}</dt><dd><a href="mailto:{{ S.email }}">{{ S.email }}</a></dd>{% endif %}
+          {% if S.discord and S.discord != "" %}<dt>{{ T.discord_label | default: "Discord" }}</dt><dd><a href="{{ S.discord }}" target="_blank" rel="noopener">{{ S.discord_text | default: S.discord }}</a></dd>{% endif %}
           {% if S.place and S.place != "" %}<dt>{{ T.place_label }}</dt><dd>{{ S.place }}</dd>{% endif %}
         </dl>
       </div>

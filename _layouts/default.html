@@ -72,6 +72,7 @@
 <footer>
   <div class="wrap">
     <span>© {{ site.time | date: "%Y" }} {{ T.footer | default: T.site_name }}</span>
+    {% if S.discord and S.discord != "" %}<a class="foot-link" href="{{ S.discord }}" target="_blank" rel="noopener">{{ T.discord_label | default: "Discord" }} ↗</a>{% endif %}
   </div>
 </footer>
 

@@ -677,3 +677,5 @@ a.contents-latest:hover { color: var(--c); }
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
 }
 .list h3 { margin-bottom: 4px; }
+.foot-link { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.foot-link:hover { color: var(--seal); border-color: var(--seal); }

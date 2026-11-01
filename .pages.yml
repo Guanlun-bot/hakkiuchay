@@ -122,6 +122,13 @@ content:
         label: 所在
         type: string
         description: 留空就不會顯示。
+      - name: discord
+        label: Discord 連結
+        type: string
+        description: 例如 https://discord.gg/xxxx 。填了才會在關於頁與頁尾顯示。
+      - name: discord_text
+        label: Discord 顯示文字（可留空，留空就顯示連結本身）
+        type: string
       - name: tajiyu_url
         label: 獺祭魚網址
         type: string
@@ -168,6 +175,7 @@ content:
       - { name: contact_note, label: 關於頁：聯絡說明, type: text }
       - { name: email_label, label: 關於頁：電子郵件標籤, type: string }
       - { name: place_label, label: 關於頁：所在標籤, type: string }
+      - { name: discord_label, label: Discord 標籤, type: string }
       - { name: empty_category, label: 分類沒有文章時顯示, type: string }
       - { name: tajiyu_title, label: 獺祭魚頁標題（未填網址時才會用到）, type: string }
       - { name: tajiyu_intro, label: 獺祭魚簡介, type: string }

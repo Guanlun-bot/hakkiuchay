@@ -117,6 +117,8 @@ collections:
           - { name: quote_source, label: 題跋出處, widget: string, required: false }
           - { name: intro_title, label: 介紹區塊標題, widget: string, required: false }
           - { name: intro, label: 書齋介紹, widget: text, required: false, hint: 空一行就是分段；留空則不顯示 }
+          - { name: intro_image, label: 介紹下方的畫, widget: image, required: false }
+          - { name: intro_image_caption, label: 畫的說明, widget: string, required: false }
           - { name: slide_seconds, label: 照片輪播秒數, widget: number, value_type: int, min: 2, required: false }
       - name: text
         label: 網站文字

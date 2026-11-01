@@ -167,6 +167,12 @@ content:
         label: 書齋介紹
         type: text
         description: 空一行就是分段；留空則不顯示這個區塊。
+      - name: intro_image
+        label: 介紹下方的畫
+        type: image
+      - name: intro_image_caption
+        label: 畫的說明
+        type: string
       - name: slide_seconds
         label: 照片輪播秒數
         type: number

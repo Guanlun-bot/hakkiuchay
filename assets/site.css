@@ -689,3 +689,8 @@ footer .wrap { align-items: center; }
 /* 照片說明：貼齊照片左緣 */
 .plate-foot { justify-content: flex-start; transition: margin-left .4s var(--ease); }
 .plate-cap { color: var(--ink-soft); font-size: 13.5px; }
+
+/* 文章內照片與圖說 */
+.prose .post-fig { margin: 2em 0; }
+.prose .post-fig img { margin: 0 auto; max-height: 82vh; width: auto; max-width: 100%; box-shadow: 0 18px 30px -24px rgba(30,25,20,.45); }
+.prose .post-fig figcaption { margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); letter-spacing: .08em; text-align: center; }

@@ -20,3 +20,5 @@ life:
   en: NOTEBOOK
   cover: /assets/uploads/covers/magritte-tree.jpg
   cover_caption: 馬格利特〈九月十六日〉
+  bg_whole: true
+  bg_fill: "linear-gradient(#0dade6 0%, #0eafe7 40%, #15b5ea 55%, #3ebded 65%, #4594c7 72%, #2a6a9d 80%, #2e587f 90%, #1f1d26 100%)"

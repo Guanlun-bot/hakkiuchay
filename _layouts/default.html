@@ -36,7 +36,7 @@
 <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}?v={{ site.time | date: '%s' }}">
 </head>
 {%- assign bgc = site.data.categories[page.cat] -%}
-<body{% if bgc.cover and bgc.cover != "" %} class="has-bg" style="--bgimg:url('{{ bgc.cover | relative_url }}')"{% endif %}>
+<body{% if bgc.cover and bgc.cover != "" %} class="has-bg{% if bgc.bg_whole %} bg-whole{% endif %}" style="--bgimg:url('{{ bgc.cover | relative_url }}'){% if bgc.bg_fill and bgc.bg_fill != "" %};--bgfill:{{ bgc.bg_fill }}{% endif %}"{% endif %}>
 {% assign S = site.data.site %}{% assign T = site.data.text %}{% assign CATS = site.data.categories %}
 {% assign nav = page.nav | default: page.cat %}
 <div id="progress" aria-hidden="true"></div>

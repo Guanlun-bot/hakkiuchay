@@ -28,7 +28,7 @@ layout: default
       {% if page.source and page.source != "" %}<span>出處：{{ page.source }}</span>{% endif %}
     </div>
 
-    {% if page.cat == "academic" and page.summary %}
+    {% if page.cat == "academic" and page.summary and page.summary != "" %}
     <div class="abstract"><b>摘要</b><div class="abstract-text">{{ page.summary }}</div>
       {% if page.keywords and page.keywords.size > 0 %}<div class="meta-line" style="margin-top:12px">關鍵詞 {% for k in page.keywords %}<span class="kw">{{ k }}</span>{% endfor %}</div>{% endif %}
     </div>

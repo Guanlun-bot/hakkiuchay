@@ -694,3 +694,11 @@ footer .wrap { align-items: center; }
 .prose .post-fig { margin: 2em 0; }
 .prose .post-fig img { margin: 0 auto; max-height: 82vh; width: auto; max-width: 100%; box-shadow: 0 18px 30px -24px rgba(30,25,20,.45); }
 .prose .post-fig figcaption { margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); letter-spacing: .08em; text-align: center; }
+
+/* 社群圖示按鈕 */
+.social-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.social-btn { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 12px; border: 1px solid var(--rule); border-radius: 999px; text-decoration: none; color: var(--ink); font-size: 14px; letter-spacing: .06em; transition: color .2s, border-color .2s, background .2s; }
+.social-btn svg { color: var(--ink-soft); transition: color .2s; }
+.social-btn:hover { border-color: var(--seal); color: var(--seal); }
+.social-btn:hover svg { color: var(--seal); }
+.foot-icons { display: inline-flex; gap: 10px; }

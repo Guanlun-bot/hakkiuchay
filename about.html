@@ -25,9 +25,15 @@ permalink: /about/
         {% if T.contact_note and T.contact_note != "" %}<p>{{ T.contact_note }}</p>{% endif %}
         <dl class="contact-grid">
           {% if S.email and S.email != "" %}<dt>{{ T.email_label }}</dt><dd><a href="mailto:{{ S.email }}">{{ S.email }}</a></dd>{% endif %}
-          {% if S.discord and S.discord != "" %}<dt>{{ T.discord_label | default: "Discord" }}</dt><dd><a href="{{ S.discord }}" target="_blank" rel="noopener">{{ S.discord_text | default: S.discord }}</a></dd>{% endif %}
           {% if S.place and S.place != "" %}<dt>{{ T.place_label }}</dt><dd>{{ S.place }}</dd>{% endif %}
         </dl>
+        {%- assign has_social = false -%}{%- if S.discord and S.discord != "" -%}{%- assign has_social = true -%}{%- endif -%}{%- if S.signal and S.signal != "" -%}{%- assign has_social = true -%}{%- endif -%}
+        {% if has_social %}
+        <div class="social-row" aria-label="{{ T.social_label | default: '社群' }}">
+          {% if S.discord and S.discord != "" %}<a class="social-btn" href="{{ S.discord }}" target="_blank" rel="noopener">{% include icon-discord.svg %}<span>{{ T.discord_label | default: "Discord" }}</span></a>{% endif %}
+          {% if S.signal and S.signal != "" %}<a class="social-btn" href="{{ S.signal }}" target="_blank" rel="noopener">{% include icon-signal.svg %}<span>{{ T.signal_label | default: "Signal" }}</span></a>{% endif %}
+        </div>
+        {% endif %}
       </div>
     </div>
   </section>

@@ -19,6 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 找出這次新增的照片
+        id: added
+        run: |
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || ! git cat-file -e "$before" 2>/dev/null; then before="HEAD~1"; fi
+          git diff --name-only --diff-filter=A "$before" HEAD -- assets/uploads/home > /tmp/added.txt || true
+          echo "新增檔案："; cat /tmp/added.txt
       - name: 安裝工具
         run: sudo apt-get -qq update && sudo apt-get -qq install -y imagemagick libheif-examples >/dev/null
       - name: HEIC 轉 JPG
@@ -51,8 +60,11 @@ jobs:
                 echo "壓縮：$f"
               fi
             done
-      - name: 加進首頁輪播
-        run: python3 .github/scripts/add_home_photos.py
+      - name: 加進首頁輪播（只加這次新增的）
+        run: |
+          # 副檔名改小寫後，檔名可能變了，一併換算
+          files=$(sed -E 's/\.([A-Za-z]+)$/.\L\1/' /tmp/added.txt | sed -E 's/\.(heic|heif)$/.jpg/I')
+          python3 .github/scripts/add_home_photos.py $files
       - name: 存回儲存庫
         run: |
           if [ -n "$(git status --porcelain)" ]; then

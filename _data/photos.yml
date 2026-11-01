@@ -1,112 +1,73 @@
 photos:
-- image: /assets/uploads/home/IMG_5363.jpg
-  caption: 白馬祠大門
-- image: /assets/uploads/img5526.jpg
-  caption: 真武觀的擲筊
-- image: /assets/uploads/home/IMG_5837.jpg
-  caption: 昇龍城旁的塗鴉
-- image: /assets/uploads/home/IMG_0116.jpg
-  caption: 玄天觀的觀音
-- image: /assets/uploads/home/IMG_0377.jpg
-  caption: 斑駁毀損的華人商號
-- image: /assets/uploads/home/IMG_4953.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_5091.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_5221.jpg
-  caption: 香爐
-- image: /assets/uploads/home/IMG_5452.jpg
-  caption: 盆栽
-- image: /assets/uploads/home/IMG_5656.jpg
-  caption: 土地公
-- image: /assets/uploads/home/IMG_5719.jpg
-  caption: 電焊工
-- image: /assets/uploads/home/IMG_5909.jpg
-  caption: 屋脊
-- image: /assets/uploads/home/IMG_6215.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_6702.2.jpg
-  caption: 教堂前的聖母
-- image: /assets/uploads/home/IMG_6820.jpg
-  caption: 館使寺
-- image: /assets/uploads/home/IMG_7523.jpg
-  caption: 鎮國寺
-- image: /assets/uploads/home/IMG_7824.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_7901.jpg
-  caption: 象伏祠
-- image: /assets/uploads/home/IMG_8015.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_8140.jpg
-  caption: 白馬
-- image: /assets/uploads/home/IMG_8233.jpg
-  caption: 樹下
-- image: /assets/uploads/home/IMG_8295.jpg
-  caption: 最靈祠
-- image: /assets/uploads/home/IMG_8344.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_8414.1.jpg
-  caption: 踢球的孩童
-- image: /assets/uploads/home/IMG_8490.2.jpg
-  caption: 巷道
-- image: /assets/uploads/home/IMG_8643.jpg
-  caption: 店
-- image: /assets/uploads/home/IMG_8721.jpg
-  caption: 囍
-- image: /assets/uploads/home/IMG_8864.jpg
-  caption: 獅子
-- image: /assets/uploads/home/IMG_9161.2.jpg
-  caption: 鄉村
-- image: /assets/uploads/home/IMG_9404.jpg
-  caption: 西湖
-- image: /assets/uploads/home/IMG_9453.jpg
-  caption: 招牌
-- image: /assets/uploads/home/IMG_9499.2.jpg
-  caption: 老公寓
-- image: /assets/uploads/home/IMG_9557.jpg
-  caption: 城門
-- image: /assets/uploads/home/IMG_9661.2.jpg
-  caption: 玄天觀
-- image: /assets/uploads/home/IMG_9701.2.jpg
-  caption: 市場
-- image: /assets/uploads/home/IMG_9961.jpg
-  caption: 鎮武
-- image: /assets/uploads/home/IMG_0610.jpg
-- image: /assets/uploads/home/IMG_5013.jpg
-- image: /assets/uploads/home/IMG_5333.jpg
-- image: /assets/uploads/home/IMG_5374.jpg
-- image: /assets/uploads/home/IMG_5526.jpg
-- image: /assets/uploads/home/IMG_5548.jpg
-- image: /assets/uploads/home/IMG_5551.jpg
-- image: /assets/uploads/home/IMG_5650.jpg
-- image: /assets/uploads/home/IMG_5743.jpg
-- image: /assets/uploads/home/IMG_5896.jpg
-- image: /assets/uploads/home/IMG_6271.jpg
-- image: /assets/uploads/home/IMG_6389.jpg
-- image: /assets/uploads/home/IMG_6412.jpg
-- image: /assets/uploads/home/IMG_6657.jpg
-- image: /assets/uploads/home/IMG_6838.jpg
-- image: /assets/uploads/home/IMG_6849.jpg
-- image: /assets/uploads/home/IMG_6955.jpg
-- image: /assets/uploads/home/IMG_7025.jpg
-- image: /assets/uploads/home/IMG_7055.jpg
-- image: /assets/uploads/home/IMG_7166.jpg
-- image: /assets/uploads/home/IMG_7266.jpg
-- image: /assets/uploads/home/IMG_7543.jpg
-- image: /assets/uploads/home/IMG_8483.2.jpg
-- image: /assets/uploads/home/IMG_8483.jpg
-- image: /assets/uploads/home/IMG_8490.jpg
-- image: /assets/uploads/home/IMG_8595.jpg
-- image: /assets/uploads/home/IMG_8619.jpg
-- image: /assets/uploads/home/IMG_8777.jpg
-- image: /assets/uploads/home/IMG_9161.jpg
-- image: /assets/uploads/home/IMG_9257.jpg
-- image: /assets/uploads/home/IMG_9490.jpg
-- image: /assets/uploads/home/IMG_9499.jpg
-- image: /assets/uploads/home/IMG_9661.jpg
-- image: /assets/uploads/home/IMG_9701.jpg
-- image: /assets/uploads/home/IMG_9762.2.jpg
-- image: /assets/uploads/home/IMG_9762.jpg
-- image: /assets/uploads/home/IMG_9788.2.jpg
-- image: /assets/uploads/home/IMG_9788.jpg
-- image: /assets/uploads/home/IMG_9872.jpg
+  - image: /assets/uploads/home/IMG_5363.jpg
+    caption: 白馬祠大門
+  - image: /assets/uploads/img5526.jpg
+    caption: 真武觀的擲筊
+  - image: /assets/uploads/home/IMG_5837.jpg
+    caption: 昇龍城旁的塗鴉
+  - image: /assets/uploads/home/IMG_0116.jpg
+    caption: 玄天觀的觀音
+  - image: /assets/uploads/home/IMG_0377.jpg
+    caption: 斑駁毀損的華人商號
+  - image: /assets/uploads/home/IMG_4953.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_5091.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_5221.jpg
+    caption: 香爐
+  - image: /assets/uploads/home/IMG_5452.jpg
+    caption: 盆栽
+  - image: /assets/uploads/home/IMG_5656.jpg
+    caption: 土地公
+  - image: /assets/uploads/home/IMG_5719.jpg
+    caption: 電焊工
+  - image: /assets/uploads/home/IMG_5909.jpg
+    caption: 屋脊
+  - image: /assets/uploads/home/IMG_6215.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_6702.2.jpg
+    caption: 教堂前的聖母
+  - image: /assets/uploads/home/IMG_6820.jpg
+    caption: 館使寺
+  - image: /assets/uploads/home/IMG_7523.jpg
+    caption: 鎮國寺
+  - image: /assets/uploads/home/IMG_7824.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_7901.jpg
+    caption: 象伏祠
+  - image: /assets/uploads/home/IMG_8015.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_8140.jpg
+    caption: 白馬
+  - image: /assets/uploads/home/IMG_8233.jpg
+    caption: 樹下
+  - image: /assets/uploads/home/IMG_8295.jpg
+    caption: 最靈祠
+  - image: /assets/uploads/home/IMG_8344.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_8414.1.jpg
+    caption: 踢球的孩童
+  - image: /assets/uploads/home/IMG_8490.2.jpg
+    caption: 巷道
+  - image: /assets/uploads/home/IMG_8643.jpg
+    caption: 店
+  - image: /assets/uploads/home/IMG_8721.jpg
+    caption: 囍
+  - image: /assets/uploads/home/IMG_8864.jpg
+    caption: 獅子
+  - image: /assets/uploads/home/IMG_9161.2.jpg
+    caption: 鄉村
+  - image: /assets/uploads/home/IMG_9404.jpg
+    caption: 西湖
+  - image: /assets/uploads/home/IMG_9453.jpg
+    caption: 招牌
+  - image: /assets/uploads/home/IMG_9499.2.jpg
+    caption: 老公寓
+  - image: /assets/uploads/home/IMG_9557.jpg
+    caption: 城門
+  - image: /assets/uploads/home/IMG_9661.2.jpg
+    caption: 玄天觀
+  - image: /assets/uploads/home/IMG_9701.2.jpg
+    caption: 市場
+  - image: /assets/uploads/home/IMG_9961.jpg
+    caption: 鎮武

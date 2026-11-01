@@ -492,3 +492,6 @@ html.theme-reveal::view-transition-new(root) { animation: reveal .6s var(--ease)
 .toc-inline summary { cursor: pointer; color: var(--ink-soft); }
 .toc-inline ol { margin-top: 8px; } .toc-inline li { margin: 4px 0; }
 .toc-inline a { text-decoration: none; }
+.fn { vertical-align: baseline; position: relative; top: -.6em; line-height: 1; padding: 1px 2px; font-size: 11.5px; }
+.prose, .notes-block, .fn-pop, .abstract, .cite-box { overflow-wrap: anywhere; word-break: normal; }
+.article { min-width: 0; }

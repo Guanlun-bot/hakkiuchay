@@ -720,3 +720,39 @@ footer .wrap { align-items: center; }
 #contact { padding-bottom: 96px; }
 @media (max-width: 900px) { #contact { padding-bottom: 64px; } }
 #owner .study-body p:first-child::first-letter, #contact .study-body p:first-child::first-letter { font-size: inherit; }
+
+/* ===== 首頁下半：甲案（左文右名片） ===== */
+main .study { display: none; }
+.lower { max-width: 1100px; margin: 0 auto; padding: 72px 24px 104px; display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(260px, 1fr); gap: 0; align-items: start; }
+.lower-label { margin: 0 0 22px; font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: .5em; color: var(--seal); }
+.lower-main { padding-right: 56px; }
+.lower-intro p { margin: 0 0 1.15em; font-size: 18px; line-height: 2.05; color: var(--ink); text-indent: 0; }
+.lower-intro p:first-child { font-size: 21px; line-height: 1.9; font-weight: 600; letter-spacing: .04em; }
+
+.card { border-left: 1px solid var(--rule); padding-left: 40px; position: sticky; top: 96px; }
+.card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.card-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--rule); flex: none; }
+.card-name { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: .12em; }
+.card-tag { margin: 2px 0 0; font-size: 13.5px; color: var(--ink-soft); letter-spacing: .1em; }
+.card-bio p { margin: 0 0 .9em; font-size: 14.5px; line-height: 1.95; color: var(--ink-soft); }
+.card-more { margin: -2px 0 6px; }
+.card-more summary { cursor: pointer; list-style: none; display: inline-block; font-size: 13px; color: var(--dove); letter-spacing: .2em; border-bottom: 1px solid var(--rule); padding-bottom: 1px; margin-bottom: 12px; }
+.card-more summary::-webkit-details-marker { display: none; }
+.card-more summary::after { content: " ＋"; }
+.card-more[open] summary::after { content: " －"; }
+.card-more summary:hover { color: var(--seal); border-color: var(--seal); }
+.card-links { list-style: none; margin: 18px 0 0; padding: 18px 0 0; border-top: 1px solid var(--rule); display: grid; gap: 12px; }
+.card-links a, .card-links .is-text { display: inline-flex; align-items: center; gap: 12px; font-size: 14.5px; color: var(--ink); text-decoration: none; }
+.card-links svg { width: 19px; height: 19px; color: var(--ink-soft); flex: none; transition: color .2s; }
+.card-links a span { border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
+.card-links a:hover span { color: var(--seal); border-color: var(--seal); }
+.card-links a:hover svg { color: var(--seal); }
+.card-links .is-text { color: var(--ink-soft); }
+#owner, #contact { scroll-margin-top: 90px; }
+
+@media (max-width: 900px) {
+  .lower { grid-template-columns: minmax(0, 1fr); padding: 48px 20px 64px; gap: 44px; }
+  .lower-main { padding-right: 0; }
+  .lower-intro p { font-size: 16.5px; } .lower-intro p:first-child { font-size: 18.5px; }
+  .card { border-left: 0; border-top: 1px solid var(--rule); padding: 32px 0 0; position: static; }
+}

@@ -36,16 +36,8 @@ nav: home
   </div>
 </section>
 
-<!-- 書齋 -->
-{% if H.intro and H.intro != "" %}
-<section class="study">
-  <h2 class="study-title">{{ H.intro_title }}</h2>
-  <div class="study-body">{{ H.intro | markdownify }}</div>
-</section>
-{% endif %}
-
-<!-- 齋主、聯絡（原「關於」頁） -->
-{% include about-sections.html %}
+<!-- 書齋＋齋主名片 -->
+{% include home-lower.html %}
 
 
 

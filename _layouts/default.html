@@ -72,7 +72,7 @@
 <footer>
   <div class="wrap">
     <span>© {{ site.time | date: "%Y" }} {{ T.footer | default: T.site_name }}</span>
-    {% if S.discord and S.discord != "" %}<a class="foot-link" href="{{ S.discord }}" target="_blank" rel="noopener">{{ T.discord_label | default: "Discord" }} ↗</a>{% endif %}
+    {% if S.discord and S.discord != "" %}<a class="foot-icon" href="{{ S.discord }}" target="_blank" rel="noopener" aria-label="{{ T.discord_label | default: 'Discord' }}" title="{{ T.discord_label | default: 'Discord' }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17.5H4A1.5 1.5 0 0 1 2.5 16V7A1.5 1.5 0 0 1 4 5.5z"/><circle cx="8.5" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="15.5" cy="11.5" r=".9" fill="currentColor" stroke="none"/></svg></a>{% endif %}
   </div>
 </footer>
 

@@ -679,3 +679,6 @@ a.contents-latest:hover { color: var(--c); }
 .list h3 { margin-bottom: 4px; }
 .foot-link { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--rule); }
 .foot-link:hover { color: var(--seal); border-color: var(--seal); }
+footer .wrap { align-items: center; }
+.foot-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--ink-soft); border: 1px solid var(--rule); transition: color .2s, border-color .2s; }
+.foot-icon:hover { color: var(--seal); border-color: var(--seal); }

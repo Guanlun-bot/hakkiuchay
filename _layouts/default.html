@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="{{ '/favicon.png' | relative_url }}">
+<link rel="apple-touch-icon" href="{{ '/assets/img/seal-512.png' | relative_url }}">
+<meta property="og:image" content="{{ '/assets/img/seal-512.png' | absolute_url }}">
 <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
 </head>
 <body>
@@ -16,7 +19,7 @@
 <div id="progress" aria-hidden="true"></div>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="{{ '/' | relative_url }}"><span class="seal" aria-hidden="true">學鳩</span><span class="brand-name">學鳩齋<small lang="en">HAK KIU CHAY</small></span></a>
+    <a class="brand" href="{{ '/' | relative_url }}"><img class="logo" src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="44" height="44"><span class="brand-name">學鳩齋<small lang="en">HAK KIU CHAY</small></span></a>
     <nav aria-label="主選單">
       <ul id="nav">
         <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>首頁</a></li>

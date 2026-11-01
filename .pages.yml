@@ -111,6 +111,10 @@ content:
       - name: avatar
         label: 大頭貼
         type: image
+      - name: intro
+        label: 首頁書齋介紹
+        type: text
+        description: 顯示在首頁照片與引文下方。空一行就是分段；留空則不顯示這個區塊。
       - name: owner_bio
         label: 自我介紹
         type: text

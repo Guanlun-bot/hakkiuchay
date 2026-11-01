@@ -28,6 +28,22 @@ nav: home
   </blockquote>
   <figcaption>《莊子・逍遙遊》</figcaption>
 </figure>
+
+{%- assign S = site.data.site -%}
+{% if S.intro and S.intro != "" %}
+<section class="home-intro" aria-labelledby="intro-title">
+  <h2 id="intro-title">書齋</h2>
+  <div class="home-intro-body">
+    {{ S.intro | markdownify }}
+    <nav class="home-intro-links" aria-label="分類">
+      <a href="{{ '/academic/' | relative_url }}">學術</a>
+      <a href="{{ '/study-talks/' | relative_url }}">參學瑣談</a>
+      <a href="{{ '/life/' | relative_url }}">生活札記</a>
+      {% if S.tajiyu_url and S.tajiyu_url != "" %}<a href="{{ S.tajiyu_url }}" target="_blank" rel="noopener">獺祭魚 ↗</a>{% endif %}
+    </nav>
+  </div>
+</section>
+{% endif %}
 {% if photos.size > 1 %}
 <script>
 (function () {

@@ -92,6 +92,7 @@ collections:
         fields:
           - { name: owner, label: 名字或字號, widget: string }
           - { name: avatar, label: 大頭貼, widget: image, required: false }
+          - { name: intro, label: 首頁書齋介紹, widget: text, required: false, hint: 空一行就是分段；留空則不顯示 }
           - { name: owner_bio, label: 自我介紹, widget: text, required: false }
           - { name: email, label: 電子郵件, widget: string, required: false }
           - { name: place, label: 所在, widget: string, required: false }

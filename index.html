@@ -34,12 +34,11 @@ nav: home
     dots.forEach((d, k) => d.setAttribute("aria-selected", k === i ? "true" : "false"));
     const img = slides[(i + 1) % slides.length].querySelector("img"); img.loading = "eager";
   }
-  function play() { if (reduce) return; stop(); timer = setInterval(() => show(i + 1), 6000); }
+  function play() { stop(); timer = setInterval(() => show(i + 1), 6000); }
   function stop() { if (timer) clearInterval(timer); timer = null; }
   box.querySelector(".prev").onclick = () => { show(i - 1); play(); };
   box.querySelector(".next").onclick = () => { show(i + 1); play(); };
   dots.forEach((d, k) => d.onclick = () => { show(k); play(); });
-  box.addEventListener("mouseenter", stop); box.addEventListener("mouseleave", play);
   addEventListener("keydown", e => { if (e.key === "ArrowLeft") { show(i - 1); play(); } if (e.key === "ArrowRight") { show(i + 1); play(); } });
   let x0 = null;
   box.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });

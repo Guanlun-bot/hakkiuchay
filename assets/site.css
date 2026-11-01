@@ -682,3 +682,7 @@ a.contents-latest:hover { color: var(--c); }
 footer .wrap { align-items: center; }
 .foot-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--ink-soft); border: 1px solid var(--rule); transition: color .2s, border-color .2s; }
 .foot-icon:hover { color: var(--seal); border-color: var(--seal); }
+/* 關於頁：大頭貼放大 */
+.owner-row { display: flex; gap: 36px; align-items: flex-start; }
+.avatar-img { width: 200px; height: 200px; }
+@media (max-width: 720px) { .owner-row { flex-direction: column; gap: 20px; } .avatar-img { width: 160px; height: 160px; } }

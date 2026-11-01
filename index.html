@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>學鳩齋</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* 版面構想：青灰宣紙為底，首屏淡墨遠山＋直排齋名如匾；四類文章各有一枚色籤，朱印只作齋主之印。 */
+:root {
+  --paper: #eef0ec;
+  --paper-2: #e2e6e0;
+  --card: #f6f7f4;
+  --ink: #1d2221;
+  --ink-soft: #56615d;
+  --rule: #c9d0ca;
+  --dove: #6b7e78;
+  --seal: #a8322a;
+  --c-academic: #3c5068;
+  --c-talks: #5d7a5e;
+  --c-life: #9a6b35;
+  --c-taji: #a8322a;
+  --font-display: "LXGW WenKai TC", "Kaiti TC", "BiauKai", "STKaiti", serif;
+  --font-body: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #151918; --paper-2: #1d2220; --card: #1a1f1d;
+    --ink: #e3e7e2; --ink-soft: #a2ada8; --rule: #323a37;
+    --dove: #93a8a1; --seal: #d4594d;
+    --c-academic: #8fa6c4; --c-talks: #93b494; --c-life: #d1a26b; --c-taji: #d4594d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #151918; --paper-2: #1d2220; --card: #1a1f1d;
+  --ink: #e3e7e2; --ink-soft: #a2ada8; --rule: #323a37;
+  --dove: #93a8a1; --seal: #d4594d;
+  --c-academic: #8fa6c4; --c-talks: #93b494; --c-life: #d1a26b; --c-taji: #d4594d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+a { color: inherit; text-decoration-color: var(--rule); text-underline-offset: 4px; }
+a:hover { color: var(--seal); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { text-wrap: balance; }
+
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* 頁首 */
+header.top { border-bottom: 1px solid var(--rule); background: var(--paper); position: sticky; top: 0; z-index: 10; }
+header.top .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+.brand-name { display: flex; flex-direction: column; line-height: 1.2; }
+.brand-name small { font-family: var(--font-body); font-size: 10px; letter-spacing: 0.32em; color: var(--dove); margin-top: 3px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 23px; text-decoration: none; letter-spacing: 0.08em; }
+.seal {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px 4px; border: 2px solid var(--seal); border-radius: 3px;
+  color: var(--seal); font-family: var(--font-display); font-weight: 700;
+  font-size: 15px; line-height: 1.1; letter-spacing: 0.05em; writing-mode: vertical-rl;
+}
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 4px; }
+nav a {
+  display: block; text-decoration: none; color: var(--ink-soft); font-size: 15px;
+  padding: 4px 10px; border-radius: 2px; position: relative;
+}
+nav a:hover { color: var(--ink); }
+nav a[aria-current="page"] { color: var(--ink); }
+nav a[aria-current="page"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--seal); }
+.ext { font-size: 0.8em; color: var(--dove); margin-left: 2px; }
+
+/* 首屏 */
+.hero { position: relative; border-bottom: 1px solid var(--rule); overflow: hidden; }
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.hero .wrap { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 56px; padding-top: 64px; padding-bottom: 156px; align-items: start; }
+.plaque {
+  writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(64px, 8.5vw, 108px); line-height: 1; letter-spacing: 0.14em;
+  margin: 0; padding: 4px 0 4px 26px; border-left: 1px solid var(--rule);
+}
+.hero-text { max-width: 36em; }
+.hero-text .lead { font-family: var(--font-display); font-size: clamp(24px, 3vw, 32px); line-height: 1.6; margin: 0 0 20px; }
+.hero-text p { margin: 0 0 14px; color: var(--ink-soft); }
+.owner {
+  display: flex; gap: 18px; align-items: center; margin-top: 28px;
+  padding: 16px 20px; background: color-mix(in srgb, var(--card) 88%, transparent);
+  border: 1px solid var(--rule); border-radius: 3px; max-width: 30em;
+}
+.avatar {
+  flex: none; width: 64px; height: 64px; border-radius: 50%;
+  background: var(--paper-2); border: 1px solid var(--rule);
+  display: grid; place-items: center; font-family: var(--font-display); font-size: 28px; color: var(--dove);
+}
+.owner b { display: block; font-size: 17px; }
+.owner span { font-size: 14px; color: var(--ink-soft); line-height: 1.7; display: block; }
+
+/* 區段 */
+.section { padding: 56px 0; border-bottom: 1px solid var(--rule); }
+.section:last-child { border-bottom: 0; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+.sec-head h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; margin: 0; letter-spacing: 0.06em; }
+.sec-head small { color: var(--dove); font-size: 13px; letter-spacing: 0.2em; }
+
+/* 四類入口 */
+.cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.cat {
+  background: var(--card); border: 1px solid var(--rule); border-top: 3px solid var(--c);
+  border-radius: 3px; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 12px;
+}
+.cat h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 24px; letter-spacing: 0.06em; }
+.cat h3 a { text-decoration: none; }
+.cat .desc { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.8; }
+.cat ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--rule); padding-top: 12px; flex: 1; }
+.cat li a { text-decoration: none; font-size: 15px; line-height: 1.6; display: block; }
+.cat li a:hover { color: var(--c); }
+.cat li time { display: block; font-size: 12px; color: var(--dove); font-variant-numeric: tabular-nums; }
+.more { font-size: 14px; color: var(--c); text-decoration: none; align-self: flex-start; }
+.more:hover { text-decoration: underline; }
+
+/* 文章列表 */
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: grid; grid-template-columns: 8em 1fr; gap: 24px; padding: 22px 0; border-bottom: 1px dashed var(--rule); }
+.list li:first-child { padding-top: 0; }
+.list time { color: var(--dove); font-size: 14px; font-variant-numeric: tabular-nums; padding-top: 3px; }
+.list h3 { margin: 0 0 6px; font-size: 19px; font-weight: 600; line-height: 1.6; }
+.list h3 a { text-decoration: none; }
+.list p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+.meta-line { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; color: var(--dove); }
+.chip { display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 2px; border: 1px solid currentColor; color: var(--c); line-height: 1.8; text-decoration: none; }
+.kw { font-size: 12px; background: var(--paper-2); color: var(--ink-soft); padding: 0 8px; border-radius: 2px; }
+
+/* 分類頁抬頭 */
+.page-head { padding: 56px 0 36px; border-bottom: 1px solid var(--rule); }
+.page-head .eyebrow { color: var(--c); font-size: 13px; letter-spacing: 0.2em; }
+.page-head h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(36px, 5vw, 52px); margin: 4px 0 12px; letter-spacing: 0.08em; line-height: 1.3; }
+.page-head p { margin: 0; color: var(--ink-soft); max-width: 36em; }
+.sample-note { font-size: 13px; color: var(--dove); margin: 20px 0 0; }
+
+/* 文章頁 */
+.article { max-width: 42em; margin: 0 auto; padding: 56px 0 24px; }
+.article .crumbs { font-size: 14px; color: var(--dove); margin-bottom: 12px; }
+.article .crumbs a { color: var(--c); text-decoration: none; }
+.article h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(30px, 4.2vw, 42px); line-height: 1.45; margin: 0 0 14px; letter-spacing: 0.04em; }
+.article .byline { font-size: 14px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 4px 16px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 30px; }
+.abstract { background: var(--paper-2); padding: 18px 22px; border-radius: 3px; margin: 0 0 32px; font-size: 15px; }
+.abstract b { display: block; font-size: 13px; letter-spacing: 0.2em; color: var(--dove); font-weight: 400; margin-bottom: 4px; }
+.prose p { margin: 0 0 1.3em; text-indent: 2em; }
+.prose h2 { font-family: var(--font-display); font-weight: 400; font-size: 24px; margin: 2em 0 0.8em; }
+.prose blockquote { margin: 1.4em 0; padding: 4px 0 4px 22px; border-left: 3px solid var(--rule); color: var(--ink-soft); font-family: var(--font-display); font-size: 18px; }
+.prose blockquote p { text-indent: 0; margin: 0; }
+.fn { font-size: 12px; vertical-align: super; line-height: 0; color: var(--seal); background: none; border: 0; padding: 0 2px; cursor: pointer; font-family: var(--font-body); }
+.notes-block { margin-top: 40px; border-top: 1px solid var(--rule); padding-top: 20px; font-size: 14px; color: var(--ink-soft); }
+.notes-block h2 { font-size: 15px; font-weight: 600; color: var(--ink); margin: 0 0 10px; letter-spacing: 0.1em; }
+.notes-block ol { margin: 0 0 20px; padding-left: 1.6em; }
+.notes-block li { margin-bottom: 6px; scroll-margin-top: 90px; }
+.notes-block li.flash { background: var(--paper-2); }
+.notes-block ul { list-style: none; margin: 0; padding: 0; }
+.notes-block ul li { padding-left: 2em; text-indent: -2em; }
+.cite-box { margin-top: 28px; border: 1px solid var(--rule); border-radius: 3px; padding: 16px 20px; background: var(--card); }
+.cite-box b { font-size: 13px; color: var(--dove); letter-spacing: 0.2em; font-weight: 400; display: block; margin-bottom: 6px; }
+.cite-box p { margin: 0 0 12px; font-size: 14px; line-height: 1.8; }
+.btn {
+  font-family: var(--font-body); font-size: 14px; padding: 5px 14px; border-radius: 2px;
+  border: 1px solid var(--ink-soft); background: transparent; color: var(--ink); cursor: pointer;
+}
+.btn:hover { border-color: var(--seal); color: var(--seal); }
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.pager a { text-decoration: none; display: block; font-size: 15px; }
+.pager small { display: block; color: var(--dove); font-size: 12px; }
+.pager .next { text-align: right; }
+.photo {
+  margin: 1.6em 0; aspect-ratio: 3 / 2; border-radius: 3px; background: var(--paper-2);
+  border: 1px dashed var(--rule); display: grid; place-items: center; color: var(--dove); font-size: 14px;
+}
+
+/* 關於 */
+.about-grid { display: grid; grid-template-columns: 220px 1fr; gap: 48px; }
+.about-grid h2 { font-family: var(--font-display); font-weight: 400; font-size: 26px; margin: 0; }
+.about-grid .body { max-width: 38em; }
+.about-grid .body p { margin: 0 0 14px; }
+.quote { margin: 0 0 20px; padding: 18px 22px; background: var(--paper-2); border-left: 3px solid var(--dove); font-family: var(--font-display); font-size: 18px; }
+.quote cite { display: block; margin-top: 6px; font-style: normal; color: var(--ink-soft); font-size: 14px; font-family: var(--font-body); }
+.contact-grid { display: grid; grid-template-columns: 6em 1fr; gap: 6px 20px; margin: 0; }
+.contact-grid dt { color: var(--dove); font-size: 15px; }
+.contact-grid dd { margin: 0; }
+
+footer { border-top: 1px solid var(--rule); }
+footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+@media (max-width: 920px) {
+  .cats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .hero .wrap { grid-template-columns: 1fr; gap: 24px; padding-top: 36px; padding-bottom: 140px; }
+  .plaque { writing-mode: horizontal-tb; border-left: 0; padding: 0 0 14px; border-bottom: 1px solid var(--rule); font-size: 54px; }
+  .cats { grid-template-columns: 1fr; }
+  .list li { grid-template-columns: 1fr; gap: 2px; }
+  .about-grid { grid-template-columns: 1fr; gap: 14px; }
+  .pager { grid-template-columns: 1fr; }
+  .pager .next { text-align: left; }
+}
+/* ===== 書庫風格：索書號、書籤、抽書、借閱卡、翻頁 ===== */
+.callno {
+  font-family: var(--font-body); font-size: 12px; letter-spacing: 0.08em; color: var(--c);
+  border: 1px solid var(--rule); background: var(--card); padding: 0 6px; border-radius: 2px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.list time { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+
+/* 列表：滑過時落下一條書籤 */
+.list li { position: relative; }
+.list li::before {
+  content: ""; position: absolute; right: 18px; top: -1px; width: 12px; height: 0;
+  background: var(--c); transition: height .28s ease-out;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 6px), 0 100%);
+}
+.list li:hover::before { height: 34px; }
+.list li:first-child::before { top: -22px; }
+
+/* 分類卡：書函，滑過時像從書架抽出 */
+.cat { position: relative; transition: transform .25s ease-out, box-shadow .25s ease-out; padding-left: 34px; }
+.cat::before {
+  content: attr(data-spine); position: absolute; left: 0; top: 0; bottom: 0; width: 22px;
+  writing-mode: vertical-rl; font-family: var(--font-display); font-size: 12px; letter-spacing: 0.3em;
+  display: flex; align-items: center; justify-content: flex-start; padding-top: 14px;
+  color: var(--paper); background: var(--c); opacity: 0.85;
+}
+.cat:hover { transform: translateY(-6px); box-shadow: 0 10px 0 -4px var(--rule), 0 14px 24px -12px rgba(0,0,0,.25); }
+
+/* 引用：借閱卡 */
+.cite-box {
+  position: relative;
+  background-color: var(--card);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 27px, color-mix(in srgb, var(--c-academic) 18%, transparent) 27px 28px);
+  background-position: 0 10px;
+  border-top: 3px double var(--seal);
+  padding-bottom: 30px;
+}
+.cite-box::after {
+  content: ""; position: absolute; left: 50%; bottom: 8px; width: 12px; height: 12px; margin-left: -6px;
+  border-radius: 50%; background: var(--paper); border: 1px solid var(--rule);
+}
+
+/* 閱讀進度：頁首下方一條書籤線 */
+#progress { position: fixed; left: 0; top: 0; height: 2px; width: 0; background: var(--seal); z-index: 20; }
+
+/* 翻頁 */
+.stage { perspective: 1600px; }
+@media (prefers-reduced-motion: no-preference) {
+  main.turn { animation: turn .5s cubic-bezier(.2,.7,.2,1); transform-origin: left center; }
+  @keyframes turn {
+    from { transform: rotateY(-9deg) translateX(14px); box-shadow: -30px 0 40px -30px rgba(0,0,0,.25); }
+    to   { transform: none; box-shadow: none; }
+  }
+  .hero .plaque { animation: unroll .9s cubic-bezier(.2,.7,.2,1); }
+  @keyframes unroll { from { clip-path: inset(0 0 35% 0); } to { clip-path: inset(0 0 0 0); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .list li::before, .cat { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home"><span class="seal" aria-hidden="true">學鳩</span><span class="brand-name">學鳩齋<small lang="en">HAK KIU CHAY</small></span></a>
+    <nav aria-label="主選單">
+      <ul id="nav">
+        <li><a href="#home" data-route="home">首頁</a></li>
+        <li><a href="#academic" data-route="academic">學術</a></li>
+        <li><a href="#study-talks" data-route="study-talks">參學瑣談</a></li>
+        <li><a href="#life" data-route="life">生活札記</a></li>
+        <li><a id="taji-nav" href="#tajiyu" data-route="tajiyu">獺祭魚<span class="ext" aria-hidden="true">↗</span></a></li>
+        <li><a href="#about" data-route="about">關於</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div id="progress" aria-hidden="true"></div>
+<div id="hero-slot"></div>
+<div class="stage"><main id="app"></main></div>
+
+<footer>
+  <div class="wrap">
+    <span>學鳩齋 Hak Kiu Chay ・ 決起而飛，搶榆枋而止</span>
+    <span>© 2026 Hak Kiu Chay</span>
+  </div>
+</footer>
+
+<script>
+/* ===== 設定：之後只要改這裡 ===== */
+const SITE = {
+  owner: "齋主",                 // 你的名字或字號
+  ownerBio: "讀書人。在學院裡做研究，也在學院外讀雜書、問學、過日子。", // 一兩句自我介紹
+  email: "（請填入）",
+  place: "（請填入）",
+  tajiyuUrl: ""                  // 獺祭魚的網址，例如 "https://example.com"
+};
+
+const CATS = {
+  "academic": {
+    name: "學術", en: "ACADEMIC", color: "var(--c-academic)",
+    desc: "研究論文與考證文字，附註腳與參考書目。"
+  },
+  "study-talks": {
+    name: "參學瑣談", en: "STUDY TALKS", color: "var(--c-talks)",
+    desc: "讀書、聽講、問學途中的心得與隨想。"
+  },
+  "life": {
+    name: "生活札記", en: "NOTEBOOK", color: "var(--c-life)",
+    desc: "日常的片段：天氣、街巷、書桌上的小事。"
+  },
+  "tajiyu": {
+    name: "獺祭魚", en: "OTTER'S OFFERING", color: "var(--c-taji)",
+    desc: "讀書摘錄與典故彙編。名出《禮記・月令》「獺祭魚」，水獺捕魚陳列岸邊，喻羅列群書。"
+  }
+};
+
+/* ===== 文章（以下皆為範例） ===== */
+const POSTS = [
+  {
+    id: "p-xiaoda", cat: "academic", date: "2026-10-20",
+    title: "小大之辨：郭象「適性逍遙」說重探",
+    summary: "〈逍遙遊〉以鵬與學鳩對舉，郭象卻說二者「逍遙一也」。本文重讀郭注，討論「適性」之說如何改寫了莊子的小大之辨。",
+    keywords: ["莊子", "郭象", "逍遙", "魏晉玄學"],
+    body: `
+<h2>一、問題的提出</h2>
+<p>〈逍遙遊〉開篇，鵬「摶扶搖而上者九萬里」，蜩與學鳩則「決起而飛，搶榆枋而止」，並笑大鵬何必遠行。莊子隨即評曰：「之二蟲又何知！」<button class="fn" data-fn="1" aria-label="註 1">1</button>由文脈看，小大之間顯有高下。</p>
+<p>然而郭象注此段，卻提出截然不同的讀法。他認為大小雖殊，只要各安其性，便同樣逍遙。<button class="fn" data-fn="2" aria-label="註 2">2</button>這一轉折，使「小知不及大知」的批判，變成了對萬物各得其所的肯定。</p>
+<h2>二、郭注的理路</h2>
+<blockquote><p>夫小大雖殊，而放於自得之場，則物任其性，事稱其能，各當其分，逍遙一也。</p></blockquote>
+<p>郭象把「逍遙」從一種需要超越的境界，改寫為一種本分的實現。學鳩不必羨鵬，鵬亦無以傲學鳩。後世對此說褒貶不一，或以為深得莊旨，或以為消解了莊子原有的超越向度。<button class="fn" data-fn="3" aria-label="註 3">3</button></p>
+<h2>三、小結</h2>
+<p>本齋取名「學鳩」，某種意義上正站在郭象這一邊：承認自己是小鳥，卻不以此為憾。至於這是否背離莊子本意，留待下篇再論。</p>`,
+    notes: [
+      "《莊子・逍遙遊》。",
+      "郭象《莊子注・逍遙遊》「蜩與學鳩笑之曰」條下注。",
+      "此處僅舉其大要，各家評議擬於續篇詳列。"
+    ],
+    refs: [
+      "郭象注，成玄英疏：《南華真經注疏》。",
+      "王先謙：《莊子集解》。",
+      "郭慶藩：《莊子集釋》。"
+    ]
+  },
+  {
+    id: "p-qingtan", cat: "academic", date: "2026-08-12",
+    title: "《世說新語》「清言」語彙初考",
+    summary: "整理《世說新語》中與談論相關的詞彙，觀察「清言」「玄言」「談」等用語的分布與差異。",
+    keywords: ["世說新語", "清談", "詞彙"],
+    body: `<p>（範例文章，正文待補。）</p>`,
+    notes: [], refs: []
+  },
+  {
+    id: "p-three-speeds", cat: "study-talks", date: "2026-10-26",
+    source: "讀《論語》",
+    title: "讀《論語》的三種速度",
+    summary: "快讀知其大意，慢讀見其語氣，最慢的一種是把一句話帶在身上過一整天。",
+    body: `<p>同一部《論語》，可以用三種速度讀。</p>
+<p>第一種是快讀，一個下午翻完二十篇，知道孔子大概說了些什麼。第二種是慢讀，一章一章停下來，注意誰在問、孔子怎麼答，同一個問題對不同的人答得不一樣。</p>
+<p>第三種最慢：早上讀一句，然後整天帶著它。「學而時習之」讀了幾十年，某天在公車上忽然懂了「時」字。</p>`
+  },
+  {
+    id: "p-can", cat: "study-talks", date: "2026-09-18",
+    source: "問學小記",
+    title: "何謂「參」",
+    summary: "「參學」的參，是參訪，也是參究。走出去問人，再回來問自己。",
+    body: `<p>「參學」一詞，原指行腳參訪、尋師問道。參字有兩層意思：一是去參見，走出書房，向人請益；一是參究，把聽來的話放在心上反覆咀嚼。</p>
+<p>這個分類記的就是這兩件事：在外頭聽到的，和回來後想到的。</p>`
+  },
+  {
+    id: "p-lecture", cat: "study-talks", date: "2026-08-30",
+    source: "聽講記",
+    title: "聽一場講座之後",
+    summary: "講者說，讀古書最難的不是字義，而是忍住不替古人下結論。",
+    body: `<p>（範例文章，正文待補。）</p>`
+  },
+  {
+    id: "p-books-sun", cat: "life", date: "2026-10-30",
+    title: "秋分，晾書",
+    summary: "趁著難得的乾燥天氣，把書架最底層的線裝書搬出來晾。",
+    body: `<p>趁著難得的乾燥天氣，把書架最底層的幾函線裝書搬到窗邊晾。古人七夕曬書，我晚了兩個月，書大概也不介意。</p>
+<div class="photo">照片位置</div>
+<p>翻到一本夾著舊書籤的，書籤上的字是自己十年前寫的，已經認不太出來。</p>`
+  },
+  {
+    id: "p-dove", cat: "life", date: "2026-10-08",
+    title: "巷口的斑鳩",
+    summary: "每天早上巷口的電線上停著一隻斑鳩，咕咕咕地叫。也許牠才是本齋真正的齋主。",
+    body: `<p>每天早上巷口的電線上停著一隻斑鳩，咕—咕咕—咕地叫。牠飛得不高，從電線到屋簷，再從屋簷到地面，一天大概就這麼來回。</p>
+<p>看久了覺得，也許牠才是本齋真正的齋主。</p>`
+  },
+  {
+    id: "p-lanting", cat: "life", date: "2026-09-15",
+    title: "臨〈蘭亭序〉第三十遍",
+    summary: "「之」字二十餘個，個個不同。寫到第三十遍，終於寫出一個不像自己的「之」。",
+    body: `<p>〈蘭亭序〉裡的「之」字有二十來個，沒有一個重複。寫到第三十遍，終於寫出一個不像自己的「之」，不知該高興還是難過。</p>`
+  }
+];
+
+/* ===== 工具 ===== */
+const $app = document.getElementById("app");
+const $hero = document.getElementById("hero-slot");
+const fmt = d => d.replaceAll("-", "・");
+const byDate = (a, b) => b.date.localeCompare(a.date);
+const postsOf = cat => POSTS.filter(p => p.cat === cat).sort(byDate);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tajiHref = () => SITE.tajiyuUrl || "#tajiyu";
+
+/* 索書號：依分類、依發表先後編號，如「學・002」 */
+const CALL_PREFIX = { "academic": "學", "study-talks": "參", "life": "生" };
+const callNo = p => {
+  const asc = postsOf(p.cat).slice().reverse();
+  return `${CALL_PREFIX[p.cat]}・${String(asc.indexOf(p) + 1).padStart(3, "0")}`;
+};
+
+function setupTajiLink() {
+  const a = document.getElementById("taji-nav");
+  if (SITE.tajiyuUrl) { a.href = SITE.tajiyuUrl; a.target = "_blank"; a.rel = "noopener"; a.removeAttribute("data-route"); }
+}
+
+function listItem(p, showCat) {
+  const c = CATS[p.cat];
+  let meta = showCat ? `<a class="chip" href="#${p.cat}">${c.name}</a>` : "";
+  if (p.cat === "academic" && p.keywords) meta += p.keywords.map(k => `<span class="kw">${esc(k)}</span>`).join("");
+  if (p.cat === "study-talks" && p.source) meta += `<span>出處：${esc(p.source)}</span>`;
+  return `<li style="--c:${c.color}">
+    <time datetime="${p.date}">${fmt(p.date)}<span class="callno" title="索書號">${callNo(p)}</span></time>
+    <div>
+      <h3><a href="#${p.id}">${esc(p.title)}</a></h3>
+      <p>${esc(p.summary)}</p>
+      ${meta ? `<div class="meta-line">${meta}</div>` : ""}
+    </div></li>`;
+}
+
+/* ===== 各頁 ===== */
+function viewHome() {
+  $hero.innerHTML = `
+  <section class="hero">
+    <canvas id="ink" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <h1 class="plaque">學鳩齋</h1>
+      <div class="hero-text">
+        <p class="lead">不羨九萬里，<br>只在榆枋之間，日日學飛。</p>
+        <p>這裡是${esc(SITE.owner)}的個人書齋。收的是學術文字、參學途中的瑣談，和一些生活札記；另有「獺祭魚」，專放讀書摘錄。</p>
+        <div class="owner">
+          <div class="avatar" aria-hidden="true">鳩</div>
+          <div><b>${esc(SITE.owner)}</b><span>${esc(SITE.ownerBio)}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+  drawInk(true);
+
+  const cards = Object.entries(CATS).map(([key, c]) => {
+    if (key === "tajiyu") {
+      const ext = SITE.tajiyuUrl ? ` target="_blank" rel="noopener"` : "";
+      return `<article class="cat" data-spine="${c.name}" style="--c:${c.color}">
+        <h3><a href="${tajiHref()}"${ext}>${c.name}<span class="ext" aria-hidden="true"> ↗</span></a></h3>
+        <p class="desc">${c.desc}</p>
+        <ul><li style="color:var(--ink-soft);font-size:14px;line-height:1.8">另設專站，收錄摘抄、典故與資料，隨讀隨記，像水獺把魚一尾尾排在岸上。</li></ul>
+        <a class="more" href="${tajiHref()}"${ext}>前往獺祭魚 →</a>
+      </article>`;
+    }
+    const ps = postsOf(key).slice(0, 3);
+    return `<article class="cat" data-spine="${c.name}" style="--c:${c.color}">
+      <h3><a href="#${key}">${c.name}</a></h3>
+      <p class="desc">${c.desc}</p>
+      <ul>${ps.map(p => `<li><a href="#${p.id}"><time datetime="${p.date}">${fmt(p.date)}</time>${esc(p.title)}</a></li>`).join("")}</ul>
+      <a class="more" href="#${key}">看全部 ${postsOf(key).length} 篇 →</a>
+    </article>`;
+  }).join("");
+
+  const latest = [...POSTS].sort(byDate).slice(0, 5);
+  $app.innerHTML = `
+  <div class="wrap">
+    <section class="section">
+      <div class="sec-head"><h2>齋中四類</h2><small>CATEGORIES</small></div>
+      <div class="cats">${cards}</div>
+    </section>
+    <section class="section">
+      <div class="sec-head"><h2>最近寫的</h2><small>LATEST</small></div>
+      <ul class="list">${latest.map(p => listItem(p, true)).join("")}</ul>
+      <p class="sample-note">目前的文章皆為範例內容。</p>
+    </section>
+    <section class="section">
+      <div class="about-grid">
+        <h2>齋名由來</h2>
+        <div class="body">
+          <p>〈逍遙遊〉裡，大鵬飛上九萬里，樹下的蟬與學鳩笑牠何必飛那麼遠。莊子拿這隻小鳥來說「小知不及大知」，本齋偏偏取牠作名字：自知眼界有限，也喜歡那個「學」字。</p>
+          <a class="more" style="--c:var(--seal)" href="#about">關於學鳩齋 →</a>
+        </div>
+      </div>
+    </section>
+  </div>`;
+}
+
+function viewCategory(key) {
+  $hero.innerHTML = "";
+  const c = CATS[key];
+  const ps = postsOf(key);
+  $app.innerHTML = `
+  <div class="wrap" style="--c:${c.color}">
+    <header class="page-head">
+      <div class="eyebrow">${c.en}</div>
+      <h1>${c.name}</h1>
+      <p>${c.desc}</p>
+    </header>
+    <section class="section">
+      <ul class="list">${ps.map(listItem).join("")}</ul>
+      <p class="sample-note">共 ${ps.length} 篇，皆為範例內容。</p>
+    </section>
+  </div>`;
+}
+
+function viewTajiyu() {
+  $hero.innerHTML = "";
+  const c = CATS.tajiyu;
+  $app.innerHTML = `
+  <div class="wrap" style="--c:${c.color}">
+    <header class="page-head">
+      <div class="eyebrow">${c.en}</div>
+      <h1>獺祭魚</h1>
+      <p>${c.desc}</p>
+    </header>
+    <section class="section">
+      <div class="about-grid">
+        <h2>關於這個名字</h2>
+        <div class="body">
+          <blockquote class="quote">孟春之月……東風解凍，蟄蟲始振，魚上冰，獺祭魚，鴻雁來。<cite>《禮記・月令》</cite></blockquote>
+          <p>水獺捕得魚，先排在岸邊，像是祭祀。後人借來形容寫作時把書冊攤滿一桌、多用典故，相傳李商隱便有此號。這裡收的，就是攤在桌上的那些書與摘句。</p>
+          <p style="color:var(--dove);font-size:14px">獺祭魚另設專站。填入網址後，導覽列和首頁的連結會直接開啟該站。</p>
+        </div>
+      </div>
+    </section>
+  </div>`;
+}
+
+function viewPost(p) {
+  $hero.innerHTML = "";
+  const c = CATS[p.cat];
+  const siblings = postsOf(p.cat);
+  const i = siblings.indexOf(p);
+  const newer = siblings[i - 1], older = siblings[i + 1];
+  const isAcad = p.cat === "academic";
+  const notes = (p.notes && p.notes.length) ? `<h2>註釋</h2><ol>${p.notes.map((n, k) => `<li id="fn-${k + 1}">${esc(n)}</li>`).join("")}</ol>` : "";
+  const refs = (p.refs && p.refs.length) ? `<h2>參考書目</h2><ul>${p.refs.map(r => `<li>${esc(r)}</li>`).join("")}</ul>` : "";
+  const citeText = `${SITE.owner}：〈${p.title}〉，《學鳩齋》，${p.date.replace(/-/g, "/")}。`;
+
+  $app.innerHTML = `
+  <div class="wrap" style="--c:${c.color}">
+    <article class="article">
+      <div class="crumbs"><a href="#${p.cat}">${c.name}</a></div>
+      <h1>${esc(p.title)}</h1>
+      <div class="byline">
+        <span>${esc(SITE.owner)}</span>
+        <time datetime="${p.date}">${fmt(p.date)}</time>
+        <span class="callno" title="索書號">${callNo(p)}</span>
+        ${p.source ? `<span>出處：${esc(p.source)}</span>` : ""}
+      </div>
+      ${isAcad ? `<div class="abstract"><b>摘要</b>${esc(p.summary)}
+        ${p.keywords ? `<div class="meta-line" style="margin-top:10px">關鍵詞 ${p.keywords.map(k => `<span class="kw">${esc(k)}</span>`).join("")}</div>` : ""}</div>` : ""}
+      <div class="prose">${p.body}</div>
+      ${(notes || refs) ? `<div class="notes-block">${notes}${refs}</div>` : ""}
+      ${isAcad ? `<div class="cite-box"><b>引用本文</b><p id="cite-text">${esc(citeText)}</p>
+        <button class="btn" id="copy-cite" type="button">複製引用格式</button></div>` : ""}
+      <nav class="pager" aria-label="同類文章">
+        <div>${older ? `<a href="#${older.id}"><small>← 上一篇</small>${esc(older.title)}</a>` : ""}</div>
+        <div class="next">${newer ? `<a href="#${newer.id}"><small>下一篇 →</small>${esc(newer.title)}</a>` : `<a href="#${p.cat}"><small>回到</small>${c.name}</a>`}</div>
+      </nav>
+    </article>
+  </div>`;
+
+  $app.querySelectorAll(".fn").forEach(b => b.addEventListener("click", () => {
+    const li = document.getElementById("fn-" + b.dataset.fn);
+    if (!li) return;
+    li.scrollIntoView({ behavior: "smooth", block: "center" });
+    li.classList.add("flash"); setTimeout(() => li.classList.remove("flash"), 1600);
+  }));
+  const cb = document.getElementById("copy-cite");
+  if (cb) cb.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(citeText); cb.textContent = "已複製"; }
+    catch { cb.textContent = "無法自動複製，請手動選取上方文字"; }
+  });
+}
+
+function viewAbout() {
+  $hero.innerHTML = "";
+  $app.innerHTML = `
+  <div class="wrap" style="--c:var(--seal)">
+    <header class="page-head">
+      <div class="eyebrow">ABOUT</div>
+      <h1>關於學鳩齋</h1>
+    </header>
+    <section class="section">
+      <div class="about-grid">
+        <h2>齋名由來</h2>
+        <div class="body">
+          <blockquote class="quote">蜩與學鳩笑之曰：「我決起而飛，搶榆枋而止，時則不至而控於地而已矣，奚以之九萬里而南為？」<cite>《莊子・逍遙遊》</cite></blockquote>
+          <p>〈逍遙遊〉開篇寫大鵬，背若泰山，翼若垂天之雲，摶扶搖而上九萬里。樹下的蟬與小斑鳩看了，笑牠何必飛那麼遠：我們一躍而起，碰到榆樹、檀樹就停下，偶爾飛不上去，落回地面也就罷了。</p>
+          <p>莊子拿這兩隻小蟲小鳥來說「小知不及大知」。學鳩齋偏偏取了這隻被笑的小鳥當名字，一來自知眼界有限，二來喜歡那個「學」字：飛不遠，就從榆枋之間開始學。</p>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="about-grid">
+        <h2>齋主</h2>
+        <div class="body" style="display:flex;gap:20px;align-items:flex-start">
+          <div class="avatar" aria-hidden="true" style="width:88px;height:88px;font-size:36px">鳩</div>
+          <div><p><b>${esc(SITE.owner)}</b></p><p>${esc(SITE.ownerBio)}</p></div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="about-grid">
+        <h2>聯絡</h2>
+        <div class="body">
+          <p>歡迎來信交流，討論文章、指正錯誤，或只是打聲招呼。</p>
+          <dl class="contact-grid">
+            <dt>電子郵件</dt><dd>${esc(SITE.email)}</dd>
+            <dt>所在</dt><dd>${esc(SITE.place)}</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ===== 書架：首屏底部一排書脊，載入時一冊冊歸位 ===== */
+let SHELF = null, shelfW = 0;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function buildShelf(W) {
+  let seed = 11;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const books = [];
+  let x = 8;
+  while (x < W - 8) {
+    const kind = rnd();
+    if (kind < 0.12) {
+      // 平放的線裝書一疊
+      const n = 3 + Math.floor(rnd() * 4), w = 46 + rnd() * 30;
+      for (let i = 0; i < n; i++) books.push({ type: "flat", x: x + rnd() * 4, w: w - rnd() * 6, h: 7 + rnd() * 3, level: i, tone: Math.floor(rnd() * 4) });
+      x += w + 10;
+    } else if (kind < 0.18) {
+      x += 14 + rnd() * 30; // 空位
+    } else {
+      const w = 10 + rnd() * 16, h = 54 + rnd() * 66;
+      const lean = (kind > 0.95 && books.length) ? -0.18 : 0;
+      books.push({ type: "spine", x, w, h, lean, tone: Math.floor(rnd() * 4), bands: rnd() < 0.5 });
+      x += w + 1 + rnd() * 2;
+    }
+  }
+  books.forEach((b, i) => b.delay = i * 14);
+  return books;
+}
+
+function drawInk(animate) {
+  const cv = document.getElementById("ink");
+  if (!cv) return;
+  const r = cv.getBoundingClientRect();
+  const W = r.width, H = r.height;
+  if (!SHELF || Math.abs(W - shelfW) > 40) { SHELF = buildShelf(W); shelfW = W; }
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d");
+  const css = getComputedStyle(document.documentElement);
+  const tones = ["--dove", "--c-academic", "--c-talks", "--c-life"].map(v => css.getPropertyValue(v).trim());
+  const rule = css.getPropertyValue("--ink-soft").trim();
+  const base = H - 18;
+  const start = performance.now();
+  const dur = 650;
+
+  function frame(now) {
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+    let done = true;
+    let stackY = {};
+    SHELF.forEach(b => {
+      let t = 1;
+      if (animate && !reduceMotion) {
+        t = Math.min(1, Math.max(0, (now - start - b.delay) / dur));
+        if (t < 1) done = false;
+      }
+      const e = 1 - Math.pow(1 - t, 3);
+      g.globalAlpha = 0.07 + 0.11 * e;
+      g.fillStyle = tones[b.tone];
+      if (b.type === "spine") {
+        const drop = (1 - e) * b.h * 0.7;
+        g.save();
+        g.translate(b.x, base + drop);
+        g.rotate(b.lean);
+        g.fillRect(0, -b.h, b.w, b.h);
+        g.globalAlpha *= 1.6;
+        g.fillRect(2, -b.h + 10, b.w - 4, 2);
+        if (b.bands) { g.fillRect(2, -20, b.w - 4, 2); g.fillRect(2, -b.h * 0.55, b.w - 4, 1.5); }
+        g.restore();
+      } else {
+        const y = base - (b.level + 1) * 10 - (1 - e) * 24;
+        g.fillRect(b.x, y, b.w, b.h);
+        g.globalAlpha *= 1.6;
+        for (let k = 1; k <= 4; k++) g.fillRect(b.x + 3, y + 1, 1, b.h - 2), g.fillRect(b.x + b.w * k / 5, y + b.h - 2, 1.2, 2);
+      }
+    });
+    // 書架橫板
+    g.globalAlpha = 0.22;
+    g.fillStyle = rule;
+    g.fillRect(0, base, W, 2);
+    g.globalAlpha = 0.08;
+    g.fillRect(0, base + 2, W, 10);
+    g.globalAlpha = 1;
+    if (!done) requestAnimationFrame(frame);
+  }
+  if (animate && !reduceMotion) requestAnimationFrame(frame); else frame(performance.now());
+}
+window.addEventListener("resize", () => drawInk(false));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => drawInk(false));
+new MutationObserver(() => drawInk(false)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ===== 閱讀進度 ===== */
+const $progress = document.getElementById("progress");
+function updateProgress() {
+  const art = document.querySelector(".article");
+  if (!art) { $progress.style.width = "0"; return; }
+  const max = document.documentElement.scrollHeight - innerHeight;
+  $progress.style.width = (max > 0 ? Math.min(1, scrollY / max) * 100 : 0) + "%";
+}
+window.addEventListener("scroll", updateProgress, { passive: true });
+
+/* ===== 路由 ===== */
+function route() {
+  const h = (location.hash || "#home").slice(1);
+  let active = h;
+  const post = POSTS.find(p => p.id === h);
+  if (post) { viewPost(post); active = post.cat; }
+  else if (h === "academic" || h === "study-talks" || h === "life") viewCategory(h);
+  else if (h === "tajiyu") viewTajiyu();
+  else if (h === "about") viewAbout();
+  else { viewHome(); active = "home"; }
+  document.querySelectorAll("#nav a").forEach(a => {
+    if (a.dataset.route === active) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+  $app.classList.remove("turn"); void $app.offsetWidth; $app.classList.add("turn");
+  window.scrollTo(0, 0);
+  updateProgress();
+}
+setupTajiLink();
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

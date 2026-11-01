@@ -4,14 +4,14 @@ title: 關於
 nav: about
 permalink: /about/
 ---
-{%- assign S = site.data.site -%}
+{%- assign S = site.data.site -%}{%- assign T = site.data.text -%}
 <div class="wrap" style="--c:var(--seal)">
   <header class="page-head">
-    <h1>關於學鳩齋</h1>
+    <h1>{{ T.about_title }}</h1>
   </header>
   <section class="section">
     <div class="about-grid">
-      <h2>齋主</h2>
+      <h2>{{ T.owner_heading }}</h2>
       <div class="body" style="display:flex;gap:20px;align-items:flex-start">
         {% if S.avatar and S.avatar != "" %}<img class="avatar-img" src="{{ S.avatar | relative_url }}" alt="{{ S.owner }}的大頭貼" width="96" height="96">{% else %}<img src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="88" height="88" style="flex:none">{% endif %}
         <div><p><b>{{ S.owner }}</b></p>{% if S.owner_bio and S.owner_bio != "" %}{{ S.owner_bio | markdownify }}{% endif %}</div>
@@ -20,12 +20,12 @@ permalink: /about/
   </section>
   <section class="section">
     <div class="about-grid">
-      <h2>聯絡</h2>
+      <h2>{{ T.contact_heading }}</h2>
       <div class="body">
-        <p>歡迎來信交流，討論文章、指正錯誤，或只是打聲招呼。</p>
+        {% if T.contact_note and T.contact_note != "" %}<p>{{ T.contact_note }}</p>{% endif %}
         <dl class="contact-grid">
-          {% if S.email and S.email != "" %}<dt>電子郵件</dt><dd><a href="mailto:{{ S.email }}">{{ S.email }}</a></dd>{% endif %}
-          {% if S.place and S.place != "" %}<dt>所在</dt><dd>{{ S.place }}</dd>{% endif %}
+          {% if S.email and S.email != "" %}<dt>{{ T.email_label }}</dt><dd><a href="mailto:{{ S.email }}">{{ S.email }}</a></dd>{% endif %}
+          {% if S.place and S.place != "" %}<dt>{{ T.place_label }}</dt><dd>{{ S.place }}</dd>{% endif %}
         </dl>
       </div>
     </div>

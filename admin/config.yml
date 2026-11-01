@@ -92,8 +92,65 @@ collections:
         fields:
           - { name: owner, label: 名字或字號, widget: string }
           - { name: avatar, label: 大頭貼, widget: image, required: false }
-          - { name: intro, label: 首頁書齋介紹, widget: text, required: false, hint: 空一行就是分段；留空則不顯示 }
           - { name: owner_bio, label: 自我介紹, widget: text, required: false }
           - { name: email, label: 電子郵件, widget: string, required: false }
           - { name: place, label: 所在, widget: string, required: false }
           - { name: tajiyu_url, label: 獺祭魚網址, widget: string, required: false }
+      - name: home
+        label: 首頁文字
+        file: _data/home.yml
+        fields:
+          - { name: quote, label: 右頁直排題跋, widget: text, required: false, hint: 一行就是一直行；留空則不顯示右頁 }
+          - { name: quote_source, label: 題跋出處, widget: string, required: false }
+          - { name: intro_title, label: 介紹區塊標題, widget: string, required: false }
+          - { name: intro, label: 書齋介紹, widget: text, required: false, hint: 空一行就是分段；留空則不顯示 }
+          - { name: slide_seconds, label: 照片輪播秒數, widget: number, value_type: int, min: 2, required: false }
+      - name: text
+        label: 網站文字
+        file: _data/text.yml
+        fields:
+          - { name: site_name, label: 齋名（頁首左上）, widget: string }
+          - { name: nav_home, label: 選單：首頁, widget: string }
+          - { name: nav_tajiyu, label: 選單：獺祭魚, widget: string }
+          - { name: nav_about, label: 選單：關於, widget: string }
+          - { name: footer, label: 頁尾文字, widget: string }
+          - { name: about_title, label: 關於頁：大標題, widget: string }
+          - { name: owner_heading, label: 關於頁：齋主欄標題, widget: string }
+          - { name: contact_heading, label: 關於頁：聯絡欄標題, widget: string }
+          - { name: contact_note, label: 關於頁：聯絡說明, widget: text, required: false }
+          - { name: email_label, label: 關於頁：電子郵件標籤, widget: string }
+          - { name: place_label, label: 關於頁：所在標籤, widget: string }
+          - { name: empty_category, label: 分類沒有文章時顯示, widget: string }
+          - { name: tajiyu_title, label: 獺祭魚頁標題, widget: string, required: false }
+          - { name: tajiyu_intro, label: 獺祭魚簡介, widget: string, required: false }
+      - name: categories
+        label: 分類名稱
+        file: _data/categories.yml
+        fields:
+          - name: academic
+            label: 學術
+            widget: object
+            fields:
+              - { name: name, label: 名稱（選單與標題）, widget: string }
+              - { name: desc, label: 說明, widget: string, required: false }
+              - { name: prefix, label: 索書號字頭, widget: string }
+              - { name: color, label: 顏色, widget: hidden }
+              - { name: en, label: en, widget: hidden }
+          - name: study-talks
+            label: 參學瑣談
+            widget: object
+            fields:
+              - { name: name, label: 名稱（選單與標題）, widget: string }
+              - { name: desc, label: 說明, widget: string, required: false }
+              - { name: prefix, label: 索書號字頭, widget: string }
+              - { name: color, label: 顏色, widget: hidden }
+              - { name: en, label: en, widget: hidden }
+          - name: life
+            label: 生活札記
+            widget: object
+            fields:
+              - { name: name, label: 名稱（選單與標題）, widget: string }
+              - { name: desc, label: 說明, widget: string, required: false }
+              - { name: prefix, label: 索書號字頭, widget: string }
+              - { name: color, label: 顏色, widget: hidden }
+              - { name: en, label: en, widget: hidden }

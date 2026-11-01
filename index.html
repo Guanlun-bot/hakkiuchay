@@ -3,66 +3,77 @@ layout: default
 title: 學鳩齋
 nav: home
 ---
+{%- assign H = site.data.home -%}
+{%- assign T = site.data.text -%}
+{%- assign S = site.data.site -%}
 {%- assign photos = site.data.photos.photos | where_exp: "p", "p.image" -%}
-<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">學鳩齋</h1>
-{% if photos.size > 0 %}
-<section class="slides" id="slides" aria-roledescription="輪播" aria-label="照片">
-  {% for ph in photos %}
-  <figure class="slide{% if forloop.first %} is-on{% endif %}" aria-hidden="{% unless forloop.first %}true{% else %}false{% endunless %}">
-    <img src="{{ ph.image | relative_url }}" alt="{{ ph.caption | default: '' | escape }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
-    {% if ph.caption and ph.caption != "" %}<figcaption>{{ ph.caption }}</figcaption>{% endif %}
-  </figure>
-  {% endfor %}
-  {% if photos.size > 1 %}
-  <button class="slide-nav prev" type="button" aria-label="上一張">‹</button>
-  <button class="slide-nav next" type="button" aria-label="下一張">›</button>
-  <div class="slide-dots" role="tablist">
-    {% for ph in photos %}<button type="button" role="tab" aria-label="第 {{ forloop.index }} 張"{% if forloop.first %} aria-selected="true"{% endif %}></button>{% endfor %}
+<h1 class="sr-only">{{ T.site_name | default: "學鳩齋" }}</h1>
+
+<!-- 對開：左頁照片，右頁直排題跋 -->
+<section class="spread">
+  <div class="leaf leaf-plate">
+    {% if photos.size > 0 %}
+    <div class="plate" id="plate" aria-roledescription="輪播" aria-label="照片" data-seconds="{{ H.slide_seconds | default: 6 }}">
+      {% for ph in photos %}
+      <figure class="plate-item{% if forloop.first %} is-on{% endif %}" aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
+        <img src="{{ ph.image | relative_url }}" alt="{{ ph.caption | default: '' | escape }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+      </figure>
+      {% endfor %}
+    </div>
+    <div class="plate-foot">
+      <span class="plate-cap" id="plate-cap">{{ photos[0].caption }}</span>
+      {% if photos.size > 1 %}
+      <span class="plate-ctrl">
+        <button type="button" id="plate-prev" aria-label="上一張">前</button>
+        <span class="plate-count" aria-live="polite"><b id="plate-n">1</b><i>／</i>{{ photos.size }}</span>
+        <button type="button" id="plate-next" aria-label="下一張">後</button>
+      </span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if H.quote and H.quote != "" %}
+  <div class="leaf leaf-text">
+    <div class="colophon">
+      {%- assign qlines = H.quote | newline_to_br | split: "<br />" -%}
+      {%- for l in qlines -%}{%- assign t = l | strip -%}{%- if t != "" -%}<p>{{ t }}</p>{%- endif -%}{%- endfor -%}
+      {% if H.quote_source and H.quote_source != "" %}<p class="colophon-src">{{ H.quote_source }}</p>{% endif %}
+    </div>
   </div>
   {% endif %}
 </section>
-<figure class="home-quote">
-  <blockquote>
-    <p>蜩與鷽鳩笑之曰：<br class="br-d">「我決起而飛，槍榆枋，時則不至，而控於地而已矣，<br class="br-d">奚以之九萬里而南爲？」</p>
-    <p>適莽蒼者，三湌而反，腹猶果然；<br class="br-d">適百里者，宿舂糧；適千里者，三月聚糧。</p>
-  </blockquote>
-  <figcaption>《莊子・逍遙遊》</figcaption>
-</figure>
 
-{%- assign S = site.data.site -%}
-{% if S.intro and S.intro != "" %}
-<section class="home-intro" aria-labelledby="intro-title">
-  <h2 id="intro-title">書齋</h2>
-  <div class="home-intro-body">
-    {{ S.intro | markdownify }}
-    <nav class="home-intro-links" aria-label="分類">
-      <a href="{{ '/academic/' | relative_url }}">學術</a>
-      <a href="{{ '/study-talks/' | relative_url }}">參學瑣談</a>
-      <a href="{{ '/life/' | relative_url }}">生活札記</a>
-      {% if S.tajiyu_url and S.tajiyu_url != "" %}<a href="{{ S.tajiyu_url }}" target="_blank" rel="noopener">獺祭魚 ↗</a>{% endif %}
-    </nav>
-  </div>
+<!-- 書齋 -->
+{% if H.intro and H.intro != "" %}
+<section class="study">
+  <h2 class="study-title">{{ H.intro_title }}</h2>
+  <div class="study-body">{{ H.intro | markdownify }}</div>
 </section>
 {% endif %}
+
+
+
 {% if photos.size > 1 %}
 <script>
 (function () {
-  const box = document.getElementById("slides");
-  const slides = [...box.querySelectorAll(".slide")], dots = [...box.querySelectorAll(".slide-dots button")];
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const box = document.getElementById("plate");
+  const items = [...box.querySelectorAll(".plate-item")];
+  const caps = {{ photos | map: "caption" | jsonify }};
+  const n = document.getElementById("plate-n"), cap = document.getElementById("plate-cap");
+  const secs = Math.max(2, Number(box.dataset.seconds) || 6) * 1000;
   let i = 0, timer = null;
-  function show(n) {
-    i = (n + slides.length) % slides.length;
-    slides.forEach((s, k) => { s.classList.toggle("is-on", k === i); s.setAttribute("aria-hidden", k === i ? "false" : "true"); });
-    dots.forEach((d, k) => d.setAttribute("aria-selected", k === i ? "true" : "false"));
-    const img = slides[(i + 1) % slides.length].querySelector("img"); img.loading = "eager";
+  function show(k) {
+    i = (k + items.length) % items.length;
+    items.forEach((el, j) => { el.classList.toggle("is-on", j === i); el.setAttribute("aria-hidden", j === i ? "false" : "true"); });
+    n.textContent = i + 1; cap.textContent = caps[i] || "";
+    const nx = items[(i + 1) % items.length].querySelector("img"); nx.loading = "eager";
   }
-  function play() { stop(); timer = setInterval(() => show(i + 1), 6000); }
+  function play() { stop(); timer = setInterval(() => show(i + 1), secs); }
   function stop() { if (timer) clearInterval(timer); timer = null; }
-  box.querySelector(".prev").onclick = () => { show(i - 1); play(); };
-  box.querySelector(".next").onclick = () => { show(i + 1); play(); };
-  dots.forEach((d, k) => d.onclick = () => { show(k); play(); });
-  addEventListener("keydown", e => { if (e.key === "ArrowLeft") { show(i - 1); play(); } if (e.key === "ArrowRight") { show(i + 1); play(); } });
+  document.getElementById("plate-prev").onclick = () => { show(i - 1); play(); };
+  document.getElementById("plate-next").onclick = () => { show(i + 1); play(); };
+  addEventListener("keydown", e => { if (e.target.closest("input,textarea")) return; if (e.key === "ArrowLeft") { show(i - 1); play(); } if (e.key === "ArrowRight") { show(i + 1); play(); } });
   let x0 = null;
   box.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
   box.addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) { show(i + (dx < 0 ? 1 : -1)); play(); } x0 = null; });
@@ -70,7 +81,4 @@ nav: home
   play();
 })();
 </script>
-{% endif %}
-{% else %}
-<div class="wrap"><div class="empty-wall"><img class="seal-big" src="{{ '/assets/img/seal-512.png' | relative_url }}" alt="學鳩齋印" width="220" height="220"></div></div>
 {% endif %}

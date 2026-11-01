@@ -25,7 +25,7 @@
   window.XJTheme = { autoTheme: autoTheme, nextBoundary: nextBoundary };
 })();
 </script>
-<title>{% if page.title and page.title != site.title %}{{ page.title }}｜{% endif %}學鳩齋</title>
+<title>{% if page.title and page.title != site.title %}{{ page.title }}｜{% endif %}{{ site.data.text.site_name | default: "學鳩齋" }}</title>
 {% if page.summary %}<meta name="description" content="{{ page.summary | strip_html | escape }}">{% endif %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,25 +36,25 @@
 <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
 </head>
 <body>
-{% assign S = site.data.site %}
+{% assign S = site.data.site %}{% assign T = site.data.text %}{% assign CATS = site.data.categories %}
 {% assign nav = page.nav | default: page.cat %}
 <div id="progress" aria-hidden="true"></div>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="{{ '/' | relative_url }}"><span class="brand-name">學鳩齋</span></a>
+    <a class="brand" href="{{ '/' | relative_url }}"><span class="brand-name">{{ T.site_name | default: "學鳩齋" }}</span></a>
     <div class="top-right">
     <nav aria-label="主選單">
       <ul id="nav">
-        <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>首頁</a></li>
-        <li><a href="{{ '/academic/' | relative_url }}"{% if nav == 'academic' %} aria-current="page"{% endif %}>學術</a></li>
-        <li><a href="{{ '/study-talks/' | relative_url }}"{% if nav == 'study-talks' %} aria-current="page"{% endif %}>參學瑣談</a></li>
-        <li><a href="{{ '/life/' | relative_url }}"{% if nav == 'life' %} aria-current="page"{% endif %}>生活札記</a></li>
+        <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>{{ T.nav_home | default: "首頁" }}</a></li>
+        <li><a href="{{ '/academic/' | relative_url }}"{% if nav == 'academic' %} aria-current="page"{% endif %}>{{ CATS.academic.name }}</a></li>
+        <li><a href="{{ '/study-talks/' | relative_url }}"{% if nav == 'study-talks' %} aria-current="page"{% endif %}>{{ CATS['study-talks'].name }}</a></li>
+        <li><a href="{{ '/life/' | relative_url }}"{% if nav == 'life' %} aria-current="page"{% endif %}>{{ CATS.life.name }}</a></li>
         {% if S.tajiyu_url and S.tajiyu_url != "" %}
-        <li><a href="{{ S.tajiyu_url }}" target="_blank" rel="noopener">獺祭魚<span class="ext" aria-hidden="true">↗</span></a></li>
+        <li><a href="{{ S.tajiyu_url }}" target="_blank" rel="noopener">{{ T.nav_tajiyu | default: "獺祭魚" }}<span class="ext" aria-hidden="true">↗</span></a></li>
         {% else %}
-        <li><a href="{{ '/tajiyu/' | relative_url }}"{% if nav == 'tajiyu' %} aria-current="page"{% endif %}>獺祭魚<span class="ext" aria-hidden="true">↗</span></a></li>
+        <li><a href="{{ '/tajiyu/' | relative_url }}"{% if nav == 'tajiyu' %} aria-current="page"{% endif %}>{{ T.nav_tajiyu | default: "獺祭魚" }}<span class="ext" aria-hidden="true">↗</span></a></li>
         {% endif %}
-        <li><a href="{{ '/about/' | relative_url }}"{% if nav == 'about' %} aria-current="page"{% endif %}>關於</a></li>
+        <li><a href="{{ '/about/' | relative_url }}"{% if nav == 'about' %} aria-current="page"{% endif %}>{{ T.nav_about | default: "關於" }}</a></li>
       </ul>
     </nav>
     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切換白天／夜間模式">
@@ -71,7 +71,7 @@
 
 <footer>
   <div class="wrap">
-    <span>© {{ site.time | date: "%Y" }} 學鳩齋</span>
+    <span>© {{ site.time | date: "%Y" }} {{ T.footer | default: T.site_name }}</span>
   </div>
 </footer>
 

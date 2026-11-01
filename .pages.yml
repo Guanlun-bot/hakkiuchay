@@ -111,10 +111,6 @@ content:
       - name: avatar
         label: 大頭貼
         type: image
-      - name: intro
-        label: 首頁書齋介紹
-        type: text
-        description: 顯示在首頁照片與引文下方。空一行就是分段；留空則不顯示這個區塊。
       - name: owner_bio
         label: 自我介紹
         type: text
@@ -130,3 +126,82 @@ content:
         label: 獺祭魚網址
         type: string
         description: 填入後，選單上的「獺祭魚」會直接開啟這個網址。
+
+  - name: home
+    label: 首頁文字
+    type: file
+    path: _data/home.yml
+    format: yaml
+    fields:
+      - name: quote
+        label: 右頁直排題跋
+        type: text
+        description: 一行就是一直行；留空則不顯示右頁。
+      - name: quote_source
+        label: 題跋出處
+        type: string
+      - name: intro_title
+        label: 介紹區塊標題
+        type: string
+      - name: intro
+        label: 書齋介紹
+        type: text
+        description: 空一行就是分段；留空則不顯示這個區塊。
+      - name: slide_seconds
+        label: 照片輪播秒數
+        type: number
+
+  - name: text
+    label: 網站文字
+    type: file
+    path: _data/text.yml
+    format: yaml
+    fields:
+      - { name: site_name, label: 齋名（頁首左上）, type: string }
+      - { name: nav_home, label: 選單：首頁, type: string }
+      - { name: nav_tajiyu, label: 選單：獺祭魚, type: string }
+      - { name: nav_about, label: 選單：關於, type: string }
+      - { name: footer, label: 頁尾文字（© 年份之後）, type: string }
+      - { name: about_title, label: 關於頁：大標題, type: string }
+      - { name: owner_heading, label: 關於頁：齋主欄標題, type: string }
+      - { name: contact_heading, label: 關於頁：聯絡欄標題, type: string }
+      - { name: contact_note, label: 關於頁：聯絡說明, type: text }
+      - { name: email_label, label: 關於頁：電子郵件標籤, type: string }
+      - { name: place_label, label: 關於頁：所在標籤, type: string }
+      - { name: empty_category, label: 分類沒有文章時顯示, type: string }
+      - { name: tajiyu_title, label: 獺祭魚頁標題（未填網址時才會用到）, type: string }
+      - { name: tajiyu_intro, label: 獺祭魚簡介, type: string }
+
+  - name: categories
+    label: 分類名稱
+    type: file
+    path: _data/categories.yml
+    format: yaml
+    fields:
+      - name: academic
+        label: 學術
+        type: object
+        fields:
+          - { name: name, label: 名稱（選單與標題）, type: string }
+          - { name: desc, label: 說明, type: string }
+          - { name: prefix, label: 索書號字頭, type: string }
+          - { name: color, label: 顏色（勿改）, type: string, hidden: true }
+          - { name: en, label: en, type: string, hidden: true }
+      - name: study-talks
+        label: 參學瑣談
+        type: object
+        fields:
+          - { name: name, label: 名稱（選單與標題）, type: string }
+          - { name: desc, label: 說明, type: string }
+          - { name: prefix, label: 索書號字頭, type: string }
+          - { name: color, label: 顏色（勿改）, type: string, hidden: true }
+          - { name: en, label: en, type: string, hidden: true }
+      - name: life
+        label: 生活札記
+        type: object
+        fields:
+          - { name: name, label: 名稱（選單與標題）, type: string }
+          - { name: desc, label: 說明, type: string }
+          - { name: prefix, label: 索書號字頭, type: string }
+          - { name: color, label: 顏色（勿改）, type: string, hidden: true }
+          - { name: en, label: en, type: string, hidden: true }

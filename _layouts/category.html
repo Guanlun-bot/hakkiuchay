@@ -13,7 +13,7 @@ layout: default
       {% for p in posts %}{% include post-item.html post=p %}{% endfor %}
     </ul>
     {% else %}
-    <p class="sample-note">還沒有文章。</p>
+    <p class="sample-note">{{ site.data.text.empty_category }}</p>
     {% endif %}
   </section>
 </div>

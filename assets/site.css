@@ -379,3 +379,28 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   header.top nav::-webkit-scrollbar { display: none; }
   header.top nav ul { flex-wrap: nowrap; white-space: nowrap; }
 }
+
+/* 首頁照片：置中、留白、完整顯示不裁切 */
+.slides {
+  max-width: 1100px; margin: 32px auto 40px; padding: 0 24px;
+  height: min(68svh, 640px); min-height: 280px;
+  background: transparent; overflow: visible;
+}
+.slide { inset: 0 24px; }
+.slide img { object-fit: contain; }
+.slide.is-on img { animation: none; }
+.slide figcaption { right: 0; bottom: -26px; color: var(--ink-soft); text-shadow: none; }
+.slide-nav { background: color-mix(in srgb, var(--paper) 70%, transparent); color: var(--ink); opacity: .85; }
+.slide-nav:hover { background: var(--paper); }
+.slide-nav.prev { left: 0; } .slide-nav.next { right: 0; }
+.slide-dots { bottom: -26px; }
+.slide-dots button { background: var(--rule); }
+.slide-dots button[aria-selected="true"] { background: var(--ink-soft); }
+@media (max-width: 720px) {
+  .slides { height: min(58svh, 520px); margin: 20px auto 36px; padding: 0 16px; }
+  .slide { inset: 0 16px; }
+}
+@media (max-width: 720px) {
+  .slides { height: auto; aspect-ratio: 4 / 3; min-height: 0; }
+  .slide-nav { display: none; }
+}

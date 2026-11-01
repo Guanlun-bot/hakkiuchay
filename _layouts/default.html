@@ -3,11 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* 依臺北時間：06:00–18:00 白天，其餘夜間。手動切換只維持到下一次日出或日落。 */
+(function () {
+  function taipeiHour() {
+    try { return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Taipei", hour: "2-digit", hourCycle: "h23" }).format(new Date())); }
+    catch (e) { return (new Date().getUTCHours() + 8) % 24; }
+  }
+  function autoTheme() { var h = taipeiHour(); return (h >= 6 && h < 18) ? "light" : "dark"; }
+  function nextBoundary() {
+    var now = Date.now(), h = taipeiHour(), m = new Date().getUTCMinutes();
+    var target = (h < 6) ? 6 : (h < 18 ? 18 : 30);
+    return now + ((target - h) * 60 - m) * 60000;
+  }
+  var t = autoTheme();
+  try {
+    var o = JSON.parse(localStorage.getItem("xj-theme") || "null");
+    if (o && o.until > Date.now()) t = o.theme; else localStorage.removeItem("xj-theme");
+  } catch (e) {}
+  document.documentElement.setAttribute("data-theme", t);
+  window.XJTheme = { autoTheme: autoTheme, nextBoundary: nextBoundary };
+})();
+</script>
 <title>{% if page.title and page.title != site.title %}{{ page.title }}｜{% endif %}學鳩齋</title>
 {% if page.summary %}<meta name="description" content="{{ page.summary | strip_html | escape }}">{% endif %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="{{ '/favicon.png' | relative_url }}">
 <link rel="apple-touch-icon" href="{{ '/assets/img/seal-512.png' | relative_url }}">
 <meta property="og:image" content="{{ '/assets/img/seal-512.png' | absolute_url }}">
@@ -20,6 +42,7 @@
 <header class="top">
   <div class="wrap">
     <a class="brand" href="{{ '/' | relative_url }}"><img class="logo" src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="44" height="44"><span class="brand-name">學鳩齋</span></a>
+    <div class="top-right">
     <nav aria-label="主選單">
       <ul id="nav">
         <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>首頁</a></li>
@@ -34,6 +57,11 @@
         <li><a href="{{ '/about/' | relative_url }}"{% if nav == 'about' %} aria-current="page"{% endif %}>關於</a></li>
       </ul>
     </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切換白天／夜間模式">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z"/></svg>
+    </button>
+    </div>
   </div>
 </header>
 
@@ -50,6 +78,36 @@
 </footer>
 
 <script>
+(function () {
+  var btn = document.getElementById("theme-toggle"), root = document.documentElement;
+  function label() {
+    var dark = root.getAttribute("data-theme") === "dark";
+    btn.setAttribute("aria-label", dark ? "切換成白天模式" : "切換成夜間模式");
+    btn.title = dark ? "切換成白天模式" : "切換成夜間模式";
+  }
+  label();
+  btn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.classList.add("theme-fade");
+    root.setAttribute("data-theme", next);
+    setTimeout(function () { root.classList.remove("theme-fade"); }, 700);
+    try {
+      if (next === XJTheme.autoTheme()) localStorage.removeItem("xj-theme");
+      else localStorage.setItem("xj-theme", JSON.stringify({ theme: next, until: XJTheme.nextBoundary() }));
+    } catch (e) {}
+    label();
+  });
+  /* 頁面開著時，到了日出或日落自動換 */
+  setInterval(function () {
+    var manual = false;
+    try { var o = JSON.parse(localStorage.getItem("xj-theme") || "null"); manual = !!(o && o.until > Date.now()); } catch (e) {}
+    if (!manual && root.getAttribute("data-theme") !== XJTheme.autoTheme()) {
+      root.classList.add("theme-fade"); root.setAttribute("data-theme", XJTheme.autoTheme());
+      setTimeout(function () { root.classList.remove("theme-fade"); }, 700); label();
+    }
+  }, 60000);
+})();
+
 /* 書架：頁尾一排書脊，載入時一冊冊歸位 */
 (function () {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -113,8 +171,7 @@
     } else frame(performance.now());
   }
   addEventListener("resize", () => draw(false));
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw(false));
-  new MutationObserver(() => draw(false)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    new MutationObserver(() => draw(false)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   draw(true);
 
   /* 閱讀進度 */

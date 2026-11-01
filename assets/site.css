@@ -1,38 +1,43 @@
 
-/* 版面構想：青灰宣紙為底，首屏淡墨遠山＋直排齋名如匾；四類文章各有一枚色籤，朱印只作齋主之印。 */
+/* 版面構想：日本傳統色。白天如灰白和紙配消炭墨，夜裡如呂色漆配灰白字；朱印只作齋主之印。字型一律宋體。
+   白天：灰白 #f1efe8・生壁 #e6e2d6・消炭 #3f3a39・鈍色 #6e6866・利休鼠 #6c7163・臙脂 #a8343a
+         紺鼠（學術）#3e5873・千歳緑（參學）#3d6b4f・朽葉（生活）#86683c
+   夜間：呂色 #2a2826・灰白 #e2ddd0・銀鼠 #aaa49b・利休白茶 #a3a894・珊瑚 #e48f7d
+         浅縹（學術）#8fa8c8・青磁（參學）#86b79a・芥子（生活）#d2b06a */
 :root {
-  --paper: #eef0ec;
-  --paper-2: #e2e6e0;
-  --card: #f6f7f4;
-  --ink: #1d2221;
-  --ink-soft: #56615d;
-  --rule: #c9d0ca;
-  --dove: #6b7e78;
-  --seal: #a8322a;
-  --c-academic: #3c5068;
-  --c-talks: #5d7a5e;
-  --c-life: #9a6b35;
-  --c-taji: #a8322a;
-  --font-display: "LXGW WenKai TC", "Kaiti TC", "BiauKai", "STKaiti", serif;
-  --font-body: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --paper: #f1efe8;
+  --paper-2: #e6e2d6;
+  --card: #f7f6f1;
+  --ink: #3f3a39;
+  --ink-soft: #6e6866;
+  --rule: #d3cec3;
+  --dove: #6c7163;
+  --seal: #a8343a;
+  --c-academic: #3e5873;
+  --c-talks: #3d6b4f;
+  --c-life: #86683c;
+  --c-taji: #a8343a;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", "MingLiU", serif;
+  --font-body: "Noto Serif TC", "Songti TC", "PMingLiU", "MingLiU", serif;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #151918; --paper-2: #1d2220; --card: #1a1f1d;
-    --ink: #e3e7e2; --ink-soft: #a2ada8; --rule: #323a37;
-    --dove: #93a8a1; --seal: #d4594d;
-    --c-academic: #8fa6c4; --c-talks: #93b494; --c-life: #d1a26b; --c-taji: #d4594d;
-    color-scheme: dark;
-  }
-}
 :root[data-theme="dark"] {
-  --paper: #151918; --paper-2: #1d2220; --card: #1a1f1d;
-  --ink: #e3e7e2; --ink-soft: #a2ada8; --rule: #323a37;
-  --dove: #93a8a1; --seal: #d4594d;
-  --c-academic: #8fa6c4; --c-talks: #93b494; --c-life: #d1a26b; --c-taji: #d4594d;
+  --paper: #2a2826;
+  --paper-2: #33302d;
+  --card: #2f2c2a;
+  --ink: #e2ddd0;
+  --ink-soft: #aaa49b;
+  --rule: #4a4540;
+  --dove: #a3a894;
+  --seal: #e48f7d;
+  --c-academic: #8fa8c8;
+  --c-talks: #86b79a;
+  --c-life: #d2b06a;
+  --c-taji: #e48f7d;
   color-scheme: dark;
 }
+/* 切換時整頁緩緩換色 */
+html.theme-fade, html.theme-fade * { transition: background-color .6s ease, color .6s ease, border-color .6s ease !important; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -102,7 +107,7 @@ nav a[aria-current="page"]::after { content: ""; position: absolute; left: 10px;
 .section { padding: 56px 0; border-bottom: 1px solid var(--rule); }
 .section:last-child { border-bottom: 0; }
 .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
-.sec-head h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; margin: 0; letter-spacing: 0.06em; }
+.sec-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 28px; margin: 0; letter-spacing: 0.06em; }
 .sec-head small { color: var(--dove); font-size: 13px; letter-spacing: 0.2em; }
 
 /* 四類入口 */
@@ -324,3 +329,19 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   .empty-wall .seal-big { animation: stamp .55s cubic-bezier(.2,.9,.3,1.3) both; }
   @keyframes stamp { from { transform: scale(1.18); opacity: .4; } to { transform: none; opacity: .92; } }
 }
+
+/* 太陽／月亮切換鈕 */
+.top .wrap { flex-wrap: wrap; }
+.top-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.theme-toggle {
+  position: relative; width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--rule); background: var(--card); color: var(--ink);
+  cursor: pointer; display: grid; place-items: center; padding: 0; flex: none;
+}
+.theme-toggle:hover { border-color: var(--seal); color: var(--seal); }
+.theme-toggle svg { position: absolute; width: 20px; height: 20px; transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .4s; }
+.theme-toggle .sun { opacity: 1; transform: rotate(0) scale(1); }
+.theme-toggle .moon { opacity: 0; transform: rotate(-90deg) scale(.5); }
+:root[data-theme="dark"] .theme-toggle .sun { opacity: 0; transform: rotate(90deg) scale(.5); }
+:root[data-theme="dark"] .theme-toggle .moon { opacity: 1; transform: rotate(0) scale(1); }
+@media (prefers-reduced-motion: reduce) { .theme-toggle svg { transition: none; } }

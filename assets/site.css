@@ -719,3 +719,4 @@ footer .wrap { align-items: center; }
 .study { padding-bottom: 0; }
 #contact { padding-bottom: 96px; }
 @media (max-width: 900px) { #contact { padding-bottom: 64px; } }
+#owner .study-body p:first-child::first-letter, #contact .study-body p:first-child::first-letter { font-size: inherit; }

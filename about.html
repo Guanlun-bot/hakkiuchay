@@ -24,7 +24,7 @@ permalink: /about/
     <div class="about-grid">
       <h2>齋主</h2>
       <div class="body" style="display:flex;gap:20px;align-items:flex-start">
-        <img src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="88" height="88" style="flex:none">
+        {% if S.avatar and S.avatar != "" %}<img class="avatar-img" src="{{ S.avatar | relative_url }}" alt="{{ S.owner }}的大頭貼" width="96" height="96">{% else %}<img src="{{ '/assets/img/seal-128.png' | relative_url }}" alt="" width="88" height="88" style="flex:none">{% endif %}
         <div><p><b>{{ S.owner }}</b></p>{% if S.owner_bio and S.owner_bio != "" %}{{ S.owner_bio | markdownify }}{% endif %}</div>
       </div>
     </div>

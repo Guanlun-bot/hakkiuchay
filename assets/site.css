@@ -345,3 +345,5 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 :root[data-theme="dark"] .theme-toggle .sun { opacity: 0; transform: rotate(90deg) scale(.5); }
 :root[data-theme="dark"] .theme-toggle .moon { opacity: 1; transform: rotate(0) scale(1); }
 @media (prefers-reduced-motion: reduce) { .theme-toggle svg { transition: none; } }
+
+.avatar-img { flex: none; width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 1px solid var(--rule); }

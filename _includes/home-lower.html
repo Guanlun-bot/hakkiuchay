@@ -21,5 +21,16 @@
       {% if S.signal and S.signal != "" %}<li><a href="{{ S.signal }}" target="_blank" rel="noopener">{% include icon-signal.svg %}<span>{{ T.signal_label | default: "Signal" }}</span></a></li>{% endif %}
       {% if S.place and S.place != "" %}<li class="is-text">{% include icon-place.svg %}<span>{{ S.place }}</span></li>{% endif %}
     </ul>
+    {% if S.books and S.books.size > 0 %}
+    <div class="card-books">
+      <h3 class="lower-label">{{ T.books_heading | default: "著作" }}</h3>
+      <ul>
+        {% for b in S.books %}<li>{% include icon-book.svg %}<div>
+          <p class="book-title">{% if b.url and b.url != "" %}<a href="{{ b.url }}" target="_blank" rel="noopener">《{{ b.title }}》</a>{% else %}《{{ b.title }}》{% endif %}</p>
+          <p class="book-meta">{{ b.editors }}{% if b.publisher %}　｜　{{ b.publisher }}{% if b.year %}，{{ b.year }}{% endif %}{% endif %}{% if T.books_role and T.books_role != "" %}　｜　{{ b.role | default: T.books_role }}{% endif %}</p>
+        </div></li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </aside>
 </section>

@@ -123,6 +123,17 @@ content:
         label: 所在
         type: string
         description: 留空就不會顯示。
+      - name: books
+        label: 著作
+        type: object
+        list: true
+        fields:
+          - { name: title, label: 書名, type: string }
+          - { name: editors, label: 作者／主編, type: string }
+          - { name: publisher, label: 出版社, type: string }
+          - { name: year, label: 年份, type: string }
+          - { name: url, label: 連結, type: string }
+          - { name: role, label: 角色（留空＝合著）, type: string }
       - name: discord
         label: Discord 連結
         type: string
@@ -178,6 +189,8 @@ content:
       - { name: discord_label, label: Discord 標籤, type: string }
       - { name: signal_label, label: Signal 標籤, type: string }
       - { name: empty_category, label: 分類沒有文章時顯示, type: string }
+      - { name: books_heading, label: 齋主：著作標題, type: string }
+      - { name: books_role, label: 齋主：著作預設角色, type: string }
       - { name: tajiyu_title, label: 獺祭魚頁標題（未填網址時才會用到）, type: string }
       - { name: tajiyu_intro, label: 獺祭魚簡介, type: string }
 

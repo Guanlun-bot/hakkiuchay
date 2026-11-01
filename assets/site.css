@@ -686,3 +686,6 @@ footer .wrap { align-items: center; }
 .owner-row { display: flex; gap: 36px; align-items: flex-start; }
 .avatar-img { width: 200px; height: 200px; }
 @media (max-width: 720px) { .owner-row { flex-direction: column; gap: 20px; } .avatar-img { width: 160px; height: 160px; } }
+/* 照片說明：貼齊照片左緣 */
+.plate-foot { justify-content: flex-start; transition: margin-left .4s var(--ease); }
+.plate-cap { color: var(--ink-soft); font-size: 13.5px; }

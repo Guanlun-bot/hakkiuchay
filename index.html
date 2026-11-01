@@ -72,3 +72,22 @@ nav: home
 })();
 </script>
 {% endif %}
+
+{% if photos.size > 0 %}
+<script>
+(function () {
+  const plate = document.getElementById("plate"), foot = document.querySelector(".plate-foot");
+  if (!plate || !foot) return;
+  function align() {
+    const img = plate.querySelector(".plate-item.is-on img") || plate.querySelector("img");
+    if (!img || !img.complete || !img.naturalWidth) return;
+    foot.style.marginLeft = img.offsetLeft + "px";
+    foot.style.maxWidth = img.offsetWidth + "px";
+  }
+  plate.querySelectorAll("img").forEach(im => im.addEventListener("load", align));
+  addEventListener("resize", align);
+  new MutationObserver(align).observe(plate, { subtree: true, attributes: true, attributeFilter: ["class"] });
+  align();
+})();
+</script>
+{% endif %}

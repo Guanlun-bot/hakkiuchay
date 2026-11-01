@@ -41,10 +41,15 @@ jobs:
           done
       - name: 壓縮
         run: |
-          find assets/uploads -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -size +600k -print0 |
+          # 只處理長邊超過 2000 像素、或大於 1.5MB 的照片，已處理過的不再重壓
+          find assets/uploads -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -print0 |
             while IFS= read -r -d '' f; do
-              mogrify -auto-orient -resize '2000x2000>' -strip -quality 82 "$f"
-              echo "壓縮：$f"
+              long=$(identify -format '%[fx:max(w,h)]' "$f[0]" 2>/dev/null || echo 0)
+              size=$(stat -c %s "$f")
+              if [ "$long" -gt 2000 ] || [ "$size" -gt 1500000 ]; then
+                mogrify -auto-orient -resize '2000x2000>' -strip -quality 82 "$f"
+                echo "壓縮：$f"
+              fi
             done
       - name: 加進首頁輪播
         run: python3 .github/scripts/add_home_photos.py

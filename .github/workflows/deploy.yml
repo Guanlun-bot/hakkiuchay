@@ -1,0 +1,39 @@
+# 發布網站：每次 main 有更新（或照片處理完）就用 Jekyll 建置並發布到 GitHub Pages。
+# 發布會排隊依序進行，不會互相卡住。
+name: 發布網站
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["處理上傳的照片"]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

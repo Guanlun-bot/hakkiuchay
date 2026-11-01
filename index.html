@@ -22,13 +22,6 @@ nav: home
     </div>
     <div class="plate-foot">
       <span class="plate-cap" id="plate-cap">{{ photos[0].caption }}</span>
-      {% if photos.size > 1 %}
-      <span class="plate-ctrl">
-        <button type="button" id="plate-prev" aria-label="上一張">前</button>
-        <span class="plate-count" aria-live="polite"><b id="plate-n">1</b><i>／</i>{{ photos.size }}</span>
-        <button type="button" id="plate-next" aria-label="下一張">後</button>
-      </span>
-      {% endif %}
     </div>
     {% endif %}
     {% if H.quote and H.quote != "" %}
@@ -59,19 +52,17 @@ nav: home
   const box = document.getElementById("plate");
   const items = [...box.querySelectorAll(".plate-item")];
   const caps = {{ photos | map: "caption" | jsonify }};
-  const n = document.getElementById("plate-n"), cap = document.getElementById("plate-cap");
+  const cap = document.getElementById("plate-cap");
   const secs = Math.max(2, Number(box.dataset.seconds) || 6) * 1000;
   let i = 0, timer = null;
   function show(k) {
     i = (k + items.length) % items.length;
     items.forEach((el, j) => { el.classList.toggle("is-on", j === i); el.setAttribute("aria-hidden", j === i ? "false" : "true"); });
-    n.textContent = i + 1; cap.textContent = caps[i] || "";
+    cap.textContent = caps[i] || "";
     const nx = items[(i + 1) % items.length].querySelector("img"); nx.loading = "eager";
   }
   function play() { stop(); timer = setInterval(() => show(i + 1), secs); }
   function stop() { if (timer) clearInterval(timer); timer = null; }
-  document.getElementById("plate-prev").onclick = () => { show(i - 1); play(); };
-  document.getElementById("plate-next").onclick = () => { show(i + 1); play(); };
   addEventListener("keydown", e => { if (e.target.closest("input,textarea")) return; if (e.key === "ArrowLeft") { show(i - 1); play(); } if (e.key === "ArrowRight") { show(i + 1); play(); } });
   let x0 = null;
   box.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });

@@ -12,6 +12,7 @@ kramdown:
 permalink: /posts/:year/:month/:day/:title/
 exclude:
   - README.md
+  - CLAUDE.md
   - .pages.yml
 defaults:
   - scope:

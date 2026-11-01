@@ -307,6 +307,14 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .prose ul, .prose ol { margin: 0 0 1.3em; }
 .lightbox .nav:focus-visible, .lightbox .close:focus-visible { outline-offset: -6px; }
 
+/* 齋名：青柳隷書しも（只含「學鳩齋」三字） */
+@font-face {
+  font-family: "Aoyagi Reisho Name";
+  src: url("fonts/aoyagireisho-name.woff2") format("woff2");
+  font-display: swap;
+}
+.brand-name { font-family: "Aoyagi Reisho Name", var(--font-display); font-size: 30px; letter-spacing: 0.12em; line-height: 1; }
+
 /* 印章 logo */
 .brand .logo { width: 44px; height: 44px; display: block; }
 .empty-wall .seal-big { width: 220px; height: auto; opacity: .92; }

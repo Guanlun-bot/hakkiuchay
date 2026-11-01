@@ -4,7 +4,9 @@
   <time datetime="{{ p.date | date: '%Y-%m-%d' }}">{{ p.date | date: "%Y・%m・%d" }}{% include callno.html post=p %}</time>
   <div>
     <h3><a href="{{ p.url | relative_url }}">{{ p.title }}</a></h3>
-    {% if p.summary %}<p>{{ p.summary }}</p>{% endif %}
+    {%- if p.summary and p.summary != "" -%}{%- assign pre = p.summary -%}{%- else -%}{%- assign pre = p.content | strip_html | strip_newlines -%}{%- endif -%}
+    {%- assign pre = pre | replace: "[註", "" | split: "]" | join: "" | truncate: 160, "……" -%}
+    <p class="preview">{{ pre }}</p>
     {% if include.show_cat %}<div class="meta-line"><a class="cat-tag" href="{{ '/' | append: p.cat | append: '/' | relative_url }}">{{ c.name }}</a></div>{% endif %}
   </div>
 </li>

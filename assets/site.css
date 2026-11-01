@@ -667,3 +667,6 @@ a.contents-latest:hover { color: var(--c); }
 /* 引文：整段置中，各行靠左 */
 .epigraph { text-align: left; width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
 .epigraph::before { margin-left: 0; margin-right: auto; }
+/* 照片放大：高度佔畫面約八成五，寬度放寬 */
+.spread { --plate-h: min(calc(100svh - 150px), 900px); max-width: 1320px; margin-top: 28px; }
+@media (max-width: 900px) { .spread { --plate-h: min(92vw, 70svh); margin-top: 16px; padding: 0 10px; } }

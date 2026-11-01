@@ -767,3 +767,9 @@ body.has-bg footer { background: color-mix(in srgb, var(--paper) 78%, transparen
 
 /* 整幅顯示：畫完整置中於背景，四周用畫邊顏色補滿；文字紙面照常滿版 */
 body.bg-whole::before { top: 67px; background: var(--bgimg) center / contain no-repeat, var(--bgfill, var(--paper-2)); }
+/* 大樹跤：不模糊，改一層透明灰紙面 */
+body.bg-whole main#app, body.bg-whole header.top, body.bg-whole footer { -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.bg-whole main#app { background: rgba(232, 232, 230, .62); }
+body.bg-whole header.top, body.bg-whole footer { background: rgba(232, 232, 230, .72); }
+[data-theme="dark"] body.bg-whole main#app { background: rgba(28, 28, 30, .58); }
+[data-theme="dark"] body.bg-whole header.top, [data-theme="dark"] body.bg-whole footer { background: rgba(28, 28, 30, .7); }

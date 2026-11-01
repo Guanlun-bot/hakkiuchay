@@ -6,8 +6,6 @@ academic:
   en: ACADEMIC
   cover: /assets/uploads/covers/nianchatu.jpg
   cover_caption: 宋　劉松年〈攆茶圖〉，國立故宮博物院藏
-  bg_whole: true
-  bg_fill: "#755c3a"
 study-talks:
   name: 拈花記
   desc: 這裡放學佛筆記

@@ -1,7 +1,7 @@
 academic:
   name: 自反軒
   desc: 這裡放的是學術文章
-  prefix: CHI
+  prefix: TSU
   cover: /assets/uploads/covers/nianchatu.jpg
   cover_caption: 宋　劉松年〈攆茶圖〉，國立故宮博物院藏
   bg_whole: true

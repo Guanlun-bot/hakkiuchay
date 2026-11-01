@@ -2,15 +2,13 @@ site_name: 學鳩齋
 nav_home: 關於書齋
 nav_tajiyu: 獺祭魚
 footer: 學鳩齋
-owner_heading: 齋主
-contact_heading: 聯絡
-contact_note: 歡迎來信交流，討論文章、指正錯誤，或只是打聲招呼。
+owner_heading: 書齋主人
+contact_heading: 怎麼找我
+contact_note: 歡迎來信交流、聊天，討論文章、指正錯誤，或只是打聲招呼。
 email_label: 電子郵件
-place_label: 所在
+place_label: 棲息地
+discord_label: Discord 群組
+signal_label: Signal 群組
 empty_category: 還沒有文章。
 tajiyu_title: 獺祭魚
 tajiyu_intro: 讀書摘錄與典故彙編。
-discord_label: Discord
-signal_label: Signal 群組
-social_label: 社群
-more_label: 更多

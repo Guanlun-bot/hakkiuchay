@@ -108,16 +108,13 @@ content:
       - name: owner
         label: 名字或字號
         type: string
-      - name: owner_tagline
-        label: 名字下方一行（字號等）
-        type: string
       - name: avatar
         label: 大頭貼
         type: image
       - name: owner_bio
         label: 自我介紹
         type: text
-        description: 首頁名片只顯示第一段，其餘收在「更多」裡；空一行就是分段。
+        description: 空一行就是分段。
       - name: email
         label: 電子郵件
         type: string

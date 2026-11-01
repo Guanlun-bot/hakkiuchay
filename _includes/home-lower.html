@@ -1,7 +1,4 @@
 {%- assign S = site.data.site -%}{%- assign T = site.data.text -%}{%- assign H = site.data.home -%}
-{%- assign bio_parts = S.owner_bio | default: "" | split: "
-
-" -%}
 <section class="lower">
   {% if H.intro and H.intro != "" %}
   <div class="lower-main">
@@ -15,17 +12,9 @@
       {% if S.avatar and S.avatar != "" %}<img class="card-avatar" src="{{ S.avatar | relative_url }}" alt="{{ S.owner }}的大頭貼" width="72" height="72">{% endif %}
       <div>
         <p class="card-name">{{ S.owner }}</p>
-        {% if S.owner_tagline and S.owner_tagline != "" %}<p class="card-tag">{{ S.owner_tagline }}</p>{% endif %}
       </div>
     </div>
-    {% if bio_parts.size > 0 %}
-    <div class="card-bio">{{ bio_parts[0] | markdownify }}</div>
-    {% if bio_parts.size > 1 %}
-    <details class="card-more"><summary>{{ T.more_label | default: "更多" }}</summary>
-      <div class="card-bio">{% for b in bio_parts offset: 1 %}{{ b | markdownify }}{% endfor %}</div>
-    </details>
-    {% endif %}
-    {% endif %}
+    {% if S.owner_bio and S.owner_bio != "" %}<div class="card-bio">{{ S.owner_bio | markdownify }}</div>{% endif %}
     <ul class="card-links" id="contact" aria-label="{{ T.contact_heading }}">
       {% if S.email and S.email != "" %}<li><a href="mailto:{{ S.email }}">{% include icon-mail.svg %}<span>{{ S.email }}</span></a></li>{% endif %}
       {% if S.discord and S.discord != "" %}<li><a href="{{ S.discord }}" target="_blank" rel="noopener">{% include icon-discord.svg %}<span>{{ T.discord_label | default: "Discord" }}</span></a></li>{% endif %}

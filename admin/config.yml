@@ -91,7 +91,6 @@ collections:
         file: _data/site.yml
         fields:
           - { name: owner, label: 名字或字號, widget: string }
-          - { name: owner_tagline, label: 名字下方一行（字號等）, widget: string, required: false }
           - { name: avatar, label: 大頭貼, widget: image, required: false }
           - { name: owner_bio, label: 自我介紹, widget: text, required: false }
           - { name: email, label: 電子郵件, widget: string, required: false }

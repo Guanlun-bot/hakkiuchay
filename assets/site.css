@@ -795,3 +795,4 @@ body.bg-gray header.top, body.bg-gray footer { background: rgba(232, 232, 230, .
   .lower-intro p:first-child { font-size: 19.5px; }
   .card-bio p { font-size: 15px; }
 }
+.card { position: static; }

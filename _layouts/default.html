@@ -107,6 +107,11 @@
 })();
 
 (function () {
+  /* 首頁大照片剛好填滿頁首以下 */
+  const hd = document.querySelector("header.top");
+  const setH = () => document.documentElement.style.setProperty("--hh", hd.offsetHeight + "px");
+  setH(); addEventListener("resize", setH);
+
   /* 閱讀進度 */
   const bar = document.getElementById("progress");
   if (document.querySelector(".article")) {

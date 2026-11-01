@@ -3,50 +3,52 @@ layout: default
 title: 學鳩齋
 nav: home
 ---
-{%- assign photos = site.data.photos.photos -%}
-<div class="wrap">
-  <h1 class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">學鳩齋</h1>
-  {% if photos and photos.size > 0 %}
-  <div class="wall" id="wall">
-    {% for ph in photos %}{% if ph.image %}
-    <figure>
-      <button type="button" data-i="{{ forloop.index0 }}" aria-label="放大照片{% if ph.caption %}：{{ ph.caption | escape }}{% endif %}">
-        <img src="{{ ph.image | relative_url }}" alt="{{ ph.caption | default: '' | escape }}" loading="{% if forloop.index > 6 %}lazy{% else %}eager{% endif %}" decoding="async">
-      </button>
-    </figure>
-    {% endif %}{% endfor %}
+{%- assign photos = site.data.photos.photos | where_exp: "p", "p.image" -%}
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">學鳩齋</h1>
+{% if photos.size > 0 %}
+<section class="slides" id="slides" aria-roledescription="輪播" aria-label="照片">
+  {% for ph in photos %}
+  <figure class="slide{% if forloop.first %} is-on{% endif %}" aria-hidden="{% unless forloop.first %}true{% else %}false{% endunless %}">
+    <img src="{{ ph.image | relative_url }}" alt="{{ ph.caption | default: '' | escape }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+    {% if ph.caption and ph.caption != "" %}<figcaption>{{ ph.caption }}</figcaption>{% endif %}
+  </figure>
+  {% endfor %}
+  {% if photos.size > 1 %}
+  <button class="slide-nav prev" type="button" aria-label="上一張">‹</button>
+  <button class="slide-nav next" type="button" aria-label="下一張">›</button>
+  <div class="slide-dots" role="tablist">
+    {% for ph in photos %}<button type="button" role="tab" aria-label="第 {{ forloop.index }} 張"{% if forloop.first %} aria-selected="true"{% endif %}></button>{% endfor %}
   </div>
-  {% else %}
-  <div class="empty-wall"><img class="seal-big" src="{{ '/assets/img/seal-512.png' | relative_url }}" alt="學鳩齋印" width="220" height="220"></div>
   {% endif %}
-</div>
-
-{% if photos and photos.size > 0 %}
-<dialog class="lightbox" id="lb" aria-label="照片">
-  <button class="nav" id="lb-prev" type="button" aria-label="上一張">‹</button>
-  <div class="stagebox"><img id="lb-img" alt=""><span class="cap" id="lb-cap"></span></div>
-  <button class="nav" id="lb-next" type="button" aria-label="下一張">›</button>
-  <span class="count" id="lb-count"></span>
-  <button class="close" id="lb-close" type="button" aria-label="關閉">×</button>
-</dialog>
+</section>
+{% if photos.size > 1 %}
 <script>
 (function () {
-  const items = [...document.querySelectorAll("#wall button")].map(b => {
-    const img = b.querySelector("img"); return { src: img.src, cap: img.alt };
-  });
-  const lb = document.getElementById("lb"), im = document.getElementById("lb-img"),
-        cap = document.getElementById("lb-cap"), cnt = document.getElementById("lb-count");
-  let i = 0;
-  const show = n => { i = (n + items.length) % items.length; im.src = items[i].src; im.alt = items[i].cap; cap.textContent = items[i].cap; cnt.textContent = (i + 1) + " / " + items.length; };
-  document.querySelectorAll("#wall button").forEach((b, n) => b.addEventListener("click", () => { show(n); lb.showModal(); }));
-  document.getElementById("lb-prev").onclick = () => show(i - 1);
-  document.getElementById("lb-next").onclick = () => show(i + 1);
-  document.getElementById("lb-close").onclick = () => lb.close();
-  lb.addEventListener("click", e => { if (e.target === lb || e.target.classList.contains("stagebox")) lb.close(); });
-  lb.addEventListener("keydown", e => { if (e.key === "ArrowLeft") show(i - 1); if (e.key === "ArrowRight") show(i + 1); });
+  const box = document.getElementById("slides");
+  const slides = [...box.querySelectorAll(".slide")], dots = [...box.querySelectorAll(".slide-dots button")];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let i = 0, timer = null;
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => { s.classList.toggle("is-on", k === i); s.setAttribute("aria-hidden", k === i ? "false" : "true"); });
+    dots.forEach((d, k) => d.setAttribute("aria-selected", k === i ? "true" : "false"));
+    const img = slides[(i + 1) % slides.length].querySelector("img"); img.loading = "eager";
+  }
+  function play() { if (reduce) return; stop(); timer = setInterval(() => show(i + 1), 6000); }
+  function stop() { if (timer) clearInterval(timer); timer = null; }
+  box.querySelector(".prev").onclick = () => { show(i - 1); play(); };
+  box.querySelector(".next").onclick = () => { show(i + 1); play(); };
+  dots.forEach((d, k) => d.onclick = () => { show(k); play(); });
+  box.addEventListener("mouseenter", stop); box.addEventListener("mouseleave", play);
+  addEventListener("keydown", e => { if (e.key === "ArrowLeft") { show(i - 1); play(); } if (e.key === "ArrowRight") { show(i + 1); play(); } });
   let x0 = null;
-  lb.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
-  lb.addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); x0 = null; });
+  box.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
+  box.addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) { show(i + (dx < 0 ? 1 : -1)); play(); } x0 = null; });
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : play());
+  play();
 })();
 </script>
+{% endif %}
+{% else %}
+<div class="wrap"><div class="empty-wall"><img class="seal-big" src="{{ '/assets/img/seal-512.png' | relative_url }}" alt="學鳩齋印" width="220" height="220"></div></div>
 {% endif %}

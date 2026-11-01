@@ -664,3 +664,6 @@ a.contents-latest:hover { color: var(--c); }
 .plate-foot { min-height: 0; }
 .plate-foot:empty, .plate-cap:empty { display: none; }
 @media (max-width: 900px) { .epigraph p { font-size: 16.5px; } }
+/* 引文：整段置中，各行靠左 */
+.epigraph { text-align: left; width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
+.epigraph::before { margin-left: 0; margin-right: auto; }

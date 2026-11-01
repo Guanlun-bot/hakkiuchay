@@ -1,0 +1,21 @@
+---
+layout: default
+---
+{%- assign c = site.data.categories[page.cat] -%}
+{%- assign posts = site.posts | where: "cat", page.cat -%}
+<div class="wrap" style="--c:{{ c.color }}">
+  <header class="page-head">
+    <div class="eyebrow">{{ c.en }}</div>
+    <h1>{{ c.name }}</h1>
+    <p>{{ c.desc }}</p>
+  </header>
+  <section class="section">
+    {% if posts.size > 0 %}
+    <ul class="list">
+      {% for p in posts %}{% include post-item.html post=p %}{% endfor %}
+    </ul>
+    {% else %}
+    <p class="sample-note">還沒有文章。</p>
+    {% endif %}
+  </section>
+</div>

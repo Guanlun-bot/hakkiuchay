@@ -1,0 +1,70 @@
+---
+layout: default
+---
+{%- assign S = site.data.site -%}
+{%- assign c = site.data.categories[page.cat] -%}
+{%- assign same = site.posts | where: "cat", page.cat -%}
+{%- assign idx = -1 -%}
+{%- for q in same -%}{%- if q.url == page.url -%}{%- assign idx = forloop.index0 -%}{%- endif -%}{%- endfor -%}
+{%- assign newer_i = idx | minus: 1 -%}
+{%- assign older_i = idx | plus: 1 -%}
+{%- if newer_i >= 0 -%}{%- assign newer = same[newer_i] -%}{%- endif -%}
+{%- assign older = same[older_i] -%}
+{%- assign fixed_src = 'src="' | append: site.baseurl | append: '/assets/' -%}
+<div class="wrap" style="--c:{{ c.color }}">
+  <article class="article">
+    <div class="crumbs"><a href="{{ '/' | append: page.cat | append: '/' | relative_url }}">{{ c.name }}</a></div>
+    <h1>{{ page.title }}</h1>
+    <div class="byline">
+      <span>{{ S.owner }}</span>
+      <time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: "%Y・%m・%d" }}</time>
+      {% include callno.html post=page %}
+      {% if page.source and page.source != "" %}<span>出處：{{ page.source }}</span>{% endif %}
+    </div>
+
+    {% if page.cat == "academic" and page.summary %}
+    <div class="abstract"><b>摘要</b>{{ page.summary }}
+      {% if page.keywords and page.keywords.size > 0 %}<div class="meta-line" style="margin-top:10px">關鍵詞 {% for k in page.keywords %}<span class="kw">{{ k }}</span>{% endfor %}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="prose">{{ content | replace: 'src="/assets/', fixed_src }}</div>
+
+    {% if page.notes.size > 0 or page.refs.size > 0 %}
+    <div class="notes-block">
+      {% if page.notes.size > 0 %}<h2>註釋</h2><ol>{% for n in page.notes %}<li id="fn-{{ forloop.index }}">{{ n | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endfor %}</ol>{% endif %}
+      {% if page.refs.size > 0 %}<h2>參考書目</h2><ul>{% for r in page.refs %}<li>{{ r | markdownify | remove: '<p>' | remove: '</p>' | strip }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if page.cat == "academic" %}
+    {%- capture cite -%}{{ S.owner }}：〈{{ page.title }}〉，《學鳩齋》，{{ page.date | date: "%Y/%m/%d" }}，{{ page.url | absolute_url }}。{%- endcapture -%}
+    <div class="cite-box"><b>引用本文</b><p id="cite-text">{{ cite }}</p>
+      <button class="btn" id="copy-cite" type="button">複製引用格式</button></div>
+    {% endif %}
+
+    <nav class="pager" aria-label="同類文章">
+      <div>{% if older %}<a href="{{ older.url | relative_url }}"><small>← 上一篇</small>{{ older.title }}</a>{% endif %}</div>
+      <div class="next">{% if newer %}<a href="{{ newer.url | relative_url }}"><small>下一篇 →</small>{{ newer.title }}</a>{% else %}<a href="{{ '/' | append: page.cat | append: '/' | relative_url }}"><small>回到</small>{{ c.name }}</a>{% endif %}</div>
+    </nav>
+  </article>
+</div>
+
+<script>
+(function () {
+  /* 內文寫 [註1]、[註2]，自動變成可點的註腳號碼 */
+  const prose = document.querySelector(".prose");
+  prose.innerHTML = prose.innerHTML.replace(/\\?\[註\s*(\d+)\\?\]/g, (m, n) =>
+    `<button class="fn" type="button" data-fn="${n}" aria-label="註 ${n}">${n}</button>`);
+  prose.querySelectorAll(".fn").forEach(b => b.addEventListener("click", () => {
+    const li = document.getElementById("fn-" + b.dataset.fn); if (!li) return;
+    li.scrollIntoView({ behavior: "smooth", block: "center" });
+    li.classList.add("flash"); setTimeout(() => li.classList.remove("flash"), 1600);
+  }));
+  const cb = document.getElementById("copy-cite");
+  if (cb) cb.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(document.getElementById("cite-text").textContent); cb.textContent = "已複製"; }
+    catch (e) { cb.textContent = "無法自動複製，請手動選取上方文字"; }
+  });
+})();
+</script>

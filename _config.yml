@@ -1,0 +1,21 @@
+title: 學鳩齋
+# 網站放在 https://guanlun-bot.github.io/hakkiuchay/ 時要有 baseurl。
+# 以後綁了自己的網域，把 baseurl 改成 "" 、url 改成新網域即可。
+baseurl: "/hakkiuchay"
+url: "https://guanlun-bot.github.io"
+lang: zh-Hant
+timezone: Asia/Taipei
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+permalink: /posts/:year/:month/:day/:title/
+exclude:
+  - README.md
+  - .pages.yml
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post

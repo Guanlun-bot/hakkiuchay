@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title and page.title != site.title %}{{ page.title }}｜{% endif %}學鳩齋</title>
+{% if page.summary %}<meta name="description" content="{{ page.summary | strip_html | escape }}">{% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+</head>
+<body>
+{% assign S = site.data.site %}
+{% assign nav = page.nav | default: page.cat %}
+<div id="progress" aria-hidden="true"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="{{ '/' | relative_url }}"><span class="seal" aria-hidden="true">學鳩</span><span class="brand-name">學鳩齋<small lang="en">HAK KIU CHAY</small></span></a>
+    <nav aria-label="主選單">
+      <ul id="nav">
+        <li><a href="{{ '/' | relative_url }}"{% if nav == 'home' %} aria-current="page"{% endif %}>首頁</a></li>
+        <li><a href="{{ '/academic/' | relative_url }}"{% if nav == 'academic' %} aria-current="page"{% endif %}>學術</a></li>
+        <li><a href="{{ '/study-talks/' | relative_url }}"{% if nav == 'study-talks' %} aria-current="page"{% endif %}>參學瑣談</a></li>
+        <li><a href="{{ '/life/' | relative_url }}"{% if nav == 'life' %} aria-current="page"{% endif %}>生活札記</a></li>
+        {% if S.tajiyu_url and S.tajiyu_url != "" %}
+        <li><a href="{{ S.tajiyu_url }}" target="_blank" rel="noopener">獺祭魚<span class="ext" aria-hidden="true">↗</span></a></li>
+        {% else %}
+        <li><a href="{{ '/tajiyu/' | relative_url }}"{% if nav == 'tajiyu' %} aria-current="page"{% endif %}>獺祭魚<span class="ext" aria-hidden="true">↗</span></a></li>
+        {% endif %}
+        <li><a href="{{ '/about/' | relative_url }}"{% if nav == 'about' %} aria-current="page"{% endif %}>關於</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div class="stage"><main id="app" class="turn">
+{{ content }}
+</main></div>
+
+<div class="shelf" aria-hidden="true"><canvas id="ink"></canvas></div>
+<footer>
+  <div class="wrap">
+    <span>學鳩齋 Hak Kiu Chay ・ 決起而飛，搶榆枋而止</span>
+    <span>© {{ site.time | date: "%Y" }} Hak Kiu Chay</span>
+  </div>
+</footer>
+
+<script>
+/* 書架：頁尾一排書脊，載入時一冊冊歸位 */
+(function () {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let SHELF = null, shelfW = 0;
+  function build(W) {
+    let seed = 11;
+    const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    const books = []; let x = 8;
+    while (x < W - 8) {
+      const k = rnd();
+      if (k < 0.12) {
+        const n = 3 + Math.floor(rnd() * 4), w = 46 + rnd() * 30;
+        for (let i = 0; i < n; i++) books.push({ type: "flat", x: x + rnd() * 4, w: w - rnd() * 6, h: 7 + rnd() * 3, level: i, tone: Math.floor(rnd() * 4) });
+        x += w + 10;
+      } else if (k < 0.18) { x += 14 + rnd() * 30; }
+      else {
+        const w = 10 + rnd() * 16, h = 54 + rnd() * 50;
+        books.push({ type: "spine", x, w, h, lean: (k > 0.95 && books.length) ? -0.18 : 0, tone: Math.floor(rnd() * 4), bands: rnd() < 0.5 });
+        x += w + 1 + rnd() * 2;
+      }
+    }
+    books.forEach((b, i) => b.delay = i * 14);
+    return books;
+  }
+  function draw(animate) {
+    const cv = document.getElementById("ink"); if (!cv) return;
+    const r = cv.getBoundingClientRect(), W = r.width, H = r.height;
+    if (!SHELF || Math.abs(W - shelfW) > 40) { SHELF = build(W); shelfW = W; }
+    const dpr = devicePixelRatio || 1;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const g = cv.getContext("2d"), css = getComputedStyle(document.documentElement);
+    const tones = ["--dove", "--c-academic", "--c-talks", "--c-life"].map(v => css.getPropertyValue(v).trim());
+    const rule = css.getPropertyValue("--ink-soft").trim(), base = H - 14, start = performance.now(), dur = 650;
+    function frame(now) {
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+      let done = true;
+      SHELF.forEach(b => {
+        let t = 1;
+        if (animate && !reduce) { t = Math.min(1, Math.max(0, (now - start - b.delay) / dur)); if (t < 1) done = false; }
+        const e = 1 - Math.pow(1 - t, 3);
+        g.globalAlpha = 0.07 + 0.11 * e; g.fillStyle = tones[b.tone];
+        if (b.type === "spine") {
+          g.save(); g.translate(b.x, base + (1 - e) * b.h * 0.7); g.rotate(b.lean);
+          g.fillRect(0, -b.h, b.w, b.h); g.globalAlpha *= 1.6;
+          g.fillRect(2, -b.h + 10, b.w - 4, 2);
+          if (b.bands) { g.fillRect(2, -20, b.w - 4, 2); g.fillRect(2, -b.h * 0.55, b.w - 4, 1.5); }
+          g.restore();
+        } else {
+          const y = base - (b.level + 1) * 10 - (1 - e) * 24;
+          g.fillRect(b.x, y, b.w, b.h); g.globalAlpha *= 1.6;
+          for (let k = 1; k <= 4; k++) g.fillRect(b.x + b.w * k / 5, y + b.h - 2, 1.2, 2);
+        }
+      });
+      g.globalAlpha = 0.22; g.fillStyle = rule; g.fillRect(0, base, W, 2);
+      g.globalAlpha = 0.08; g.fillRect(0, base + 2, W, 10); g.globalAlpha = 1;
+      if (!done) requestAnimationFrame(frame);
+    }
+    if (animate && !reduce) {
+      const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { io.disconnect(); requestAnimationFrame(frame); } });
+      frame(start); io.observe(cv);
+    } else frame(performance.now());
+  }
+  addEventListener("resize", () => draw(false));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw(false));
+  new MutationObserver(() => draw(false)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  draw(true);
+
+  /* 閱讀進度 */
+  const bar = document.getElementById("progress");
+  if (document.querySelector(".article")) {
+    const up = () => { const m = document.documentElement.scrollHeight - innerHeight; bar.style.width = (m > 0 ? Math.min(1, scrollY / m) * 100 : 0) + "%"; };
+    addEventListener("scroll", up, { passive: true }); up();
+  }
+})();
+</script>
+</body>
+</html>

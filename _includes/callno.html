@@ -1,0 +1,5 @@
+{%- assign _same = site.posts | where: "cat", include.post.cat | reverse -%}
+{%- assign _n = 0 -%}
+{%- for q in _same -%}{%- if q.url == include.post.url -%}{%- assign _n = forloop.index -%}{%- endif -%}{%- endfor -%}
+{%- assign _pad = _n | prepend: "00" | slice: -3, 3 -%}
+<span class="callno" title="索書號">{{ site.data.categories[include.post.cat].prefix }}・{{ _pad }}</span>

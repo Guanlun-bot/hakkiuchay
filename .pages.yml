@@ -1,0 +1,117 @@
+# 學鳩齋管理後台設定（Pages CMS：https://app.pagescms.org）
+media:
+  input: assets/uploads
+  output: /assets/uploads
+
+content:
+  - name: posts
+    label: 文章
+    type: collection
+    path: _posts
+    filename: "{year}-{month}-{day}-{fields.slug}.md"
+    view:
+      fields: [title, cat, date]
+      primary: title
+      sort: date
+      order: desc
+    fields:
+      - name: title
+        label: 標題
+        type: string
+        required: true
+      - name: slug
+        label: 網址代稱
+        type: string
+        required: true
+        description: 只能用英文小寫、數字和連字號，例如 three-speeds。會成為這篇文章網址的一部分，建立後不要再改。
+        pattern:
+          regex: "^[a-z0-9-]+$"
+          message: 只能用英文小寫、數字和連字號（-）
+      - name: cat
+        label: 分類
+        type: select
+        required: true
+        options:
+          values:
+            - name: academic
+              label: 學術
+            - name: study-talks
+              label: 參學瑣談
+            - name: life
+              label: 生活札記
+      - name: date
+        label: 日期
+        type: date
+        required: true
+      - name: summary
+        label: 摘要
+        type: text
+        description: 列表上顯示的一兩句話。學術文章會當作摘要放在文章開頭。
+      - name: keywords
+        label: 關鍵詞（學術文章用）
+        type: string
+        list: true
+      - name: source
+        label: 出處（參學瑣談用，例如：讀《論語》、聽講記）
+        type: string
+      - name: body
+        label: 內文
+        type: rich-text
+        description: 要加註腳時，在內文寫 [註1]、[註2]……，再到下方「註釋」依序填寫。
+        options:
+          format: markdown
+          rename: safe
+      - name: notes
+        label: 註釋
+        type: text
+        list: true
+        description: 第一條對應內文的 [註1]，第二條對應 [註2]，依此類推。
+      - name: refs
+        label: 參考書目
+        type: string
+        list: true
+
+  - name: photos
+    label: 首頁照片
+    type: file
+    path: _data/photos.yml
+    format: yaml
+    fields:
+      - name: photos
+        label: 照片（可拖曳調整順序）
+        type: object
+        list: true
+        fields:
+          - name: image
+            label: 照片
+            type: image
+            options:
+              rename: safe
+          - name: caption
+            label: 說明（可留空，放大時顯示在角落）
+            type: string
+
+  - name: site
+    label: 基本資料
+    type: file
+    path: _data/site.yml
+    format: yaml
+    fields:
+      - name: owner
+        label: 名字或字號
+        type: string
+      - name: owner_bio
+        label: 自我介紹
+        type: text
+      - name: email
+        label: 電子郵件
+        type: string
+        description: 留空就不會顯示。
+      - name: place
+        label: 所在
+        type: string
+        description: 留空就不會顯示。
+      - name: tajiyu_url
+        label: 獺祭魚網址
+        type: string
+        description: 填入後，選單上的「獺祭魚」會直接開啟這個網址。

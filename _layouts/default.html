@@ -25,7 +25,8 @@
   window.XJTheme = { autoTheme: autoTheme, nextBoundary: nextBoundary };
 })();
 </script>
-<title>{% if page.title and page.title != site.title %}{{ page.title }}｜{% endif %}{{ site.data.text.site_name | default: "學鳩齋" }}</title>
+{%- assign ptitle = page.title -%}{%- if page.layout == "category" -%}{%- assign ptitle = site.data.categories[page.cat].name -%}{%- endif -%}
+<title>{% if ptitle and ptitle != site.title %}{{ ptitle }}｜{% endif %}{{ site.data.text.site_name | default: "學鳩齋" }}</title>
 {% if page.summary %}<meta name="description" content="{{ page.summary | strip_html | escape }}">{% endif %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

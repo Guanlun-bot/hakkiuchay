@@ -1,0 +1,30 @@
+# 從後台上傳的照片若太大，自動縮到長邊 2000 像素、品質 82，讓網站開得快。
+name: 壓縮上傳的照片
+on:
+  push:
+    branches: [main]
+    paths: ["assets/uploads/**"]
+permissions:
+  contents: write
+jobs:
+  compress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 壓縮
+        run: |
+          sudo apt-get -qq update && sudo apt-get -qq install -y imagemagick >/dev/null
+          find assets/uploads -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -size +600k -print0 |
+            while IFS= read -r -d '' f; do
+              mogrify -auto-orient -resize '2000x2000>' -strip -quality 82 "$f"
+              echo "壓縮：$f"
+            done
+      - name: 存回儲存庫
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add assets/uploads
+            git commit -m "自動壓縮照片"
+            git push
+          fi

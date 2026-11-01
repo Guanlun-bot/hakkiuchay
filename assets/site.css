@@ -305,3 +305,4 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 /* 內文圖片 */
 .prose img { max-width: 100%; height: auto; display: block; margin: 1.6em auto; border-radius: 2px; }
 .prose ul, .prose ol { margin: 0 0 1.3em; }
+.lightbox .nav:focus-visible, .lightbox .close:focus-visible { outline-offset: -6px; }

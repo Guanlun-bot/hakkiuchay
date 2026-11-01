@@ -15,12 +15,6 @@
       </div>
     </div>
     {% if S.owner_bio and S.owner_bio != "" %}<div class="card-bio">{{ S.owner_bio | markdownify }}</div>{% endif %}
-    <ul class="card-links" id="contact" aria-label="{{ T.contact_heading }}">
-      {% if S.email and S.email != "" %}<li><a href="mailto:{{ S.email }}">{% include icon-mail.svg %}<span>{{ S.email }}</span></a></li>{% endif %}
-      {% if S.discord and S.discord != "" %}<li><a href="{{ S.discord }}" target="_blank" rel="noopener">{% include icon-discord.svg %}<span>{{ T.discord_label | default: "Discord" }}</span></a></li>{% endif %}
-      {% if S.signal and S.signal != "" %}<li><a href="{{ S.signal }}" target="_blank" rel="noopener">{% include icon-signal.svg %}<span>{{ T.signal_label | default: "Signal" }}</span></a></li>{% endif %}
-      {% if S.place and S.place != "" %}<li class="is-text">{% include icon-place.svg %}<span>{{ S.place }}</span></li>{% endif %}
-    </ul>
     {% if S.books and S.books.size > 0 %}
     <div class="card-books">
       <h3 class="lower-label">{{ T.books_heading | default: "著作" }}</h3>
@@ -32,5 +26,11 @@
       </ul>
     </div>
     {% endif %}
+    <ul class="card-links" id="contact" aria-label="{{ T.contact_heading }}">
+      {% if S.email and S.email != "" %}<li><a href="mailto:{{ S.email }}">{% include icon-mail.svg %}<span>{{ S.email }}</span></a></li>{% endif %}
+      {% if S.discord and S.discord != "" %}<li><a href="{{ S.discord }}" target="_blank" rel="noopener">{% include icon-discord.svg %}<span>{{ T.discord_label | default: "Discord" }}</span></a></li>{% endif %}
+      {% if S.signal and S.signal != "" %}<li><a href="{{ S.signal }}" target="_blank" rel="noopener">{% include icon-signal.svg %}<span>{{ T.signal_label | default: "Signal" }}</span></a></li>{% endif %}
+      {% if S.place and S.place != "" %}<li class="is-text">{% include icon-place.svg %}<span>{{ S.place }}</span></li>{% endif %}
+    </ul>
   </aside>
 </section>

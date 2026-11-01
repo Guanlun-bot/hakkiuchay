@@ -796,3 +796,7 @@ body.bg-gray header.top, body.bg-gray footer { background: rgba(232, 232, 230, .
   .card-bio p { font-size: 15px; }
 }
 .card { position: static; }
+/* 著作在聯絡資訊之上，收緊間距 */
+.card-books { margin-top: 18px; padding-top: 18px; }
+.card-books + .card-links { margin-top: 18px; }
+.lower { padding-bottom: 64px; }

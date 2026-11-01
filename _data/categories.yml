@@ -9,7 +9,7 @@ study-talks:
   color: var(--c-talks)
   en: STUDY TALKS
 life:
-  name: 三籟圓
+  name: 大樹跤
   desc: 日常的片段
   color: var(--c-life)
   en: NOTEBOOK

@@ -1,18 +1,15 @@
 academic:
-  name: 學術
-  en: ACADEMIC
+  name: 近思室
+  desc: 這裡放的是學術文章
   color: var(--c-academic)
-  prefix: 學
-  desc: 研究論文與考證文字，附註腳與參考書目。
+  en: ACADEMIC
 study-talks:
-  name: 參學瑣談
-  en: STUDY TALKS
+  name: 拈花記
+  desc: 這裡放學佛筆記
   color: var(--c-talks)
-  prefix: 參
-  desc: 讀書、聽講、問學途中的心得與隨想。
+  en: STUDY TALKS
 life:
-  name: 生活札記
-  en: NOTEBOOK
+  name: 三籟圓
+  desc: 日常的片段
   color: var(--c-life)
-  prefix: 生
-  desc: 日常的片段：天氣、街巷、書桌上的小事。
+  en: NOTEBOOK

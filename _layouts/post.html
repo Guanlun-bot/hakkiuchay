@@ -66,6 +66,20 @@ layout: default
 
 <script>
 (function () {
+  /* 連續兩張以上、各自獨立一段的圖，排成兩欄相簿；點圖開原圖 */
+  const isImgPara = el => el && el.tagName === "P" && el.children.length === 1 && el.firstElementChild.tagName === "IMG" && el.textContent.trim() === "";
+  document.querySelectorAll(".prose > p").forEach(p => {
+    if (!isImgPara(p) || isImgPara(p.previousElementSibling) || !isImgPara(p.nextElementSibling)) return;
+    const box = document.createElement("div"); box.className = "gallery";
+    p.before(box);
+    let cur = p;
+    while (isImgPara(cur)) {
+      const next = cur.nextElementSibling, img = cur.firstElementChild, a = document.createElement("a");
+      a.href = img.currentSrc || img.src; a.target = "_blank"; a.rel = "noopener";
+      img.loading = "lazy"; a.append(img); box.append(a); cur.remove(); cur = next;
+    }
+  });
+
   /* 內文與摘要中的 [註1] 變成可點的註腳號碼 */
   let k = 0;
   document.querySelectorAll(".prose, .abstract-text").forEach(el => {

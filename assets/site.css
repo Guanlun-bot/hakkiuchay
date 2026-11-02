@@ -82,8 +82,11 @@ h1, h2, h3 { text-wrap: balance; }
 /* 區段（分類頁、獺祭魚頁） */
 .section { padding: 56px 0; border-bottom: 1px solid var(--rule); }
 .section:last-child { border-bottom: 0; }
-.page-head { padding: 56px 0 36px; border-bottom: 1px solid var(--rule); }
-.page-head h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(36px, 5vw, 52px); margin: 4px 0 0; letter-spacing: 0.08em; line-height: 1.3; }
+.page-head { padding: 64px 0 32px; border-bottom: 1px solid var(--rule); }
+.page-head + .section { padding-top: 24px; }
+.page-head h1, .article h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 3.6vw, 38px); line-height: 1.5; letter-spacing: .04em; word-break: keep-all; overflow-wrap: anywhere; }
+/* 標題只在標點處斷行，不把詞拆開；整句沒有標點又太長時才逐字斷 */
+.page-head h1 { margin: 0; }
 .page-head p { margin: 0; color: var(--ink-soft); max-width: 36em; }
 .sample-note { font-size: 13px; color: var(--dove); margin: 20px 0 0; }
 
@@ -156,22 +159,24 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .plate-item img { max-width: 100%; max-height: var(--plate-h); width: auto; height: auto; object-fit: contain; display: block; box-shadow: 0 1px 0 var(--rule), 0 24px 40px -28px rgba(30, 25, 20, .45); }
 /* 照片說明：貼齊照片左緣（位置由首頁的程式計算） */
 .plate-foot { display: flex; justify-content: flex-start; align-items: baseline; gap: 16px; margin-top: 18px; font-size: 13px; color: var(--dove); letter-spacing: .12em; min-height: 0; transition: margin-left .4s var(--ease); }
-.plate-cap { color: var(--ink-soft); font-size: 13.5px; }
+.plate-cap { color: var(--ink-soft); font-size: 13px; }
 .plate-foot:empty, .plate-cap:empty { display: none; }
 
 /* 引文：整段置中，各行靠左 */
 .epigraph { margin: 44px auto 8px; padding: 0; text-align: left; width: fit-content; max-width: 100%; }
 .epigraph::before { content: ""; display: block; width: 36px; height: 1px; background: var(--seal); margin: 0 auto 18px 0; }
 .epigraph blockquote { margin: 0; padding: 0; border: 0; background: none; }
-.epigraph p { margin: 0; font-size: 19px; line-height: 2.1; letter-spacing: .12em; color: var(--ink); font-weight: 600; text-indent: 0; }
+.epigraph p { margin: 0; font-size: 20px; line-height: 2.1; letter-spacing: .12em; color: var(--ink); font-weight: 600; text-indent: 0; }
 .epigraph figcaption { margin-top: 10px; font-size: 14px; letter-spacing: .25em; color: var(--ink-soft); }
 
 /* 下半：左書齋介紹＋畫，右齋主名片 */
 .lower { max-width: 1100px; margin: 0 auto; padding: 72px 24px 64px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; align-items: start; }
-.lower-label { margin: 0 0 22px; font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: .5em; color: var(--seal); }
+/* 小標籤：書齋、書齋主人、著作、摘要、註釋、目錄、引用本文，同一種樣式 */
+.lower-label, .abstract b, .notes-block h2, .toc-side b, .cite-box b { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: .4em; color: var(--seal); }
+.lower-label { margin: 0 0 22px; }
 .lower-main { padding-right: 56px; }
 .lower-intro p { margin: 0 0 1.15em; font-size: 17px; line-height: 2; color: var(--ink); text-indent: 0; }
-.lower-intro p:first-child { font-size: 19.5px; line-height: 1.9; font-weight: 600; letter-spacing: .04em; }
+.lower-intro p:first-child { font-size: 20px; line-height: 1.9; font-weight: 600; letter-spacing: .04em; }
 .lower-art { margin: 34px 0 0; }
 .lower-art img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); }
 .lower-art figcaption { margin-top: 10px; font-size: 13px; color: var(--ink-soft); letter-spacing: .06em; }
@@ -180,7 +185,7 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .card { border-left: 1px solid var(--rule); padding-left: 56px; }
 .card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
 .card-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--rule); flex: none; }
-.card-name { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: .12em; }
+.card-name { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: .12em; }
 .card-bio p { margin: 0 0 .9em; font-size: 15px; line-height: 1.95; color: var(--ink-soft); }
 
 .card-books { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--rule); }
@@ -189,31 +194,28 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .card-books li { display: flex; gap: 12px; align-items: flex-start; }
 .card-books svg { width: 19px; height: 19px; flex: none; margin-top: 3px; color: var(--ink-soft); }
 .card-books p { margin: 0; }
-.book-title { font-size: 14.5px; line-height: 1.7; color: var(--ink); }
+.book-title { font-size: 14px; line-height: 1.7; color: var(--ink); }
 .book-title a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
 .book-title a:hover { color: var(--seal); border-color: var(--seal); }
 .book-meta { font-size: 13px; line-height: 1.7; color: var(--ink-soft); margin-top: 2px !important; }
 
 .card-links { list-style: none; margin: 18px 0 0; padding: 18px 0 0; border-top: 1px solid var(--rule); display: grid; gap: 12px; }
-.card-links a, .card-links .is-text { display: inline-flex; align-items: center; gap: 12px; font-size: 14.5px; color: var(--ink); text-decoration: none; }
+.card-links a, .card-links .is-text { display: inline-flex; align-items: center; gap: 12px; font-size: 14px; color: var(--ink); text-decoration: none; }
 .card-links svg { width: 19px; height: 19px; color: var(--ink-soft); flex: none; transition: color .2s; }
 .card-links a span { border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
 .card-links a:hover span { color: var(--seal); border-color: var(--seal); }
 .card-links a:hover svg { color: var(--seal); }
 .card-links .is-text { color: var(--ink-soft); }
 #owner, #contact { scroll-margin-top: 90px; }
-#contact { padding-bottom: 96px; }
 
 @media (max-width: 900px) {
   .spread { --plate-h: min(92vw, 70svh); margin-top: 16px; padding: 0 10px; }
-  .epigraph p { font-size: 16.5px; }
+  .epigraph p { font-size: 17px; }
   .lower { grid-template-columns: minmax(0, 1fr); padding: 48px 20px 64px; gap: 44px; }
   .lower-main { padding-right: 0; }
-  .lower-intro p { font-size: 16.5px; line-height: 2.05; }
-  .lower-intro p:first-child { font-size: 18.5px; }
+  .lower-intro p { line-height: 2.05; }
+  .lower-intro p:first-child { font-size: 18px; }
   .card { border-left: 0; border-top: 1px solid var(--rule); padding: 32px 0 0; }
-  .card-bio p { font-size: 14.5px; }
-  #contact { padding-bottom: 64px; }
 }
 
 
@@ -222,11 +224,11 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .list li { position: relative; display: grid; grid-template-columns: 8em 1fr; gap: 24px; padding: 22px 0; border-bottom: 1px dashed var(--rule); }
 .list li:first-child { padding-top: 0; }
 .list time { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; color: var(--dove); font-size: 14px; font-variant-numeric: tabular-nums; padding-top: 3px; }
-.list h3 { margin: 0 0 4px; font-size: 19px; font-weight: 600; line-height: 1.6; }
+.list h3 { margin: 0 0 4px; font-size: 20px; font-weight: 600; line-height: 1.6; }
 .list h3 a { text-decoration: none; }
 /* 預覽：三個分類一致，最多三行 */
 .list .preview {
-  margin: 4px 0 0; font-size: 15px; line-height: 1.9; color: var(--ink-soft);
+  margin: 4px 0 0; max-width: 40em; font-size: 15px; line-height: 1.9; color: var(--ink-soft);
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
 }
 /* 滑過時落下一條書籤 */
@@ -250,7 +252,7 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 /* 索書號 */
 .callno {
   font-family: var(--font-body); font-size: 12px; letter-spacing: 0.08em; color: var(--c);
-  border: 1px solid var(--rule); background: var(--card); padding: 0 6px; border-radius: 2px;
+  border: 1px solid var(--rule); background: transparent; padding: 0 6px; border-radius: 2px;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .meta-line { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; color: var(--dove); }
@@ -267,20 +269,20 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .article { max-width: 42em; min-width: 0; margin: 0 auto; padding: 64px 0 24px; }
 .article .crumbs { font-size: 14px; color: var(--dove); margin-bottom: 12px; }
 .article .crumbs a { color: var(--c); text-decoration: none; }
-.article h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 3.6vw, 38px); line-height: 1.5; margin: 0 0 8px; letter-spacing: .02em; }
-.subtitle { margin: 0 0 18px; color: var(--ink-soft); font-size: 15px; font-style: italic; line-height: 1.6; letter-spacing: 0; }
-.article .byline { font-size: 14px; color: var(--ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); margin-bottom: 30px; }
+.article h1 { margin: 0 0 8px; }
+.subtitle { margin: 0 0 16px; color: var(--ink-soft); font-size: 15px; font-style: italic; line-height: 1.6; letter-spacing: 0; }
+.article .byline { font-size: 14px; color: var(--ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding-bottom: 24px; border-bottom: 1px solid var(--rule); margin-bottom: 32px; }
 
 /* 摘要 */
-.abstract { background: var(--paper-2); padding: 20px 24px; border-left: 3px solid var(--c); border-radius: 0 3px 3px 0; margin: 0 0 32px; font-size: 15px; line-height: 1.95; }
-.abstract b { display: block; font-size: 13px; letter-spacing: 0.2em; color: var(--dove); font-weight: 400; margin-bottom: 4px; }
+.abstract { background: var(--paper-2); padding: 24px; border-left: 3px solid var(--c); border-radius: 0 3px 3px 0; margin: 0 0 32px; font-size: 15px; line-height: 1.95; }
+.abstract b { display: block; margin-bottom: 8px; }
 
 /* 內文 */
 .prose { font-size: 18px; line-height: 2.05; }
 .prose p { margin: 0 0 1.35em; text-indent: 0; }
 .prose h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; margin: 2.4em 0 .9em; padding-top: .4em; scroll-margin-top: 90px; letter-spacing: .04em; }
-.prose h3 { font-size: 19px; font-weight: 600; margin: 1.8em 0 .7em; scroll-margin-top: 90px; }
-.prose blockquote { font-family: var(--font-body); font-size: 16px; line-height: 2; background: var(--paper-2); border-left: 3px solid var(--rule); padding: 16px 22px; margin: 1.6em 0; color: var(--ink); border-radius: 0 3px 3px 0; }
+.prose h3 { font-size: 20px; font-weight: 600; margin: 1.8em 0 .7em; scroll-margin-top: 90px; }
+.prose blockquote { font-family: var(--font-body); font-size: 17px; line-height: 2; background: var(--paper-2); border-left: 3px solid var(--rule); padding: 16px 22px; margin: 1.6em 0; color: var(--ink); border-radius: 0 3px 3px 0; }
 .prose blockquote p { text-indent: 0; margin: 0 0 .8em; }
 .prose blockquote p:last-child { margin: 0; }
 .prose ol, .prose ul { padding-left: 1.6em; margin: 0 0 1.4em; }
@@ -291,11 +293,11 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 /* 文章內照片與圖說 */
 .prose .post-fig { margin: 2em 0; }
 .prose .post-fig img { margin: 0 auto; max-height: 82vh; width: auto; max-width: 100%; box-shadow: 0 18px 30px -24px rgba(30,25,20,.45); }
-.prose .post-fig figcaption { margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); letter-spacing: .08em; text-align: center; }
+.prose .post-fig figcaption { margin-top: 10px; font-size: 13px; color: var(--ink-soft); letter-spacing: .08em; text-align: center; }
 .prose, .notes-block, .fn-pop, .abstract, .cite-box { overflow-wrap: anywhere; word-break: normal; }
 
 /* 註腳號碼 */
-.fn { position: relative; top: -.6em; vertical-align: baseline; font-size: 11.5px; line-height: 1; color: var(--c); background: none; border: 0; padding: 1px 2px; margin: 0 1px; cursor: pointer; font-family: var(--font-body); font-weight: 600; border-radius: 2px; }
+.fn { position: relative; top: -.6em; vertical-align: baseline; font-size: 12px; line-height: 1; color: var(--c); background: none; border: 0; padding: 1px 2px; margin: 0 1px; cursor: pointer; font-family: var(--font-body); font-weight: 600; border-radius: 2px; }
 .fn:hover { color: var(--seal); text-decoration: underline; }
 
 /* 註腳小卡片 */
@@ -309,8 +311,8 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 }
 
 /* 註釋與參考書目 */
-.notes-block { margin-top: 40px; border-top: 1px solid var(--rule); padding-top: 20px; font-size: 14.5px; line-height: 1.85; color: var(--ink-soft); }
-.notes-block h2 { font-size: 15px; font-weight: 600; color: var(--ink); margin: 0 0 10px; letter-spacing: 0.1em; scroll-margin-top: 90px; }
+.notes-block { margin-top: 40px; border-top: 1px solid var(--rule); padding-top: 20px; font-size: 14px; line-height: 1.85; color: var(--ink-soft); }
+.notes-block h2 { margin: 0 0 12px; scroll-margin-top: 90px; }
 .notes-block h3 { font-size: 14px; color: var(--dove); font-weight: 600; margin: 18px 0 8px; letter-spacing: .1em; }
 .notes-block ol { margin: 0 0 20px; padding-left: 1.6em; }
 .notes-block li { margin-bottom: 6px; scroll-margin-top: 100px; }
@@ -331,7 +333,7 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   content: ""; position: absolute; left: 50%; bottom: 8px; width: 12px; height: 12px; margin-left: -6px;
   border-radius: 50%; background: var(--paper); border: 1px solid var(--rule);
 }
-.cite-box b { font-size: 13px; color: var(--dove); letter-spacing: 0.2em; font-weight: 400; display: block; margin-bottom: 6px; }
+.cite-box b { display: block; margin-bottom: 6px; }
 .cite-box p { margin: 0 0 12px; font-size: 14px; line-height: 1.8; }
 
 /* 上一篇／下一篇 */
@@ -342,7 +344,7 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 
 /* 目錄：寬螢幕在右側，窄螢幕在文前可收合 */
 .toc-side { display: none; }
-.toc-side b { display: block; font-size: 12px; letter-spacing: .2em; color: var(--dove); font-weight: 400; margin-bottom: 10px; }
+.toc-side b { display: block; margin-bottom: 10px; }
 .toc-side ol, .toc-inline ol { list-style: none; margin: 0; padding: 0; }
 .toc-side li { margin: 0 0 8px; }
 .toc-side a { text-decoration: none; color: var(--ink-soft); display: block; padding-left: 10px; border-left: 2px solid transparent; transition: color .2s, border-color .2s; }
@@ -357,7 +359,8 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 @media (min-width: 1120px) {
   .post-grid { grid-template-columns: minmax(0, 42em) 220px; }
   .post-grid .article { margin: 0; }
-  .toc-side:not([hidden]) { display: block; position: sticky; top: 96px; align-self: start; margin-top: 150px; font-size: 13.5px; line-height: 1.7; }
+  .post-grid:has(.toc-side[hidden]) { grid-template-columns: minmax(0, 42em); }
+  .toc-side:not([hidden]) { display: block; position: sticky; top: 96px; align-self: start; margin-top: 150px; font-size: 13px; line-height: 1.7; }
   .toc-inline { display: none; }
 }
 @media (max-width: 720px) {
@@ -381,18 +384,25 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 /* ===== 9 分類背景（原圖），文字放在半透明紙面上 ===== */
 body.has-bg::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--bgimg) center 35% / cover no-repeat; }
 body.has-bg header.top { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-body.has-bg main#app { max-width: 1148px; margin: 40px auto 56px; padding-bottom: 40px; background: color-mix(in srgb, var(--paper) 74%, transparent); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); box-shadow: 0 18px 50px -24px rgba(0,0,0,.45); }
+body.has-bg main#app { max-width: 1148px; margin: 40px auto 56px; padding-bottom: 40px; background: color-mix(in srgb, var(--paper) 90%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 18px 50px -24px rgba(0,0,0,.35); }
 body.has-bg footer { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 @media (max-width: 1200px) { body.has-bg main#app { margin: 28px 20px 40px; } }
 @media (max-width: 700px) { body.has-bg main#app { margin: 16px 10px 28px; } }
+/* 手機：文字離螢幕邊緣一律 20px（紙面 10 + 內距 10） */
+@media (max-width: 720px) {
+  .wrap { padding: 0 20px; }
+  body.has-bg main#app .wrap { padding: 0 10px; }
+  .page-head { padding: 48px 0 24px; }
+  .article { padding-top: 48px; }
+}
 
 /* 整幅顯示：畫完整置中於背景，四周用畫邊顏色補滿；文字紙面照常滿版（後台 bg_whole） */
 body.bg-whole::before { top: 67px; background: var(--bgimg) center / contain no-repeat, var(--bgfill, var(--paper-2)); }
-/* 透明灰紙面、不模糊（後台 bg_gray） */
+/* 灰色紙面、不模糊（後台 bg_gray）：仍保持九成不透明，避免畫面透到字底下 */
 body.bg-gray main#app, body.bg-gray header.top, body.bg-gray footer { -webkit-backdrop-filter: none; backdrop-filter: none; }
-body.bg-gray main#app { background: rgba(232, 232, 230, .62); }
+body.bg-gray main#app { background: rgba(232, 232, 230, .9); }
 body.bg-gray header.top, body.bg-gray footer { background: rgba(232, 232, 230, .72); }
-[data-theme="dark"] body.bg-gray main#app { background: rgba(28, 28, 30, .58); }
+[data-theme="dark"] body.bg-gray main#app { background: rgba(28, 28, 30, .88); }
 [data-theme="dark"] body.bg-gray header.top, [data-theme="dark"] body.bg-gray footer { background: rgba(28, 28, 30, .7); }
 
 

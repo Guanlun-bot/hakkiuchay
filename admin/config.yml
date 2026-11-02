@@ -154,7 +154,7 @@ collections:
               - { name: cover, label: 背景圖片, widget: image, required: false }
               - { name: cover_caption, label: 背景圖說明（目前不顯示）, widget: string, required: false }
               - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, widget: boolean, required: false }
-              - { name: bg_gray, label: 文字底改成透明灰框（不模糊）, widget: boolean, required: false }
+              - { name: bg_gray, label: 文字底改成灰色紙面（不模糊）, widget: boolean, required: false }
               - { name: bg_fill, label: 背景空白處顏色（可留空）, widget: string, required: false }
               - { name: color, label: 顏色, widget: hidden }
               - { name: en, label: en, widget: hidden }
@@ -168,7 +168,7 @@ collections:
               - { name: cover, label: 背景圖片, widget: image, required: false }
               - { name: cover_caption, label: 背景圖說明（目前不顯示）, widget: string, required: false }
               - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, widget: boolean, required: false }
-              - { name: bg_gray, label: 文字底改成透明灰框（不模糊）, widget: boolean, required: false }
+              - { name: bg_gray, label: 文字底改成灰色紙面（不模糊）, widget: boolean, required: false }
               - { name: bg_fill, label: 背景空白處顏色（可留空）, widget: string, required: false }
               - { name: color, label: 顏色, widget: hidden }
               - { name: en, label: en, widget: hidden }
@@ -182,7 +182,7 @@ collections:
               - { name: cover, label: 背景圖片, widget: image, required: false }
               - { name: cover_caption, label: 背景圖說明（目前不顯示）, widget: string, required: false }
               - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, widget: boolean, required: false }
-              - { name: bg_gray, label: 文字底改成透明灰框（不模糊）, widget: boolean, required: false }
+              - { name: bg_gray, label: 文字底改成灰色紙面（不模糊）, widget: boolean, required: false }
               - { name: bg_fill, label: 背景空白處顏色（可留空）, widget: string, required: false }
               - { name: color, label: 顏色, widget: hidden }
               - { name: en, label: en, widget: hidden }

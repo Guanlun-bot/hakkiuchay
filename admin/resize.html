@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>學鳩齋 縮圖工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper: #f1efe8; --paper-2: #e6e2d6; --ink: #3f3a39; --ink-soft: #6e6866; --rule: #d3cec3; --dove: #6c7163; --seal: #a8343a; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --paper: #2a2826; --paper-2: #33302d; --ink: #e2ddd0; --ink-soft: #aaa49b; --rule: #4a4540; --dove: #a3a894; --seal: #e48f7d; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: "Noto Serif TC", "Songti TC", serif; font-size: 16px; line-height: 1.9; }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { margin: 0 0 6px; font-size: 26px; font-weight: 600; letter-spacing: .04em; }
+  p { margin: 0 0 1em; color: var(--ink-soft); font-size: 15px; }
+  .pick { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--ink); border-radius: 2px; cursor: pointer; font-size: 16px; }
+  .pick:hover { border-color: var(--seal); color: var(--seal); }
+  .pick input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 18px 0 0; font-size: 14px; color: var(--ink-soft); }
+  .opts select { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 2px 6px; }
+  ul { list-style: none; margin: 28px 0 0; padding: 0; border-top: 1px solid var(--rule); }
+  li { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
+  li img { width: 72px; height: 54px; object-fit: cover; border-radius: 2px; background: var(--paper-2); }
+  .name { overflow-wrap: anywhere; }
+  .meta { display: block; color: var(--dove); font-size: 13px; }
+  .err { color: var(--seal); }
+  a.dl { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  a.dl:hover { color: var(--seal); border-color: var(--seal); }
+  .all { margin-top: 18px; }
+  button { font: inherit; padding: 6px 16px; border: 1px solid var(--ink-soft); border-radius: 2px; background: transparent; color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--seal); color: var(--seal); }
+</style>
+</head>
+<body>
+<main>
+  <h1>縮圖工具</h1>
+  <p>照片太大會上傳失敗。先在這裡縮小，再到後台上傳。照片只在這個瀏覽器裡處理，不會傳到任何地方。</p>
+  <label class="pick">選擇照片（可多張）<input type="file" id="files" accept="image/*" multiple></label>
+  <div class="opts">
+    <label>長邊 <select id="size"><option value="1600" selected>1600 像素（文章用）</option><option value="2000">2000 像素（首頁輪播用）</option><option value="1200">1200 像素</option></select></label>
+    <label>畫質 <select id="quality"><option value="0.82" selected>標準</option><option value="0.9">較高</option><option value="0.75">較小檔案</option></select></label>
+  </div>
+  <ul id="list"></ul>
+  <div class="all" id="all" hidden><button type="button" id="saveAll">全部存檔</button></div>
+</main>
+<script>
+(function () {
+  const list = document.getElementById("list"), all = document.getElementById("all");
+  const kb = n => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.round(n / 1024) + " KB";
+  let done = [];
+
+  async function shrink(file, max, q) {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * s), h = Math.round(bmp.height * s);
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(bmp, 0, 0, w, h);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", q));
+    return { blob, w, h };
+  }
+
+  document.getElementById("files").addEventListener("change", async e => {
+    const max = Number(document.getElementById("size").value), q = Number(document.getElementById("quality").value);
+    list.innerHTML = ""; done.forEach(d => URL.revokeObjectURL(d.url)); done = []; all.hidden = true;
+    for (const file of e.target.files) {
+      const li = document.createElement("li");
+      li.innerHTML = '<img alt=""><span class="name"></span><span></span>';
+      li.querySelector(".name").textContent = file.name;
+      list.append(li);
+      try {
+        const { blob, w, h } = await shrink(file, max, q);
+        const url = URL.createObjectURL(blob);
+        const name = file.name.replace(/\.[^.]+$/, "").replace(/[^\w一-鿿-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() + ".jpg";
+        li.firstElementChild.src = url;
+        li.querySelector(".name").innerHTML = "";
+        li.querySelector(".name").append(name, Object.assign(document.createElement("span"), { className: "meta", textContent: kb(file.size) + " → " + kb(blob.size) + "，" + w + "×" + h }));
+        const a = Object.assign(document.createElement("a"), { className: "dl", href: url, download: name, textContent: "存檔" });
+        li.lastElementChild.append(a);
+        done.push({ url, name, a });
+      } catch (err) {
+        li.querySelector(".name").append(Object.assign(document.createElement("span"), { className: "meta err", textContent: "這張無法讀取。若是 HEIC，請在手機相簿先分享成 JPG 再試。" }));
+      }
+    }
+    all.hidden = done.length < 2;
+  });
+
+  document.getElementById("saveAll").addEventListener("click", () => {
+    done.forEach((d, i) => setTimeout(() => d.a.click(), i * 300));
+  });
+})();
+</script>
+</body>
+</html>

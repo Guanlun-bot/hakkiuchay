@@ -26,6 +26,8 @@
 - `.github/workflows/compress-images.yml`：上傳的新照片會自動 HEIC→JPG、副檔名改小寫、長邊大於 2000 像素或大於 1.5MB 的會縮小；`assets/uploads/home/` 的新照片自動加進首頁輪播。它可能自己多推一個 commit，記得再 pull。
 - `.github/workflows/cancel-stuck-pages.yml`：Pages 發布卡住時手動執行。
 - `deploy.yml` 目前停用。
+- 圖片上傳：Pages CMS 傳大檔（手機照片幾 MB）會失敗，文章裡留下 `blob:` 開頭的暫時連結、圖片顯示不出來。請齋主先用 `/admin/resize.html`（瀏覽器內縮成長邊 1600px 的 JPG）再上傳。看到文章裡有 `blob:` 連結，代表那張圖沒上傳成功，檔案不在 repo 裡，無法替換，只能請齋主重傳。
+- 文章裡連續多張各自成段的圖，`_layouts/post.html` 的程式會自動排成兩欄相簿（`.gallery`）。
 
 ## 預覽與確認
 - `baseurl` 是空字串（自訂網域），連結仍一律用 `relative_url`，以便日後換網址。

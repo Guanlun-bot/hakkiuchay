@@ -144,10 +144,12 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 
 
 /* ===== 5 首頁 ===== */
-/* 上半：照片輪播＋《莊子》引文 */
+/* 上半：照片裱在一整條紙色底帶上（紙裱），照片完整顯示不裁切 */
+.mount { --plate-h: min(calc(100svh - 180px), 860px); background: var(--paper-2); padding: 40px 24px 28px; }
+.mount-inner { max-width: 1320px; margin: 0 auto; }
+/* 照片下方的《莊子》引文 */
 .spread {
-  --plate-h: min(calc(100svh - 150px), 900px);
-  max-width: 1320px; margin: 28px auto 0; padding: 0 24px;
+  max-width: 1320px; margin: 0 auto; padding: 0 24px;
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 0;
   border-bottom: 1px solid var(--rule);
 }
@@ -156,7 +158,12 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .plate { position: relative; height: var(--plate-h); }
 .plate-item { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity 1.1s var(--ease); display: flex; place-items: center; justify-content: center; }
 .plate-item.is-on { opacity: 1; }
-.plate-item img { max-width: 100%; max-height: var(--plate-h); width: auto; height: auto; object-fit: contain; display: block; box-shadow: 0 1px 0 var(--rule), 0 24px 40px -28px rgba(30, 25, 20, .45); }
+.plate-item img { max-width: 100%; max-height: var(--plate-h); width: auto; height: auto; object-fit: contain; display: block; box-shadow: 0 30px 60px -32px rgba(30, 25, 20, .55), 0 0 0 1px rgba(63, 58, 57, .06); }
+/* 呼吸：停留時極緩放大約 3%；剛換下的那張（was-on）繼續到淡出結束，避免跳動 */
+@media (prefers-reduced-motion: no-preference) {
+  .plate-item.is-on img, .plate-item.was-on img { animation: breathe 9s ease-in-out infinite alternate; }
+  @keyframes breathe { from { transform: scale(1); } to { transform: scale(1.03); } }
+}
 /* 照片說明：貼齊照片左緣（位置由首頁的程式計算） */
 .plate-foot { display: flex; justify-content: flex-start; align-items: baseline; gap: 16px; margin-top: 18px; font-size: 13px; color: var(--dove); letter-spacing: .12em; min-height: 0; transition: margin-left .4s var(--ease); }
 .plate-cap { color: var(--ink-soft); font-size: 13px; }
@@ -209,7 +216,8 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 #owner, #contact { scroll-margin-top: 90px; }
 
 @media (max-width: 900px) {
-  .spread { --plate-h: min(92vw, 70svh); margin-top: 16px; padding: 0 10px; }
+  .mount { --plate-h: min(92vw, 70svh); padding: 20px 10px 16px; }
+  .spread { padding: 0 10px; }
   .epigraph p { font-size: 17px; }
   .lower { grid-template-columns: minmax(0, 1fr); padding: 48px 20px 64px; gap: 44px; }
   .lower-main { padding-right: 0; }

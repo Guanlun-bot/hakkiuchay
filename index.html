@@ -9,10 +9,10 @@ nav: home
 {%- assign photos = site.data.photos.photos | where_exp: "p", "p.image" -%}
 <h1 class="sr-only">{{ T.site_name | default: "學鳩齋" }}</h1>
 
-<!-- 對開：左頁照片，右頁直排題跋 -->
-<section class="spread">
-  <div class="leaf leaf-plate">
-    {% if photos.size > 0 %}
+<!-- 照片裱在一整條紙色底帶上 -->
+{% if photos.size > 0 %}
+<section class="mount" aria-label="照片">
+  <div class="mount-inner">
     <div class="plate" id="plate" aria-roledescription="輪播" aria-label="照片" data-seconds="{{ H.slide_seconds | default: 6 }}">
       {% for ph in photos %}
       <figure class="plate-item{% if forloop.first %} is-on{% endif %}" aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
@@ -23,8 +23,14 @@ nav: home
     <div class="plate-foot">
       <span class="plate-cap" id="plate-cap">{{ photos[0].caption }}</span>
     </div>
-    {% endif %}
-    {% if H.quote and H.quote != "" %}
+  </div>
+</section>
+{% endif %}
+
+<!-- 照片下方的《莊子》引文 -->
+{% if H.quote and H.quote != "" %}
+<section class="spread">
+  <div class="leaf leaf-plate">
     <figure class="epigraph">
       <blockquote>
         {%- assign qlines = H.quote | newline_to_br | split: "<br />" -%}
@@ -32,9 +38,9 @@ nav: home
       </blockquote>
       {% if H.quote_source and H.quote_source != "" %}<figcaption>{{ H.quote_source }}</figcaption>{% endif %}
     </figure>
-    {% endif %}
   </div>
 </section>
+{% endif %}
 
 <!-- 書齋＋齋主名片 -->
 {% include home-lower.html %}
@@ -58,6 +64,8 @@ nav: home
   function show(k) {
     i = (k + order.length) % order.length;
     const cur = order[i];
+    const prev = box.querySelector(".plate-item.is-on");
+    if (prev && prev !== items[cur]) { prev.classList.add("was-on"); setTimeout(() => prev.classList.remove("was-on"), 1300); }
     items.forEach((el, j) => { el.classList.toggle("is-on", j === cur); el.setAttribute("aria-hidden", j === cur ? "false" : "true"); });
     cap.textContent = caps[cur] || "";
     const nx = items[order[(i + 1) % order.length]].querySelector("img"); nx.loading = "eager";

@@ -19,7 +19,7 @@
 - `_posts/`：文章（front matter：title、subtitle、author、slug、cat、date、summary、keywords、source、notes、refs）。文章內的圖放 `assets/uploads/posts/<文章>/`，用 `figure.post-fig`。
 - `_layouts/default.html`：外框、選單、頁尾、日夜模式、分類背景。`_layouts/post.html`：文章閱讀版（註腳、目錄）。`_layouts/category.html`：分類列表。
 - `_includes/home-lower.html`：首頁下半（左：書齋介紹＋畫；右：齋主名片＋著作＋聯絡）。
-- `assets/site.css`：全部樣式。新樣式一律加在檔尾覆寫，用 CSS 變數（`--ink`、`--paper`、`--rule`、`--seal` 等）以支援深色模式。
+- `assets/site.css`：全部樣式，依頁面分成 10 段（檔頭有目次）。修改時找到對應段落直接改，不要往檔尾疊加覆寫；顏色一律用 CSS 變數（`--ink`、`--paper`、`--rule`、`--seal` 等）以支援深色模式。
 - 獺祭魚是外部連結：https://otterslibrary.pages.dev/
 
 ## 自動流程

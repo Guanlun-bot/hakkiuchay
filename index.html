@@ -50,12 +50,17 @@ nav: home
   const caps = {{ photos | map: "caption" | jsonify }};
   const cap = document.getElementById("plate-cap");
   const secs = Math.max(2, Number(box.dataset.seconds) || 6) * 1000;
+  /* 播放順序：第一張固定，其餘每次進站隨機排列 */
+  const order = [0], rest = items.map((_, j) => j).slice(1);
+  for (let j = rest.length - 1; j > 0; j--) { const r = Math.floor(Math.random() * (j + 1)); [rest[j], rest[r]] = [rest[r], rest[j]]; }
+  order.push(...rest);
   let i = 0, timer = null;
   function show(k) {
-    i = (k + items.length) % items.length;
-    items.forEach((el, j) => { el.classList.toggle("is-on", j === i); el.setAttribute("aria-hidden", j === i ? "false" : "true"); });
-    cap.textContent = caps[i] || "";
-    const nx = items[(i + 1) % items.length].querySelector("img"); nx.loading = "eager";
+    i = (k + order.length) % order.length;
+    const cur = order[i];
+    items.forEach((el, j) => { el.classList.toggle("is-on", j === cur); el.setAttribute("aria-hidden", j === cur ? "false" : "true"); });
+    cap.textContent = caps[cur] || "";
+    const nx = items[order[(i + 1) % order.length]].querySelector("img"); nx.loading = "eager";
   }
   function play() { stop(); timer = setInterval(() => show(i + 1), secs); }
   function stop() { if (timer) clearInterval(timer); timer = null; }
@@ -64,6 +69,7 @@ nav: home
   box.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
   box.addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) { show(i + (dx < 0 ? 1 : -1)); play(); } x0 = null; });
   document.addEventListener("visibilitychange", () => document.hidden ? stop() : play());
+  items[order[1 % order.length]].querySelector("img").loading = "eager";
   play();
 })();
 </script>

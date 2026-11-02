@@ -1,109 +1,161 @@
 ---
-title: 伍廷芳及其素食思想析論：衛生、養生與修身
-subtitle: 'An Analysis of Wu Tingfang’s Vegetarian Thought: Hygiene, Yangsheng, and Self-Cultivation'
+title: "伍廷芳及其素食思想析論：衛生、養生與修身An Analysis of Wu Tingfang’s Vegetarian Thought:
+  Hygiene, Yangsheng, and Self-Cultivation"
+author: 許原綸
 slug: wu-tingfang-vegetarianism
 cat: academic
-date: '2026-07-27'
-author: 許原綸
+date: 2026-07-27
 summary: 伍廷芳（1842-1922），是清末民初重要的政治家與外交官。[註1]以往學界研究多著眼於他的政治生涯，近年則逐漸關注到其生活層面，特別是他在1910年出使美洲歸國、短居上海之時段，對靈學與養生所展現的興趣。在民初素食運動中，伍氏可以說是最早期的重要推手。學界對伍廷芳素食思想的詮釋，多集中在其作為西方素食觀念在中國最早的引介者。現有研究大多將伍氏的素食主張視為知識分子接受與詮釋西方衛生知識的範例，然而，對於其思想來源的脈絡仍缺乏細緻探討。細讀伍氏著作與晚年經驗，可以發現伍氏的素食論述並不僅止於衛生層面，更延伸至對生命、文明的整體關懷，甚至將飲食修養納入修道實踐的一部分。本文主要整理伍氏對素食的看法，以1910年引退上海後的三個活動為核心加以考察：一是「慎食衛生會」的成立，二是《延壽新法》的文本內容，三是宗教如何詮釋素食。試圖從這些文本，分析伍氏素食觀的構成邏輯，以此窺探民初素食運動前期知識分子的思考途徑，以及其本身的能動性。
 keywords:
-- 伍廷芳
-- 素食
-- 慎食衛生會
-- 《延壽新法》
+  - 伍廷芳
+  - 素食
+  - 慎食衛生會
+  - 《延壽新法》
 notes:
-- 伍廷芳，字文爵，號秩庸，廣東新會人，1842年生於南洋海峽殖民地（一說新加坡，一說麻六甲）。清末民初的知名外交家與改革派人物。早年於香港學習英文與法律，後赴英國倫敦大學留學，取得法學博士學位，並成為中國第一位具有律師資格者。學成歸國伍氏歷任香港律師、李鴻章幕僚、中國鐵路公司總辦等職，後受清廷派任駐美、西、秘魯等國公使。1910年，伍廷芳藉病辭官，退居上海。辛亥革命後任臨時政府外交代表，主持南北議和，後轉任司法總長。袁世凱死後出任段祺瑞內閣外交總長，1917年短暫代理國務總理。護法運動時赴廣州任外交、財政部長，並一度代理非常大總統。1922年任廣東省長時，卒於廣州。
-- 梁其姿演講、于穎整理，〈「素食中國」在民國時期的兩個意義〉，《豆瓣小組》，2021年10月5日，豆瓣，<https://www.douban.com/group/topic/248887935/?_i=91330769vVa92l>，檢索日期：2026年2月23日。此文為梁其姿於2016年7月29日在復旦大學演講之摘要。
-- 'Angela Ki Che Leung, “To Build or to Transform Vegetarian China: Two Republican Projects,” in *Moral Foods*, ed. Leung Angela Ki Che, et al. (Honolulu: University of Hawaii Press, 2019), pp. 221-240.'
-- '長與專齋（1838-1902），日本明治時期醫學官僚。早年於長崎學習蘭學。明治維新後，擔任文部省醫務行政職務。1871年，隨岩倉使節團出使歐美，於歐洲考察醫療與公共衛生體系。返國後任文部省醫務局長，兼東京醫學校校長，創設東京司藥場。又出任首任衛生局長、元老院議官、貴族院勅選議員等職，為日本近代公共衛生制度的奠基者。R. Rogaski, *Hygienic Modernity: Meanings of Health and Disease in Treaty Port China* (Berkeley: University of California Press, 2004), pp. 136-144.'
-- 'R. Rogaski, *Hygienic Modernity: Meanings of Health and Disease in Treaty Port China*, pp. 20-21.'
-- 'John Kieschnick,“Buddhist Vegetarianism in China,” in *Of Tripod and Palate: Food, Politics, and Religion in Traditional China,* ed. Roel Sterckx (New York: Springer, 2005), pp. 186-212.'
-- 'Chün-fang Yü, “Syncretism in Action: Morality Books and The Record of Self- knowledge”*The Renewal of Buddhism in China: Zhuhong and the Late Ming Synthesis* (New York: Columbia University Press, 2020), pp. 106-139.'
-- 高明芳，〈豐子愷與《護生畫集》的編繪〉，《國史館學術集刊》13（臺北，2007.9），頁209-239。
-- 'Shuk-wah Poon, “Buddhist Activism and Animal Protection in Republican China,” in *Volume Iii Key Concepts in Practice*, ed. R. Katz Paul and Travagnin Stefania (Berlin, Boston: De Gruyter, 2019), pp. 91-112；范純武，〈清末民初女詞人呂碧城與國際蔬食運動〉，《清史研究》2（北京，2010.5），頁105-113。'
-- 'Nikolas Broy, “Moral Integration or Social Segregation? Vegetarianism and Vegetarian Religious Communities in Chinese Religious Life,” in *Volume Iii Key Concepts in Practice*, ed. R. Katz Paul and Travagnin Stefania (Berlin, Boston: De Gruyter, 2019), pp. 37-64；師復，〈素食主義淺説〉，《民聲》（廣州），1914年4月25日，第7張1-4頁。'
-- 丁賢俊、喻作鳳，《伍廷芳評傳》（北京：人民出版社，2005），頁257。
-- 李石曾（1881-1973），原名煜瀛，字石僧，河北高陽人，著名政治家、教育家、文物學家，為故宮博物院首任院長，亦列國民黨四大元老之一。其長期提倡素食主義，1909年在巴黎創辦中國豆腐公司，並與吳稚暉、張靜江、蔡元培等人推動勤工儉學運動、進德會等社會運動。
-- 黃秀伯，本名黃慧中，生卒年不詳。實業家黃思永之子，光緒年間任秘魯嘉里約領事，曾與伍廷芳出使美國華盛頓。
-- 楊愷齡，《民國李石曾先生煜瀛年譜》（臺北：臺灣商務印書館，1980），頁20-21。
-- 楊愷齡，《民國李石曾先生煜瀛年譜》，頁24。
-- 〈醫事新聞：慎食衛生會〉，《中西醫學報》（上海），1910年，第3張。
-- 〈紀慎食衛生會開議事〉，《紹興醫藥學報》（紹興），1910年，第23期 ;〈慎食衛生會章程〉，《申報》（上海），1910年10月2日，第2張。
-- 〈慎食衛生會章程〉，第2張。
-- 楊愷齡，《民國李石曾先生煜瀛年譜》，頁23。
-- 'Leung, “To Build or to Transform Vegetarian China: Two Republican Projects,” p. 224.'
-- 李煜瀛，《李石曾先生文集（上冊）》（臺北：中國國民黨黨史委員會，1980），頁266-270。
-- 傅家倩著，羅亞琪譯，《豆漿：小小的豆子如何成為近代中國救亡圖存的靈丹妙藥》（臺北：畢方文化，2025），頁64-69。
-- 傅家倩著，羅亞琪譯，《豆漿：小小的豆子如何成為近代中國救亡圖存的靈丹妙藥》，頁154-182。
-- Mary Foote Henderson（1842-1931），美國社會改革者與作家，國會議員John B. Henderson之妻。早年以小說創作出名，後投入素食、禁菸酒和衛生改革運動。著有*Diet for the Sick, Diet for the Well, The Aristocracy of Health, Substitutes for Flesh Foods*等書。
-- 'Tingfang Wu, *America, through the Spectacles of an Oriental Diplomat* (New York: Frederick A. Stokes Company, 1914), pp. 117-118.'
-- 'Mary Foote Henderson, *The Aristocracy of Health: A Study of Physical Culture, Our Favorite Poisons, and a National and International League for the Advancement of Physical Culture* (Colton, 1904), pp. 635-718.此書談到素食和少食的篇幅主要集中於以下幾章：Comparative Strength–giving Qualities of Animal and Vegetable Foods, Dr. Kellogg''s Dietary, The Influence of a Meat Diet on Mental Activity, The Relation of Meat–eating to a Craving for Stimulant, Eating too Much and too Often。另外，值得注意的是The Obligation of Kindness to Animals一章在談素食的動物保護意義。伍廷芳的《延壽新法》中對於素食理由的分類亦有提及，伍氏的架構可能參考亨德森之作。'
-- John Harvey Kellogg (1852-1943)，美國醫師與社會改革者，長期主持巴特克里克療養院，提倡素食、禁菸酒與自然療法，同時亦為家樂氏早餐玉米片的發明者之一。著有*The Home Handbook of Domestic Hygiene and Rational Medicine*, *The Natural Diet of Man*, *Plain Facts for Old and Young*等書。
-- Wu, *America, through the Spectacles of an Oriental Diplomat*, pp. 149-150.此章寫道“he told me that he worked sixteen hours daily without the least fatigue”由此推測兩人應該相識。
-- Wu, *America, through the Spectacles of an Oriental Diplomat*, p. 115.
-- 伍廷芳，《伍廷芳證道學說》（上海：上海證道學會，1923），頁34-35。
-- 伍廷芳，《伍廷芳證道學說》，頁35。
-- 李煜瀛，《李石曾先生文集（上冊）》，頁265-266。
-- 李煜瀛，〈論大豆工藝為中國製造之特長〉，《申報》（上海），1910年3月18日，第18張。
-- 李煜瀛，《李石曾先生文集（上冊）》，頁271。
-- 李煜瀛，《李石曾先生文集（下冊）》（臺北：中國國民黨黨史委員會，1980），頁177。
-- 李煜瀛，《李石曾先生文集（下冊）》，頁94-97。
-- 伍廷芳，《延壽新法》（上海：商務印書館，1916），頁2。
-- 范鐵權、黃敏，〈從「養生」到「衛生」：近代中國對素食的倡導及實踐（1910-1937）〉，《中國農史》2025：1（南京，2025.2），頁9。
-- 〈聞蘭亭等續辦慎食衛生會〉，《申報》（上海），1941年8月12日，第8張。
-- 瞿鴻禨（1853-1918），字子玖，號止庵，湖南善化人，清末大臣。同治年間中進士，歷任翰林院編修、工部尚書、軍機大臣，並為首任外務部尚書。曾參與預備立憲與官制改革，後因彈劾慶親王遭罷官，辛亥後避居上海，卒於當地，追諡文慎。瞿氏亦是素食者，在京任官時與伍廷芳相識，伍氏常向其提其素食延壽之法。高雨、李文林，〈論伍廷芳《延壽新法》的版本及其養生思想 〉，《江西中醫藥大學學報》32：3（南昌，2020.6），頁7-10。
-- 丁福保，〈傷生條件二十三條〉，《大公報》（天津），1910年12月5日，第9張。
-- 伍廷芳，《延壽新法》，頁3。
-- 伍廷芳，《延壽新法》，頁5。
-- 伍廷芳，《延壽新法》，頁5。
-- 伍廷芳，《延壽新法》，頁6。
-- 伍廷芳，《延壽新法》，頁2。
-- 呂碧城（1883-1943），字遁夫，號聖因。安徽旌德人，清末民初知名女詞人與新聞編輯，曾任《北洋女報》主編，以倡導女權聞名。她中年後篤信佛教，積極推動素食與動物保護運動，並於1929年出席維也納國際保護動物會，發表演說，為中國最早參與國際動保運動的重要人物。
-- 呂碧城，《歐美之光》（上海：上海佛學書局，1932），頁116。
-- 黃克武，〈民國初年上海的靈學研究：以「上海靈學會」為例〉，《近代史研究所集刊》55（臺北，2007.3），頁101-102。
-- 與辜鴻銘的比較，可以更明顯地看到伍廷芳對於東西文明交流所持的開放態度。詳見：張禮恆，《從西方到東方：伍廷芳與中國近代社會的演進》（臺北：臺灣商務印書館，2003），頁129-147。
-- '關於證道學會早期的發展歷史，詳見：Jeffrey D Lavoie, *The Theosophical Society: The History of a Spiritualist Movement* (Boca Raton: BrownWalker Press, 2012), pp. 13-98.'
-- 胡學丞，〈伍廷芳的通神學與靈學生涯〉，《政大史粹》22（臺北，2012.6），頁4-5。
-- Chien-hui Chuang, “Internationalism or Pan-Asianism? Modern China's Theosophical Movement in the 1910s and 1920s,” *GlobalLocal Studies*, no. 14 (March, 2021), pp. 34-37.
-- 伍廷芳，《證道學會要旨》（上海：道德通神會，1921），頁21-22。
-- 'Helene Petrovna Blavatsky, *The Key to Theosophy* (London: The Theosophical Publishing Society, 1893), pp. 147-148'
-- 伍廷芳，《伍廷芳證道學說》，頁33-34。
-- 伍廷芳，《伍廷芳證道學說》，頁34-35。
-- Wu, America, through the Spectacles of an Oriental Diplomat, p. 153.
+  - 伍廷芳，字文爵，號秩庸，廣東新會人，1842年生於南洋海峽殖民地（一說新加坡，一說麻六甲）。清末民初的知名外交家與改革派人物。早年於香港學習英文與法律，後赴英國倫敦大學留學，取得法學博士學位，並成為中國第一位具有律師資格者。學成歸國伍氏歷任香港律師、李鴻章幕僚、中國鐵路公司總辦等職，後受清廷派任駐美、西、秘魯等國公使。1910年，伍廷芳藉病辭官，退居上海。辛亥革命後任臨時政府外交代表，主持南北議和，後轉任司法總長。袁世凱死後出任段祺瑞內閣外交總長，1917年短暫代理國務總理。護法運動時赴廣州任外交、財政部長，並一度代理非常大總統。1922年任廣東省長時，卒於廣州。
+  - 梁其姿演講、于穎整理，〈「素食中國」在民國時期的兩個意義〉，《豆瓣小組》，2021年10月5日，豆瓣，<https://www.douban.com/group/topic/248887935/?_i=91330769vVa92l>，檢索日期：2026年2月23日。此文為梁其姿於2016年7月29日在復旦大學演講之摘要。
+  - "Angela Ki Che Leung, “To Build or to Transform Vegetarian China: Two
+    Republican Projects,” in *Moral Foods*, ed. Leung Angela Ki Che, et al.
+    (Honolulu: University of Hawaii Press, 2019), pp. 221-240."
+  - "長與專齋（1838-1902），日本明治時期醫學官僚。早年於長崎學習蘭學。明治維新後，擔任文部省醫務行政職務。1871年，隨岩倉使節團出使歐美，於歐\
+    洲考察醫療與公共衛生體系。返國後任文部省醫務局長，兼東京醫學校校長，創設東京司藥場。又出任首任衛生局長、元老院議官、貴族院勅選議員等職，為日本近代公共\
+    衛生制度的奠基者。R. Rogaski, *Hygienic Modernity: Meanings of Health and Disease in
+    Treaty Port China* (Berkeley: University of California Press, 2004), pp.
+    136-144."
+  - "R. Rogaski, *Hygienic Modernity: Meanings of Health and Disease in Treaty
+    Port China*, pp. 20-21."
+  - "John Kieschnick,“Buddhist Vegetarianism in China,” in *Of Tripod and
+    Palate: Food, Politics, and Religion in Traditional China,* ed. Roel Sterckx
+    (New York: Springer, 2005), pp. 186-212."
+  - "Chün-fang Yü, “Syncretism in Action: Morality Books and The Record of Self-
+    knowledge”*The Renewal of Buddhism in China: Zhuhong and the Late Ming
+    Synthesis* (New York: Columbia University Press, 2020), pp. 106-139."
+  - 高明芳，〈豐子愷與《護生畫集》的編繪〉，《國史館學術集刊》13（臺北，2007.9），頁209-239。
+  - "Shuk-wah Poon, “Buddhist Activism and Animal Protection in Republican
+    China,” in *Volume Iii Key Concepts in Practice*, ed. R. Katz Paul and
+    Travagnin Stefania (Berlin, Boston: De Gruyter, 2019), pp.
+    91-112；范純武，〈清末民初女詞人呂碧城與國際蔬食運動〉，《清史研究》2（北京，2010.5），頁105-113。"
+  - "Nikolas Broy, “Moral Integration or Social Segregation? Vegetarianism and
+    Vegetarian Religious Communities in Chinese Religious Life,” in *Volume Iii
+    Key Concepts in Practice*, ed. R. Katz Paul and Travagnin Stefania (Berlin,
+    Boston: De Gruyter, 2019), pp.
+    37-64；師復，〈素食主義淺説〉，《民聲》（廣州），1914年4月25日，第7張1-4頁。"
+  - 丁賢俊、喻作鳳，《伍廷芳評傳》（北京：人民出版社，2005），頁257。
+  - 李石曾（1881-1973），原名煜瀛，字石僧，河北高陽人，著名政治家、教育家、文物學家，為故宮博物院首任院長，亦列國民黨四大元老之一。其長期提倡素食主義，1909年在巴黎創辦中國豆腐公司，並與吳稚暉、張靜江、蔡元培等人推動勤工儉學運動、進德會等社會運動。
+  - 黃秀伯，本名黃慧中，生卒年不詳。實業家黃思永之子，光緒年間任秘魯嘉里約領事，曾與伍廷芳出使美國華盛頓。
+  - 楊愷齡，《民國李石曾先生煜瀛年譜》（臺北：臺灣商務印書館，1980），頁20-21。
+  - 楊愷齡，《民國李石曾先生煜瀛年譜》，頁24。
+  - 〈醫事新聞：慎食衛生會〉，《中西醫學報》（上海），1910年，第3張。
+  - 〈紀慎食衛生會開議事〉，《紹興醫藥學報》（紹興），1910年，第23期 ;〈慎食衛生會章程〉，《申報》（上海），1910年10月2日，第2張。
+  - 〈慎食衛生會章程〉，第2張。
+  - 楊愷齡，《民國李石曾先生煜瀛年譜》，頁23。
+  - "Leung, “To Build or to Transform Vegetarian China: Two Republican
+    Projects,” p. 224."
+  - 李煜瀛，《李石曾先生文集（上冊）》（臺北：中國國民黨黨史委員會，1980），頁266-270。
+  - 傅家倩著，羅亞琪譯，《豆漿：小小的豆子如何成為近代中國救亡圖存的靈丹妙藥》（臺北：畢方文化，2025），頁64-69。
+  - 傅家倩著，羅亞琪譯，《豆漿：小小的豆子如何成為近代中國救亡圖存的靈丹妙藥》，頁154-182。
+  - Mary Foote Henderson（1842-1931），美國社會改革者與作家，國會議員John B.
+    Henderson之妻。早年以小說創作出名，後投入素食、禁菸酒和衛生改革運動。著有*Diet for the Sick, Diet for the
+    Well, The Aristocracy of Health, Substitutes for Flesh Foods*等書。
+  - "Tingfang Wu, *America, through the Spectacles of an Oriental Diplomat* (New
+    York: Frederick A. Stokes Company, 1914), pp. 117-118."
+  - "Mary Foote Henderson, *The Aristocracy of Health: A Study of Physical
+    Culture, Our Favorite Poisons, and a National and International League for
+    the Advancement of Physical Culture* (Colton, 1904), pp.
+    635-718.此書談到素食和少食的篇幅主要集中於以下幾章：Comparative Strength–giving Qualities of
+    Animal and Vegetable Foods, Dr. Kellogg's Dietary, The Influence of a Meat
+    Diet on Mental Activity, The Relation of Meat–eating to a Craving for
+    Stimulant, Eating too Much and too Often。另外，值得注意的是The Obligation of Kindness
+    to Animals一章在談素食的動物保護意義。伍廷芳的《延壽新法》中對於素食理由的分類亦有提及，伍氏的架構可能參考亨德森之作。"
+  - John Harvey Kellogg
+    (1852-1943)，美國醫師與社會改革者，長期主持巴特克里克療養院，提倡素食、禁菸酒與自然療法，同時亦為家樂氏早餐玉米片的發明者之一。著有*The
+    Home Handbook of Domestic Hygiene and Rational Medicine*, *The Natural Diet
+    of Man*, *Plain Facts for Old and Young*等書。
+  - Wu, *America, through the Spectacles of an Oriental Diplomat*, pp.
+    149-150.此章寫道“he told me that he worked sixteen hours daily without the least
+    fatigue”由此推測兩人應該相識。
+  - Wu, *America, through the Spectacles of an Oriental Diplomat*, p. 115.
+  - 伍廷芳，《伍廷芳證道學說》（上海：上海證道學會，1923），頁34-35。
+  - 伍廷芳，《伍廷芳證道學說》，頁35。
+  - 李煜瀛，《李石曾先生文集（上冊）》，頁265-266。
+  - 李煜瀛，〈論大豆工藝為中國製造之特長〉，《申報》（上海），1910年3月18日，第18張。
+  - 李煜瀛，《李石曾先生文集（上冊）》，頁271。
+  - 李煜瀛，《李石曾先生文集（下冊）》（臺北：中國國民黨黨史委員會，1980），頁177。
+  - 李煜瀛，《李石曾先生文集（下冊）》，頁94-97。
+  - 伍廷芳，《延壽新法》（上海：商務印書館，1916），頁2。
+  - 范鐵權、黃敏，〈從「養生」到「衛生」：近代中國對素食的倡導及實踐（1910-1937）〉，《中國農史》2025：1（南京，2025.2），頁9。
+  - 〈聞蘭亭等續辦慎食衛生會〉，《申報》（上海），1941年8月12日，第8張。
+  - 瞿鴻禨（1853-1918），字子玖，號止庵，湖南善化人，清末大臣。同治年間中進士，歷任翰林院編修、工部尚書、軍機大臣，並為首任外務部尚書。曾參與預備立憲與官制改革，後因彈劾慶親王遭罷官，辛亥後避居上海，卒於當地，追諡文慎。瞿氏亦是素食者，在京任官時與伍廷芳相識，伍氏常向其提其素食延壽之法。高雨、李文林，〈論伍廷芳《延壽新法》的版本及其養生思想
+    〉，《江西中醫藥大學學報》32：3（南昌，2020.6），頁7-10。
+  - 丁福保，〈傷生條件二十三條〉，《大公報》（天津），1910年12月5日，第9張。
+  - 伍廷芳，《延壽新法》，頁3。
+  - 伍廷芳，《延壽新法》，頁5。
+  - 伍廷芳，《延壽新法》，頁5。
+  - 伍廷芳，《延壽新法》，頁6。
+  - 伍廷芳，《延壽新法》，頁2。
+  - 呂碧城（1883-1943），字遁夫，號聖因。安徽旌德人，清末民初知名女詞人與新聞編輯，曾任《北洋女報》主編，以倡導女權聞名。她中年後篤信佛教，積極推動素食與動物保護運動，並於1929年出席維也納國際保護動物會，發表演說，為中國最早參與國際動保運動的重要人物。
+  - 呂碧城，《歐美之光》（上海：上海佛學書局，1932），頁116。
+  - 黃克武，〈民國初年上海的靈學研究：以「上海靈學會」為例〉，《近代史研究所集刊》55（臺北，2007.3），頁101-102。
+  - 與辜鴻銘的比較，可以更明顯地看到伍廷芳對於東西文明交流所持的開放態度。詳見：張禮恆，《從西方到東方：伍廷芳與中國近代社會的演進》（臺北：臺灣商務印書館，2003），頁129-147。
+  - "關於證道學會早期的發展歷史，詳見：Jeffrey D Lavoie, *The Theosophical Society: The History
+    of a Spiritualist Movement* (Boca Raton: BrownWalker Press, 2012), pp.
+    13-98."
+  - 胡學丞，〈伍廷芳的通神學與靈學生涯〉，《政大史粹》22（臺北，2012.6），頁4-5。
+  - Chien-hui Chuang, “Internationalism or Pan-Asianism? Modern China's
+    Theosophical Movement in the 1910s and 1920s,” *GlobalLocal Studies*, no. 14
+    (March, 2021), pp. 34-37.
+  - 伍廷芳，《證道學會要旨》（上海：道德通神會，1921），頁21-22。
+  - "Helene Petrovna Blavatsky, *The Key to Theosophy* (London: The Theosophical
+    Publishing Society, 1893), pp. 147-148"
+  - 伍廷芳，《伍廷芳證道學說》，頁33-34。
+  - 伍廷芳，《伍廷芳證道學說》，頁34-35。
+  - Wu, America, through the Spectacles of an Oriental Diplomat, p. 153.
 refs:
-- '## 文獻史料'
-- 丁福保，〈傷生條件二十三條〉，《大公報》，天津，1910年12月5日，第9張。
-- 李煜瀛，〈論大豆工藝為中國製造之特長〉，《申報》，上海，1910年3月18日，第18頁。
-- 〈紀慎食衛生會開議事〉，《紹興醫藥學報》，紹興，1910年，第23期。
-- 師復，〈素食主義淺説〉，《民聲》，廣州，1914年，第7張。
-- 〈慎食衛生會章程〉，《申報》，上海，1910年10月2日，第2張。
-- 〈聞蘭亭等續辦慎食衛生會〉，《申報》，上海，1941年8月12日，第8張。
-- 〈醫事新聞：慎食衛生會〉，《中西醫學報》，上海，1910年，第3張。
-- '## 近人專書'
-- 丁賢俊、喻作鳳，《伍廷芳評傳》，北京：人民出版社，2005。
-- 伍廷芳，《伍廷芳證道學說》，上海：上海證道學會，1923。
-- 伍廷芳，《延壽新法》，上海：商務印書館，1916。
-- 伍廷芳，《證道學會要旨》，上海：道德通神會，1921。
-- 呂碧城，《歐美之光》，上海：上海佛學書局，1932。
-- 李煜瀛，《李石曾先生文集（上冊）》，臺北：中國國民黨黨史委員會，1980。
-- 李煜瀛，《李石曾先生文集（下冊）》，臺北：中國國民黨黨史委員會，1980。
-- 張禮恆，《從西方到東方：伍廷芳與中國近代社會的演進》，臺北：臺灣商務印書館，2003。
-- 傅家倩著、羅亞琪譯，《豆漿：小小的豆子如何成為近代中國救亡圖存的靈丹妙藥》，臺北：畢方文化，2025。
-- 楊愷齡，《民國李石曾先生煜瀛年譜》，臺北：臺灣商務印書館，1980。
-- '## 近人論文'
-- 胡學丞，〈伍廷芳的通神學與靈學生涯〉，《政大史粹》22，臺北：2012.6，頁1-21。
-- 范純武，〈清末民初女詞人呂碧城與國際蔬食運動〉，《清史研究》2010：2，北京：2010.5，頁105-113。
-- 范鐵權、黃敏，〈從「養生」到「衛生」：近代中國對素食的倡導及實踐（1910-1937）〉，《中國農史》2025：1，南京：2025.2，頁3-14。
-- 高明芳，〈豐子愷與《護生畫集》的編繪〉，《國史館學術集刊》13，臺北：2007.9，頁209-239。
-- 高雨、李文林，〈論伍廷芳《延壽新法》的版本及其養生思想〉，《江西中醫藥大學學報》32：3，南昌：2020.6，頁7-10。
-- 黃克武，〈民國初年上海的靈學研究：以「上海靈學會」為例〉，《近代史研究所集刊》55，臺北：2007.3，頁99-136。
-- 'Broy, Nikolas. “Moral Integration or Social Segregation? Vegetarianism and Vegetarian Religious Communities in Chinese Religious Life.” In *Volume Iii Key Concepts in Practice*, edited by R. Katz Paul and Travagnin Stefania, Boston: De Gruyter, 2019, pp. 37-64.'
-- Chuang, Chienhui. “Internationalism or Pan-Asianism? Modern China's Theosophical Movement in the 1910s and 1920s.” *Global-Local Studies*, no. 14, March, 2021, pp. 34-46.
-- 'Kieschnick, John. “Buddhist Vegetarianism in China.” In *Of Tripod and Palate: Food, Politics, and Religion in Traditional China*, edited by Roel Sterckx, New York: Springer, 2005, pp. 186-212.'
-- 'Leung, Angela Ki Che. “To Build or to Transform Vegetarian China: Two Republican Projects.” In *Moral Foods*, edited by Leung Angela Ki Che, L. Caldwell Melissa, Ku Robert Ji-Song and R. Yano Christine, Honolulu: University of Hawaii Press, 2019, pp. 221-240.'
-- 'Poon, Shuk-wah. “Buddhist Activism and Animal Protection in Republican China.” In *Volume Iii Key Concepts in Practice*, edited by R. Katz Paul and Travagnin Stefania, Boston: De Gruyter, 2019 , pp. 91-112.'
-- '## 其他論述'
-- 梁其姿演講、于穎整理，〈「素食中國」在民國時期的兩個意義〉，《小組》，2021年10月5日，豆瓣，https://www.douban.com/group/topic/248887935/?\_i=91330769vVa92l，檢索日期：2026年2月23日。
+  - "## 文獻史料"
+  - 丁福保，〈傷生條件二十三條〉，《大公報》，天津，1910年12月5日，第9張。
+  - 李煜瀛，〈論大豆工藝為中國製造之特長〉，《申報》，上海，1910年3月18日，第18頁。
+  - 〈紀慎食衛生會開議事〉，《紹興醫藥學報》，紹興，1910年，第23期。
+  - 師復，〈素食主義淺説〉，《民聲》，廣州，1914年，第7張。
+  - 〈慎食衛生會章程〉，《申報》，上海，1910年10月2日，第2張。
+  - 〈聞蘭亭等續辦慎食衛生會〉，《申報》，上海，1941年8月12日，第8張。
+  - 〈醫事新聞：慎食衛生會〉，《中西醫學報》，上海，1910年，第3張。
+  - "## 近人專書"
+  - 丁賢俊、喻作鳳，《伍廷芳評傳》，北京：人民出版社，2005。
+  - 伍廷芳，《伍廷芳證道學說》，上海：上海證道學會，1923。
+  - 伍廷芳，《延壽新法》，上海：商務印書館，1916。
+  - 伍廷芳，《證道學會要旨》，上海：道德通神會，1921。
+  - 呂碧城，《歐美之光》，上海：上海佛學書局，1932。
+  - 李煜瀛，《李石曾先生文集（上冊）》，臺北：中國國民黨黨史委員會，1980。
+  - 李煜瀛，《李石曾先生文集（下冊）》，臺北：中國國民黨黨史委員會，1980。
+  - 張禮恆，《從西方到東方：伍廷芳與中國近代社會的演進》，臺北：臺灣商務印書館，2003。
+  - 傅家倩著、羅亞琪譯，《豆漿：小小的豆子如何成為近代中國救亡圖存的靈丹妙藥》，臺北：畢方文化，2025。
+  - 楊愷齡，《民國李石曾先生煜瀛年譜》，臺北：臺灣商務印書館，1980。
+  - "## 近人論文"
+  - 胡學丞，〈伍廷芳的通神學與靈學生涯〉，《政大史粹》22，臺北：2012.6，頁1-21。
+  - 范純武，〈清末民初女詞人呂碧城與國際蔬食運動〉，《清史研究》2010：2，北京：2010.5，頁105-113。
+  - 范鐵權、黃敏，〈從「養生」到「衛生」：近代中國對素食的倡導及實踐（1910-1937）〉，《中國農史》2025：1，南京：2025.2，頁3-14。
+  - 高明芳，〈豐子愷與《護生畫集》的編繪〉，《國史館學術集刊》13，臺北：2007.9，頁209-239。
+  - 高雨、李文林，〈論伍廷芳《延壽新法》的版本及其養生思想〉，《江西中醫藥大學學報》32：3，南昌：2020.6，頁7-10。
+  - 黃克武，〈民國初年上海的靈學研究：以「上海靈學會」為例〉，《近代史研究所集刊》55，臺北：2007.3，頁99-136。
+  - "Broy, Nikolas. “Moral Integration or Social Segregation? Vegetarianism and
+    Vegetarian Religious Communities in Chinese Religious Life.” In *Volume Iii
+    Key Concepts in Practice*, edited by R. Katz Paul and Travagnin Stefania,
+    Boston: De Gruyter, 2019, pp. 37-64."
+  - Chuang, Chienhui. “Internationalism or Pan-Asianism? Modern China's
+    Theosophical Movement in the 1910s and 1920s.” *Global-Local Studies*, no.
+    14, March, 2021, pp. 34-46.
+  - "Kieschnick, John. “Buddhist Vegetarianism in China.” In *Of Tripod and
+    Palate: Food, Politics, and Religion in Traditional China*, edited by Roel
+    Sterckx, New York: Springer, 2005, pp. 186-212."
+  - "Leung, Angela Ki Che. “To Build or to Transform Vegetarian China: Two
+    Republican Projects.” In *Moral Foods*, edited by Leung Angela Ki Che, L.
+    Caldwell Melissa, Ku Robert Ji-Song and R. Yano Christine, Honolulu:
+    University of Hawaii Press, 2019, pp. 221-240."
+  - "Poon, Shuk-wah. “Buddhist Activism and Animal Protection in Republican
+    China.” In *Volume Iii Key Concepts in Practice*, edited by R. Katz Paul and
+    Travagnin Stefania, Boston: De Gruyter, 2019 , pp. 91-112."
+  - "## 其他論述"
+  - 梁其姿演講、于穎整理，〈「素食中國」在民國時期的兩個意義〉，《小組》，2021年10月5日，豆瓣，https://www.douban.com/group/topic/248887935/?\_i=91330769vVa92l，檢索日期：2026年2月23日。
 ---
 ## 一、前言
 
@@ -126,15 +178,10 @@ refs:
 目前能找到慎食衛生會最早公開紀錄，見於《浙江醫藥學報》刊載的〈醫事新聞：慎食衛生會〉。[註16]同年，《中西醫學報》與《申報》亦刊出相同章程。[註17]文件章程中，較為重要的前六條如下：
 
 1. 本會以改良食品，研究衛生，俾免病苦而登壽域爲宗旨。廷芳等就學識所及，身經親歷者，箸說發明，隨時刊布，以餉同志。
-
 2. 食品改良以不食血肉毒品爲綱，他若費財傷生之烟酒等物，皆在應戒之列。本會同人，各舉所知，另刊耑書，以廣勸告。
-
 3. 肉食之害，甫經發明。衛生家雖不乏知者，而每苦於素食，或難戒絶。本會特别研究於代肉物料，選備頗多。將來擬編印書報，開會演說。並應特設一食品售賣處，改良烹飪，俾戒肉者漸入佳境，而無所苦。現暫指定法界密采里爲本會改良食物之所，並備有無酒精之葡萄佳釀，專爲便於同人宴會起見。凡發起諸君，及本會出力之人，皆另贈餐劵，取價格外從廉。
-
 4. 本總會暫借設上海愛文義路一百號觀渡廬伍寓，分會設法京巴黎生物學會。凡有志入會或不即入會而欲研究此事，皆可通信賜敎。互換知識，再來函請逕寄上海馬霍路德福里三百八十二號半門牌。本會書記朱君總收。彚交廷芳等分别函答，或登報總覆。如有面詢事件，亦請先向朱君接治。
-
 5. 凡入本會。永不食血肉毒品者，即爲本會會員。
-
 6. 凡深知毒食之害而不能遽絶肉食者，亦可附入本會，爲本會之贊成員。[註18]
 
 慎食衛生會的會務自1910年9月7日正式展開，由伍廷芳任會長，李石曾任副會長。每隔兩週舉行一次聚會，時間固定於下午二時至三時，地點設在伍廷芳的上海寓所觀渡廬。分會則設在巴黎的生物學會，由李石曾所主持。事實上，李氏大多時間待在法國，直至隔年夏天才返國。因此大多事務，乃是由伍廷芳所主持。[註19]

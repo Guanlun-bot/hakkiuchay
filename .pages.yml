@@ -217,6 +217,7 @@ content:
           - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, type: boolean }
           - { name: bg_gray, label: 文字底改成透明灰框（不模糊）, type: boolean }
+          - { name: bg_transparency, label: 文字框透明度（%）, description: 0 為完全不透明；數字越大，越看得到背景畫。原本是 38。, type: number, options: { min: 0, max: 100, step: 1 } }
           - { name: bg_fill, label: 背景空白處顏色（可留空）, type: string }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }
@@ -231,6 +232,7 @@ content:
           - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, type: boolean }
           - { name: bg_gray, label: 文字底改成透明灰框（不模糊）, type: boolean }
+          - { name: bg_transparency, label: 文字框透明度（%）, description: 0 為完全不透明；數字越大，越看得到背景畫。原本是 38。, type: number, options: { min: 0, max: 100, step: 1 } }
           - { name: bg_fill, label: 背景空白處顏色（可留空）, type: string }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }
@@ -245,6 +247,7 @@ content:
           - { name: cover_caption, label: 背景圖說明（目前不顯示）, type: string }
           - { name: bg_whole, label: 背景整幅顯示（直幅畫打勾）, type: boolean }
           - { name: bg_gray, label: 文字底改成透明灰框（不模糊）, type: boolean }
+          - { name: bg_transparency, label: 文字框透明度（%）, description: 0 為完全不透明；數字越大，越看得到背景畫。原本是 38。, type: number, options: { min: 0, max: 100, step: 1 } }
           - { name: bg_fill, label: 背景空白處顏色（可留空）, type: string }
           - { name: color, label: 顏色（勿改）, type: string, hidden: true }
           - { name: en, label: en, type: string, hidden: true }

@@ -6,6 +6,7 @@ academic:
   cover_caption: 宋　劉松年〈攆茶圖〉，國立故宮博物院藏
   bg_whole: false
   bg_gray: true
+  bg_transparency: 38
   color: var(--c-academic)
   en: ACADEMIC
 study-talks:
@@ -16,6 +17,7 @@ study-talks:
   cover_caption: 江戶　仙厓義梵〈○△□〉，出光美術館藏
   bg_whole: false
   bg_gray: true
+  bg_transparency: 38
   color: var(--c-talks)
   en: STUDY TALKS
 life:
@@ -26,5 +28,6 @@ life:
   cover_caption: 大正　今村紫紅〈熱國之卷〉，東京國立博物館藏
   bg_whole: false
   bg_gray: true
+  bg_transparency: 38
   color: var(--c-life)
   en: NOTEBOOK

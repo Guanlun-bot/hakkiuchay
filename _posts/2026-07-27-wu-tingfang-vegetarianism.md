@@ -1,6 +1,6 @@
 ---
-title: "伍廷芳及其素食思想析論：衛生、養生與修身An Analysis of Wu Tingfang’s Vegetarian Thought:
-  Hygiene, Yangsheng, and Self-Cultivation"
+title: "伍廷芳及其素食思想析論：衛生、養生與修身 "
+subtitle: 收錄於《史轍》第十七期
 author: 許原綸
 slug: wu-tingfang-vegetarianism
 cat: academic

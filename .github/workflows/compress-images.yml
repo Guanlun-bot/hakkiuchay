@@ -1,8 +1,9 @@
 # 照片上傳後自動處理：
 # 0. 副檔名改成小寫
 # 1. iPhone 的 HEIC 轉成 JPG
-# 2. 超過 600KB 的照片縮到長邊 2000 像素、品質 82
-# 3. 放在 assets/uploads/home/ 的照片，自動加進首頁輪播（_data/photos.yml）
+# 2. 不透明的 PNG 照片轉成 JPG（PNG 存照片檔案很大），並更新文章與資料裡的連結
+# 3. 大於 500KB 或尺寸過大的照片縮小：首頁輪播 home/ 長邊 2000 像素，其餘（文章用）長邊 1600 像素，品質 82
+# 4. 放在 assets/uploads/home/ 的照片，自動加進首頁輪播（_data/photos.yml）
 name: 處理上傳的照片
 on:
   push:
@@ -28,6 +29,8 @@ jobs:
           if [ -z "$before" ] || ! git cat-file -e "$before" 2>/dev/null; then before="HEAD~1"; fi
           git diff --name-only --diff-filter=A "$before" HEAD -- assets/uploads/home > /tmp/added.txt || true
           echo "新增檔案："; cat /tmp/added.txt
+          # 這次新增或更動的所有照片（只處理這些，舊照片不重壓）
+          git diff --name-only --diff-filter=AM "$before" HEAD -- assets/uploads > /tmp/changed.txt || true
       - name: 安裝工具
         run: sudo apt-get -qq update && sudo apt-get -qq install -y imagemagick libheif-examples >/dev/null
       - name: HEIC 轉 JPG
@@ -48,16 +51,33 @@ jobs:
               echo "改名：$f → $new"
             fi
           done
+      - name: PNG 照片轉 JPG（有透明背景的不轉）
+        run: |
+          sed -E 's/\.([A-Za-z]+)$/.\L\1/' /tmp/changed.txt | sed -E 's/\.(heic|heif)$/.jpg/I' > /tmp/todo.txt
+          grep -E '\.png$' /tmp/todo.txt | while IFS= read -r f; do
+              [ -f "$f" ] && [ "$(stat -c %s "$f")" -gt 300000 ] || continue
+              [ "$(identify -format '%[opaque]' "$f[0]" 2>/dev/null | tr 'A-Z' 'a-z')" = "true" ] || { echo "保留（有透明背景）：$f"; continue; }
+              base="${f%.*}"; new="$base.jpg"; n=1
+              while [ -e "$new" ]; do new="$base-$n.jpg"; n=$((n+1)); done
+              case "$f" in assets/uploads/home/*|assets/uploads/covers/*) max=2000 ;; *) max=1600 ;; esac
+              convert "$f[0]" -auto-orient -background white -flatten -resize "${max}x${max}>" -strip -quality 82 "$new" && git rm -q "$f"
+              old_url="/${f}"; new_url="/${new}"
+              grep -rl --include='*.yml' --include='*.md' -F "$old_url" _data _posts 2>/dev/null | xargs -r sed -i "s#${old_url}#${new_url}#g"
+              echo "轉檔：$f → $new"
+            done
       - name: 壓縮
         run: |
-          # 只處理長邊超過 2000 像素、或大於 1.5MB 的照片，已處理過的不再重壓
-          find assets/uploads -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -print0 |
-            while IFS= read -r -d '' f; do
+          # 這次上傳的照片裡，大於 500KB、或長邊超過上限的才處理
+          # （PNG 轉成的 JPG 已在上一步一併縮好，不再重壓）
+          grep -iE '\.(jpe?g|webp)$' /tmp/todo.txt | sort -u | while IFS= read -r f; do
+              [ -f "$f" ] || continue
+              case "$f" in assets/uploads/home/*|assets/uploads/covers/*) max=2000 ;; *) max=1600 ;; esac
               long=$(identify -format '%[fx:max(w,h)]' "$f[0]" 2>/dev/null || echo 0)
               size=$(stat -c %s "$f")
-              if [ "$long" -gt 2000 ] || [ "$size" -gt 1500000 ]; then
-                mogrify -auto-orient -resize '2000x2000>' -strip -quality 82 "$f"
-                echo "壓縮：$f"
+              if [ "$long" -gt "$max" ] || [ "$size" -gt 500000 ]; then
+                before=$size
+                mogrify -auto-orient -resize "${max}x${max}>" -strip -quality 82 "$f"
+                echo "壓縮：$f（$((before/1024))KB → $(( $(stat -c %s "$f") / 1024 ))KB）"
               fi
             done
       - name: 加進首頁輪播（只加這次新增的）

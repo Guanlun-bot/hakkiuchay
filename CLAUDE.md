@@ -23,7 +23,7 @@
 - 獺祭魚是外部連結：https://otterslibrary.pages.dev/
 
 ## 自動流程
-- `.github/workflows/compress-images.yml`：上傳的新照片會自動 HEIC→JPG、副檔名改小寫、長邊大於 2000 像素或大於 1.5MB 的會縮小；`assets/uploads/home/` 的新照片自動加進首頁輪播。它可能自己多推一個 commit，記得再 pull。
+- `.github/workflows/compress-images.yml`：只處理每次新上傳或更動的照片（舊照片不重壓）：HEIC→JPG、副檔名改小寫、不透明的 PNG 照片轉 JPG 並同步改文章／資料裡的連結、大於 500KB 或過大的縮小（`home/`、`covers/` 長邊 2000，其餘文章用 1600，品質 82）；`assets/uploads/home/` 的新照片自動加進首頁輪播。它可能自己多推一個 commit，記得再 pull。
 - `.github/workflows/cancel-stuck-pages.yml`：Pages 發布卡住時手動執行。
 - `deploy.yml` 目前停用。
 - 圖片上傳：Pages CMS 傳大檔（手機照片幾 MB）會失敗，文章裡留下 `blob:` 開頭的暫時連結、圖片顯示不出來。請齋主先用 `/admin/resize.html`（瀏覽器內縮成長邊 1600px 的 JPG）再上傳。看到文章裡有 `blob:` 連結，代表那張圖沒上傳成功，檔案不在 repo 裡，無法替換，只能請齋主重傳。

@@ -17,7 +17,7 @@ study-talks:
   cover_caption: 江戶　仙厓義梵〈○△□〉，出光美術館藏
   bg_whole: false
   bg_gray: true
-  bg_transparency: 38
+  bg_transparency: 50
   color: var(--c-talks)
   en: STUDY TALKS
 life:

@@ -1,6 +1,6 @@
 # 學鳩齋：給協助編輯的 Claude 的交接說明
 
-這是許原綸（Kho GuanLun）的個人書齋網站，網址 https://guanlun-bot.github.io/hakkiuchay/ 。
+這是許原綸（Kho GuanLun）的個人書齋網站，網址 https://hakkiuchay.space/ （網域在 GoDaddy 購買，DNS 指向 GitHub Pages；根目錄的 CNAME 檔不要刪）。
 用 Jekyll 寫，GitHub Pages 以「Deploy from a branch（main）」自動建置；推上 main 約一分鐘後上線。
 
 ## 最重要的規矩
@@ -28,6 +28,6 @@
 - `deploy.yml` 目前停用。
 
 ## 預覽與確認
-- `baseurl` 是 `/hakkiuchay`，連結一律用 `relative_url`。
+- `baseurl` 是空字串（自訂網域），連結仍一律用 `relative_url`，以便日後換網址。
 - 上線後用 `?v=<commit>` 加在網址後避開快取。
 - 圖片版權：只用公有領域或齋主有權使用的圖（例：故宮開放資料、作者過世逾 50 年的作品）。

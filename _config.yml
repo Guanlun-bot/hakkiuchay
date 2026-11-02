@@ -1,8 +1,8 @@
 title: 學鳩齋
-# 網站放在 https://guanlun-bot.github.io/hakkiuchay/ 時要有 baseurl。
-# 以後綁了自己的網域，把 baseurl 改成 "" 、url 改成新網域即可。
-baseurl: "/hakkiuchay"
-url: "https://guanlun-bot.github.io"
+# 網站網址：https://hakkiuchay.space/ （網域記在根目錄的 CNAME 檔）
+# 若改回 https://guanlun-bot.github.io/hakkiuchay/ ，baseurl 要改回 "/hakkiuchay"、url 改回 "https://guanlun-bot.github.io"，並刪除 CNAME。
+baseurl: ""
+url: "https://hakkiuchay.space"
 lang: zh-Hant
 timezone: Asia/Taipei
 markdown: kramdown

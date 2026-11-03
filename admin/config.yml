@@ -133,6 +133,8 @@ collections:
           - { name: contact_note, label: 齋主／聯絡：聯絡說明, widget: text, required: false }
           - { name: email_label, label: 齋主／聯絡：電子郵件標籤, widget: string }
           - { name: place_label, label: 齋主／聯絡：所在標籤, widget: string }
+          - { name: bg_dial_label, label: 分類背景：透明度滑桿標籤, widget: string, required: false }
+          - { name: bg_dial_hint, label: 分類背景：滑桿提示文字, widget: string, required: false }
           - { name: books_heading, label: 齋主：著作標題, widget: string, required: false }
           - { name: books_role, label: 齋主：著作預設角色, widget: string, required: false }
           - { name: discord_label, label: Discord 標籤, widget: string, required: false }

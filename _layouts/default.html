@@ -77,6 +77,12 @@
   </div>
 </footer>
 
+{% if bgc.cover and bgc.cover != "" %}
+<label class="bg-dial" title="{{ T.bg_dial_hint | default: '拖動調整背景畫作的透明度' }}">
+  <span class="bg-dial-label">{{ T.bg_dial_label | default: "背景" }}</span>
+  <input type="range" id="bg-dial" min="0" max="95" step="1" aria-label="{{ T.bg_dial_hint | default: '拖動調整背景畫作的透明度' }}">
+</label>
+{% endif %}
 <script>
 (function () {
   var btn = document.getElementById("theme-toggle"), root = document.documentElement;
@@ -130,6 +136,18 @@
     const up = () => { const m = document.documentElement.scrollHeight - innerHeight; bar.style.width = (m > 0 ? Math.min(1, scrollY / m) * 100 : 0) + "%"; };
     addEventListener("scroll", up, { passive: true }); up();
   }
+})();
+(function () {
+  /* 閱讀者自行調整背景透明度：數值越大，紙面越透、畫越清楚；記在這台瀏覽器 */
+  const dial = document.getElementById("bg-dial");
+  if (!dial) return;
+  const body = document.body, key = "xj-bg-clear";
+  const base = parseFloat(getComputedStyle(body).getPropertyValue("--bga")) || (body.classList.contains("bg-gray") ? 62 : 74);
+  const apply = v => body.style.setProperty("--bga", (100 - v) + "%");
+  let v = 100 - base;
+  try { const saved = localStorage.getItem(key); if (saved !== null) v = +saved; } catch (e) {}
+  dial.value = v; apply(v);
+  dial.addEventListener("input", () => { apply(+dial.value); try { localStorage.setItem(key, dial.value); } catch (e) {} });
 })();
 </script>
 </body>

@@ -58,10 +58,20 @@
         {% endif %}
       </ul>
     </nav>
+    <div class="top-btns">
     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切換白天／夜間模式">
       <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
       <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z"/></svg>
     </button>
+    {% if bgc.cover and bgc.cover != "" %}
+    <div class="candle-wrap">
+      <button class="candle-btn" id="candle-btn" type="button" aria-expanded="false" aria-controls="candle-pop" aria-label="{{ T.bg_dial_hint | default: '調整背景畫作的透明度' }}" title="{{ T.bg_dial_hint | default: '調整背景畫作的透明度' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="flame" d="M12 3c1.5 1.8 2 3 2 4a2 2 0 0 1-4 0c0-1 .5-2.2 2-4z"/><rect x="9" y="11" width="6" height="9.5" rx="1"/></svg>
+      </button>
+      <div class="candle-pop" id="candle-pop" hidden><input type="range" id="bg-dial" min="0" max="95" step="1" aria-label="{{ T.bg_dial_hint | default: '調整背景畫作的透明度' }}"></div>
+    </div>
+    {% endif %}
+    </div>
     </div>
   </div>
 </header>
@@ -77,12 +87,6 @@
   </div>
 </footer>
 
-{% if bgc.cover and bgc.cover != "" %}
-<label class="bg-dial" title="{{ T.bg_dial_hint | default: '拖動調整背景畫作的透明度' }}">
-  <span class="bg-dial-label">{{ T.bg_dial_label | default: "背景" }}</span>
-  <input type="range" id="bg-dial" min="0" max="95" step="1" aria-label="{{ T.bg_dial_hint | default: '拖動調整背景畫作的透明度' }}">
-</label>
-{% endif %}
 <script>
 (function () {
   var btn = document.getElementById("theme-toggle"), root = document.documentElement;
@@ -138,16 +142,21 @@
   }
 })();
 (function () {
-  /* 閱讀者自行調整背景透明度：數值越大，紙面越透、畫越清楚；記在這台瀏覽器 */
-  const dial = document.getElementById("bg-dial");
+  /* 閱讀者自行調整背景透明度：蠟燭鍵彈出直式滑桿；數值越大，紙面越透、畫越清楚；記在這台瀏覽器 */
+  const dial = document.getElementById("bg-dial"), btn = document.getElementById("candle-btn"), pop = document.getElementById("candle-pop");
   if (!dial) return;
   const body = document.body, key = "xj-bg-clear";
   const base = parseFloat(getComputedStyle(body).getPropertyValue("--bga")) || (body.classList.contains("bg-gray") ? 62 : 74);
-  const apply = v => body.style.setProperty("--bga", (100 - v) + "%");
+  const apply = v => { body.style.setProperty("--bga", (100 - v) + "%"); btn.style.setProperty("--flame", (.3 + v / 95 * .7).toFixed(2)); };
   let v = 100 - base;
   try { const saved = localStorage.getItem(key); if (saved !== null) v = +saved; } catch (e) {}
   dial.value = v; apply(v);
   dial.addEventListener("input", () => { apply(+dial.value); try { localStorage.setItem(key, dial.value); } catch (e) {} });
+  const close = () => { pop.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+  btn.addEventListener("click", e => { e.stopPropagation(); const open = pop.hidden; pop.hidden = !open; btn.setAttribute("aria-expanded", String(open)); if (open) dial.focus(); });
+  pop.addEventListener("click", e => e.stopPropagation());
+  document.addEventListener("click", close);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
 })();
 </script>
 </body>

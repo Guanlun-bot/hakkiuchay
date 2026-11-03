@@ -62,11 +62,19 @@ layout: default
   </div>
 </div>
 
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="照片" hidden>
+  <div class="lb-stage"><img class="lb-img" alt=""></div>
+  <div class="lb-bar"><span class="lb-cap"></span><span class="lb-count"></span></div>
+  <button class="lb-btn lb-close" type="button" aria-label="關閉">×</button>
+  <button class="lb-btn lb-prev" type="button" aria-label="上一張">‹</button>
+  <button class="lb-btn lb-next" type="button" aria-label="下一張">›</button>
+</div>
+
 <div class="fn-pop" id="fn-pop" role="dialog" aria-live="polite" hidden><div class="fn-pop-body"></div><a class="fn-pop-more" href="#notes">看全部註釋</a></div>
 
 <script>
 (function () {
-  /* 連續兩張以上、各自獨立一段的圖，排成兩欄相簿；點圖開原圖 */
+  /* 連續兩張以上、各自獨立一段的圖，排成兩欄相簿；點圖在本頁放大瀏覽 */
   const isImgPara = el => el && el.tagName === "P" && el.children.length === 1 && el.firstElementChild.tagName === "IMG" && el.textContent.trim() === "";
   document.querySelectorAll(".prose > p").forEach(p => {
     if (!isImgPara(p) || isImgPara(p.previousElementSibling) || !isImgPara(p.nextElementSibling)) return;
@@ -75,10 +83,84 @@ layout: default
     let cur = p;
     while (isImgPara(cur)) {
       const next = cur.nextElementSibling, img = cur.firstElementChild, a = document.createElement("a");
-      a.href = img.currentSrc || img.src; a.target = "_blank"; a.rel = "noopener";
+      a.href = img.currentSrc || img.src;
       img.loading = "lazy"; a.append(img); box.append(a); cur.remove(); cur = next;
     }
   });
+
+
+  /* 照片瀏覽：點文中任何照片，在本頁放大；左右滑動或方向鍵換張，點空白、Esc 或返回鍵關閉 */
+  (function () {
+    /* 內文稍後會被註腳轉換改寫，所以用事件委派、每次打開時才收集照片 */
+    let imgs = [];
+    const collect = () => imgs = [...document.querySelectorAll(".prose img")].filter(im => !im.closest("a") || im.closest(".gallery"));
+    const lb = document.getElementById("lb"), view = lb.querySelector(".lb-img"), stage = lb.querySelector(".lb-stage");
+    const capEl = lb.querySelector(".lb-cap"), countEl = lb.querySelector(".lb-count");
+    const capOf = im => { const f = im.closest("figure"); const c = f && f.querySelector("figcaption"); return (c ? c.textContent : im.alt || "").trim(); };
+    let i = 0, open = false, busy = false;
+    const srcOf = im => im.closest("a") && im.closest("a").getAttribute("href") || im.currentSrc || im.src;
+    const preload = j => { const im = imgs[(j + imgs.length) % imgs.length]; if (im) { const p = new Image(); p.src = srcOf(im); } };
+    function set(j) {
+      i = (j + imgs.length) % imgs.length;
+      view.src = srcOf(imgs[i]); view.alt = imgs[i].alt || "";
+      capEl.textContent = capOf(imgs[i]);
+      countEl.textContent = imgs.length > 1 ? (i + 1) + " / " + imgs.length : "";
+      lb.classList.toggle("is-single", imgs.length < 2);
+      preload(i + 1); preload(i - 1);
+    }
+    function show(j) {
+      set(j); lb.hidden = false; open = true; document.documentElement.classList.add("lb-open");
+      requestAnimationFrame(() => lb.classList.add("is-on"));
+      if (history.state !== "lb") history.pushState("lb", "");
+    }
+    function hide(fromPop) {
+      if (!open) return; open = false; lb.classList.remove("is-on");
+      document.documentElement.classList.remove("lb-open");
+      setTimeout(() => { if (!open) lb.hidden = true; }, 220);
+      if (!fromPop && history.state === "lb") history.back();
+    }
+    function go(dir) {
+      if (busy || imgs.length < 2) return; busy = true;
+      view.style.transition = "transform .2s ease, opacity .2s ease";
+      view.style.transform = `translateX(${-dir * 40}%)`; view.style.opacity = "0";
+      setTimeout(() => {
+        set(i + dir);
+        view.style.transition = "none"; view.style.transform = `translateX(${dir * 40}%)`;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          view.style.transition = "transform .26s var(--ease), opacity .26s ease";
+          view.style.transform = ""; view.style.opacity = "";
+          setTimeout(() => busy = false, 260);
+        }));
+      }, 190);
+    }
+    document.addEventListener("click", e => {
+      const im = e.target.closest(".prose img"); if (!im) return;
+      collect(); const j = imgs.indexOf(im); if (j < 0) return;
+      e.preventDefault(); show(j);
+    });
+    lb.querySelector(".lb-close").addEventListener("click", () => hide());
+    lb.querySelector(".lb-prev").addEventListener("click", e => { e.stopPropagation(); go(-1); });
+    lb.querySelector(".lb-next").addEventListener("click", e => { e.stopPropagation(); go(1); });
+    stage.addEventListener("click", e => { if (e.target === stage) hide(); });
+    addEventListener("popstate", () => hide(true));
+    addEventListener("keydown", e => { if (!open) return; if (e.key === "Escape") hide(); if (e.key === "ArrowLeft") go(-1); if (e.key === "ArrowRight") go(1); });
+    /* 手指拖曳：照片跟著手走，放開時超過一定距離就換張 */
+    let x0 = null, y0 = 0, dx = 0;
+    stage.addEventListener("touchstart", e => { if (busy || e.touches.length > 1) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; view.style.transition = "none"; }, { passive: true });
+    stage.addEventListener("touchmove", e => {
+      if (x0 === null) return;
+      dx = e.touches[0].clientX - x0; const dy = e.touches[0].clientY - y0;
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 12) { view.style.transform = `translateY(${dy}px)`; view.style.opacity = String(Math.max(.3, 1 - Math.abs(dy) / 400)); dx = 0; return; }
+      if (imgs.length > 1) view.style.transform = `translateX(${dx}px)`;
+    }, { passive: true });
+    stage.addEventListener("touchend", e => {
+      if (x0 === null) return;
+      const dy = e.changedTouches[0].clientY - y0; x0 = null;
+      if (Math.abs(dy) > 110 && Math.abs(dy) > Math.abs(dx)) { view.style.transform = ""; view.style.opacity = ""; hide(); return; }
+      if (Math.abs(dx) > 50) { view.style.transform = ""; view.style.opacity = ""; go(dx < 0 ? 1 : -1); return; }
+      view.style.transition = "transform .22s var(--ease), opacity .22s ease"; view.style.transform = ""; view.style.opacity = "";
+    });
+  })();
 
   /* 內文與摘要中的 [註1] 變成可點的註腳號碼 */
   let k = 0;

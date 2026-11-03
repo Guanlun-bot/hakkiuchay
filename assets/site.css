@@ -328,6 +328,28 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .prose .post-fig img { margin: 0 auto; max-height: min(70vh, 560px); width: auto; max-width: 100%; box-shadow: 0 18px 30px -24px rgba(30,25,20,.45); }
 .prose .post-fig figcaption { margin-top: 10px; font-size: 13px; color: var(--ink-soft); letter-spacing: .08em; text-align: center; }
 .prose, .notes-block, .fn-pop, .abstract, .cite-box { overflow-wrap: anywhere; word-break: normal; }
+/* 照片瀏覽（本頁放大，左右滑動換張） */
+.prose img { cursor: zoom-in; }
+.prose a:not(.gallery a) img { cursor: pointer; }
+html.lb-open { overflow: hidden; }
+.lb { position: fixed; inset: 0; z-index: 100; background: rgba(18, 16, 15, .97); opacity: 0; transition: opacity .2s ease; touch-action: none; }
+.lb.is-on { opacity: 1; }
+.lb-stage { position: absolute; inset: 0 0 64px; display: flex; align-items: center; justify-content: center; padding: 48px 56px 8px; box-sizing: border-box; }
+.lb-img { display: block; max-width: 100%; max-height: 100%; min-width: 0; min-height: 0; width: auto; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; will-change: transform; transition: transform .26s var(--ease), opacity .26s ease; }
+.lb-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px; color: #d8d3c8; font-size: 14px; letter-spacing: .06em; }
+.lb-cap { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-count { flex: none; color: #9d978c; font-variant-numeric: tabular-nums; }
+.lb-btn { position: absolute; border: 0; background: transparent; color: #e8e3d8; cursor: pointer; font-family: var(--font-body); line-height: 1; opacity: .75; transition: opacity .2s; }
+.lb-btn:hover { opacity: 1; }
+.lb-close { top: 10px; right: 14px; width: 44px; height: 44px; font-size: 30px; }
+.lb-prev, .lb-next { top: 50%; width: 52px; height: 72px; margin-top: -60px; font-size: 44px; }
+.lb-prev { left: 4px; } .lb-next { right: 4px; }
+.lb.is-single .lb-prev, .lb.is-single .lb-next { display: none; }
+@media (max-width: 720px), (pointer: coarse) {
+  .lb-stage { padding: 52px 0 6px; }
+  .lb-prev, .lb-next { display: none; }
+  .lb-bar { padding: 0 18px; font-size: 13px; }
+}
 
 /* 註腳號碼 */
 .fn { position: relative; top: -.6em; vertical-align: baseline; font-size: 12px; line-height: 1; color: var(--c); background: none; border: 0; padding: 1px 2px; margin: 0 1px; cursor: pointer; font-family: var(--font-body); font-weight: 600; border-radius: 2px; }

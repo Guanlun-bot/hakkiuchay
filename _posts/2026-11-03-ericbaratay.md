@@ -1,6 +1,6 @@
 ---
 title: 【史學文章翻譯】長頸鹿的法國之旅（1826–1827），進入另一個世界
-author: Eric Baratay
+author: 艾瑞克・巴拉泰
 slug: ericbaratay
 cat: life
 date: 2026-11-03
@@ -10,11 +10,10 @@ keywords:
   - 長頸鹿
   - 巴黎植物園
   - 翻譯
-source: "Eric Baratay（艾瑞克・巴拉泰），〈The Giraffe's Journey in France (1826–1827):
-  Entering Another World〉，收錄於 Clemens Wischermann、Aline Steinbrecher、Philip
-  Howell 編，《Animal History in the Modern City: Exploring
-  Liminality》，Bloomsbury，2018，頁 91–104。HAL 開放典藏編號 hal-04776575（2024 年 11 月 11
-  日上傳）。"
+source: "Eric Baratay，〈The Giraffe's Journey in France (1826–1827): Entering
+  Another World〉，收錄於 Clemens Wischermann、Aline Steinbrecher、Philip Howell
+  編，《Animal History in the Modern City: Exploring Liminality》，Bloomsbury，2018，頁
+  91–104。HAL 開放典藏編號 hal-04776575（2024 年 11 月 11 日上傳）。"
 notes:
   - G. Dardaud, *Une Girafe pour le roi* (1985), Bordeaux, 2007；M. Allin,
     *Zarafa*, London, 1999.

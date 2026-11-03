@@ -1,43 +1,80 @@
 ---
-title: 【史學文章翻譯】Eric Baratay〈長頸鹿的法國之旅（1826–1827），進入另一個世界〉
+title: 【史學文章翻譯】長頸鹿的法國之旅（1826–1827），進入另一個世界
 author: Eric Baratay
 slug: ericbaratay
 cat: life
 date: 2026-11-03
 keywords:
-- 動物史
-- 閾限性
-- 長頸鹿
-- 巴黎植物園
-- 翻譯
-source: 'Eric Baratay（艾瑞克・巴拉泰），〈The Giraffe''s Journey in France (1826–1827): Entering Another World〉，收錄於 Clemens Wischermann、Aline Steinbrecher、Philip Howell 編，《Animal History in the Modern City: Exploring Liminality》，Bloomsbury，2018，頁 91–104。HAL 開放典藏編號 hal-04776575（2024 年 11 月 11 日上傳）。'
+  - 動物史
+  - 閾限性
+  - 長頸鹿
+  - 巴黎植物園
+  - 翻譯
+source: "Eric Baratay（艾瑞克・巴拉泰），〈The Giraffe's Journey in France (1826–1827):
+  Entering Another World〉，收錄於 Clemens Wischermann、Aline Steinbrecher、Philip
+  Howell 編，《Animal History in the Modern City: Exploring
+  Liminality》，Bloomsbury，2018，頁 91–104。HAL 開放典藏編號 hal-04776575（2024 年 11 月 11
+  日上傳）。"
 notes:
-- G. Dardaud, *Une Girafe pour le roi* (1985), Bordeaux, 2007；M. Allin, *Zarafa*, London, 1999.
-- 'Éric Baratay, *Le Point de vue animal, une autre version de l''histoire*, Paris, 2012；"Geschichtsschreibung von Seiten der Tiere. Leben und Sterben im Ersten Weltkrieg", *Tierstudien*, 5, 2014, 30–43；"Building an Animal History", in: Louisa Mackenzie et al. (eds.), *French Thinking about Animals*, East Lansing, 2015, 3–14.'
-- 'Julius Bräuer, "What Dogs Understand about Humans", in: Juliane Kaminski et al. (eds.), *The Social Dog*, London, 2014, 295–317；Monique Udell et al., "A Dog''s-Eye View of Canine Cognition", in: Alexandra Horowitz (ed.), *Domestic Dog Cognition and Behavior*, New York, 2014, 221–240.'
-- 專題 "Does History Need Animals?", *History and Theory*, 52-4, 2013.
-- 'Adam Miklósi et al., "The Personality of Dogs", in: Juliane Kaminski et al. (eds.), 前引書，191–222.'
-- Adam Miklósi, *Dog*, Oxford, 2014.
-- 省長維勒紐夫－巴爾尚蒙（Villeneuve-Bargemon）的信件，ADBR, 4 T 53；Salze, "Observations faites sur la Girafe envoyée au Roi par le Pacha d'Egypte", *Mémoires du Muséum d'Histoire Naturelle*, 14, 1827, 68–84；É. Geoffroy Saint-Hilaire，信件，ADBR, 4 T 53，及（原文此處不完整）。
-- '為避免註釋過多，本文的動物行為學資料均出自國際權威著作 Anne Dagg, *Giraffe: Biology, Behaviour and Conservation*, Cambridge, 2014。'
-- L. D. Ferlus, *Nouvelle notice sur la girafe*, Paris, 1827, p. 4；Salze，前引書，p. 71–72；Étienne Geoffroy Saint-Hilaire，前引書，p. 210–211, 223.
-- Salze，同上，p. 68–69（引文）；ADBR, 4 T 53，省長致海關關長函，1826 年 11 月 14 日。
-- Salze，同上，p. 82–83；ADBR, 4 T 53，帳目，1826 年 11 月 10 日；省長信件，1826 年 11 月 8 日及 18 日、1827 年 2 月 12 日。
-- Salze，同上，p. 80–83；Meredith Bashaw et al., "A survey assessment of variables related to stereotypy in captive giraffe and okapi", *Applied Animal Behaviour Science*, 73-3, 2001, 235–247.
-- Salze，同上，p. 78, 81–82（引文）；ADBR, 4 T 53，省長信件，1827 年 2 月 12 日。
-- ADBR, 4 T 53，省長信件，1827 年 3 月 3 日及 19 日（引文）、1827 年 4 月 28 日、1827 年 6 月；L.-F. Grognier, *Gazette universelle de Lyon*, 1827 年 6 月 14 日，p. 1。
-- Salze，前引書，p. 76, 82；ADBR, 4 T 53，省長信件，1827 年 2 月 12 日。
-- Salze，同上，p. 82（引文）；ADBR, 4 T 53，省長信件，1827 年 2 月 12 日及 4 月 28 日；博物館信件，1827 年 7 月 4 日。
-- Salze，同上，p. 77, 79（引文 1–4）；Étienne Geoffroy Saint-Hilaire，前引書，p. 216, 220（引文 5–7）。
-- Robert Dantzer, *Le stress en élevage intensif*, Paris, 1979.
-- Étienne Geoffroy Saint-Hilaire，同上，p. 214–215；Graham Mitchell et al., "The origin of mean arterial and jugular venous blood pressures in giraffes", *Journal of Experimental Biology*, 209, 2006, 2515–2524.
-- Salze，前引書，p. 73–76, 83（引文）；ADBR, 4 T 53，開支報告，1826 年 11 月及 12 月；省長信件，1827 年 2 月 12 日。
-- ADBR, 4 T 53，Étienne Geoffroy Saint-Hilaire 信件，1827 年 5 月 21 日及 24 日（引文 1）、6 月 2 日（引文 3）；Étienne Geoffroy Saint-Hilaire，前引書，p. 214（引文 2）、219。
-- ADBR, 4 T 53，省長信件，1827 年 6 月 23 日；艾克斯副省長信件，1827 年 6 月 23 日（引文 1）；Saint-Hilaire 信件，1827 年 6 月 24 日（引文 2、3）；《艾克斯儀典》（Cérémonial of Aix），1827 年 5 月 20 日，載於 É. Aude, *La Girafe à Aix*, Aix, 1934, p. 10–12；Louis-Furcy Grognier，載於 *Gazette universelle de Lyon*，6 月 6 日 p. 2、6 月 7 日 p. 2、7 月 9 日 p. 1（引文 4–5）；里昂市檔案館（Archives Municipales de Lyon），1 I 65，市長信件，1827 年 6 月 6 日。
-- ADBR, 4 T 53，Saint-Hilaire 信件，1827 年 5 月 23 日及 24 日（引文 2）、6 月 2 日及 5 日（引文 1）。
-- ADBR, 4 T 53，博物館信件，1827 年 7 月 4 日；Saint-Hilaire 信件，1827 年 7 月 12 日；Louis-Furcy Grognier，載於 *Gazette universelle de Lyon*，1827 年 7 月 15 日；L. Ferlus, *Dernière notice sur la girafe contenant la relation de son voyage à Saint-Cloud*, Paris, 1827.
-- ADBR, 4 T 53，Geoffroy 致省長函，1827 年 10 月 22 日；L. Ferlus，同上，p. 9（引文）。
-- P. Bernard et al., *Le Jardin des plantes*, Paris, 1842, I, p. 41–43；M. Boitard, *Le Jardin des plantes*, Paris, 1842, p. 442.
+  - G. Dardaud, *Une Girafe pour le roi* (1985), Bordeaux, 2007；M. Allin,
+    *Zarafa*, London, 1999.
+  - "Éric Baratay, *Le Point de vue animal, une autre version de l'histoire*,
+    Paris, 2012；\"Geschichtsschreibung von Seiten der Tiere. Leben und Sterben
+    im Ersten Weltkrieg\", *Tierstudien*, 5, 2014, 30–43；\"Building an Animal
+    History\", in: Louisa Mackenzie et al. (eds.), *French Thinking about
+    Animals*, East Lansing, 2015, 3–14."
+  - "Julius Bräuer, \"What Dogs Understand about Humans\", in: Juliane Kaminski
+    et al. (eds.), *The Social Dog*, London, 2014, 295–317；Monique Udell et al.,
+    \"A Dog's-Eye View of Canine Cognition\", in: Alexandra Horowitz (ed.),
+    *Domestic Dog Cognition and Behavior*, New York, 2014, 221–240."
+  - 專題 "Does History Need Animals?", *History and Theory*, 52-4, 2013.
+  - 'Adam Miklósi et al., "The Personality of Dogs", in: Juliane Kaminski et al.
+    (eds.), 前引書，191–222.'
+  - Adam Miklósi, *Dog*, Oxford, 2014.
+  - 省長維勒紐夫－巴爾尚蒙（Villeneuve-Bargemon）的信件，ADBR, 4 T 53；Salze, "Observations faites
+    sur la Girafe envoyée au Roi par le Pacha d'Egypte", *Mémoires du Muséum
+    d'Histoire Naturelle*, 14, 1827, 68–84；É. Geoffroy Saint-Hilaire，信件，ADBR, 4
+    T 53，及（原文此處不完整）。
+  - "為避免註釋過多，本文的動物行為學資料均出自國際權威著作 Anne Dagg, *Giraffe: Biology, Behaviour and
+    Conservation*, Cambridge, 2014。"
+  - L. D. Ferlus, *Nouvelle notice sur la girafe*, Paris, 1827, p.
+    4；Salze，前引書，p. 71–72；Étienne Geoffroy Saint-Hilaire，前引書，p. 210–211, 223.
+  - Salze，同上，p. 68–69（引文）；ADBR, 4 T 53，省長致海關關長函，1826 年 11 月 14 日。
+  - Salze，同上，p. 82–83；ADBR, 4 T 53，帳目，1826 年 11 月 10 日；省長信件，1826 年 11 月 8 日及 18
+    日、1827 年 2 月 12 日。
+  - Salze，同上，p. 80–83；Meredith Bashaw et al., "A survey assessment of variables
+    related to stereotypy in captive giraffe and okapi", *Applied Animal
+    Behaviour Science*, 73-3, 2001, 235–247.
+  - Salze，同上，p. 78, 81–82（引文）；ADBR, 4 T 53，省長信件，1827 年 2 月 12 日。
+  - ADBR, 4 T 53，省長信件，1827 年 3 月 3 日及 19 日（引文）、1827 年 4 月 28 日、1827 年 6 月；L.-F.
+    Grognier, *Gazette universelle de Lyon*, 1827 年 6 月 14 日，p. 1。
+  - Salze，前引書，p. 76, 82；ADBR, 4 T 53，省長信件，1827 年 2 月 12 日。
+  - Salze，同上，p. 82（引文）；ADBR, 4 T 53，省長信件，1827 年 2 月 12 日及 4 月 28 日；博物館信件，1827 年
+    7 月 4 日。
+  - Salze，同上，p. 77, 79（引文 1–4）；Étienne Geoffroy Saint-Hilaire，前引書，p. 216, 220（引文
+    5–7）。
+  - Robert Dantzer, *Le stress en élevage intensif*, Paris, 1979.
+  - Étienne Geoffroy Saint-Hilaire，同上，p. 214–215；Graham Mitchell et al., "The
+    origin of mean arterial and jugular venous blood pressures in giraffes",
+    *Journal of Experimental Biology*, 209, 2006, 2515–2524.
+  - Salze，前引書，p. 73–76, 83（引文）；ADBR, 4 T 53，開支報告，1826 年 11 月及 12 月；省長信件，1827 年 2
+    月 12 日。
+  - ADBR, 4 T 53，Étienne Geoffroy Saint-Hilaire 信件，1827 年 5 月 21 日及 24 日（引文 1）、6
+    月 2 日（引文 3）；Étienne Geoffroy Saint-Hilaire，前引書，p. 214（引文 2）、219。
+  - ADBR, 4 T 53，省長信件，1827 年 6 月 23 日；艾克斯副省長信件，1827 年 6 月 23 日（引文
+    1）；Saint-Hilaire 信件，1827 年 6 月 24 日（引文 2、3）；《艾克斯儀典》（Cérémonial of Aix），1827
+    年 5 月 20 日，載於 É. Aude, *La Girafe à Aix*, Aix, 1934, p. 10–12；Louis-Furcy
+    Grognier，載於 *Gazette universelle de Lyon*，6 月 6 日 p. 2、6 月 7 日 p. 2、7 月 9 日
+    p. 1（引文 4–5）；里昂市檔案館（Archives Municipales de Lyon），1 I 65，市長信件，1827 年 6 月 6
+    日。
+  - ADBR, 4 T 53，Saint-Hilaire 信件，1827 年 5 月 23 日及 24 日（引文 2）、6 月 2 日及 5 日（引文 1）。
+  - ADBR, 4 T 53，博物館信件，1827 年 7 月 4 日；Saint-Hilaire 信件，1827 年 7 月 12
+    日；Louis-Furcy Grognier，載於 *Gazette universelle de Lyon*，1827 年 7 月 15 日；L.
+    Ferlus, *Dernière notice sur la girafe contenant la relation de son voyage à
+    Saint-Cloud*, Paris, 1827.
+  - ADBR, 4 T 53，Geoffroy 致省長函，1827 年 10 月 22 日；L. Ferlus，同上，p. 9（引文）。
+  - P. Bernard et al., *Le Jardin des plantes*, Paris, 1842, I, p. 41–43；M.
+    Boitard, *Le Jardin des plantes*, Paris, 1842, p. 442.
 ---
 ## 導言
 

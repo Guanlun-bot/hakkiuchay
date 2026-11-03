@@ -122,16 +122,16 @@ nav a:hover::after, nav a[aria-current="page"]::after { transform: scaleX(1); }
 :root[data-theme="dark"] .theme-toggle .sun { opacity: 0; transform: rotate(90deg) scale(.5); }
 :root[data-theme="dark"] .theme-toggle .moon { opacity: 1; transform: rotate(0) scale(1); }
 
-/* 日月鍵右邊的蠟燭鍵：點開直式滑桿，調整分類背景畫的透明度（火苗亮度跟著變） */
+/* 日月鍵右邊的蠟燭鍵：點開橫式滑桿，調整分類背景畫的透明度（火苗亮度跟著變） */
 .top-btns { display: flex; align-items: center; gap: 8px; flex: none; }
 .candle-wrap { position: relative; }
 .candle-btn { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--rule); background: var(--card); color: var(--ink); cursor: pointer; display: grid; place-items: center; padding: 0; }
 .candle-btn:hover, .candle-btn[aria-expanded="true"] { border-color: var(--seal); color: var(--seal); }
 .candle-btn svg { width: 21px; height: 21px; }
 .candle-btn .flame { fill: currentColor; fill-opacity: calc(var(--flame, .6) - .3); opacity: var(--flame, .6); transition: opacity .2s, fill-opacity .2s; }
-.candle-pop { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 38px; height: 132px; border: 1px solid var(--rule); border-radius: 19px; background: var(--card); box-shadow: 0 10px 24px -14px rgba(0,0,0,.4); z-index: 40; }
+.candle-pop { position: absolute; top: calc(100% + 8px); right: 0; width: 160px; height: 38px; border: 1px solid var(--rule); border-radius: 19px; background: var(--card); box-shadow: 0 10px 24px -14px rgba(0,0,0,.4); z-index: 40; }
 .candle-pop[hidden] { display: none; }
-.candle-pop input { position: absolute; left: 50%; top: 50%; width: 104px; height: 18px; margin: 0; transform: translate(-50%, -50%) rotate(-90deg); -webkit-appearance: none; appearance: none; background: transparent; color: var(--ink-soft); cursor: pointer; }
+.candle-pop input { position: absolute; left: 16px; right: 16px; top: 50%; width: calc(100% - 32px); height: 18px; margin: 0; transform: translateY(-50%); -webkit-appearance: none; appearance: none; background: transparent; color: var(--ink-soft); cursor: pointer; }
 .candle-pop input::-webkit-slider-runnable-track { height: 2px; background: currentColor; border-radius: 1px; }
 .candle-pop input::-moz-range-track { height: 2px; background: currentColor; border-radius: 1px; }
 .candle-pop input::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -5px; border-radius: 50%; background: var(--seal); border: 0; }

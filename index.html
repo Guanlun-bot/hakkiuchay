@@ -16,7 +16,7 @@ nav: home
     <div class="plate" id="plate" aria-roledescription="輪播" aria-label="照片" data-seconds="{{ H.slide_seconds | default: 6 }}">
       {% for ph in photos %}
       <figure class="plate-item{% if forloop.first %} is-on{% endif %}" aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
-        <img src="{{ ph.image | relative_url }}" alt="{{ ph.caption | default: '' | escape }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+        <img {% if forloop.first %}src="{{ ph.image | relative_url }}" fetchpriority="high"{% else %}data-src="{{ ph.image | relative_url }}"{% endif %} alt="{{ ph.caption | default: '' | escape }}" decoding="async">
       </figure>
       {% endfor %}
     </div>
@@ -61,14 +61,17 @@ nav: home
   for (let j = rest.length - 1; j > 0; j--) { const r = Math.floor(Math.random() * (j + 1)); [rest[j], rest[r]] = [rest[r], rest[j]]; }
   order.push(...rest);
   let i = 0, timer = null;
+  /* 照片只在輪到它（和下一張）時才下載，手機不會一次載入幾十張 */
+  const load = j => { const im = items[j] && items[j].querySelector("img[data-src]"); if (im) { im.src = im.dataset.src; im.removeAttribute("data-src"); } };
   function show(k) {
     i = (k + order.length) % order.length;
     const cur = order[i];
+    load(cur);
     const prev = box.querySelector(".plate-item.is-on");
     if (prev && prev !== items[cur]) { prev.classList.add("was-on"); setTimeout(() => prev.classList.remove("was-on"), 1300); }
     items.forEach((el, j) => { el.classList.toggle("is-on", j === cur); el.setAttribute("aria-hidden", j === cur ? "false" : "true"); });
     cap.textContent = caps[cur] || "";
-    const nx = items[order[(i + 1) % order.length]].querySelector("img"); nx.loading = "eager";
+    load(order[(i + 1) % order.length]);
   }
   function play() { stop(); timer = setInterval(() => show(i + 1), secs); }
   function stop() { if (timer) clearInterval(timer); timer = null; }
@@ -77,7 +80,7 @@ nav: home
   box.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
   box.addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) { show(i + (dx < 0 ? 1 : -1)); play(); } x0 = null; });
   document.addEventListener("visibilitychange", () => document.hidden ? stop() : play());
-  items[order[1 % order.length]].querySelector("img").loading = "eager";
+  if ("requestIdleCallback" in window) requestIdleCallback(() => load(order[1 % order.length])); else setTimeout(() => load(order[1 % order.length]), 1500);
   play();
 })();
 </script>

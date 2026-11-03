@@ -415,7 +415,7 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 /* ===== 9 分類背景（原圖），文字放在半透明紙面上 ===== */
 body.has-bg::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--bgimg) center 35% / cover no-repeat; transform: translateZ(0); }
 /* 文字底下的紙面：獨立一層，閱讀者調透明度時只改這層的 opacity，手機也順 */
-.paper { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--paper); opacity: var(--bga, 74%); will-change: opacity; }
+.paper { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--paper); opacity: var(--bga, 74%); }
 body.has-bg header.top { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 body.has-bg main#app { max-width: 1148px; margin: 40px auto 56px; padding-bottom: 40px; position: relative; isolation: isolate; box-shadow: 0 18px 50px -24px rgba(0,0,0,.45); }
 body.has-bg footer { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }

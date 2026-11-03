@@ -438,13 +438,25 @@ body.bg-gray header.top, body.bg-gray footer { background: rgba(232, 232, 230, .
 /* 切換時整頁緩緩換色（不支援圓形展開的瀏覽器） */
 html.theme-fade body, html.theme-fade header.top, html.theme-fade footer { transition: background-color .5s ease, color .5s ease, border-color .5s ease; }
 
-/* 換頁：整頁淡出淡入、內容輕輕上浮 */
+/* 換頁：頁首不動；背景畫在換分類時慢慢疊化；內文先淡出，新頁再輕輕浮上來 */
 @view-transition { navigation: auto; }
-::view-transition-old(root) { animation: vt-out .22s var(--ease) both; }
-::view-transition-new(root) { animation: vt-in .38s var(--ease) both; }
-::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
-@keyframes vt-out { to { opacity: 0; } }
-@keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+header.top { view-transition-name: site-head; }
+main#app { view-transition-name: page; }
+::view-transition-group(site-head) { animation: none; z-index: 2; }
+::view-transition-old(site-head) { display: none; }
+::view-transition-new(site-head) { animation: none; }
+::view-transition-old(root) { animation: vt-fade-out .45s ease both; }
+::view-transition-new(root) { animation: vt-fade-in .45s ease both; }
+::view-transition-group(page) { animation-duration: .42s; animation-timing-function: var(--ease); }
+::view-transition-old(page) { animation: vt-out .18s ease-in both; }
+::view-transition-new(page) { animation: vt-in .42s var(--ease) .06s both; }
+::view-transition-old(*), ::view-transition-new(*) { mix-blend-mode: normal; }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-4px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
+/* 日夜切換時整頁一起做圓形展開，不分頁首與內文 */
+html.theme-reveal header.top, html.theme-reveal main#app { view-transition-name: none; }
 
 /* 日夜切換：圓形從按鈕展開 */
 html.theme-reveal::view-transition-old(root) { animation: none; }
@@ -452,6 +464,6 @@ html.theme-reveal::view-transition-new(root) { animation: reveal .6s var(--ease)
 @keyframes reveal { from { clip-path: circle(0 at var(--rx, 100%) var(--ry, 0)); } to { clip-path: circle(var(--rr, 150vmax) at var(--rx, 100%) var(--ry, 0)); } }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+  ::view-transition-old(*), ::view-transition-new(*), ::view-transition-group(*) { animation: none !important; }
   .theme-toggle svg, nav a::after, .list li::before { transition: none; }
 }

@@ -142,6 +142,8 @@ nav a:hover::after, nav a[aria-current="page"]::after { transform: scaleX(1); }
 /* 閱讀進度：頁首下方一條書籤線 */
 #progress { position: fixed; left: 0; top: 0; height: 2px; width: 100%; transform: scaleX(0); transform-origin: 0 50%; background: var(--seal); z-index: 20; will-change: transform; }
 
+header.top { transition: transform .28s var(--ease); }
+header.top.is-tucked { transform: translateY(-100%); }
 @media (max-width: 720px) {
   header.top .wrap { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 6px; padding-top: 10px; padding-bottom: 8px; }
   header.top .top-right { display: contents; }
@@ -395,6 +397,11 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
   .toc-inline { display: none; }
 }
 @media (max-width: 720px) {
+  .prose { font-size: 17px; line-height: 2.1; letter-spacing: .02em; }
+  .prose p { margin-bottom: 1.5em; }
+  .prose h2 { font-size: 21px; margin-top: 2.2em; }
+  .prose h3 { font-size: 18.5px; }
+  .prose blockquote { font-size: 16px; padding: 14px 16px; }
   .pager { grid-template-columns: 1fr; }
   .pager .next { text-align: left; }
 }
@@ -420,14 +427,14 @@ body.has-bg header.top { background: color-mix(in srgb, var(--paper) 78%, transp
 body.has-bg main#app { max-width: 1148px; margin: 40px auto 56px; padding-bottom: 40px; position: relative; isolation: isolate; box-shadow: 0 18px 50px -24px rgba(0,0,0,.45); }
 body.has-bg footer { background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 @media (max-width: 1200px) { body.has-bg main#app { margin: 28px 20px 40px; } }
-@media (max-width: 700px) { body.has-bg main#app { margin: 16px 10px 28px; } }
+@media (max-width: 700px) { body.has-bg main#app { margin: 12px 6px 24px; box-shadow: none; } }
 @media (max-width: 900px), (pointer: coarse) { body.has-bg header.top, body.has-bg footer { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--paper) 92%, transparent); } }
-/* 手機：文字離螢幕邊緣一律 20px（紙面 10 + 內距 10） */
+/* 手機：文字離螢幕邊緣約 24px（紙面 6 + 內距 18），閱讀不擠 */
 @media (max-width: 720px) {
-  .wrap { padding: 0 20px; }
-  body.has-bg main#app .wrap { padding: 0 10px; }
-  .page-head { padding: 48px 0 24px; }
-  .article { padding-top: 48px; }
+  .wrap { padding: 0 22px; }
+  body.has-bg main#app .wrap { padding: 0 18px; }
+  .page-head { padding: 40px 0 22px; }
+  .article { padding-top: 36px; }
 }
 
 /* 整幅顯示：畫完整置中於背景，四周用畫邊顏色補滿；文字紙面照常滿版（後台 bg_whole） */
@@ -460,6 +467,8 @@ header.top { view-transition-name: site-head; }
 @keyframes vt-fade-in { from { opacity: 0; } }
 @keyframes vt-out { to { opacity: 0; transform: translateY(-4px); } }
 @keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
+/* 手機換頁更快：短短淡入，不拖泥帶水 */
+@media (max-width: 720px) { ::view-transition-old(root) { animation-duration: .16s; } ::view-transition-new(root) { animation-duration: .26s; } }
 /* 日夜切換時整頁一起做圓形展開，不分頁首與內文 */
 html.theme-reveal header.top, html.theme-reveal main#app { view-transition-name: none; }
 

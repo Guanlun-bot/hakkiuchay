@@ -135,6 +135,22 @@
   const setH = () => document.documentElement.style.setProperty("--hh", hd.offsetHeight + "px");
   setH(); addEventListener("resize", setH);
 
+  /* 手機：往下讀時頁首收起，往上捲就出來 */
+  const narrow = matchMedia("(max-width: 720px)");
+  let lastY = scrollY, ticking = false;
+  addEventListener("scroll", () => {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const y = scrollY, dy = y - lastY;
+      const pop = document.getElementById("candle-pop");
+      if (!narrow.matches || (pop && !pop.hidden)) { hd.classList.remove("is-tucked"); lastY = y; return; }
+      if (y < 120 || dy < -6) hd.classList.remove("is-tucked");
+      else if (dy > 6) hd.classList.add("is-tucked");
+      if (Math.abs(dy) > 6) lastY = y;
+    });
+  }, { passive: true });
+
   /* 閱讀進度 */
   const bar = document.getElementById("progress");
   if (document.querySelector(".article")) {

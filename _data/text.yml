@@ -16,3 +16,5 @@ books_heading: 著作
 books_role: 合著
 bg_dial_label: 背景
 bg_dial_hint: 拖動調整背景畫作的透明度
+stats_uv: 造訪人數
+stats_pv: 瀏覽次數

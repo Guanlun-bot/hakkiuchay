@@ -158,6 +158,8 @@ header.top.is-tucked { transform: translateY(-100%); }
 footer { border-top: 1px solid var(--rule); }
 footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); font-size: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .foot-icons { display: inline-flex; gap: 10px; }
+.foot-stats { font-size: 13px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.foot-sep { margin: 0 .5em; color: var(--rule); }
 .foot-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--ink-soft); border: 1px solid var(--rule); transition: color .2s, border-color .2s; }
 .foot-icon:hover { color: var(--seal); border-color: var(--seal); }
 

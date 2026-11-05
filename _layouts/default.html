@@ -37,6 +37,7 @@
 <meta property="og:image" content="{{ '/assets/img/seal-512.png' | absolute_url }}">
 <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}?v={{ site.time | date: '%s' }}">
 <script type="speculationrules">{"prerender":[{"where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":"/admin/*"}}]},"eagerness":"moderate"}]}</script>
+<script defer src="https://events.vercount.one/js"></script>
 </head>
 {%- assign bgc = site.data.categories[page.cat] -%}
 <body{% if bgc.cover and bgc.cover != "" %} class="has-bg{% if bgc.bg_whole %} bg-whole{% endif %}{% if bgc.bg_gray %} bg-gray{% endif %}" style="--bgimg:url('{{ bgc.cover | relative_url }}'){% if bgc.bg_fill and bgc.bg_fill != "" %};--bgfill:{{ bgc.bg_fill }}{% endif %}{% if bgc.bg_ratio %};--ar:{{ bgc.bg_ratio }}{% endif %}{% if bgc.bg_transparency != nil and bgc.bg_transparency != "" %};--bga:{{ 100 | minus: bgc.bg_transparency | at_least: 0 | at_most: 100 }}%{% endif %}"{% endif %}>
@@ -85,6 +86,7 @@
 <footer>
   <div class="wrap">
     <span>© {{ site.time | date: "%Y" }} {{ T.footer | default: T.site_name }}</span>
+    <span class="foot-stats" aria-live="polite">{{ T.stats_uv | default: "造訪人數" }} <span id="vercount_value_site_uv">—</span>{% if T.stats_pv and T.stats_pv != "" %}<span class="foot-sep">・</span>{{ T.stats_pv }} <span id="vercount_value_site_pv">—</span>{% endif %}</span>
     <span class="foot-icons">{% if S.discord and S.discord != "" %}<a class="foot-icon" href="{{ S.discord }}" target="_blank" rel="noopener" aria-label="{{ T.discord_label | default: 'Discord' }}" title="{{ T.discord_label | default: 'Discord' }}">{% include icon-discord.svg %}</a>{% endif %}{% if S.signal and S.signal != "" %}<a class="foot-icon" href="{{ S.signal }}" target="_blank" rel="noopener" aria-label="{{ T.signal_label | default: 'Signal' }}" title="{{ T.signal_label | default: 'Signal' }}">{% include icon-signal.svg %}</a>{% endif %}</span>
   </div>
 </footer>

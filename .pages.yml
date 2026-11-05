@@ -195,6 +195,8 @@ content:
       - { name: discord_label, label: Discord 標籤, type: string }
       - { name: signal_label, label: Signal 標籤, type: string }
       - { name: empty_category, label: 分類沒有文章時顯示, type: string }
+      - { name: stats_uv, label: 頁尾：造訪人數標籤, type: string }
+      - { name: stats_pv, label: 頁尾：瀏覽次數標籤（留空就不顯示）, type: string }
       - { name: bg_dial_label, label: 分類背景：透明度滑桿標籤, type: string }
       - { name: bg_dial_hint, label: 分類背景：滑桿提示文字, type: string }
       - { name: books_heading, label: 齋主：著作標題, type: string }

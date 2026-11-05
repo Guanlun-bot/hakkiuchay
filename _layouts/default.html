@@ -57,9 +57,9 @@
         {% if S.tajiyu_url and S.tajiyu_url != "" %}
         <li><a href="{{ S.tajiyu_url }}" target="_blank" rel="noopener">{{ T.nav_tajiyu | default: "獺祭魚" }}<span class="ext" aria-hidden="true">↗</span></a></li>
         {% else %}
-        <li><a href="{{ '/tajiyu/' | relative_url }}"{% if nav == 'tajiyu' %} aria-current="page"{% endif %}
-        {% if S.chanroom_url and S.chanroom_url != "" %}<li><a href="{{ S.chanroom_url }}" target="_blank" rel="noopener">{{ T.nav_chanroom | default: "禪修室" }}<span class="ext" aria-hidden="true">↗</span></a></li>{% endif %}>{{ T.nav_tajiyu | default: "獺祭魚" }}<span class="ext" aria-hidden="true">↗</span></a></li>
+        <li><a href="{{ '/tajiyu/' | relative_url }}"{% if nav == 'tajiyu' %} aria-current="page"{% endif %}>{{ T.nav_tajiyu | default: "獺祭魚" }}<span class="ext" aria-hidden="true">↗</span></a></li>
         {% endif %}
+        {% if S.chanroom_url and S.chanroom_url != "" %}<li><a href="{{ S.chanroom_url }}" target="_blank" rel="noopener">{{ T.nav_chanroom | default: "禪修室" }}<span class="ext" aria-hidden="true">↗</span></a></li>{% endif %}
       </ul>
     </nav>
     <div class="top-btns">

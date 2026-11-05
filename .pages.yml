@@ -146,6 +146,10 @@ content:
         label: 獺祭魚網址
         type: string
         description: 填入後，選單上的「獺祭魚」會直接開啟這個網址。
+      - name: chanroom_url
+        label: 禪修室網址
+        type: string
+        description: 留空就不會出現在選單。
 
   - name: home
     label: 首頁文字
@@ -186,6 +190,7 @@ content:
       - { name: site_name, label: 齋名（頁首左上）, type: string }
       - { name: nav_home, label: 選單：關於書齋（首頁）, type: string }
       - { name: nav_tajiyu, label: 選單：獺祭魚, type: string }
+      - { name: nav_chanroom, label: 選單：禪修室, type: string }
       - { name: footer, label: 頁尾文字（© 年份之後）, type: string }
       - { name: owner_heading, label: 齋主／聯絡：齋主欄標題, type: string }
       - { name: contact_heading, label: 齋主／聯絡：聯絡欄標題, type: string }

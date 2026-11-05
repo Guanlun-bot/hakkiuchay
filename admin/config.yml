@@ -109,6 +109,7 @@ collections:
           - { name: discord, label: Discord 連結, widget: string, required: false, hint: 填了才會在關於頁與頁尾顯示 }
           - { name: signal, label: Signal 群組連結, widget: string, required: false }
           - { name: tajiyu_url, label: 獺祭魚網址, widget: string, required: false }
+          - { name: chanroom_url, label: 禪修室網址, widget: string, required: false }
       - name: home
         label: 首頁文字
         file: _data/home.yml
@@ -127,6 +128,7 @@ collections:
           - { name: site_name, label: 齋名（頁首左上）, widget: string }
           - { name: nav_home, label: 選單：關於書齋（首頁）, widget: string }
           - { name: nav_tajiyu, label: 選單：獺祭魚, widget: string }
+          - { name: nav_chanroom, label: 選單：禪修室, widget: string, required: false }
           - { name: footer, label: 頁尾文字, widget: string }
           - { name: owner_heading, label: 齋主／聯絡：齋主欄標題, widget: string }
           - { name: contact_heading, label: 齋主／聯絡：聯絡欄標題, widget: string }

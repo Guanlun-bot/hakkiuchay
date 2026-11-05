@@ -95,7 +95,7 @@ h1, h2, h3 { text-wrap: balance; }
 header.top { border-bottom: 1px solid var(--rule); background: var(--paper); position: sticky; top: 0; z-index: 10; }
 header.top .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 23px; text-decoration: none; letter-spacing: 0.08em; }
-.brand-mark { height: 26px; aspect-ratio: 266 / 180; flex: none; background: var(--ink); -webkit-mask: url("img/dove-mark.png") center / contain no-repeat; mask: url("img/dove-mark.png") center / contain no-repeat; }
+.brand-mark { height: 31px; aspect-ratio: 266 / 180; flex: none; background: var(--ink); -webkit-mask: url("img/dove-mark.png") center / contain no-repeat; mask: url("img/dove-mark.png") center / contain no-repeat; }
 .brand-name { display: flex; flex-direction: column; font-family: "Aoyagi Reisho Name", var(--font-display); font-size: 30px; letter-spacing: 0.12em; line-height: 1; }
 .top-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 

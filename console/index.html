@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f1efe8">
+<title>學鳩齋總控台</title>
+<link rel="icon" type="image/png" href="/favicon.png?v=2">
+<link rel="apple-touch-icon" href="/assets/img/dove-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<style>
+:root{--paper:#f1efe8;--paper-2:#e6e2d6;--card:#f7f6f1;--ink:#3f3a39;--ink-soft:#6e6866;--rule:#d3cec3;--dove:#6c7163;--seal:#a8343a;--ok:#3d6b4f;--warn:#86683c;
+--font:"Noto Serif TC","Songti TC","PMingLiU",serif;--mono:ui-monospace,Menlo,Consolas,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--paper:#2a2826;--paper-2:#33302d;--card:#2f2c2a;--ink:#e2ddd0;--ink-soft:#aaa49b;--rule:#4a4540;--dove:#a3a894;--seal:#e48f7d;--ok:#86b79a;--warn:#d2b06a;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.65}
+a{color:inherit;text-underline-offset:4px;text-decoration-color:var(--rule)}
+a:hover{color:var(--seal)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:980px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px calc(90px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:14px;margin-bottom:18px}
+header img{width:40px;height:40px}
+header h1{font-size:22px;font-weight:600;letter-spacing:.18em;margin:0}
+header .who{margin-left:auto;font-size:13px;color:var(--ink-soft);text-align:right}
+nav.tabs{display:flex;gap:4px;margin-bottom:22px;border-bottom:1px solid var(--rule)}
+nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;color:var(--ink-soft);letter-spacing:.1em}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--seal)}
+@media (max-width:640px){
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;margin:0;background:var(--paper);border-top:1px solid var(--rule);border-bottom:0;justify-content:space-around;padding:4px 0 calc(4px + env(safe-area-inset-bottom))}
+  nav.tabs button{border-bottom:0;border-top:2px solid transparent;font-size:14px;padding:8px 6px}
+  nav.tabs button.on{border-top-color:var(--seal)}
+  header .who{display:none}
+}
+.view{display:none}.view.on{display:block}
+h2{font-size:17px;font-weight:600;letter-spacing:.12em;margin:26px 0 10px}
+h2:first-child{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:16px;font-weight:600;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+.card p{margin:4px 0;font-size:14px;color:var(--ink-soft)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--rule);flex:none}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--seal)}.dot.wait{background:var(--warn)}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--rule);font-size:14px}
+.list li .t{color:var(--ink-soft);font-size:12px;white-space:nowrap;margin-left:auto}
+.btn{border:1px solid var(--ink-soft);background:transparent;border-radius:2px;padding:6px 14px;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--seal);color:var(--seal)}
+.btn.main{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.main:hover{background:var(--seal);border-color:var(--seal);color:var(--paper)}
+.btn.small{padding:2px 8px;font-size:12px}
+.btn.danger{color:var(--seal);border-color:var(--seal)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--ink-soft);font-size:13px}
+.note{font-size:13px;color:var(--ink-soft);border-left:2px solid var(--rule);padding-left:10px;margin:10px 0}
+/* forms */
+.field{margin:0 0 16px}
+.field>label{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.field .desc{font-size:12px;color:var(--ink-soft);margin:-2px 0 6px}
+input[type=text],input[type=date],input[type=number],input[type=password],select,textarea{width:100%;background:var(--paper);border:1px solid var(--rule);border-radius:2px;padding:7px 9px}
+textarea{min-height:90px;resize:vertical;line-height:1.7}
+textarea.body{min-height:360px;font-size:15px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--seal)}
+fieldset{border:1px solid var(--rule);border-radius:2px;padding:12px 14px 2px;margin:0 0 14px}
+legend{font-size:14px;font-weight:600;padding:0 6px}
+.item{border:1px dashed var(--rule);border-radius:2px;padding:10px 12px 4px;margin-bottom:8px;position:relative}
+.item .ctl{display:flex;gap:4px;justify-content:flex-end;margin-bottom:6px}
+.img-row{display:flex;gap:8px;align-items:center}
+.img-row input{flex:1}
+.thumb{max-width:160px;max-height:110px;display:block;margin-top:6px;border:1px solid var(--rule)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+.editor-bar{position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 0;border-bottom:1px solid var(--rule);margin-bottom:16px}
+.posts li{cursor:pointer}
+.posts li:hover{color:var(--seal)}
+.tag{font-size:11px;border:1px solid var(--rule);border-radius:2px;padding:0 6px;color:var(--ink-soft);white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:2px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50;max-width:90vw}
+#toast.on{opacity:1}
+.login{max-width:520px}
+code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1px 5px;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <img src="/assets/img/dove-mark.png" alt="">
+  <h1>學鳩齋總控台</h1>
+  <div class="who" id="who"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-v="status">狀態</button>
+  <button data-v="content">內容</button>
+  <button data-v="actions">動作</button>
+  <button data-v="links">入口</button>
+  <button data-v="settings">設定</button>
+</nav>
+
+<!-- 狀態 -->
+<section class="view" id="v-status">
+  <h2>三站</h2>
+  <div class="grid" id="sites"></div>
+  <h2>學鳩齋發布</h2>
+  <div class="grid">
+    <div class="card"><h3><span class="dot" id="build-dot"></span>網站建置</h3><p id="build-info">—</p></div>
+    <div class="card"><h3>自動流程</h3><ul class="list" id="runs"><li class="muted">—</li></ul></div>
+  </div>
+  <h2>最近修改</h2>
+  <div class="card"><ul class="list" id="commits"><li class="muted">—</li></ul></div>
+  <p class="row" style="margin-top:14px"><button class="btn" id="refresh">重新整理</button><span class="muted" id="checked"></span></p>
+</section>
+
+<!-- 內容 -->
+<section class="view" id="v-content">
+  <div id="content-home">
+    <h2>文章</h2>
+    <p class="row"><button class="btn main" id="new-post">寫新文章</button><span class="muted" id="posts-note"></span></p>
+    <div class="card"><ul class="list posts" id="posts"><li class="muted">載入中…</li></ul></div>
+    <h2>網站資料</h2>
+    <div class="card"><ul class="list posts" id="files"></ul></div>
+    <h2>首頁照片</h2>
+    <div class="card">
+      <p class="muted">選照片後會先在瀏覽器縮到長邊 2000 像素再上傳；上傳後約 2～3 分鐘自動加進首頁輪播。</p>
+      <p class="row"><input type="file" id="home-photos" accept="image/*" multiple><button class="btn" id="home-upload">上傳</button></p>
+      <ul class="list" id="home-log"></ul>
+    </div>
+  </div>
+  <div id="editor" hidden></div>
+</section>
+
+<!-- 動作 -->
+<section class="view" id="v-actions">
+  <h2>學鳩齋</h2>
+  <div class="grid">
+    <div class="card"><h3>重新建置網站</h3><p>網站沒跟著更新時，讓 GitHub 重新產生一次。</p><p class="row"><button class="btn" data-act="build">執行</button></p></div>
+    <div class="card"><h3>重新處理照片</h3><p>照片縮圖、轉檔、加進首頁輪播，手動再跑一次。</p><p class="row"><button class="btn" data-act="compress">執行</button></p></div>
+    <div class="card"><h3>取消卡住的發布</h3><p>Actions 一直失敗、訊息說 in progress deployment 時用。</p>
+      <input type="text" id="stuck-sha" placeholder="卡住那次的 commit 編號"><p class="row" style="margin-top:8px"><button class="btn" data-act="cancel">執行</button></p></div>
+  </div>
+  <h2>獺祭魚書庫・禪修室</h2>
+  <div class="grid">
+    <div class="card"><h3>書庫立即更新</h3><p>目前要在主電腦點「立即執行夜間作業.bat」。之後會改成從這裡按，主電腦幾分鐘內接手。</p><p class="row"><button class="btn" disabled>第二階段</button></p></div>
+    <div class="card"><h3>Cloudflare</h3><p>書庫與禪修室都放在 Cloudflare Pages；手動發布、看版本從這裡進。</p><p class="row"><a class="btn" href="https://dash.cloudflare.com/?to=/:account/pages" target="_blank" rel="noopener">開啟</a></p></div>
+  </div>
+</section>
+
+<!-- 入口 -->
+<section class="view" id="v-links">
+  <div class="grid">
+    <div class="card"><h3>學鳩齋</h3><ul class="list">
+      <li><a href="/" target="_blank">網站</a><span class="t">hakkiuchay.space</span></li>
+      <li><a href="https://app.pagescms.org" target="_blank" rel="noopener">Pages CMS</a><span class="t">原本的後台</span></li>
+      <li><a href="/admin/" target="_blank">Sveltia CMS</a><span class="t">備用後台</span></li>
+      <li><a href="/admin/resize.html" target="_blank">照片縮圖工具</a></li>
+      <li><a href="https://github.com/Guanlun-bot/hakkiuchay" target="_blank" rel="noopener">GitHub 儲存庫</a></li>
+      <li><a href="https://github.com/Guanlun-bot/hakkiuchay/actions" target="_blank" rel="noopener">Actions</a></li>
+      <li><a href="https://github.com/Guanlun-bot/hakkiuchay/settings/pages" target="_blank" rel="noopener">Pages 設定</a></li>
+    </ul></div>
+    <div class="card"><h3>獺祭魚書庫</h3><ul class="list">
+      <li><a href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">書庫網站</a><span class="t">需密碼</span></li>
+      <li><a href="https://www.dropbox.com/home" target="_blank" rel="noopener">Dropbox</a><span class="t">新書入庫・總目</span></li>
+      <li><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare</a><span class="t">otterslibrary</span></li>
+      <li><a href="https://claude.ai/artifact/Q9J18sjS5MtXvbf2rnYAb3" target="_blank" rel="noopener">後台工具書</a></li>
+    </ul></div>
+    <div class="card"><h3>禪修室</h3><ul class="list">
+      <li><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a><span class="t">chanroom.pages.dev</span></li>
+      <li><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare</a><span class="t">chanroom</span></li>
+    </ul></div>
+    <div class="card"><h3>手冊與帳號</h3><ul class="list">
+      <li><a href="https://claude.ai/artifact/1tnQJwFXbJwUoMtqQzjBq7" target="_blank" rel="noopener">三站總手冊</a></li>
+      <li><a href="https://claude.ai/artifact/793Srwq4VAGMvmCcsQaVqP" target="_blank" rel="noopener">學鳩齋網站管理手冊</a></li>
+      <li><a href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noopener">GitHub 金鑰</a></li>
+      <li><a href="https://dcc.godaddy.com/control/portfolio" target="_blank" rel="noopener">GoDaddy 網域</a><span class="t">hakkiuchay.space</span></li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 設定 -->
+<section class="view" id="v-settings">
+  <div class="login">
+    <h2>GitHub 金鑰</h2>
+    <p class="muted" id="token-state"></p>
+    <div class="field">
+      <label for="token">貼上金鑰</label>
+      <input type="password" id="token" autocomplete="off" placeholder="github_pat_…">
+    </div>
+    <label class="chk" style="margin-bottom:12px"><input type="checkbox" id="remember" checked>記在這台裝置（公用電腦請取消）</label>
+    <p class="row"><button class="btn main" id="save-token">登入</button><button class="btn" id="logout">登出</button></p>
+    <div class="note">
+      金鑰只存在你這台裝置的瀏覽器，不會上傳到網站。做金鑰：<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">New fine-grained token</a> → Repository access 只選 <code>hakkiuchay</code> → Permissions 設定：
+      <br><code>Contents</code> Read and write　<code>Actions</code> Read and write　<code>Pages</code> Read and write
+      <br>Sveltia 後台用的那把若權限夠，也可以直接用。
+    </div>
+  </div>
+</section>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const OWNER="Guanlun-bot", REPO="hakkiuchay", BRANCH="main";
+const SITES=[
+  {name:"學鳩齋",url:location.origin+"/",same:true,host:"GitHub Pages"},
+  {name:"獺祭魚書庫",url:"https://otterslibrary.pages.dev/",host:"Cloudflare Pages"},
+  {name:"禪修室",url:"https://chanroom.pages.dev/",host:"Cloudflare Pages"}
+];
+const $=s=>document.querySelector(s);
+const h=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="class")e.className=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?"":v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(c))}return e};
+function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),ms)}
+const store={get(k){try{return localStorage.getItem(k)||sessionStorage.getItem(k)}catch(e){return null}},
+  set(k,v,keep){try{(keep?localStorage:sessionStorage).setItem(k,v);(keep?sessionStorage:localStorage).removeItem(k)}catch(e){}},
+  del(k){try{localStorage.removeItem(k);sessionStorage.removeItem(k)}catch(e){}}};
+let TOKEN=store.get("hkc_token");
+function ago(iso){if(!iso)return"";const s=(Date.now()-new Date(iso))/1000;if(s<60)return"剛才";if(s<3600)return Math.floor(s/60)+" 分鐘前";if(s<86400)return Math.floor(s/3600)+" 小時前";if(s<86400*30)return Math.floor(s/86400)+" 天前";return new Date(iso).toLocaleDateString("zh-TW")}
+
+/* ---------- GitHub API ---------- */
+async function gh(path,opt={}){
+  if(!TOKEN) throw Object.assign(new Error("請先到「設定」登入"),{status:401});
+  const r=await fetch("https://api.github.com"+path,{...opt,headers:{"Authorization":"Bearer "+TOKEN,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",...(opt.body?{"Content-Type":"application/json"}:{}),...(opt.headers||{})}});
+  if(!r.ok){let m="";try{m=(await r.json()).message}catch(e){}
+    const msg=r.status===401?"金鑰無效或已過期":r.status===403?"金鑰權限不足："+m:r.status===409?"檔案已在別處更新，請重新開啟後再改":r.status===404?"找不到（或金鑰沒有這個權限）":m||("錯誤 "+r.status);
+    throw Object.assign(new Error(msg),{status:r.status})}
+  return r.status===204?null:r.json();
+}
+const enc=s=>{const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(x)};
+const dec=b64=>new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g,"")),c=>c.charCodeAt(0)));
+const cpath=p=>"/repos/"+OWNER+"/"+REPO+"/contents/"+p.split("/").map(encodeURIComponent).join("/");
+async function getFile(p){const j=await gh(cpath(p)+"?ref="+BRANCH);return{text:dec(j.content),sha:j.sha}}
+async function putFile(p,contentB64,sha,message){return gh(cpath(p),{method:"PUT",body:JSON.stringify({message,content:contentB64,branch:BRANCH,...(sha?{sha}:{})})})}
+async function delFile(p,sha,message){return gh(cpath(p),{method:"DELETE",body:JSON.stringify({message,sha,branch:BRANCH})})}
+
+/* ---------- 分頁 ---------- */
+const views=["status","content","actions","links","settings"];
+function show(v){if(!views.includes(v))v=TOKEN?"status":"settings";
+  document.querySelectorAll(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  if(location.hash!=="#"+v)history.replaceState(null,"","#"+v);
+  if(v==="status"&&!show.statusDone){show.statusDone=1;loadStatus()}
+  if(v==="content"&&!show.contentDone&&TOKEN){show.contentDone=1;loadContent()}
+}
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(b.dataset.v)});
+addEventListener("hashchange",()=>show(location.hash.slice(1)));
+
+/* ---------- 狀態 ---------- */
+async function ping(s){
+  const t0=performance.now();
+  try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
+    const r=await fetch(s.url+(s.same?"?ping="+Date.now():""),{mode:s.same?"same-origin":"no-cors",cache:"no-store",signal:ctl.signal});clearTimeout(to);
+    if(s.same&&!r.ok) return{ok:false,msg:"回應 "+r.status};
+    return{ok:true,ms:Math.round(performance.now()-t0)}}
+  catch(e){return{ok:false,msg:e.name==="AbortError"?"逾時":"連不上"}}
+}
+async function loadStatus(){
+  const box=$("#sites");box.innerHTML="";
+  for(const s of SITES){
+    const dot=h("span",{class:"dot wait"}),p=h("p",{},"檢查中…");
+    box.append(h("div",{class:"card"},h("h3",{},dot,h("a",{href:s.url,target:"_blank",rel:"noopener"},s.name)),h("p",{},s.host),p));
+    ping(s).then(r=>{dot.className="dot "+(r.ok?"ok":"bad");p.textContent=r.ok?"正常開啟 · "+r.ms+" ms":r.msg});
+  }
+  $("#checked").textContent="檢查時間 "+new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+  if(!TOKEN){$("#build-info").textContent="登入後才看得到";$("#runs").innerHTML='<li class="muted">登入後才看得到</li>';$("#commits").innerHTML='<li class="muted">登入後才看得到</li>';return}
+  gh("/repos/"+OWNER+"/"+REPO+"/pages/builds/latest").then(b=>{
+    const map={built:["ok","已上線"],building:["wait","建置中"],queued:["wait","排隊中"],errored:["bad","失敗"]};const m=map[b.status]||["wait",b.status];
+    $("#build-dot").className="dot "+m[0];
+    $("#build-info").textContent=m[1]+" · "+ago(b.updated_at||b.created_at)+(b.error&&b.error.message?" · "+b.error.message:"");
+    if(b.commit)$("#stuck-sha").placeholder="例如 "+b.commit;
+  }).catch(e=>{$("#build-info").textContent=e.message});
+  gh("/repos/"+OWNER+"/"+REPO+"/actions/runs?per_page=6").then(j=>{
+    const ul=$("#runs");ul.innerHTML="";
+    if(!j.workflow_runs.length)ul.append(h("li",{class:"muted"},"沒有紀錄"));
+    for(const r of j.workflow_runs){const st=r.status!=="completed"?["wait","進行中"]:r.conclusion==="success"?["ok","成功"]:r.conclusion==="cancelled"?["","取消"]:r.conclusion==="skipped"?["","略過"]:["bad","失敗"];
+      ul.append(h("li",{},h("span",{class:"dot "+st[0]}),h("a",{href:r.html_url,target:"_blank",rel:"noopener"},r.name),h("span",{class:"tag"},st[1]),h("span",{class:"t"},ago(r.created_at))))}
+  }).catch(e=>{$("#runs").innerHTML="";$("#runs").append(h("li",{class:"muted"},e.message))});
+  gh("/repos/"+OWNER+"/"+REPO+"/commits?per_page=8&sha="+BRANCH).then(j=>{
+    const ul=$("#commits");ul.innerHTML="";
+    for(const c of j)ul.append(h("li",{},h("a",{href:c.html_url,target:"_blank",rel:"noopener"},c.commit.message.split("\n")[0]),h("span",{class:"t"},(c.commit.author.name||"")+" · "+ago(c.commit.author.date))))
+  }).catch(e=>{$("#commits").innerHTML="";$("#commits").append(h("li",{class:"muted"},e.message))});
+}
+$("#refresh").onclick=loadStatus;
+
+/* ---------- 動作 ---------- */
+document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",async()=>{
+  const act=b.dataset.act;b.disabled=true;
+  try{
+    if(act==="build"){await gh("/repos/"+OWNER+"/"+REPO+"/pages/builds",{method:"POST"});toast("已要求重新建置，約一分鐘後上線")}
+    if(act==="compress"){await gh("/repos/"+OWNER+"/"+REPO+"/actions/workflows/compress-images.yml/dispatches",{method:"POST",body:JSON.stringify({ref:BRANCH})});toast("照片處理已開始，可到「狀態」看進度")}
+    if(act==="cancel"){const sha=$("#stuck-sha").value.trim();if(!/^[0-9a-f]{7,40}$/i.test(sha)){toast("請填卡住那次的 commit 編號");return}
+      await gh("/repos/"+OWNER+"/"+REPO+"/actions/workflows/cancel-stuck-pages.yml/dispatches",{method:"POST",body:JSON.stringify({ref:BRANCH,inputs:{sha}})});toast("已送出取消，稍後再重新建置")}
+    show.statusDone=0;
+  }catch(e){toast(e.message,4000)}finally{b.disabled=false}
+}));
+
+/* ---------- 內容：讀後台設定 ---------- */
+let CMS=null;const ydump=o=>jsyaml.dump(o,{schema:jsyaml.CORE_SCHEMA,lineWidth:-1,noRefs:true,skipInvalid:true,quotingType:'"'});
+const yload=t=>jsyaml.load(t,{schema:jsyaml.CORE_SCHEMA})||{};
+async function loadContent(){
+  try{
+    CMS=yload((await getFile(".pages.yml")).text);
+    const files=$("#files");files.innerHTML="";
+    for(const c of CMS.content.filter(c=>c.type==="file"))files.append(h("li",{onclick:()=>openFile(c)},c.label||c.name,h("span",{class:"t"},c.path)));
+    await loadPosts();
+  }catch(e){$("#posts").innerHTML="";$("#posts").append(h("li",{class:"muted"},e.message));show.contentDone=0}
+}
+const coll=()=>CMS.content.find(c=>c.type==="collection");
+const CATS=()=>{const f=coll().fields.find(f=>f.name==="cat");const o={};((f&&f.options&&f.options.values)||[]).forEach(v=>o[v.name]=v.label);return o};
+async function loadPosts(){
+  const c=coll();const ul=$("#posts");ul.innerHTML="";ul.append(h("li",{class:"muted"},"載入中…"));
+  const list=(await gh(cpath(c.path)+"?ref="+BRANCH)).filter(f=>f.name.endsWith(".md")).sort((a,b)=>b.name.localeCompare(a.name));
+  const cats=CATS();
+  const rows=await Promise.all(list.map(async f=>{try{const{text}=await getFile(f.path);const{data}=splitFM(text);return{f,data}}catch(e){return{f,data:{}}}}));
+  ul.innerHTML="";
+  rows.sort((a,b)=>String(b.data.date||b.f.name).localeCompare(String(a.data.date||a.f.name)));
+  for(const{f,data}of rows)ul.append(h("li",{onclick:()=>openPost(f.path)},h("span",{},data.title||f.name),cats[data.cat]?h("span",{class:"tag"},cats[data.cat]):null,h("span",{class:"t"},String(data.date||"").slice(0,10))));
+  $("#posts-note").textContent="共 "+rows.length+" 篇";
+}
+function splitFM(text){const m=text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);if(!m)return{data:{},body:text};return{data:yload(m[1]),body:m[2]}}
+
+/* ---------- 內容：欄位產生器 ---------- */
+const empty=v=>v==null||v===""||(Array.isArray(v)&&v.length===0);
+function mediaPath(sub,name){const inp=(CMS.media&&CMS.media.input)||"assets/uploads",out=(CMS.media&&CMS.media.output)||"/assets/uploads";const rel=(sub?sub+"/":"")+name;return{repo:inp+"/"+rel,url:out+"/"+rel}}
+function safeName(n){const base=n.replace(/\.[^.]+$/,"").normalize("NFKD").replace(/[^\w-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").toLowerCase()||"img";return base+"-"+Date.now().toString(36)}
+async function shrink(file,maxLong){
+  if(/gif|svg/.test(file.type))return{blob:file,ext:file.name.split(".").pop().toLowerCase()};
+  const bmp=await createImageBitmap(file).catch(()=>null);if(!bmp)throw new Error("這個格式瀏覽器打不開（HEIC 請先轉 JPG）");
+  const k=Math.min(1,maxLong/Math.max(bmp.width,bmp.height));const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+  const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,c.width,c.height);
+  const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",.82));return{blob,ext:"jpg"};
+}
+const blobB64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(b)});
+async function uploadImage(file,sub,maxLong=1600){
+  const{blob,ext}=await shrink(file,maxLong);const p=mediaPath(sub,safeName(file.name)+"."+ext);
+  await putFile(p.repo,await blobB64(blob),null,"總控台上傳圖片 "+p.repo.split("/").pop());return p.url;
+}
+const imgSrc=v=>!v?"":/^https?:/.test(v)?v:location.origin+v;
+
+function field(f,val,ctx){
+  if(f.hidden)return{el:null,get:()=>val,keepHidden:true};
+  if(f.list&&f.type!=="select"){return listField(f,Array.isArray(val)?val:(empty(val)?[]:[val]),ctx)}
+  const wrap=h("div",{class:"field"});
+  if(f.type!=="object"&&f.type!=="boolean")wrap.append(h("label",{},f.label||f.name+(f.required?"（必填）":"")));
+  if(f.description&&f.type!=="object")wrap.append(h("div",{class:"desc"},f.description));
+  let get;
+  switch(f.type){
+    case"object":{const fs=h("fieldset",{},h("legend",{},f.label||f.name));const o=val&&typeof val==="object"?{...val}:{};const subs=f.fields.map(sf=>[sf.name,field(sf,o[sf.name],ctx)]);
+      subs.forEach(([,s])=>s.el&&fs.append(s.el));wrap.append(fs);
+      get=()=>{const out={...o};for(const[k,s]of subs){const v=s.get();if(empty(v)&&!(k in o))delete out[k];else out[k]=v}return out};break}
+    case"boolean":{const cb=h("input",{type:"checkbox"});cb.checked=!!val;wrap.append(h("label",{class:"chk"},cb,f.label||f.name));if(f.description)wrap.append(h("div",{class:"desc"},f.description));get=()=>cb.checked;break}
+    case"number":{const o=f.options||{};const i=h("input",{type:"number",min:o.min,max:o.max,step:o.step||"any"});i.value=val??"";wrap.append(i);get=()=>i.value===""?val:Number(i.value);break}
+    case"date":{const i=h("input",{type:"date"});i.value=val?String(val).slice(0,10):"";wrap.append(i);get=()=>i.value;break}
+    case"select":{const opts=(f.options&&f.options.values)||[];const s=h("select",{},h("option",{value:""},"—"),opts.map(o=>typeof o==="object"?h("option",{value:o.name},o.label||o.name):h("option",{value:o},o)));s.value=val??"";wrap.append(s);get=()=>s.value;break}
+    case"text":{const t=h("textarea");t.value=val??"";wrap.append(t);get=()=>{const v=t.value.replace(/\s+$/,"");return v===String(val??"").replace(/\s+$/,"")?(val??""):v};break}
+    case"rich-text":{const t=h("textarea",{class:"body"});t.value=val??"";
+      const fi=h("input",{type:"file",accept:"image/*",multiple:true,hidden:true});
+      fi.onchange=async()=>{for(const file of fi.files){toast("上傳 "+file.name+"…",8000);try{const url=await uploadImage(file,ctx&&ctx.slug?"posts/"+ctx.slug():"");const ins="\n\n!["+file.name.replace(/\.[^.]+$/,"")+"]("+url+")\n\n";const p=t.selectionStart??t.value.length;t.value=t.value.slice(0,p)+ins+t.value.slice(p);toast("已插入圖片")}catch(e){toast(e.message,4000)}}fi.value=""};
+      wrap.append(h("p",{class:"row",style:"margin:0 0 6px"},h("button",{type:"button",class:"btn small",onclick:()=>fi.click()},"插入圖片"),h("span",{class:"muted"},"Markdown 格式；註腳寫 [註1]")),fi,t);get=()=>t.value;break}
+    case"image":{const i=h("input",{type:"text"});i.value=val??"";const th=h("img",{class:"thumb",alt:""});const upd=()=>{th.hidden=!i.value;if(i.value)th.src=imgSrc(i.value)};upd();i.oninput=upd;
+      const fi=h("input",{type:"file",accept:"image/*",hidden:true});
+      fi.onchange=async()=>{const file=fi.files[0];if(!file)return;toast("上傳中…",8000);try{i.value=await uploadImage(file,"",2000);th.src=URL.createObjectURL(file);th.hidden=false;toast("已上傳，記得按儲存")}catch(e){toast(e.message,4000)}fi.value=""};
+      wrap.append(h("div",{class:"img-row"},i,h("button",{type:"button",class:"btn small",onclick:()=>fi.click()},"上傳")),fi,th);get=()=>i.value;break}
+    default:{const i=h("input",{type:"text"});i.value=val??"";if(f.pattern&&f.pattern.regex)i.pattern=f.pattern.regex;wrap.append(i);get=()=>i.value.trim()}
+  }
+  return{el:wrap,get,f};
+}
+function listField(f,arr,ctx){
+  const wrap=h("div",{class:"field"},h("label",{},f.label||f.name));if(f.description)wrap.append(h("div",{class:"desc"},f.description));
+  const box=h("div");const items=[];
+  const single={...f,list:false,label:"",description:""};
+  const add=v=>{const it={};const s=field(single,v,ctx);it.s=s;const el=h("div",{class:"item"},h("div",{class:"ctl"},
+      h("button",{type:"button",class:"btn small",title:"上移",onclick:()=>mv(it,-1)},"↑"),h("button",{type:"button",class:"btn small",title:"下移",onclick:()=>mv(it,1)},"↓"),h("button",{type:"button",class:"btn small danger",title:"移除",onclick:()=>{items.splice(items.indexOf(it),1);el.remove()}},"✕")),s.el);
+    it.el=el;items.push(it);box.append(el)};
+  const mv=(it,d)=>{const i=items.indexOf(it),j=i+d;if(j<0||j>=items.length)return;items.splice(i,1);items.splice(j,0,it);box.innerHTML="";items.forEach(x=>box.append(x.el))};
+  arr.forEach(add);
+  wrap.append(box,h("button",{type:"button",class:"btn small",onclick:()=>add(f.type==="object"?{}:"")},"＋ 新增一項"));
+  return{el:wrap,get:()=>items.map(x=>x.s.get()).filter(v=>!empty(v)&&!(typeof v==="object"&&!Array.isArray(v)&&Object.values(v).every(empty))),f};
+}
+
+/* ---------- 內容：編輯畫面 ---------- */
+function openEditor(title,buildBody,onSave,onDelete){
+  const ed=$("#editor");ed.innerHTML="";$("#content-home").hidden=true;ed.hidden=false;scrollTo(0,0);
+  const save=h("button",{class:"btn main"},"儲存");
+  const bar=h("div",{class:"editor-bar row"},h("button",{class:"btn",onclick:closeEditor},"← 返回"),h("strong",{style:"margin:0 6px"},title),h("span",{style:"flex:1"}),onDelete?h("button",{class:"btn danger",onclick:onDelete},"刪除"):null,save);
+  ed.append(bar);const body=buildBody();ed.append(body);
+  save.onclick=async()=>{save.disabled=true;save.textContent="儲存中…";try{await onSave();toast("已儲存，約一分鐘後上線");closeEditor(true)}catch(e){toast(e.message,4500)}finally{save.disabled=false;save.textContent="儲存"}};
+}
+function closeEditor(reload){$("#editor").hidden=true;$("#editor").innerHTML="";$("#content-home").hidden=false;if(reload===true)loadPosts().catch(()=>{})}
+
+async function openFile(c){
+  try{
+    const{text,sha}=await getFile(c.path);const data=yload(text);const subs=c.fields.map(f=>[f.name,field(f,data[f.name])]);
+    openEditor(c.label||c.name,()=>h("div",{},subs.map(([,s])=>s.el).filter(Boolean)),async()=>{
+      const out={...data};for(const[k,s]of subs){const v=s.get();if(empty(v)&&!(k in data))delete out[k];else out[k]=v}
+      await putFile(c.path,enc(ydump(out)),sha,"總控台修改"+(c.label||c.name));
+    });
+  }catch(e){toast(e.message,4000)}
+}
+async function openPost(path){
+  const c=coll();let data={},body="",sha=null;
+  try{if(path){const r=await getFile(path);sha=r.sha;({data,body}=splitFM(r.text))}}catch(e){toast(e.message,4000);return}
+  if(!path){data={date:new Date(Date.now()+8*3600e3).toISOString().slice(0,10)}}
+  const fields=c.fields.filter(f=>f.name!=="body");let slugField;
+  const ctx={slug:()=>(slugField&&slugField.get())||"draft"};
+  const subs=fields.map(f=>{const s=field(f,data[f.name],ctx);if(f.name==="slug")slugField=s;return[f.name,s]});
+  const bodyF=c.fields.find(f=>f.name==="body")||{name:"body",label:"內文",type:"rich-text"};const bodyS=field(bodyF,body,ctx);
+  if(path&&slugField){const inp=slugField.el.querySelector("input");inp.readOnly=true;inp.title="建立後不要再改"}
+  openEditor(path?(data.title||"文章"):"新文章",()=>h("div",{},subs.map(([,s])=>s.el).filter(Boolean),bodyS.el),async()=>{
+    const out=path?{...data}:{};for(const[k,s]of subs){const v=s.get();if(empty(v)&&!(k in data))delete out[k];else out[k]=v}
+    for(const f of fields)if(f.required&&empty(out[f.name]))throw new Error("「"+(f.label||f.name)+"」必填");
+    const slugF=fields.find(f=>f.name==="slug");if(slugF&&slugF.pattern&&!new RegExp(slugF.pattern.regex).test(out.slug))throw new Error(slugF.pattern.message||"網址代稱格式不對");
+    const text="---\n"+ydump(out)+"---\n"+bodyS.get().replace(/^\n+/,"");
+    let p=path;
+    if(!p){const d=String(out.date).slice(0,10).split("-");p=c.path+"/"+(c.filename||"{year}-{month}-{day}-{fields.slug}.md").replace("{year}",d[0]).replace("{month}",d[1]).replace("{day}",d[2]).replace(/\{fields\.(\w+)\}/g,(_,k)=>out[k]||"")}
+    await putFile(p,enc(text),sha,(path?"總控台修改文章：":"總控台新增文章：")+out.title);
+  },path?async()=>{
+    if(!openPost.armed){openPost.armed=1;toast("再按一次「刪除」確定刪除這篇");setTimeout(()=>openPost.armed=0,4000);return}
+    openPost.armed=0;try{await delFile(path,sha,"總控台刪除文章："+(data.title||path));toast("已刪除");closeEditor(true)}catch(e){toast(e.message,4000)}
+  }:null);
+}
+$("#new-post").onclick=()=>{if(!TOKEN){show("settings");return}openPost(null)};
+
+/* ---------- 首頁照片 ---------- */
+$("#home-upload").onclick=async()=>{
+  const files=[...$("#home-photos").files];if(!files.length){toast("先選照片");return}
+  const log=$("#home-log");const b=$("#home-upload");b.disabled=true;
+  for(const file of files){const li=h("li",{},file.name,h("span",{class:"t"},"上傳中…"));log.prepend(li);
+    try{const{blob,ext}=await shrink(file,2000);const name=safeName(file.name)+"."+ext;await putFile("assets/uploads/home/"+name,await blobB64(blob),null,"總控台上傳首頁照片 "+name);li.lastChild.textContent="完成"}
+    catch(e){li.lastChild.textContent=e.message}}
+  b.disabled=false;$("#home-photos").value="";toast("上傳完成，2～3 分鐘後會出現在首頁");
+};
+
+/* ---------- 設定 ---------- */
+async function whoami(){
+  const ts=$("#token-state"),who=$("#who");
+  if(!TOKEN){ts.textContent="尚未登入。沒有金鑰時只看得到三站是否正常開啟。";who.textContent="";return}
+  try{const u=await gh("/user");ts.textContent="已登入："+u.login;who.textContent=u.login}
+  catch(e){ts.textContent="已存的金鑰不能用："+e.message;who.textContent=""}
+}
+$("#save-token").onclick=async()=>{const v=$("#token").value.trim();if(!v){toast("請貼上金鑰");return}
+  TOKEN=v;try{await gh("/repos/"+OWNER+"/"+REPO);store.set("hkc_token",v,$("#remember").checked);$("#token").value="";toast("登入成功");show.statusDone=0;show.contentDone=0;whoami();show("status")}
+  catch(e){TOKEN=store.get("hkc_token");toast(e.message,4000)}};
+$("#logout").onclick=()=>{store.del("hkc_token");TOKEN=null;show.contentDone=0;show.statusDone=0;whoami();toast("已登出")};
+
+whoami();show(location.hash.slice(1));
+</script>
+</body>
+</html>

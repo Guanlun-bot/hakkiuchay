@@ -163,15 +163,20 @@ footer .wrap { padding-top: 26px; padding-bottom: 36px; color: var(--ink-soft); 
 .foot-sep { margin: 0 .5em; color: var(--rule); }
 .foot-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--ink-soft); border: 1px solid var(--rule); transition: color .2s, border-color .2s; }
 .foot-icon:hover { color: var(--seal); border-color: var(--seal); }
-/* 新文章電子郵件通知（頁底，每頁都有） */
-footer .foot-sub { padding-bottom: 0; }
-.subscribe { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; width: 100%; padding-bottom: 20px; border-bottom: 1px dashed var(--rule); font-size: 14px; color: var(--ink-soft); }
-.subscribe label { letter-spacing: .08em; }
-.subscribe-row { display: flex; gap: 8px; flex: 1 1 260px; max-width: 380px; }
-.subscribe input[type=email] { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 2px; padding: 5px 10px; }
-.subscribe input[type=email]:focus { outline: none; border-color: var(--seal); }
+/* 新文章電子郵件通知：頁底信封圖示，點開在上方浮出信箱欄 */
+.sub-wrap { position: relative; display: inline-flex; }
+.subscribe { position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 20; width: min(300px, calc(100vw - 32px)); padding: 14px 16px; background: var(--card); border: 1px solid var(--rule); border-radius: 2px; font-size: 13px; color: var(--ink-soft); }
+.subscribe[hidden] { display: none; }
+.subscribe label { display: block; margin-bottom: 8px; letter-spacing: .08em; }
+.subscribe-row { display: flex; align-items: baseline; gap: 12px; }
+.subscribe input[type=email] { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 4px 0; }
+.subscribe input[type=email]:focus { outline: none; border-bottom-color: var(--seal); }
+.subscribe-go { font: inherit; font-size: 14px; color: var(--ink); background: none; border: 0; padding: 4px 0; cursor: pointer; letter-spacing: .1em; }
+.subscribe-go:hover { color: var(--seal); }
 .subscribe-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-.subscribe-msg { margin: 0; flex-basis: 100%; }
+.subscribe-msg { margin: 10px 0 0; line-height: 1.6; }
+#sub-toggle { background: none; cursor: pointer; padding: 0; }
+#sub-toggle[aria-expanded="true"] { color: var(--seal); border-color: var(--seal); }
 
 
 /* ===== 5 首頁 ===== */

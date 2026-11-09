@@ -1,18 +1,26 @@
 {%- assign T = site.data.text -%}
 {%- if site.notify_url and site.notify_url != "" -%}
-<form class="subscribe" id="subscribe" data-url="{{ site.notify_url }}" novalidate>
-  <label for="sub-email">{{ T.subscribe_label }}</label>
-  <span class="subscribe-row">
-    <input type="email" id="sub-email" name="email" required autocomplete="email" placeholder="{{ T.subscribe_placeholder }}">
-    <input type="text" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" class="subscribe-hp">
-    <button class="btn" type="submit">{{ T.subscribe_button }}</button>
-  </span>
-  <p class="subscribe-msg" role="status" hidden></p>
-</form>
+<span class="sub-wrap">
+  <button class="foot-icon" id="sub-toggle" type="button" aria-expanded="false" aria-controls="subscribe" aria-label="{{ T.subscribe_label }}" title="{{ T.subscribe_label }}">{% include icon-mail.svg %}</button>
+  <form class="subscribe" id="subscribe" data-url="{{ site.notify_url }}" novalidate hidden>
+    <label for="sub-email">{{ T.subscribe_label }}</label>
+    <span class="subscribe-row">
+      <input type="email" id="sub-email" name="email" required autocomplete="email" placeholder="{{ T.subscribe_placeholder }}">
+      <input type="text" name="hp" tabindex="-1" autocomplete="off" aria-hidden="true" class="subscribe-hp">
+      <button class="subscribe-go" type="submit">{{ T.subscribe_button }}</button>
+    </span>
+    <p class="subscribe-msg" role="status" hidden></p>
+  </form>
+</span>
 <script>
 (function () {
-  const f = document.getElementById("subscribe"), msg = f.querySelector(".subscribe-msg"), btn = f.querySelector("button");
-  const say = t => { msg.textContent = t; msg.hidden = false; };
+  const t = document.getElementById("sub-toggle"), f = document.getElementById("subscribe");
+  const msg = f.querySelector(".subscribe-msg"), btn = f.querySelector(".subscribe-go");
+  const set = open => { f.hidden = !open; t.setAttribute("aria-expanded", open); if (open) f.email.focus(); };
+  t.addEventListener("click", () => set(f.hidden));
+  document.addEventListener("click", e => { if (!f.hidden && !e.target.closest(".sub-wrap")) set(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !f.hidden) { set(false); t.focus(); } });
+  const say = s => { msg.textContent = s; msg.hidden = false; };
   f.addEventListener("submit", async e => {
     e.preventDefault();
     const email = f.email.value.trim();

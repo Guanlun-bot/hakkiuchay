@@ -86,11 +86,10 @@
 </main></div>
 
 <footer>
-  {%- if site.notify_url and site.notify_url != "" %}<div class="wrap foot-sub">{% include subscribe.html %}</div>{% endif %}
   <div class="wrap">
     <span>© {{ site.time | date: "%Y" }} {{ T.footer | default: T.site_name }}</span>
     <span class="foot-stats" aria-live="polite">{{ T.stats_uv | default: "造訪人數" }} <span id="vercount_value_site_uv">—</span>{% if T.stats_pv and T.stats_pv != "" %}<span class="foot-sep">・</span>{{ T.stats_pv }} <span id="vercount_value_site_pv">—</span>{% endif %}</span>
-    <span class="foot-icons">{% if S.discord and S.discord != "" %}<a class="foot-icon" href="{{ S.discord }}" target="_blank" rel="noopener" aria-label="{{ T.discord_label | default: 'Discord' }}" title="{{ T.discord_label | default: 'Discord' }}">{% include icon-discord.svg %}</a>{% endif %}{% if S.signal and S.signal != "" %}<a class="foot-icon" href="{{ S.signal }}" target="_blank" rel="noopener" aria-label="{{ T.signal_label | default: 'Signal' }}" title="{{ T.signal_label | default: 'Signal' }}">{% include icon-signal.svg %}</a>{% endif %}</span>
+    <span class="foot-icons">{% include subscribe.html %}{% if S.discord and S.discord != "" %}<a class="foot-icon" href="{{ S.discord }}" target="_blank" rel="noopener" aria-label="{{ T.discord_label | default: 'Discord' }}" title="{{ T.discord_label | default: 'Discord' }}">{% include icon-discord.svg %}</a>{% endif %}{% if S.signal and S.signal != "" %}<a class="foot-icon" href="{{ S.signal }}" target="_blank" rel="noopener" aria-label="{{ T.signal_label | default: 'Signal' }}" title="{{ T.signal_label | default: 'Signal' }}">{% include icon-signal.svg %}</a>{% endif %}</span>
   </div>
 </footer>
 

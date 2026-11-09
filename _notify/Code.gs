@@ -1,7 +1,7 @@
 /**
  * 學鳩齋 新文章電子郵件通知（Google Apps Script，裝在 khoguanlun@gmail.com）
  *
- * 這份程式貼在試算表「學鳩齋訂閱名單」的 擴充功能 › Apps Script 裡，部署成「網頁應用程式」。
+ * 這份程式是獨立的 Apps Script 專案「學鳩齋訂閱通知」，讀寫試算表「學鳩齋訂閱名單」（SHEET_ID），部署成「網頁應用程式」。
  *   - 網站的訂閱欄、/subscribe/ 頁用 POST 呼叫它：subscribe / confirm / unsubscribe
  *   - 總控台用 GET ?action=stats 看人數（不含任何信箱）
  *   - 每 10 分鐘的觸發器跑 checkNewPosts()：讀 https://hakkiuchay.space/notify.json，
@@ -14,6 +14,8 @@
  */
 
 const SITE = 'https://hakkiuchay.space';
+const SHEET_ID = '';            // 名單試算表的 ID（網址 /d/ 與 /edit 之間那段）；程式綁在試算表裡時可以留空
+const ss_ = () => (SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActive());
 const SENDER_NAME = '學鳩齋';
 const SUBS = '訂閱者';        // 欄：信箱｜狀態｜代碼｜訂閱時間｜確認時間｜退訂時間
 const SENT = '已寄文章';      // 欄：文章 id｜標題｜開始寄送｜完成｜封數
@@ -21,7 +23,6 @@ const EMAIL = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/;
 
 /* ---------- 安裝 ---------- */
 function setup() {
-  const ss = SpreadsheetApp.getActive();
   sheet_(SUBS, ['信箱', '狀態', '代碼', '訂閱時間', '確認時間', '退訂時間']);
   sheet_(SENT, ['文章 id', '標題', '開始寄送', '完成', '封數']);
   ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'checkNewPosts') ScriptApp.deleteTrigger(t); });
@@ -31,7 +32,7 @@ function setup() {
 }
 
 function sheet_(name, header) {
-  const ss = SpreadsheetApp.getActive();
+  const ss = ss_();
   let sh = ss.getSheetByName(name);
   if (!sh) { sh = ss.insertSheet(name); if (header.length) { sh.appendRow(header); sh.setFrozenRows(1); } }
   return sh;

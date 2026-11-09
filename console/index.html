@@ -327,7 +327,8 @@ const RES={published:["ok","已更新網站"],nochange:["ok","書目沒有變動
 async function getLibStatus(){
   const list=await gh(cpath("status",OPS)).catch(e=>{if(e.status===404&&/找不到/.test(e.message))return gh("/repos/"+OWNER+"/"+OPS).then(()=>[]);throw e});
   const files=(list||[]).filter(f=>f.name.endsWith(".json"));
-  const out=await Promise.all(files.map(f=>getFile(f.path,OPS).then(r=>JSON.parse(r.text)).catch(()=>null)));
+  // 用 raw 格式讀：超過 1MB 的檔案 contents API 不給內容
+  const out=await Promise.all(files.map(f=>gh(cpath(f.path,OPS),{headers:{Accept:"application/vnd.github.raw+json"}}).catch(()=>null)));
   return out.filter(Boolean).sort((a,b)=>(b.is_main?1:0)-(a.is_main?1:0));
 }
 function libLine(list){const m=list.find(x=>x.is_main)||list[0];const ln=m.last_night||{};const r=RES[ln.result]||RES.none;

@@ -5,7 +5,7 @@ baseurl: ""
 url: "https://hakkiuchay.space"
 lang: zh-Hant
 # 新文章電子郵件通知：Google Apps Script 網頁應用程式網址（程式在 _notify/Code.gs）。留空時文章下方不顯示訂閱欄。
-notify_url: ""
+notify_url: "https://script.google.com/macros/s/AKfycbylMDtuLdCfgmRH5T1tuxTGYxvT6zXdWKKLlg8KHiYOXegaOC8QRYtMyC6UYpdmm7W6/exec"
 timezone: Asia/Taipei
 markdown: kramdown
 kramdown:

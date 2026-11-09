@@ -202,7 +202,7 @@ content:
       - { name: email_label, label: 齋主／聯絡：電子郵件標籤, type: string }
       - { name: place_label, label: 齋主／聯絡：所在標籤, type: string }
       - { name: discord_label, label: Discord 標籤, type: string }
-      - { name: subscribe_label, label: "訂閱：文章下方的說明", type: string }
+      - { name: subscribe_label, label: "訂閱：頁底的說明", type: string }
       - { name: subscribe_placeholder, label: "訂閱：信箱欄提示", type: string }
       - { name: subscribe_button, label: "訂閱：按鈕", type: string }
       - { name: subscribe_sent, label: "訂閱：送出後", type: string }

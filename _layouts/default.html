@@ -86,6 +86,7 @@
 </main></div>
 
 <footer>
+  {%- if site.notify_url and site.notify_url != "" %}<div class="wrap foot-sub">{% include subscribe.html %}</div>{% endif %}
   <div class="wrap">
     <span>© {{ site.time | date: "%Y" }} {{ T.footer | default: T.site_name }}</span>
     <span class="foot-stats" aria-live="polite">{{ T.stats_uv | default: "造訪人數" }} <span id="vercount_value_site_uv">—</span>{% if T.stats_pv and T.stats_pv != "" %}<span class="foot-sep">・</span>{{ T.stats_pv }} <span id="vercount_value_site_pv">—</span>{% endif %}</span>

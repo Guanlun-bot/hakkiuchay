@@ -11,6 +11,7 @@ sitemap: false
     "mail_confirm_subject": {{ T.mail_confirm_subject | jsonify }},
     "mail_confirm_body": {{ T.mail_confirm_body | jsonify }},
     "mail_confirm_button": {{ T.mail_confirm_button | jsonify }},
+    "mail_confirm_fallback": {{ T.mail_confirm_fallback | jsonify }},
     "mail_confirm_ignore": {{ T.mail_confirm_ignore | jsonify }},
     "mail_post_subject": {{ T.mail_post_subject | jsonify }},
     "mail_post_read": {{ T.mail_post_read | jsonify }},

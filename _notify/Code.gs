@@ -89,10 +89,21 @@ function subscribe_(b) {
   if (MailApp.getRemainingDailyQuota() < 1) return out_({ ok: false, error: 'quota' });
   const T = feed_().texts;
   const link = SITE + '/subscribe/?c=' + t;
-  // 信件寫得像私人來信：幾段文字、一條普通連結，不用按鈕與色塊，比較不會被當成垃圾郵件
-  GmailApp.sendEmail(email, T.mail_confirm_subject || '請確認訂閱', T.mail_confirm_body + '\n\n' + link + '\n\n' + (T.mail_confirm_ignore || ''), {
+  const F = "font-family:'Noto Serif TC','Songti TC','PMingLiU',serif";
+  const inner =
+    '<tr><td style="padding:22px 32px 6px 32px;' + F + ';color:#3f3a39;font-size:15px;line-height:1.9">' +
+      paras_(T.mail_confirm_body, 'margin:0 0 14px') +
+      '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr><td style="background:#3f3a39;border-radius:2px">' +
+        '<a href="' + esc_(link) + '" style="display:inline-block;padding:11px 26px;' + F + ';font-size:15px;letter-spacing:.12em;color:#f1efe8;text-decoration:none">' + esc_(T.mail_confirm_button || '確認訂閱') + '</a>' +
+      '</td></tr></table>' +
+      '<p style="margin:18px 0 0;font-size:12px;line-height:1.7;color:#6e6866">' + esc_(T.mail_confirm_fallback || '') + '<br><a href="' + esc_(link) + '" style="color:#6e6866;word-break:break-all">' + esc_(link) + '</a></p>' +
+      (T.mail_confirm_ignore ? '<p style="margin:18px 0 0;font-size:13px;line-height:1.8;color:#6e6866">' + esc_(T.mail_confirm_ignore) + '</p>' : '') +
+    '</td></tr>' +
+    (T.mail_footer ? '<tr><td style="padding:16px 32px 26px 32px;' + F + '"><div style="border-top:1px solid #d3cec3;padding-top:12px;font-size:14px;line-height:1.8;color:#3f3a39">' + esc_(T.mail_footer) + '</div></td></tr>' : '<tr><td style="height:20px"></td></tr>');
+  const text = T.mail_confirm_body + '\n\n' + link + '\n\n' + (T.mail_confirm_ignore || '') + (T.mail_footer ? '\n\n' + T.mail_footer : '');
+  GmailApp.sendEmail(email, T.mail_confirm_subject || '請確認訂閱', text, {
     name: T.mail_sender_name || SENDER_NAME,
-    htmlBody: page_(T, paras_(T.mail_confirm_body) + '<p><a href="' + esc_(link) + '">' + esc_(T.mail_confirm_button || '確認訂閱') + '</a></p><p style="color:#6e6866">' + esc_(T.mail_confirm_ignore) + '</p>', ''),
+    htmlBody: card_(T, inner),
   });
   cache.put('c:' + email, '1', 600);
   return out_({ ok: true });
@@ -177,7 +188,22 @@ function checkNewPosts() {
 /* ---------- 信件外觀 ---------- */
 function esc_(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 
-function paras_(text) { return String(text || '').split(/\n\s*\n/).map(t => '<p>' + esc_(t).replace(/\n/g, '<br>') + '</p>').join(''); }
+function paras_(text, style) { const a = style ? ' style="' + style + '"' : ''; return String(text || '').split(/\n\s*\n/).map(t => '<p' + a + '>' + esc_(t).replace(/\n/g, '<br>') + '</p>').join(''); }
+
+// 有底色、卡片、紅色頂線的信件外框；招牌是圖片（信件無法載入網站字體）
+function card_(T, rows) {
+  const F = "font-family:'Noto Serif TC','Songti TC','PMingLiU',serif";
+  const name = esc_(T.site_name || '學鳩齋');
+  return '<div style="margin:0;padding:0;background:#f1efe8">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1efe8;padding:36px 12px"><tr><td align="center">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#f7f6f1;border:1px solid #d3cec3;border-top:3px solid #a8343a;text-align:left">' +
+    '<tr><td style="padding:26px 32px 0 32px;' + F + '">' +
+      '<a href="' + SITE + '/" style="text-decoration:none"><img src="' + SITE + '/assets/img/mail-header.png" width="157" height="44" alt="' + name + '" style="display:block;border:0;color:#3f3a39;font-size:22px;letter-spacing:.12em"></a>' +
+      '<div style="border-bottom:1px solid #d3cec3;margin:14px 0 0 0"></div>' +
+    '</td></tr>' + rows + '</table>' +
+    '<div style="' + F + ';font-size:11px;color:#9a948b;letter-spacing:.1em;padding-top:14px">hakkiuchay.space</div>' +
+    '</td></tr></table></div>';
+}
 
 function page_(T, body, unsub) {
   // 樸素的信：只有文字與細線，像一般人寫的信

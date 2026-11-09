@@ -161,6 +161,7 @@ collections:
           - { name: mail_confirm_subject, label: "通知信：確認信主旨", widget: string, required: false }
           - { name: mail_confirm_body, label: "通知信：確認信內文", widget: text, required: false }
           - { name: mail_confirm_button, label: "通知信：確認按鈕", widget: string, required: false }
+          - { name: mail_confirm_fallback, label: "通知信：按鈕無效時的說明", widget: string, required: false }
           - { name: mail_confirm_ignore, label: "通知信：確認信附註", widget: string, required: false }
           - { name: mail_post_subject, label: "通知信：新文章主旨（{title} 會換成文章標題）", widget: string, required: false }
           - { name: mail_post_read, label: "通知信：閱讀全文連結", widget: string, required: false }

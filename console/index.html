@@ -176,15 +176,19 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
 <!-- 禪修室 -->
 <section class="view" id="v-chan">
   <div class="grid">
-    <div class="card"><h3><span class="dot" id="chan-dot"></span><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a></h3><p>Cloudflare Pages · chanroom</p><p id="chan-info">—</p></div>
-    <div class="card"><h3>發布</h3><p>禪修室的程式還沒放進 GitHub，所以目前要請 Claude 改好後發布。接上之後，這裡會顯示最新版本並能一鍵重新發布。</p></div>
-    <div class="card"><h3>入口</h3><ul class="list">
-      <li><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a></li>
-      <li><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare</a><span class="t">chanroom</span></li>
-      <li><a href="https://claude.ai/artifact/LUF5Sqqz4YE2Uwiet1zyKA" target="_blank" rel="noopener">Claude 工作版</a></li>
-      <li><a href="https://claude.ai/artifact/1tnQJwFXbJwUoMtqQzjBq7" target="_blank" rel="noopener">三站總手冊</a></li>
-    </ul></div>
+    <div class="card"><h3><span class="dot" id="chan-dot"></span><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a></h3><p>Cloudflare Pages · chanroom</p><p id="chan-info">—</p><p id="chan-ver">—</p></div>
+    <div class="card"><h3>發布</h3><p>把儲存庫裡最新的禪修室上傳到網站。由已設好 Cloudflare 的書庫電腦接手，約 10 分鐘內完成。</p>
+      <p class="row"><button class="btn main" id="chan-deploy">發布最新版</button></p><p class="muted" id="chan-req"></p><p id="chan-last"></p></div>
   </div>
+  <h2>最近修改</h2>
+  <div class="card"><ul class="list" id="chan-commits"><li class="muted">—</li></ul></div>
+  <h2>入口</h2>
+  <div class="card"><ul class="list">
+    <li><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a></li>
+    <li><a href="https://github.com/Guanlun-bot/hakkiuchay/tree/main/_chanroom" target="_blank" rel="noopener">程式檔案</a><span class="t">_chanroom</span></li>
+    <li><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare</a><span class="t">chanroom</span></li>
+    <li><a href="https://supabase.com/dashboard" target="_blank" rel="noopener">Supabase</a><span class="t">雲端同步</span></li>
+  </ul></div>
 </section>
 
 <!-- 設定 -->
@@ -359,7 +363,29 @@ document.querySelectorAll("[data-lib]").forEach(b=>b.addEventListener("click",as
 }));
 
 /* ---------- 禪修室 ---------- */
-function loadChan(){const s=SITES.find(x=>x.key==="chan");ping(s).then(r=>{$("#chan-dot").className="dot "+(r.ok?"ok":"bad");$("#chan-info").textContent=r.ok?"正常開啟 · "+r.ms+" ms":r.msg})}
+const swVer=t=>(t.match(/VERSION\s*=\s*["']([^"']+)/)||[])[1]||"";
+async function loadChan(){
+  const s=SITES.find(x=>x.key==="chan");
+  ping(s).then(r=>{$("#chan-dot").className="dot "+(r.ok?"ok":"bad");$("#chan-info").textContent=r.ok?"正常開啟 · "+r.ms+" ms":r.msg});
+  const live=fetch("https://chanroom.pages.dev/sw.js",{cache:"no-store"}).then(r=>r.text()).then(swVer).catch(()=>"");
+  if(!TOKEN){$("#chan-ver").textContent="登入後可比對版本";return}
+  const repo=getFile("_chanroom/sw.js").then(r=>swVer(r.text)).catch(()=>"");
+  Promise.all([live,repo]).then(([l,r])=>{$("#chan-ver").textContent=!l?"讀不到線上版本":l===r?"線上版本 "+l+"，與儲存庫相同":"線上 "+(l||"?")+"，儲存庫 "+(r||"?")+"：有新版還沒發布";$("#chan-ver").style.color=l&&r&&l!==r?"var(--seal)":""});
+  gh("/repos/"+OWNER+"/"+REPO+"/commits?path=_chanroom&per_page=6&sha="+BRANCH).then(j=>{const ul=$("#chan-commits");ul.innerHTML="";
+    for(const c of j)ul.append(h("li",{},h("a",{href:c.html_url,target:"_blank",rel:"noopener"},c.commit.message.split("\n")[0]),h("span",{class:"t"},(c.commit.author.name||"")+" · "+ago(c.commit.author.date))))}).catch(e=>{$("#chan-commits").innerHTML="";$("#chan-commits").append(h("li",{class:"muted"},e.message))});
+  getLibStatus().then(list=>{
+    const can=list.filter(x=>x.chanroom&&x.chanroom.can_deploy);
+    const last=list.map(x=>x.chanroom&&x.chanroom.last).filter(Boolean).sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0];
+    const el=$("#chan-last");el.innerHTML="";
+    if(last)el.append(h("span",{style:last.result==="ok"?"":"color:var(--seal)"},"上次發布："+last.at.slice(5)+"（"+last.pc+"）"+(last.result==="ok"?"成功":"失敗："+last.message)));
+    if(!can.length){$("#chan-deploy").disabled=true;$("#chan-req").textContent=list.length?"回報中的電腦都還沒有 Cloudflare 授權，無法發布。":"書庫電腦還沒連上總控台，暫時無法發布。"}
+  }).catch(()=>{$("#chan-deploy").disabled=true;$("#chan-req").textContent="讀不到書庫電腦狀態（金鑰要有 hakkiuchay-ops）。"});
+  gh(cpath("requests/chanroom.json",OPS)).then(j=>{$("#chan-req").textContent="已送出發布（"+ago(JSON.parse(dec(j.content)).requested_at)+"），等電腦接手中…"}).catch(()=>{});
+}
+$("#chan-deploy").onclick=async()=>{const b=$("#chan-deploy");b.disabled=true;
+  try{let sha=null;try{sha=(await gh(cpath("requests/chanroom.json",OPS))).sha}catch(e){}
+    await putFile("requests/chanroom.json",enc(JSON.stringify({action:"deploy",requested_at:new Date().toISOString(),by:"console"},null,2)),sha,"總控台：發布禪修室",OPS);
+    toast("已送出，10 分鐘內發布");$("#chan-req").textContent="已送出發布，等電腦接手中…"}catch(e){toast(e.message,4500)}finally{b.disabled=false}};
 $("#refresh").onclick=()=>{loaded.overview=0;show("overview")};
 
 /* ---------- 動作 ---------- */

@@ -29,7 +29,7 @@ mail_confirm_button: 確認，我要收到新文章通知
 mail_confirm_ignore: 如果不是您本人訂閱，忽略這封信即可，不會收到任何通知。
 mail_post_subject: 學鳩齋新文章：{title}
 mail_post_read: 閱讀全文
-mail_footer: 謝謝您的訂閱，歡迎來信交流，祝快樂
+mail_footer: 謝謝您的訂閱，歡迎來信交流，祝快樂。
 mail_unsubscribe: 退訂
 signal_label: Signal 群組
 empty_category: 還沒有文章。

@@ -49,6 +49,10 @@ content:
         label: 日期
         type: date
         required: true
+      - name: published
+        label: 公開（取消勾選＝草稿，不會出現在網站上）
+        type: boolean
+        default: true
       - name: summary
         label: 摘要
         type: text

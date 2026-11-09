@@ -20,7 +20,7 @@
 - `_layouts/default.html`：外框、選單、頁尾、日夜模式、分類背景。`_layouts/post.html`：文章閱讀版（註腳、目錄）。`_layouts/category.html`：分類列表。
 - `_includes/home-lower.html`：首頁下半（左：書齋介紹＋畫；右：齋主名片＋著作＋聯絡）。
 - `assets/site.css`：全部樣式，依頁面分成 10 段（檔頭有目次）。修改時找到對應段落直接改，不要往檔尾疊加覆寫；顏色一律用 CSS 變數（`--ink`、`--paper`、`--rule`、`--seal` 等）以支援深色模式。
-- `console/index.html`：總控台（https://hakkiuchay.space/console/ ）。自成一檔，不經 Jekyll 版型；欄位直接讀 `.pages.yml` 產生，所以在 `.pages.yml` 加欄位就會自動出現在總控台。金鑰由齋主在自己瀏覽器輸入，只存在該裝置。書庫狀態與「立即更新」請求放在私人儲存庫 `Guanlun-bot/hakkiuchay-ops`（`status/<電腦名>.json`、`requests/library.json`），由書庫櫃檯 `系統\bridge.ps1` 每 10 分鐘讀寫。
+- `console/index.html`：總控台（https://hakkiuchay.space/console/ ）。自成一檔，不經 Jekyll 版型；欄位直接讀 `.pages.yml` 產生，所以在 `.pages.yml` 加欄位就會自動出現在總控台。金鑰由齋主在自己瀏覽器輸入，只存在該裝置。書庫狀態與「立即更新」請求放在私人儲存庫 `Guanlun-bot/hakkiuchay-ops`（`status/<電腦名>.json`、`requests/library.json`），由書庫櫃檯 `系統\bridge.ps1` 每 10 分鐘讀寫。總控台金鑰到期日記在 hakkiuchay-ops 的 `config/console.json`；該儲存庫的 `.github/workflows/check.yml` 每天 08:43 檢查，有狀況開 issue「書庫需要處理」通知齋主。文章草稿用 front matter `published: false`。
 - 獺祭魚、禪修室是外部連結（`site.yml` 的 tajiyu_url、chanroom_url）：https://otterslibrary.pages.dev/、https://chanroom.pages.dev/
 
 ## 自動流程

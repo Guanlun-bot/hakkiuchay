@@ -78,6 +78,15 @@ legend{font-size:14px;font-weight:600;padding:0 6px}
 #toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:2px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50;max-width:90vw}
 #toast.on{opacity:1}
 .login{max-width:520px}
+.banner{background:var(--paper-2);border-left:3px solid var(--seal);padding:8px 12px;margin:0 0 16px;font-size:14px}
+.banner .row{margin-top:6px}
+.preview{border:1px solid var(--rule);border-radius:2px;padding:14px 18px;min-height:360px;background:var(--card);font-size:16px;line-height:1.9}
+.preview img{max-width:100%;height:auto}
+.preview h1,.preview h2,.preview h3{font-weight:600;letter-spacing:.06em}
+.preview blockquote{margin:0;padding-left:14px;border-left:2px solid var(--rule);color:var(--ink-soft)}
+.preview sup{color:var(--seal)}
+.preview .notes{border-top:1px solid var(--rule);margin-top:24px;padding-top:10px;font-size:14px;color:var(--ink-soft)}
+.tag.draft{color:var(--seal);border-color:var(--seal)}
 pre.log{font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;margin:0;max-height:420px;overflow:auto;color:var(--ink-soft)}
 .pc-sum{font-size:13px;color:var(--ink-soft);margin:6px 0 0;padding-left:16px}
 .pc-sum li{margin:2px 0}
@@ -92,6 +101,7 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
   <div class="who" id="who"></div>
 </header>
 
+<div id="banners"></div>
 <nav class="tabs" id="tabs">
   <button data-v="overview">總覽</button>
   <button data-v="hakki">學鳩齋</button>
@@ -119,6 +129,7 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
     <h2>文章</h2>
     <p class="row"><button class="btn main" id="new-post">寫新文章</button><span class="muted" id="posts-note"></span></p>
     <div class="card"><ul class="list posts" id="posts"><li class="muted">登入後載入</li></ul></div>
+    <div class="card" id="imgcheck" hidden style="margin-top:14px"></div>
     <h2>網站資料</h2>
     <div class="card"><ul class="list posts" id="files"></ul></div>
     <h2>首頁照片</h2>
@@ -181,6 +192,9 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
   <div class="login">
     <h2>GitHub 金鑰</h2>
     <p class="muted" id="token-state"></p>
+    <p class="muted" id="token-exp"></p>
+    <div class="field"><label for="exp-date">金鑰到期日</label><div class="desc">到期前兩週，總控台與手機通知會提醒你換金鑰。換了新金鑰記得改這裡。</div>
+      <div class="row"><input type="date" id="exp-date" style="max-width:200px"><button class="btn small" id="save-exp">記下</button></div></div>
     <div class="field">
       <label for="token">貼上金鑰</label>
       <input type="password" id="token" autocomplete="off" placeholder="github_pat_…">
@@ -229,6 +243,18 @@ const cpath=(p,repo=REPO)=>"/repos/"+OWNER+"/"+repo+"/contents/"+p.split("/").ma
 async function getFile(p,repo=REPO){const j=await gh(cpath(p,repo)+(repo===REPO?"?ref="+BRANCH:""));return{text:dec(j.content),sha:j.sha}}
 async function putFile(p,contentB64,sha,message,repo=REPO){return gh(cpath(p,repo),{method:"PUT",body:JSON.stringify({message,content:contentB64,...(repo===REPO?{branch:BRANCH}:{}),...(sha?{sha}:{})})})}
 async function delFile(p,sha,message){return gh(cpath(p),{method:"DELETE",body:JSON.stringify({message,sha,branch:BRANCH})})}
+
+/* ---------- 金鑰到期 ---------- */
+let TOKEN_EXP=null;
+// GitHub 不讓網頁讀到期時間，所以到期日記在私人儲存庫 config/console.json（每日檢查也會讀它）
+async function loadExpiry(){try{const c=JSON.parse((await getFile("config/console.json",OPS)).text);if(c.token_expires){$("#exp-date").value=c.token_expires;noteExpiry(c.token_expires)}}catch(e){}}
+async function saveExpiry(){const v=$("#exp-date").value;if(!v){toast("請選日期");return}
+  let sha=null,cfg={};try{const r=await getFile("config/console.json",OPS);sha=r.sha;cfg=JSON.parse(r.text)}catch(e){}
+  cfg.token_expires=v;try{await putFile("config/console.json",enc(JSON.stringify(cfg,null,2)+"\n"),sha,"總控台：金鑰到期日 "+v,OPS);TOKEN_EXP=null;document.getElementById("bn-exp")?.remove();noteExpiry(v);toast("已記下")}catch(e){toast(e.message,4000)}}
+function noteExpiry(v){const d=new Date(v+"T00:00:00+08:00");if(isNaN(d))return;TOKEN_EXP=d;
+  const days=Math.ceil((d-Date.now())/86400e3);const ts=$("#token-exp");if(ts)ts.textContent="這把金鑰 "+d.toLocaleDateString("zh-TW")+" 到期（還有 "+days+" 天）。";
+  if(days<=14)banner("exp","GitHub 金鑰再 "+days+" 天到期（"+d.toLocaleDateString("zh-TW")+"）。到期後總控台就不能用，請到 GitHub 金鑰頁按 Regenerate token，再到「設定」貼上新的。",[["前往 GitHub","https://github.com/settings/personal-access-tokens"]])}
+function banner(id,text,links=[]){if(document.getElementById("bn-"+id))return;$("#banners").append(h("div",{class:"banner",id:"bn-"+id},text,links.length?h("div",{class:"row"},links.map(([t,u])=>h("a",{class:"btn small",href:u,target:"_blank",rel:"noopener"},t))):null))}
 
 /* ---------- 分頁 ---------- */
 const views=["overview","hakki","library","chan","settings"];
@@ -365,16 +391,20 @@ async function loadPosts(){
   const c=coll();const ul=$("#posts");ul.innerHTML="";ul.append(h("li",{class:"muted"},"載入中…"));
   const list=(await gh(cpath(c.path)+"?ref="+BRANCH)).filter(f=>f.name.endsWith(".md")).sort((a,b)=>b.name.localeCompare(a.name));
   const cats=CATS();
-  const rows=await Promise.all(list.map(async f=>{try{const{text}=await getFile(f.path);const{data}=splitFM(text);return{f,data}}catch(e){return{f,data:{}}}}));
+  const rows=await Promise.all(list.map(async f=>{try{const{text}=await getFile(f.path);const{data}=splitFM(text);return{f,data,text}}catch(e){return{f,data:{},text:""}}}));
   ul.innerHTML="";
   rows.sort((a,b)=>String(b.data.date||b.f.name).localeCompare(String(a.data.date||a.f.name)));
-  for(const{f,data}of rows)ul.append(h("li",{onclick:()=>openPost(f.path)},h("span",{},data.title||f.name),cats[data.cat]?h("span",{class:"tag"},cats[data.cat]):null,h("span",{class:"t"},String(data.date||"").slice(0,10))));
-  $("#posts-note").textContent="共 "+rows.length+" 篇";
+  for(const{f,data}of rows)ul.append(h("li",{onclick:()=>openPost(f.path)},h("span",{},data.title||f.name),data.published===false?h("span",{class:"tag draft"},"草稿"):null,cats[data.cat]?h("span",{class:"tag"},cats[data.cat]):null,h("span",{class:"t"},String(data.date||"").slice(0,10))));
+  const nd=rows.filter(r=>r.data.published===false).length;
+  $("#posts-note").textContent="共 "+rows.length+" 篇"+(nd?"（草稿 "+nd+" 篇）":"");
+  checkImages(rows).catch(()=>{});
 }
 function splitFM(text){const m=text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);if(!m)return{data:{},body:text};return{data:yload(m[1]),body:m[2]}}
 
 /* ---------- 內容：欄位產生器 ---------- */
 const empty=v=>v==null||v===""||(Array.isArray(v)&&v.length===0);
+// 寫回欄位：原本沒有這個欄位、而且值是空的或等於預設值，就不寫進檔案，避免每次存檔都多出一堆欄位
+function assign(out,k,v,orig,f){if(!(k in orig)&&(empty(v)||(f&&f.default!==undefined&&v===f.default)))delete out[k];else out[k]=v}
 function mediaPath(sub,name){const inp=(CMS.media&&CMS.media.input)||"assets/uploads",out=(CMS.media&&CMS.media.output)||"/assets/uploads";const rel=(sub?sub+"/":"")+name;return{repo:inp+"/"+rel,url:out+"/"+rel}}
 function safeName(n){const base=n.replace(/\.[^.]+$/,"").normalize("NFKD").replace(/[^\w-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"").toLowerCase()||"img";return base+"-"+Date.now().toString(36)}
 async function shrink(file,maxLong){
@@ -401,8 +431,8 @@ function field(f,val,ctx){
   switch(f.type){
     case"object":{const fs=h("fieldset",{},h("legend",{},f.label||f.name));const o=val&&typeof val==="object"?{...val}:{};const subs=f.fields.map(sf=>[sf.name,field(sf,o[sf.name],ctx)]);
       subs.forEach(([,s])=>s.el&&fs.append(s.el));wrap.append(fs);
-      get=()=>{const out={...o};for(const[k,s]of subs){const v=s.get();if(empty(v)&&!(k in o))delete out[k];else out[k]=v}return out};break}
-    case"boolean":{const cb=h("input",{type:"checkbox"});cb.checked=!!val;wrap.append(h("label",{class:"chk"},cb,f.label||f.name));if(f.description)wrap.append(h("div",{class:"desc"},f.description));get=()=>cb.checked;break}
+      get=()=>{const out={...o};for(const[k,s]of subs)assign(out,k,s.get(),o,s.f);return out};break}
+    case"boolean":{const cb=h("input",{type:"checkbox"});cb.checked=val==null?!!f.default:!!val;wrap.append(h("label",{class:"chk"},cb,f.label||f.name));if(f.description)wrap.append(h("div",{class:"desc"},f.description));get=()=>cb.checked;break}
     case"number":{const o=f.options||{};const i=h("input",{type:"number",min:o.min,max:o.max,step:o.step||"any"});i.value=val??"";wrap.append(i);get=()=>i.value===""?val:Number(i.value);break}
     case"date":{const i=h("input",{type:"date"});i.value=val?String(val).slice(0,10):"";wrap.append(i);get=()=>i.value;break}
     case"select":{const opts=(f.options&&f.options.values)||[];const s=h("select",{},h("option",{value:""},"—"),opts.map(o=>typeof o==="object"?h("option",{value:o.name},o.label||o.name):h("option",{value:o},o)));s.value=val??"";wrap.append(s);get=()=>s.value;break}
@@ -446,32 +476,91 @@ async function openFile(c){
   try{
     const{text,sha}=await getFile(c.path);const data=yload(text);const subs=c.fields.map(f=>[f.name,field(f,data[f.name])]);
     openEditor(c.label||c.name,()=>h("div",{},subs.map(([,s])=>s.el).filter(Boolean)),async()=>{
-      const out={...data};for(const[k,s]of subs){const v=s.get();if(empty(v)&&!(k in data))delete out[k];else out[k]=v}
+      const out={...data};for(const[k,s]of subs)assign(out,k,s.get(),data,s.f);
       await putFile(c.path,enc(ydump(out)),sha,"總控台修改"+(c.label||c.name));
     });
   }catch(e){toast(e.message,4000)}
 }
-async function openPost(path){
+const DKEY=p=>"hkc_draft:"+(p||"new");
+const drafts={get(p){try{return JSON.parse(localStorage.getItem(DKEY(p))||"null")}catch(e){return null}},set(p,v){try{localStorage.setItem(DKEY(p),JSON.stringify(v))}catch(e){}},del(p){try{localStorage.removeItem(DKEY(p))}catch(e){}}};
+async function openPost(path,restore){
   const c=coll();let data={},body="",sha=null;
   try{if(path){const r=await getFile(path);sha=r.sha;({data,body}=splitFM(r.text))}}catch(e){toast(e.message,4000);return}
   if(!path){data={date:new Date(Date.now()+8*3600e3).toISOString().slice(0,10)}}
+  const orig=data;
+  const saved=drafts.get(path);
+  if(restore&&saved){data={...data,...saved.data};body=saved.body}
   const fields=c.fields.filter(f=>f.name!=="body");let slugField;
   const ctx={slug:()=>(slugField&&slugField.get())||"draft"};
   const subs=fields.map(f=>{const s=field(f,data[f.name],ctx);if(f.name==="slug")slugField=s;return[f.name,s]});
   const bodyF=c.fields.find(f=>f.name==="body")||{name:"body",label:"內文",type:"rich-text"};const bodyS=field(bodyF,body,ctx);
   if(path&&slugField){const inp=slugField.el.querySelector("input");inp.readOnly=true;inp.title="建立後不要再改"}
-  openEditor(path?(data.title||"文章"):"新文章",()=>h("div",{},subs.map(([,s])=>s.el).filter(Boolean),bodyS.el),async()=>{
-    const out=path?{...data}:{};for(const[k,s]of subs){const v=s.get();if(empty(v)&&!(k in data))delete out[k];else out[k]=v}
+  let tm,done=false;
+  const collect=()=>{const out=path?{...orig}:{};for(const[k,s]of subs)assign(out,k,s.get(),orig,s.f);return{out,body:bodyS.get()}};
+  // 預覽
+  const ta=bodyS.el.querySelector("textarea"),pv=h("div",{class:"preview",hidden:true});ta.after(pv);
+  const pbtn=h("button",{type:"button",class:"btn small"},"預覽");
+  pbtn.onclick=async()=>{if(pv.hidden){try{await renderPreview(pv,bodyS.get(),collect().out)}catch(e){toast("預覽載入失敗："+e.message);return}pv.hidden=false;ta.hidden=true;pbtn.textContent="回到編輯"}else{pv.hidden=true;ta.hidden=false;pbtn.textContent="預覽"}};
+  bodyS.el.querySelector(".row").prepend(pbtn);
+  openEditor(path?(data.title||"文章"):"新文章",()=>{
+    const wrap=h("div",{},subs.map(([,s])=>s.el).filter(Boolean),bodyS.el);
+    if(saved&&!restore&&(saved.sha===sha))wrap.prepend(h("div",{class:"banner"},"這篇有 "+ago(new Date(saved.t).toISOString())+"在這台裝置暫存、還沒存檔的內容。",
+      h("div",{class:"row"},h("button",{type:"button",class:"btn small",onclick:()=>openPost(path,true)},"還原暫存"),h("button",{type:"button",class:"btn small",onclick:e=>{drafts.del(path);e.target.closest(".banner").remove()}},"捨棄"))));
+    // 自動暫存：停止打字 1.5 秒後存在這台裝置
+    wrap.addEventListener("input",()=>{clearTimeout(tm);if(done)return;tm=setTimeout(()=>{if(done)return;const{out,body}=collect();drafts.set(path,{t:Date.now(),sha,data:out,body})},1500)});
+    return wrap},async()=>{
+    clearTimeout(tm);const{out,body:bd}=collect();
     for(const f of fields)if(f.required&&empty(out[f.name]))throw new Error("「"+(f.label||f.name)+"」必填");
     const slugF=fields.find(f=>f.name==="slug");if(slugF&&slugF.pattern&&!new RegExp(slugF.pattern.regex).test(out.slug))throw new Error(slugF.pattern.message||"網址代稱格式不對");
-    const text="---\n"+ydump(out)+"---\n"+bodyS.get().replace(/^\n+/,"");
+    const text="---\n"+ydump(out)+"---\n"+bd.replace(/^\n+/,"");
     let p=path;
     if(!p){const d=String(out.date).slice(0,10).split("-");p=c.path+"/"+(c.filename||"{year}-{month}-{day}-{fields.slug}.md").replace("{year}",d[0]).replace("{month}",d[1]).replace("{day}",d[2]).replace(/\{fields\.(\w+)\}/g,(_,k)=>out[k]||"")}
-    await putFile(p,enc(text),sha,(path?"總控台修改文章：":"總控台新增文章：")+out.title);
+    await putFile(p,enc(text),sha,(path?"總控台修改文章：":"總控台新增文章：")+out.title+(out.published===false?"（草稿）":""));
+    done=true;clearTimeout(tm);drafts.del(path);
   },path?async()=>{
     if(!openPost.armed){openPost.armed=1;toast("再按一次「刪除」確定刪除這篇");setTimeout(()=>openPost.armed=0,4000);return}
-    openPost.armed=0;try{await delFile(path,sha,"總控台刪除文章："+(data.title||path));toast("已刪除");closeEditor(true)}catch(e){toast(e.message,4000)}
+    openPost.armed=0;try{await delFile(path,sha,"總控台刪除文章："+(data.title||path));drafts.del(path);toast("已刪除");closeEditor(true)}catch(e){toast(e.message,4000)}
   }:null);
+}
+let markedReady=null;
+function loadMarked(){return markedReady||(markedReady=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js";sc.onload=res;sc.onerror=()=>{markedReady=null;rej(new Error("連不到預覽元件"))};document.head.append(sc)}))}
+async function renderPreview(el,md,fm){
+  await loadMarked();
+  let html=marked.parse(md.replace(/\[註(\d+)\]/g,"<sup>[$1]</sup>"));
+  html=html.replace(/<script[\s\S]*?<\/script>/gi,"");
+  el.innerHTML="";
+  if(fm.title)el.append(h("h1",{},fm.title));
+  if(fm.subtitle)el.append(h("p",{class:"muted"},fm.subtitle));
+  const box=h("div");box.innerHTML=html;el.append(box);
+  const notes=Array.isArray(fm.notes)?fm.notes:[];
+  if(notes.length)el.append(h("ol",{class:"notes"},notes.map(n=>h("li",{},n))));
+  if(fm.published===false)el.prepend(h("p",{class:"tag draft",style:"display:inline-block"},"草稿：存檔後不會出現在網站上"));
+}
+
+/* ---------- 壞圖檢查 ---------- */
+async function checkImages(rows){
+  const box=$("#imgcheck");
+  const tree=await gh("/repos/"+OWNER+"/"+REPO+"/git/trees/"+BRANCH+"?recursive=1");
+  const have=new Set(tree.tree.map(t=>"/"+t.path));
+  const dataFiles=await Promise.all(CMS.content.filter(c=>c.type==="file").map(c=>getFile(c.path).then(r=>({label:c.label||c.name,text:r.text,path:c.path})).catch(()=>null)));
+  const items=[...rows.map(r=>({label:r.data.title||r.f.name,text:r.text,path:r.f.path})),...dataFiles.filter(Boolean)];
+  const issues=[];
+  for(const it of items){
+    const blobs=(it.text.match(/blob:[^\s)"']+/g)||[]).length;
+    const missing=new Set();
+    for(const m of it.text.matchAll(/(?:\(|"|'|:\s+)(\/assets\/[^\s)"'?#]+)/g)){let p=m[1];try{p=decodeURI(p)}catch(e){}if(!have.has(p))missing.add(p)}
+    if(blobs||missing.size)issues.push({it,blobs,missing:[...missing]});
+  }
+  if(tree.truncated){box.hidden=false;box.innerHTML="";box.append(h("p",{class:"muted"},"儲存庫太大，圖片檢查沒有跑完。"));return}
+  box.innerHTML="";
+  if(!issues.length){box.hidden=true;return}
+  box.hidden=false;
+  box.append(h("h3",{},h("span",{class:"dot bad"}),"有 "+issues.length+" 處的圖片顯示不出來"),
+    h("p",{},"「上傳沒成功」是 Pages CMS 傳大圖失敗留下的暫時連結，檔案不在網站裡，只能重新上傳；「找不到檔案」可能是檔名改過或被刪掉。"),
+    h("ul",{class:"list"},issues.map(x=>h("li",{style:"display:block"},
+      h("a",{href:"#",onclick:e=>{e.preventDefault();x.it.path.startsWith("_posts/")?openPost(x.it.path):openFile(CMS.content.find(c=>c.path===x.it.path))}},x.it.label),
+      x.blobs?h("span",{class:"tag draft",style:"margin-left:8px"},"上傳沒成功 "+x.blobs+" 張"):null,
+      x.missing.length?h("div",{class:"muted"},"找不到檔案："+x.missing.slice(0,3).join("、")+(x.missing.length>3?" 等 "+x.missing.length+" 個":"")):null))));
 }
 $("#new-post").onclick=()=>{if(!TOKEN){show("settings");return}openPost(null)};
 
@@ -493,11 +582,12 @@ async function whoami(){
   catch(e){ts.textContent="已存的金鑰不能用："+e.message;who.textContent=""}
 }
 $("#save-token").onclick=async()=>{const v=$("#token").value.trim();if(!v){toast("請貼上金鑰");return}
-  TOKEN=v;try{await gh("/repos/"+OWNER+"/"+REPO);store.set("hkc_token",v,$("#remember").checked);$("#token").value="";toast("登入成功");for(const k in loaded)delete loaded[k];whoami();show("overview")}
+  TOKEN=v;try{await gh("/repos/"+OWNER+"/"+REPO);store.set("hkc_token",v,$("#remember").checked);$("#token").value="";toast("登入成功");for(const k in loaded)delete loaded[k];whoami();loadExpiry();show("overview")}
   catch(e){TOKEN=store.get("hkc_token");toast(e.message,4000)}};
 $("#logout").onclick=()=>{store.del("hkc_token");TOKEN=null;for(const k in loaded)delete loaded[k];whoami();toast("已登出")};
 
-whoami();show(location.hash.slice(1));
+$("#save-exp").onclick=saveExpiry;
+whoami();if(TOKEN)loadExpiry();show(location.hash.slice(1));
 </script>
 </body>
 </html>

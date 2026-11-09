@@ -57,6 +57,7 @@ collections:
           - { label: 參學瑣談, value: study-talks }
           - { label: 生活札記, value: life }
       - { name: date, label: 日期, widget: datetime, format: YYYY-MM-DD, time_format: false }
+      - { name: published, label: 公開（取消勾選＝草稿，不會出現在網站上）, widget: boolean, default: true, required: false }
       - { name: summary, label: 摘要, widget: text, required: false, hint: 列表上顯示的一兩句話。學術文章會當作摘要放在文章開頭。 }
       - { name: keywords, label: 關鍵詞（學術文章用）, widget: list, required: false }
       - { name: source, label: 出處（參學瑣談用）, widget: string, required: false }

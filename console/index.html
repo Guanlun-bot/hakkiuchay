@@ -78,6 +78,9 @@ legend{font-size:14px;font-weight:600;padding:0 6px}
 #toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:2px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50;max-width:90vw}
 #toast.on{opacity:1}
 .login{max-width:520px}
+pre.log{font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;margin:0;max-height:420px;overflow:auto;color:var(--ink-soft)}
+.pc-sum{font-size:13px;color:var(--ink-soft);margin:6px 0 0;padding-left:16px}
+.pc-sum li{margin:2px 0}
 code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1px 5px;border-radius:2px}
 </style>
 </head>
@@ -90,33 +93,32 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
 </header>
 
 <nav class="tabs" id="tabs">
-  <button data-v="status">狀態</button>
-  <button data-v="content">內容</button>
-  <button data-v="actions">動作</button>
-  <button data-v="links">入口</button>
+  <button data-v="overview">總覽</button>
+  <button data-v="hakki">學鳩齋</button>
+  <button data-v="library">書庫</button>
+  <button data-v="chan">禪修室</button>
   <button data-v="settings">設定</button>
 </nav>
 
-<!-- 狀態 -->
-<section class="view" id="v-status">
-  <h2>三站</h2>
+<!-- 總覽 -->
+<section class="view" id="v-overview">
   <div class="grid" id="sites"></div>
-  <h2>學鳩齋發布</h2>
-  <div class="grid">
-    <div class="card"><h3><span class="dot" id="build-dot"></span>網站建置</h3><p id="build-info">—</p></div>
-    <div class="card"><h3>自動流程</h3><ul class="list" id="runs"><li class="muted">—</li></ul></div>
-  </div>
-  <h2>最近修改</h2>
+  <h2>最近修改（學鳩齋）</h2>
   <div class="card"><ul class="list" id="commits"><li class="muted">—</li></ul></div>
   <p class="row" style="margin-top:14px"><button class="btn" id="refresh">重新整理</button><span class="muted" id="checked"></span></p>
 </section>
 
-<!-- 內容 -->
-<section class="view" id="v-content">
+<!-- 學鳩齋 -->
+<section class="view" id="v-hakki">
   <div id="content-home">
+    <div class="grid">
+      <div class="card"><h3><span class="dot" id="build-dot"></span>網站建置</h3><p id="build-info">—</p>
+        <p class="row" style="margin-top:8px"><a class="btn small" href="/" target="_blank">打開網站</a><button class="btn small" data-act="build">重新建置</button></p></div>
+      <div class="card"><h3>自動流程</h3><ul class="list" id="runs"><li class="muted">—</li></ul></div>
+    </div>
     <h2>文章</h2>
     <p class="row"><button class="btn main" id="new-post">寫新文章</button><span class="muted" id="posts-note"></span></p>
-    <div class="card"><ul class="list posts" id="posts"><li class="muted">載入中…</li></ul></div>
+    <div class="card"><ul class="list posts" id="posts"><li class="muted">登入後載入</li></ul></div>
     <h2>網站資料</h2>
     <div class="card"><ul class="list posts" id="files"></ul></div>
     <h2>首頁照片</h2>
@@ -125,53 +127,51 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
       <p class="row"><input type="file" id="home-photos" accept="image/*" multiple><button class="btn" id="home-upload">上傳</button></p>
       <ul class="list" id="home-log"></ul>
     </div>
+    <h2>維護</h2>
+    <div class="grid">
+      <div class="card"><h3>重新處理照片</h3><p>照片縮圖、轉檔、加進首頁輪播，手動再跑一次。</p><p class="row"><button class="btn" data-act="compress">執行</button></p></div>
+      <div class="card"><h3>取消卡住的發布</h3><p>建置一直失敗、訊息說 in progress deployment 時用。</p>
+        <input type="text" id="stuck-sha" placeholder="卡住那次的 commit 編號"><p class="row" style="margin-top:8px"><button class="btn" data-act="cancel">執行</button></p></div>
+      <div class="card"><h3>其他後台</h3><ul class="list">
+        <li><a href="https://app.pagescms.org" target="_blank" rel="noopener">Pages CMS</a></li>
+        <li><a href="/admin/" target="_blank">Sveltia CMS</a></li>
+        <li><a href="https://github.com/Guanlun-bot/hakkiuchay" target="_blank" rel="noopener">GitHub 儲存庫</a></li>
+        <li><a href="https://claude.ai/artifact/793Srwq4VAGMvmCcsQaVqP" target="_blank" rel="noopener">管理手冊</a></li>
+      </ul></div>
+    </div>
   </div>
   <div id="editor" hidden></div>
 </section>
 
-<!-- 動作 -->
-<section class="view" id="v-actions">
-  <h2>學鳩齋</h2>
+<!-- 書庫 -->
+<section class="view" id="v-library">
+  <p class="note" id="lib-note" hidden></p>
+  <div class="grid" id="lib-pcs"></div>
+  <h2>動作</h2>
   <div class="grid">
-    <div class="card"><h3>重新建置網站</h3><p>網站沒跟著更新時，讓 GitHub 重新產生一次。</p><p class="row"><button class="btn" data-act="build">執行</button></p></div>
-    <div class="card"><h3>重新處理照片</h3><p>照片縮圖、轉檔、加進首頁輪播，手動再跑一次。</p><p class="row"><button class="btn" data-act="compress">執行</button></p></div>
-    <div class="card"><h3>取消卡住的發布</h3><p>Actions 一直失敗、訊息說 in progress deployment 時用。</p>
-      <input type="text" id="stuck-sha" placeholder="卡住那次的 commit 編號"><p class="row" style="margin-top:8px"><button class="btn" data-act="cancel">執行</button></p></div>
-  </div>
-  <h2>獺祭魚書庫・禪修室</h2>
-  <div class="grid">
-    <div class="card"><h3>書庫立即更新</h3><p>目前要在主電腦點「立即執行夜間作業.bat」。之後會改成從這裡按，主電腦幾分鐘內接手。</p><p class="row"><button class="btn" disabled>第二階段</button></p></div>
-    <div class="card"><h3>Cloudflare</h3><p>書庫與禪修室都放在 Cloudflare Pages；手動發布、看版本從這裡進。</p><p class="row"><a class="btn" href="https://dash.cloudflare.com/?to=/:account/pages" target="_blank" rel="noopener">開啟</a></p></div>
-  </div>
-</section>
-
-<!-- 入口 -->
-<section class="view" id="v-links">
-  <div class="grid">
-    <div class="card"><h3>學鳩齋</h3><ul class="list">
-      <li><a href="/" target="_blank">網站</a><span class="t">hakkiuchay.space</span></li>
-      <li><a href="https://app.pagescms.org" target="_blank" rel="noopener">Pages CMS</a><span class="t">原本的後台</span></li>
-      <li><a href="/admin/" target="_blank">Sveltia CMS</a><span class="t">備用後台</span></li>
-      <li><a href="/admin/resize.html" target="_blank">照片縮圖工具</a></li>
-      <li><a href="https://github.com/Guanlun-bot/hakkiuchay" target="_blank" rel="noopener">GitHub 儲存庫</a></li>
-      <li><a href="https://github.com/Guanlun-bot/hakkiuchay/actions" target="_blank" rel="noopener">Actions</a></li>
-      <li><a href="https://github.com/Guanlun-bot/hakkiuchay/settings/pages" target="_blank" rel="noopener">Pages 設定</a></li>
-    </ul></div>
-    <div class="card"><h3>獺祭魚書庫</h3><ul class="list">
+    <div class="card"><h3>立即更新</h3><p>主電腦 10 分鐘內接手，跑一次夜間作業：登錄新書、上架、更新書目網站。主電腦沒開時，副電腦 15 分鐘後只補傳網站。</p>
+      <p class="row"><button class="btn main" data-lib="run">立即更新</button><button class="btn" data-lib="force">強制重新發布</button></p><p class="muted" id="lib-req"></p></div>
+    <div class="card"><h3>入口</h3><ul class="list">
       <li><a href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">書庫網站</a><span class="t">需密碼</span></li>
-      <li><a href="https://www.dropbox.com/home" target="_blank" rel="noopener">Dropbox</a><span class="t">新書入庫・總目</span></li>
+      <li><a href="https://www.dropbox.com/home/%E7%8D%BA%E7%A5%AD%E9%AD%9A%E9%9B%BB%E5%AD%90%E6%9B%B8%E5%BA%AB" target="_blank" rel="noopener">Dropbox 書庫資料夾</a><span class="t">新書入庫</span></li>
       <li><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare</a><span class="t">otterslibrary</span></li>
       <li><a href="https://claude.ai/artifact/Q9J18sjS5MtXvbf2rnYAb3" target="_blank" rel="noopener">後台工具書</a></li>
     </ul></div>
-    <div class="card"><h3>禪修室</h3><ul class="list">
-      <li><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a><span class="t">chanroom.pages.dev</span></li>
+  </div>
+  <h2>夜間紀錄</h2>
+  <div class="card"><pre class="log" id="lib-log">—</pre></div>
+</section>
+
+<!-- 禪修室 -->
+<section class="view" id="v-chan">
+  <div class="grid">
+    <div class="card"><h3><span class="dot" id="chan-dot"></span><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a></h3><p>Cloudflare Pages · chanroom</p><p id="chan-info">—</p></div>
+    <div class="card"><h3>發布</h3><p>禪修室的程式還沒放進 GitHub，所以目前要請 Claude 改好後發布。接上之後，這裡會顯示最新版本並能一鍵重新發布。</p></div>
+    <div class="card"><h3>入口</h3><ul class="list">
+      <li><a href="https://chanroom.pages.dev/" target="_blank" rel="noopener">禪修室</a></li>
       <li><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">Cloudflare</a><span class="t">chanroom</span></li>
-    </ul></div>
-    <div class="card"><h3>手冊與帳號</h3><ul class="list">
+      <li><a href="https://claude.ai/artifact/LUF5Sqqz4YE2Uwiet1zyKA" target="_blank" rel="noopener">Claude 工作版</a></li>
       <li><a href="https://claude.ai/artifact/1tnQJwFXbJwUoMtqQzjBq7" target="_blank" rel="noopener">三站總手冊</a></li>
-      <li><a href="https://claude.ai/artifact/793Srwq4VAGMvmCcsQaVqP" target="_blank" rel="noopener">學鳩齋網站管理手冊</a></li>
-      <li><a href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noopener">GitHub 金鑰</a></li>
-      <li><a href="https://dcc.godaddy.com/control/portfolio" target="_blank" rel="noopener">GoDaddy 網域</a><span class="t">hakkiuchay.space</span></li>
     </ul></div>
   </div>
 </section>
@@ -188,7 +188,7 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
     <label class="chk" style="margin-bottom:12px"><input type="checkbox" id="remember" checked>記在這台裝置（公用電腦請取消）</label>
     <p class="row"><button class="btn main" id="save-token">登入</button><button class="btn" id="logout">登出</button></p>
     <div class="note">
-      金鑰只存在你這台裝置的瀏覽器，不會上傳到網站。做金鑰：<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">New fine-grained token</a> → Repository access 只選 <code>hakkiuchay</code> → Permissions 設定：
+      金鑰只存在你這台裝置的瀏覽器，不會上傳到網站。做金鑰：<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">New fine-grained token</a> → Repository access 選 <code>hakkiuchay</code> 與 <code>hakkiuchay-ops</code>（書庫狀態） → Permissions 設定：
       <br><code>Contents</code> Read and write　<code>Actions</code> Read and write　<code>Pages</code> Read and write
       <br>Sveltia 後台用的那把若權限夠，也可以直接用。
     </div>
@@ -199,11 +199,11 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
 
 <script>
 "use strict";
-const OWNER="Guanlun-bot", REPO="hakkiuchay", BRANCH="main";
+const OWNER="Guanlun-bot", REPO="hakkiuchay", OPS="hakkiuchay-ops", BRANCH="main";
 const SITES=[
-  {name:"學鳩齋",url:location.origin+"/",same:true,host:"GitHub Pages"},
-  {name:"獺祭魚書庫",url:"https://otterslibrary.pages.dev/",host:"Cloudflare Pages"},
-  {name:"禪修室",url:"https://chanroom.pages.dev/",host:"Cloudflare Pages"}
+  {key:"hakki",name:"學鳩齋",url:location.origin+"/",same:true,host:"GitHub Pages"},
+  {key:"library",name:"獺祭魚書庫",url:"https://otterslibrary.pages.dev/",host:"Cloudflare Pages"},
+  {key:"chan",name:"禪修室",url:"https://chanroom.pages.dev/",host:"Cloudflare Pages"}
 ];
 const $=s=>document.querySelector(s);
 const h=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==="class")e.className=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?"":v)}for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(c))}return e};
@@ -225,19 +225,24 @@ async function gh(path,opt={}){
 }
 const enc=s=>{const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(x)};
 const dec=b64=>new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g,"")),c=>c.charCodeAt(0)));
-const cpath=p=>"/repos/"+OWNER+"/"+REPO+"/contents/"+p.split("/").map(encodeURIComponent).join("/");
-async function getFile(p){const j=await gh(cpath(p)+"?ref="+BRANCH);return{text:dec(j.content),sha:j.sha}}
-async function putFile(p,contentB64,sha,message){return gh(cpath(p),{method:"PUT",body:JSON.stringify({message,content:contentB64,branch:BRANCH,...(sha?{sha}:{})})})}
+const cpath=(p,repo=REPO)=>"/repos/"+OWNER+"/"+repo+"/contents/"+p.split("/").map(encodeURIComponent).join("/");
+async function getFile(p,repo=REPO){const j=await gh(cpath(p,repo)+(repo===REPO?"?ref="+BRANCH:""));return{text:dec(j.content),sha:j.sha}}
+async function putFile(p,contentB64,sha,message,repo=REPO){return gh(cpath(p,repo),{method:"PUT",body:JSON.stringify({message,content:contentB64,...(repo===REPO?{branch:BRANCH}:{}),...(sha?{sha}:{})})})}
 async function delFile(p,sha,message){return gh(cpath(p),{method:"DELETE",body:JSON.stringify({message,sha,branch:BRANCH})})}
 
 /* ---------- 分頁 ---------- */
-const views=["status","content","actions","links","settings"];
-function show(v){if(!views.includes(v))v=TOKEN?"status":"settings";
+const views=["overview","hakki","library","chan","settings"];
+const loaded={};
+function show(v){if(!views.includes(v))v=TOKEN?"overview":"settings";
   document.querySelectorAll(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   if(location.hash!=="#"+v)history.replaceState(null,"","#"+v);
-  if(v==="status"&&!show.statusDone){show.statusDone=1;loadStatus()}
-  if(v==="content"&&!show.contentDone&&TOKEN){show.contentDone=1;loadContent()}
+  if(!loaded[v]){loaded[v]=1;
+    if(v==="overview")loadOverview();
+    if(v==="hakki"){loadHakki();if(TOKEN)loadContent();else loaded[v]=0}
+    if(v==="library")loadLibrary();
+    if(v==="chan")loadChan();
+  }
 }
 $("#tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(b.dataset.v)});
 addEventListener("hashchange",()=>show(location.hash.slice(1)));
@@ -251,43 +256,95 @@ async function ping(s){
     return{ok:true,ms:Math.round(performance.now()-t0)}}
   catch(e){return{ok:false,msg:e.name==="AbortError"?"逾時":"連不上"}}
 }
-async function loadStatus(){
+const siteExtra={};
+async function loadOverview(){
   const box=$("#sites");box.innerHTML="";
   for(const s of SITES){
-    const dot=h("span",{class:"dot wait"}),p=h("p",{},"檢查中…");
-    box.append(h("div",{class:"card"},h("h3",{},dot,h("a",{href:s.url,target:"_blank",rel:"noopener"},s.name)),h("p",{},s.host),p));
+    const dot=h("span",{class:"dot wait"}),p=h("p",{},"檢查中…"),ex=h("p",{});siteExtra[s.key]=ex;
+    box.append(h("div",{class:"card"},h("h3",{},dot,h("a",{href:"#"+s.key},s.name)),h("p",{},s.host),p,ex,h("p",{class:"row",style:"margin-top:8px"},h("a",{class:"btn small",href:s.url,target:"_blank",rel:"noopener"},"打開"),h("a",{class:"btn small",href:"#"+s.key},"管理"))));
     ping(s).then(r=>{dot.className="dot "+(r.ok?"ok":"bad");p.textContent=r.ok?"正常開啟 · "+r.ms+" ms":r.msg});
   }
   $("#checked").textContent="檢查時間 "+new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
-  if(!TOKEN){$("#build-info").textContent="登入後才看得到";$("#runs").innerHTML='<li class="muted">登入後才看得到</li>';$("#commits").innerHTML='<li class="muted">登入後才看得到</li>';return}
-  gh("/repos/"+OWNER+"/"+REPO+"/pages/builds/latest").then(b=>{
-    const map={built:["ok","已上線"],building:["wait","建置中"],queued:["wait","排隊中"],errored:["bad","失敗"]};const m=map[b.status]||["wait",b.status];
-    $("#build-dot").className="dot "+m[0];
-    $("#build-info").textContent=m[1]+" · "+ago(b.updated_at||b.created_at)+(b.error&&b.error.message?" · "+b.error.message:"");
-    if(b.commit)$("#stuck-sha").placeholder="例如 "+b.commit;
-  }).catch(e=>{$("#build-info").textContent=e.message});
+  if(!TOKEN){$("#commits").innerHTML='<li class="muted">登入後才看得到</li>';return}
+  getBuild().then(m=>{siteExtra.hakki.textContent="建置："+m}).catch(e=>{siteExtra.hakki.textContent=e.message});
+  getLibStatus().then(list=>{siteExtra.library.textContent=list.length?libLine(list):"電腦還沒連上總控台"}).catch(e=>{siteExtra.library.textContent=e.status===404?"金鑰還沒加 hakkiuchay-ops":e.message});
+  gh("/repos/"+OWNER+"/"+REPO+"/commits?per_page=8&sha="+BRANCH).then(j=>{
+    const ul=$("#commits");ul.innerHTML="";
+    for(const c of j)ul.append(h("li",{},h("a",{href:c.html_url,target:"_blank",rel:"noopener"},c.commit.message.split("\n")[0]),h("span",{class:"t"},(c.commit.author.name||"")+" · "+ago(c.commit.author.date))))
+  }).catch(e=>{$("#commits").innerHTML="";$("#commits").append(h("li",{class:"muted"},e.message))});
+}
+async function getBuild(){
+  const b=await gh("/repos/"+OWNER+"/"+REPO+"/pages/builds/latest");
+  const map={built:["ok","已上線"],building:["wait","建置中"],queued:["wait","排隊中"],errored:["bad","失敗"]};const m=map[b.status]||["wait",b.status];
+  $("#build-dot").className="dot "+m[0];
+  const txt=m[1]+" · "+ago(b.updated_at||b.created_at)+(b.error&&b.error.message?" · "+b.error.message:"");
+  $("#build-info").textContent=txt;if(b.commit)$("#stuck-sha").placeholder="例如 "+b.commit;
+  return txt;
+}
+function loadHakki(){
+  if(!TOKEN){$("#build-info").textContent="登入後才看得到";$("#runs").innerHTML='<li class="muted">登入後才看得到</li>';return}
+  getBuild().catch(e=>{$("#build-info").textContent=e.message});
   gh("/repos/"+OWNER+"/"+REPO+"/actions/runs?per_page=6").then(j=>{
     const ul=$("#runs");ul.innerHTML="";
     if(!j.workflow_runs.length)ul.append(h("li",{class:"muted"},"沒有紀錄"));
     for(const r of j.workflow_runs){const st=r.status!=="completed"?["wait","進行中"]:r.conclusion==="success"?["ok","成功"]:r.conclusion==="cancelled"?["","取消"]:r.conclusion==="skipped"?["","略過"]:["bad","失敗"];
       ul.append(h("li",{},h("span",{class:"dot "+st[0]}),h("a",{href:r.html_url,target:"_blank",rel:"noopener"},r.name),h("span",{class:"tag"},st[1]),h("span",{class:"t"},ago(r.created_at))))}
   }).catch(e=>{$("#runs").innerHTML="";$("#runs").append(h("li",{class:"muted"},e.message))});
-  gh("/repos/"+OWNER+"/"+REPO+"/commits?per_page=8&sha="+BRANCH).then(j=>{
-    const ul=$("#commits");ul.innerHTML="";
-    for(const c of j)ul.append(h("li",{},h("a",{href:c.html_url,target:"_blank",rel:"noopener"},c.commit.message.split("\n")[0]),h("span",{class:"t"},(c.commit.author.name||"")+" · "+ago(c.commit.author.date))))
-  }).catch(e=>{$("#commits").innerHTML="";$("#commits").append(h("li",{class:"muted"},e.message))});
 }
-$("#refresh").onclick=loadStatus;
+
+/* ---------- 書庫 ---------- */
+const RES={published:["ok","已更新網站"],nochange:["ok","書目沒有變動"],done:["ok","完成"],skipped:["wait","略過發布"],running:["wait","執行中"],fail:["bad","有失敗"],none:["","還沒有紀錄"]};
+async function getLibStatus(){
+  const list=await gh(cpath("status",OPS)).catch(e=>{if(e.status===404&&/找不到/.test(e.message))return gh("/repos/"+OWNER+"/"+OPS).then(()=>[]);throw e});
+  const files=(list||[]).filter(f=>f.name.endsWith(".json"));
+  const out=await Promise.all(files.map(f=>getFile(f.path,OPS).then(r=>JSON.parse(r.text)).catch(()=>null)));
+  return out.filter(Boolean).sort((a,b)=>(b.is_main?1:0)-(a.is_main?1:0));
+}
+function libLine(list){const m=list.find(x=>x.is_main)||list[0];const ln=m.last_night||{};const r=RES[ln.result]||RES.none;
+  return "主電腦 "+(ln.started?ln.started.slice(5,16)+" ":"")+r[1]+(m.inbox_waiting?" · 新書入庫有 "+m.inbox_waiting+" 本待處理":"")}
+async function loadLibrary(){
+  const box=$("#lib-pcs"),note=$("#lib-note");box.innerHTML="";note.hidden=true;
+  if(!TOKEN){note.hidden=false;note.textContent="登入後才看得到書庫狀態。";return}
+  let list;
+  try{list=await getLibStatus()}catch(e){note.hidden=false;note.textContent=e.status===404?"金鑰還沒加私人儲存庫 hakkiuchay-ops：到 GitHub 金鑰設定的 Repository access 把它加進去。":e.message;return}
+  if(!list.length){note.hidden=false;note.textContent="電腦還沒連上總控台：在主電腦與副電腦各點一次「書庫櫃檯\\工具\\設定總控台連線.bat」。"}
+  for(const st of list){
+    const ln=st.last_night||{};const r=RES[ln.result]||RES.none;
+    const stale=(Date.now()-new Date(st.reported_at))>4*3600e3;
+    box.append(h("div",{class:"card"},
+      h("h3",{},h("span",{class:"dot "+r[0]}),(st.is_main?"主電腦 ":"副電腦 ")+st.pc),
+      h("p",{},"最近一次夜間作業："+(ln.started?ln.started.slice(5,16)+" · ":"")+r[1]),
+      h("p",{},"新書入庫待處理："+(st.inbox_waiting||0)+" 本"+(st.pending_move?" · 待上架 "+st.pending_move+" 本":"")),
+      st.catalog_built_at?h("p",{},"書目網頁產生於 "+st.catalog_built_at):null,
+      st.schedule&&st.schedule.next_run?h("p",{},"下次排程 "+st.schedule.next_run.slice(5)):h("p",{},"找不到夜間排程"),
+      h("p",{style:stale?"color:var(--seal)":""},(stale?"電腦可能沒開 · ":"")+"最後回報 "+ago(st.reported_at)),
+      (ln.summary&&ln.summary.length)?h("ul",{class:"pc-sum"},ln.summary.slice(-6).map(t=>h("li",{},t))):null));
+  }
+  const m=list.find(x=>x.is_main)||list[0];$("#lib-log").textContent=m&&m.log_tail?m.log_tail.join("\n"):"—";
+  gh(cpath("requests/library.json",OPS)).then(j=>{const q=JSON.parse(dec(j.content));$("#lib-req").textContent="已送出「"+(q.action==="force"?"強制重新發布":"立即更新")+"」（"+ago(q.requested_at)+"），等電腦接手中…"}).catch(()=>{$("#lib-req").textContent=""});
+}
+document.querySelectorAll("[data-lib]").forEach(b=>b.addEventListener("click",async()=>{
+  b.disabled=true;
+  try{let sha=null;try{sha=(await gh(cpath("requests/library.json",OPS))).sha}catch(e){}
+    const body={action:b.dataset.lib,requested_at:new Date().toISOString(),by:"console"};
+    await putFile("requests/library.json",enc(JSON.stringify(body,null,2)),sha,"總控台："+(body.action==="force"?"強制重新發布":"立即更新"),OPS);
+    toast("已送出，主電腦 10 分鐘內接手");$("#lib-req").textContent="已送出，等電腦接手中…";
+  }catch(e){toast(e.status===404?"金鑰還沒加 hakkiuchay-ops":e.message,4500)}finally{b.disabled=false}
+}));
+
+/* ---------- 禪修室 ---------- */
+function loadChan(){const s=SITES.find(x=>x.key==="chan");ping(s).then(r=>{$("#chan-dot").className="dot "+(r.ok?"ok":"bad");$("#chan-info").textContent=r.ok?"正常開啟 · "+r.ms+" ms":r.msg})}
+$("#refresh").onclick=()=>{loaded.overview=0;show("overview")};
 
 /* ---------- 動作 ---------- */
 document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",async()=>{
   const act=b.dataset.act;b.disabled=true;
   try{
     if(act==="build"){await gh("/repos/"+OWNER+"/"+REPO+"/pages/builds",{method:"POST"});toast("已要求重新建置，約一分鐘後上線")}
-    if(act==="compress"){await gh("/repos/"+OWNER+"/"+REPO+"/actions/workflows/compress-images.yml/dispatches",{method:"POST",body:JSON.stringify({ref:BRANCH})});toast("照片處理已開始，可到「狀態」看進度")}
+    if(act==="compress"){await gh("/repos/"+OWNER+"/"+REPO+"/actions/workflows/compress-images.yml/dispatches",{method:"POST",body:JSON.stringify({ref:BRANCH})});toast("照片處理已開始，可在「自動流程」看進度");loadHakki()}
     if(act==="cancel"){const sha=$("#stuck-sha").value.trim();if(!/^[0-9a-f]{7,40}$/i.test(sha)){toast("請填卡住那次的 commit 編號");return}
       await gh("/repos/"+OWNER+"/"+REPO+"/actions/workflows/cancel-stuck-pages.yml/dispatches",{method:"POST",body:JSON.stringify({ref:BRANCH,inputs:{sha}})});toast("已送出取消，稍後再重新建置")}
-    show.statusDone=0;
+    loaded.overview=0;loaded.hakki=0;
   }catch(e){toast(e.message,4000)}finally{b.disabled=false}
 }));
 
@@ -300,7 +357,7 @@ async function loadContent(){
     const files=$("#files");files.innerHTML="";
     for(const c of CMS.content.filter(c=>c.type==="file"))files.append(h("li",{onclick:()=>openFile(c)},c.label||c.name,h("span",{class:"t"},c.path)));
     await loadPosts();
-  }catch(e){$("#posts").innerHTML="";$("#posts").append(h("li",{class:"muted"},e.message));show.contentDone=0}
+  }catch(e){$("#posts").innerHTML="";$("#posts").append(h("li",{class:"muted"},e.message))}
 }
 const coll=()=>CMS.content.find(c=>c.type==="collection");
 const CATS=()=>{const f=coll().fields.find(f=>f.name==="cat");const o={};((f&&f.options&&f.options.values)||[]).forEach(v=>o[v.name]=v.label);return o};
@@ -436,9 +493,9 @@ async function whoami(){
   catch(e){ts.textContent="已存的金鑰不能用："+e.message;who.textContent=""}
 }
 $("#save-token").onclick=async()=>{const v=$("#token").value.trim();if(!v){toast("請貼上金鑰");return}
-  TOKEN=v;try{await gh("/repos/"+OWNER+"/"+REPO);store.set("hkc_token",v,$("#remember").checked);$("#token").value="";toast("登入成功");show.statusDone=0;show.contentDone=0;whoami();show("status")}
+  TOKEN=v;try{await gh("/repos/"+OWNER+"/"+REPO);store.set("hkc_token",v,$("#remember").checked);$("#token").value="";toast("登入成功");for(const k in loaded)delete loaded[k];whoami();show("overview")}
   catch(e){TOKEN=store.get("hkc_token");toast(e.message,4000)}};
-$("#logout").onclick=()=>{store.del("hkc_token");TOKEN=null;show.contentDone=0;show.statusDone=0;whoami();toast("已登出")};
+$("#logout").onclick=()=>{store.del("hkc_token");TOKEN=null;for(const k in loaded)delete loaded[k];whoami();toast("已登出")};
 
 whoami();show(location.hash.slice(1));
 </script>

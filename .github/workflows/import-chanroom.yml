@@ -1,0 +1,25 @@
+# 一次性：把線上的禪修室收進 _chanroom/（推送這個檔案就會執行；完成後可刪除）
+name: 收入禪修室
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/import-chanroom.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 下載
+        run: python3 .github/scripts/import_chanroom.py
+      - name: 存回儲存庫
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _chanroom
+          git diff --cached --quiet && { echo "沒有變動"; exit 0; }
+          git commit -m "收入禪修室線上版（chanroom.pages.dev）"
+          git pull --rebase origin main
+          git push origin HEAD:main

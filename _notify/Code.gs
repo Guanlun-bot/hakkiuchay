@@ -4,7 +4,7 @@
  * 這份程式是獨立的 Apps Script 專案「學鳩齋訂閱通知」，讀寫試算表「學鳩齋訂閱名單」（SHEET_ID），部署成「網頁應用程式」。
  *   - 網站的訂閱欄、/subscribe/ 頁用 POST 呼叫它：subscribe / confirm / unsubscribe
  *   - 總控台用 GET ?action=stats 看人數（不含任何信箱）
- *   - 每 10 分鐘的觸發器跑 checkNewPosts()：讀 https://hakkiuchay.space/notify.json，
+ *   - 每天晚上 8～9 點（台北時間）的觸發器跑 checkNewPosts()：讀 https://hakkiuchay.space/notify.json，
  *     有新文章就寄給所有「已確認」的訂閱者。第一次只記下現有文章，不寄信。
  *   - 一般 Gmail 帳號用 Apps Script 每天最多寄給 100 位收件人：寄不完的會在額度恢復後自動續寄。
  * 信件文字都來自 notify.json（也就是網站後台「網站文字」裡的 mail_* 欄位）。
@@ -26,9 +26,9 @@ function setup() {
   sheet_(SUBS, ['信箱', '狀態', '代碼', '訂閱時間', '確認時間', '退訂時間']);
   sheet_(SENT, ['文章 id', '標題', '開始寄送', '完成', '封數']);
   ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'checkNewPosts') ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('checkNewPosts').timeBased().everyMinutes(10).create();
+  ScriptApp.newTrigger('checkNewPosts').timeBased().everyDays(1).atHour(20).inTimezone('Asia/Taipei').create();
   checkNewPosts(); // 第一次：記下現有文章
-  Logger.log('完成：已建立每 10 分鐘的檢查，今天還能寄 ' + MailApp.getRemainingDailyQuota() + ' 封。');
+  Logger.log('完成：已建立每天晚上 8～9 點的檢查，今天還能寄 ' + MailApp.getRemainingDailyQuota() + ' 封。');
 }
 
 function sheet_(name, header) {

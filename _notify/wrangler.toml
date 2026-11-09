@@ -1,0 +1,17 @@
+# 學鳩齋 新文章通知（Cloudflare Worker）。由 .github/workflows/deploy-notify.yml 自動部署。
+name = "hakkiuchay-notify"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+account_id = "616474c47dff119e3af7dd467796b2dc"
+workers_dev = true
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+[vars]
+SITE = "https://hakkiuchay.space"
+FROM = "學鳩齋 <notice@hakkiuchay.space>"
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "__KV_ID__"   # 部署時自動換成 KV「hakkiuchay-subscribers」的 id

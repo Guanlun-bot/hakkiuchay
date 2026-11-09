@@ -1,0 +1,49 @@
+# 部署「新文章電子郵件通知」小程式（_notify/）到 Cloudflare Workers。
+# 需要 GitHub secret：CLOUDFLARE_API_TOKEN（Cloudflare「Edit Cloudflare Workers」範本建立）、RESEND_API_KEY。
+name: 部署文章通知
+on:
+  push:
+    branches: [main]
+    paths: ["_notify/**", ".github/workflows/deploy-notify.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+    defaults:
+      run:
+        working-directory: _notify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 檢查設定
+        id: chk
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "還沒設定 CLOUDFLARE_API_TOKEN，略過部署"; echo "skip=1" >> $GITHUB_OUTPUT; fi
+      - name: 安裝 wrangler
+        if: steps.chk.outputs.skip != '1'
+        run: npm install --no-save --no-fund --no-audit wrangler@4
+      - name: 準備名單資料庫（KV）
+        if: steps.chk.outputs.skip != '1'
+        run: |
+          list() { npx wrangler kv namespace list 2>/dev/null; }
+          id=$(list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>x.title==="hakkiuchay-subscribers");process.stdout.write(n?n.id:"")}catch(e){}})')
+          if [ -z "$id" ]; then
+            npx wrangler kv namespace create hakkiuchay-subscribers || true
+            id=$(list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>x.title==="hakkiuchay-subscribers");process.stdout.write(n?n.id:"")}catch(e){}})')
+          fi
+          if [ -z "$id" ]; then echo "建立 KV 失敗：Cloudflare 金鑰需要 Workers KV Storage 的 Edit 權限"; exit 1; fi
+          sed -i "s/__KV_ID__/$id/" wrangler.toml
+          echo "KV：$id"
+      - name: 部署
+        if: steps.chk.outputs.skip != '1'
+        run: npx wrangler deploy
+      - name: 設定 Resend 金鑰
+        if: steps.chk.outputs.skip != '1' && env.RESEND_API_KEY != ''
+        run: printf '%s' "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY

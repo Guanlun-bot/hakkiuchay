@@ -125,6 +125,7 @@ code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1p
       <div class="card"><h3><span class="dot" id="build-dot"></span>網站建置</h3><p id="build-info">—</p>
         <p class="row" style="margin-top:8px"><a class="btn small" href="/" target="_blank">打開網站</a><button class="btn small" data-act="build">重新建置</button></p></div>
       <div class="card"><h3>自動流程</h3><ul class="list" id="runs"><li class="muted">—</li></ul></div>
+      <div class="card"><h3><span class="dot" id="notify-dot"></span>電子郵件通知</h3><p id="notify-info">—</p><p class="muted" id="notify-last"></p></div>
     </div>
     <h2>文章</h2>
     <p class="row"><button class="btn main" id="new-post">寫新文章</button><span class="muted" id="posts-note"></span></p>
@@ -311,8 +312,19 @@ async function getBuild(){
   $("#build-info").textContent=txt;if(b.commit)$("#stuck-sha").placeholder="例如 "+b.commit;
   return txt;
 }
+async function loadNotify(){
+  const info=$("#notify-info"),last=$("#notify-last"),dot=$("#notify-dot");
+  let url="";try{url=(yload((await getFile("_config.yml")).text).notify_url||"").replace(/\/$/,"")}catch(e){}
+  if(!url){info.textContent="尚未啟用（文章下方不顯示訂閱欄）";return}
+  try{const st=await (await fetch(url+"/stats",{cache:"no-store"})).json();
+    dot.className="dot "+(st.ready?"ok":"wait");
+    info.textContent="訂閱 "+st.active+" 人"+(st.pending?"，等確認 "+st.pending+" 人":"")+(st.ready?"":"；還沒設定 Resend 金鑰，不會寄信");
+    last.textContent=st.last?"上次寄出："+st.last.title+"（"+st.last.count+" 封，"+ago(st.last.at)+"）":(st.initialized?"還沒寄過新文章":"");
+  }catch(e){dot.className="dot bad";info.textContent="連不到通知小程式"}
+}
 function loadHakki(){
   if(!TOKEN){$("#build-info").textContent="登入後才看得到";$("#runs").innerHTML='<li class="muted">登入後才看得到</li>';return}
+  loadNotify();
   getBuild().catch(e=>{$("#build-info").textContent=e.message});
   gh("/repos/"+OWNER+"/"+REPO+"/actions/runs?per_page=6").then(j=>{
     const ul=$("#runs");ul.innerHTML="";

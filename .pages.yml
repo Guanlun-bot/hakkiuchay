@@ -202,6 +202,24 @@ content:
       - { name: email_label, label: 齋主／聯絡：電子郵件標籤, type: string }
       - { name: place_label, label: 齋主／聯絡：所在標籤, type: string }
       - { name: discord_label, label: Discord 標籤, type: string }
+      - { name: subscribe_label, label: "訂閱：文章下方的說明", type: string }
+      - { name: subscribe_placeholder, label: "訂閱：信箱欄提示", type: string }
+      - { name: subscribe_button, label: "訂閱：按鈕", type: string }
+      - { name: subscribe_sent, label: "訂閱：送出後", type: string }
+      - { name: subscribe_error, label: "訂閱：失敗時", type: string }
+      - { name: subscribe_page_title, label: "訂閱頁：標題", type: string }
+      - { name: subscribe_working, label: "訂閱頁：處理中", type: string }
+      - { name: subscribe_confirmed, label: "訂閱頁：確認完成", type: string }
+      - { name: subscribe_unsubscribed, label: "訂閱頁：退訂完成", type: string }
+      - { name: subscribe_invalid, label: "訂閱頁：連結失效", type: string }
+      - { name: mail_confirm_subject, label: "通知信：確認信主旨", type: string }
+      - { name: mail_confirm_body, label: "通知信：確認信內文", type: text }
+      - { name: mail_confirm_button, label: "通知信：確認按鈕", type: string }
+      - { name: mail_confirm_ignore, label: "通知信：確認信附註", type: string }
+      - { name: mail_post_subject, label: "通知信：新文章主旨（{title} 會換成文章標題）", type: string }
+      - { name: mail_post_read, label: "通知信：閱讀全文連結", type: string }
+      - { name: mail_footer, label: "通知信：頁尾說明", type: string }
+      - { name: mail_unsubscribe, label: "通知信：退訂連結", type: string }
       - { name: signal_label, label: Signal 標籤, type: string }
       - { name: empty_category, label: 分類沒有文章時顯示, type: string }
       - { name: stats_uv, label: 頁尾：造訪人數標籤, type: string }

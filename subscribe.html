@@ -1,0 +1,26 @@
+---
+layout: default
+title: 電子郵件通知
+permalink: /subscribe/
+sitemap: false
+---
+{%- assign T = site.data.text -%}
+<div class="wrap">
+  <header class="page-head">
+    <h1>{{ T.subscribe_page_title }}</h1>
+    <p id="sub-result">{{ T.subscribe_working }}</p>
+  </header>
+</div>
+<script>
+(function () {
+  const out = document.getElementById("sub-result"), q = new URLSearchParams(location.search);
+  const base = {{ site.notify_url | jsonify }}.replace(/\/$/, "");
+  const t = q.get("c") || q.get("u"), action = q.get("c") ? "confirm" : "unsubscribe";
+  const done = {{ T.subscribe_confirmed | jsonify }}, gone = {{ T.subscribe_unsubscribed | jsonify }}, bad = {{ T.subscribe_invalid | jsonify }};
+  if (!t || !base) { out.textContent = bad; return; }
+  history.replaceState(null, "", location.pathname);   // 網址列不留下連結裡的代碼
+  fetch(base + "/" + action, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t }) })
+    .then(r => { out.textContent = r.ok ? (action === "confirm" ? done : gone) : bad; })
+    .catch(() => { out.textContent = bad; });
+})();
+</script>

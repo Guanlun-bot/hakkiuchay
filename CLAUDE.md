@@ -24,6 +24,8 @@
 - 獺祭魚、禪修室是外部連結（`site.yml` 的 tajiyu_url、chanroom_url）：https://otterslibrary.pages.dev/、https://chanroom.pages.dev/
 - `_chanroom/`：禪修室的完整程式（底線開頭，Jekyll 不會把它放上學鳩齋）。正式網址仍是 https://chanroom.pages.dev/ （Cloudflare Pages 專案 chanroom）。改禪修室就改這裡，並把 `_chanroom/sw.js` 的 VERSION 數字加一，否則已安裝的使用者會一直看到舊版快取。改完由齋主在總控台「禪修室」按「發布最新版」，書庫電腦的 bridge.ps1 會下載 `_chanroom/` 用 wrangler 上傳。`config.js` 內是 Supabase 公開金鑰（anon key，本來就會出現在網頁上），可以留在儲存庫。
 
+- `_notify/`：新文章電子郵件通知（Cloudflare Worker `hakkiuchay-notify`，名單存在 Cloudflare KV `hakkiuchay-subscribers`）。每 10 分鐘讀 `/notify.json`（`notify.json` 由 Jekyll 產生，含最新 20 篇與 `_data/text.yml` 裡 `mail_*` 信件文字），有新文章就用 Resend 寄給已確認的訂閱者；第一次執行只記下現有文章。改 `_notify/` 推上 main 會由 `.github/workflows/deploy-notify.yml` 自動部署（需 GitHub secret `CLOUDFLARE_API_TOKEN`、`RESEND_API_KEY`）。`_config.yml` 的 `notify_url` 填 Worker 網址後，文章下方才會出現訂閱欄（`_includes/subscribe.html`）；確認與退訂連結都導到 `/subscribe/`。
+
 ## 自動流程
 - `.github/workflows/compress-images.yml`：只處理每次新上傳或更動的照片（舊照片不重壓）：HEIC→JPG、副檔名改小寫、不透明的 PNG 照片轉 JPG 並同步改文章／資料裡的連結、大於 500KB 或過大的縮小（`home/`、`covers/` 長邊 2000，其餘文章用 1600，品質 82）；`assets/uploads/home/` 的新照片自動加進首頁輪播。它可能自己多推一個 commit，記得再 pull。
 - `.github/workflows/cancel-stuck-pages.yml`：Pages 發布卡住時手動執行。

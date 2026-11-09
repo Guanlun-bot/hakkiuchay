@@ -400,6 +400,15 @@ html.lb-open { overflow: hidden; }
 .pager small { display: block; color: var(--dove); font-size: 12px; }
 .pager .next { text-align: right; }
 
+/* 新文章電子郵件通知（文章最下方） */
+.subscribe { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-soft); }
+.subscribe label { display: block; margin-bottom: 8px; }
+.subscribe-row { display: flex; gap: 8px; max-width: 420px; }
+.subscribe input[type=email] { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 2px; padding: 5px 10px; }
+.subscribe input[type=email]:focus { outline: none; border-color: var(--seal); }
+.subscribe-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.subscribe-msg { margin: 8px 0 0; }
+
 /* 目錄：寬螢幕在右側，窄螢幕在文前可收合 */
 .toc-side { display: none; }
 .toc-side b { display: block; margin-bottom: 10px; }

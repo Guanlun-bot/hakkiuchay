@@ -212,6 +212,7 @@ content:
       - { name: subscribe_confirmed, label: "訂閱頁：確認完成", type: string }
       - { name: subscribe_unsubscribed, label: "訂閱頁：退訂完成", type: string }
       - { name: subscribe_invalid, label: "訂閱頁：連結失效", type: string }
+      - { name: mail_sender_name, label: "通知信：寄件人名稱", type: string }
       - { name: mail_confirm_subject, label: "通知信：確認信主旨", type: string }
       - { name: mail_confirm_body, label: "通知信：確認信內文", type: text }
       - { name: mail_confirm_button, label: "通知信：確認按鈕", type: string }

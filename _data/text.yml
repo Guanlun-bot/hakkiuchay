@@ -22,16 +22,20 @@ stats_pv: 瀏覽次數
 subscribe_label: "新文章以電子郵件通知"
 subscribe_placeholder: "電子郵件"
 subscribe_button: "訂閱"
-subscribe_sent: "確認信已寄出，請到信箱點連結完成訂閱。"
+subscribe_sent: "確認信已寄出。幾分鐘內沒收到的話，請看看垃圾郵件，並把 khoguanlun@gmail.com 加入聯絡人。"
 subscribe_error: "沒有成功，請確認信箱，或稍後再試。"
 subscribe_page_title: "電子郵件通知"
 subscribe_working: "處理中……"
 subscribe_confirmed: "訂閱完成。之後有新文章，會寄到你的信箱。"
 subscribe_unsubscribed: "已退訂，不會再收到通知。"
 subscribe_invalid: "這個連結已失效或已使用過。"
-mail_confirm_subject: "請確認訂閱學鳩齋"
-mail_confirm_body: "你（或有人用你的信箱）在學鳩齋訂閱了新文章通知。請按下方按鈕確認。"
-mail_confirm_button: "確認訂閱"
+mail_sender_name: "許原綸（學鳩齋）"
+mail_confirm_subject: "學鳩齋新文章通知：請確認"
+mail_confirm_body: |-
+  你好，我是許原綸。
+
+  有人（希望是你）在學鳩齋留下了這個信箱，想在書齋有新文章時收到通知。如果是你，請點下面的連結確認：
+mail_confirm_button: "確認，我要收到新文章通知"
 mail_confirm_ignore: "如果不是你本人訂閱，忽略這封信即可，不會收到任何通知。"
 mail_post_subject: "學鳩齋新文章：{title}"
 mail_post_read: "閱讀全文"

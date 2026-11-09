@@ -157,6 +157,7 @@ collections:
           - { name: subscribe_confirmed, label: "訂閱頁：確認完成", widget: string, required: false }
           - { name: subscribe_unsubscribed, label: "訂閱頁：退訂完成", widget: string, required: false }
           - { name: subscribe_invalid, label: "訂閱頁：連結失效", widget: string, required: false }
+          - { name: mail_sender_name, label: "通知信：寄件人名稱", widget: string, required: false }
           - { name: mail_confirm_subject, label: "通知信：確認信主旨", widget: string, required: false }
           - { name: mail_confirm_body, label: "通知信：確認信內文", widget: text, required: false }
           - { name: mail_confirm_button, label: "通知信：確認按鈕", widget: string, required: false }

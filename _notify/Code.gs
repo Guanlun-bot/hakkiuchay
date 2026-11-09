@@ -16,7 +16,7 @@
 const SITE = 'https://hakkiuchay.space';
 const SHEET_ID = '';            // 名單試算表的 ID（網址 /d/ 與 /edit 之間那段）；程式綁在試算表裡時可以留空
 const ss_ = () => (SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActive());
-const SENDER_NAME = '學鳩齋';
+const SENDER_NAME = '許原綸（學鳩齋）';   // 預設；以網站文字 mail_sender_name 為準
 const SUBS = '訂閱者';        // 欄：信箱｜狀態｜代碼｜訂閱時間｜確認時間｜退訂時間
 const SENT = '已寄文章';      // 欄：文章 id｜標題｜開始寄送｜完成｜封數
 const EMAIL = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/;
@@ -89,9 +89,10 @@ function subscribe_(b) {
   if (MailApp.getRemainingDailyQuota() < 1) return out_({ ok: false, error: 'quota' });
   const T = feed_().texts;
   const link = SITE + '/subscribe/?c=' + t;
-  GmailApp.sendEmail(email, T.mail_confirm_subject || '請確認訂閱', T.mail_confirm_body + '\n\n' + link, {
-    name: SENDER_NAME,
-    htmlBody: page_(T, '<p>' + esc_(T.mail_confirm_body) + '</p><p><a href="' + esc_(link) + '" style="display:inline-block;background:#3f3a39;color:#f1efe8;text-decoration:none;padding:8px 18px;border-radius:2px">' + esc_(T.mail_confirm_button || '確認訂閱') + '</a></p><p style="font-size:13px;color:#6e6866">' + esc_(T.mail_confirm_ignore) + '</p>', ''),
+  // 信件寫得像私人來信：幾段文字、一條普通連結，不用按鈕與色塊，比較不會被當成垃圾郵件
+  GmailApp.sendEmail(email, T.mail_confirm_subject || '請確認訂閱', T.mail_confirm_body + '\n\n' + link + '\n\n' + (T.mail_confirm_ignore || ''), {
+    name: T.mail_sender_name || SENDER_NAME,
+    htmlBody: page_(T, paras_(T.mail_confirm_body) + '<p><a href="' + esc_(link) + '">' + esc_(T.mail_confirm_button || '確認訂閱') + '</a></p><p style="color:#6e6866">' + esc_(T.mail_confirm_ignore) + '</p>', ''),
   });
   cache.put('c:' + email, '1', 600);
   return out_({ ok: true });
@@ -151,13 +152,11 @@ function checkNewPosts() {
       const unsub = SITE + '/subscribe/?u=' + token;
       try {
         GmailApp.sendEmail(email, subject, p.title + '\n\n' + (p.summary || '') + '\n\n' + p.url + '\n\n' + (T.mail_unsubscribe || '退訂') + '：' + unsub, {
-          name: SENDER_NAME,
+          name: T.mail_sender_name || SENDER_NAME,
           htmlBody: page_(T,
-            '<p style="font-size:13px;color:#6e6866;margin:0">' + esc_(p.cat) + '</p>' +
-            '<h1 style="font-size:22px;font-weight:600;letter-spacing:.06em;margin:4px 0 2px">' + esc_(p.title) + '</h1>' +
-            (p.subtitle ? '<p style="color:#6e6866;margin:0 0 8px">' + esc_(p.subtitle) + '</p>' : '') +
+            '<p><b>' + esc_(p.title) + '</b>' + (p.subtitle ? '<br><span style="color:#6e6866">' + esc_(p.subtitle) + '</span>' : '') + '<br><span style="color:#6e6866">' + esc_(p.cat) + '</span></p>' +
             (p.summary ? '<p>' + esc_(p.summary) + '</p>' : '') +
-            '<p><a href="' + esc_(p.url) + '" style="color:#a8343a">' + esc_(T.mail_post_read || '閱讀全文') + '</a></p>', unsub),
+            '<p><a href="' + esc_(p.url) + '">' + esc_(T.mail_post_read || '閱讀全文') + '</a></p>', unsub),
         });
       } catch (err) { console.warn('寄給 ' + email + ' 失敗：' + err); }
       q.todo.shift(); q.done++;
@@ -178,10 +177,12 @@ function checkNewPosts() {
 /* ---------- 信件外觀 ---------- */
 function esc_(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 
+function paras_(text) { return String(text || '').split(/\n\s*\n/).map(t => '<p>' + esc_(t).replace(/\n/g, '<br>') + '</p>').join(''); }
+
 function page_(T, body, unsub) {
-  return '<div style="background:#f1efe8;padding:0;margin:0"><div style="max-width:560px;margin:0 auto;padding:28px 22px;font-family:\'Noto Serif TC\',\'Songti TC\',\'PMingLiU\',serif;color:#3f3a39;line-height:1.8;font-size:16px">' +
-    '<div style="letter-spacing:.3em;font-size:18px;border-bottom:1px solid #d3cec3;padding-bottom:10px;margin-bottom:18px">' + esc_(T.site_name || '學鳩齋') + '</div>' +
+  // 樸素的信：只有文字與細線，像一般人寫的信
+  return '<div style="font-family:\'Noto Serif TC\',\'Songti TC\',\'PMingLiU\',serif;color:#3f3a39;line-height:1.8;font-size:15px;max-width:560px">' +
     body +
-    '<div style="border-top:1px solid #d3cec3;margin-top:28px;padding-top:10px;font-size:12px;color:#6e6866">' + esc_(T.mail_footer || '') +
-    (unsub ? '　<a href="' + esc_(unsub) + '" style="color:#6e6866">' + esc_(T.mail_unsubscribe || '退訂') + '</a>' : '') + '</div></div></div>';
+    '<p style="border-top:1px solid #d3cec3;margin-top:24px;padding-top:8px;font-size:12px;color:#6e6866">' + esc_(T.mail_footer || '') +
+    (unsub ? '　<a href="' + esc_(unsub) + '" style="color:#6e6866">' + esc_(T.mail_unsubscribe || '退訂') + '</a>' : '') + '</p></div>';
 }

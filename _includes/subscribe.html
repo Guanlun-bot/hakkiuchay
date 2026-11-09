@@ -19,8 +19,9 @@
     if (!f.email.checkValidity() || !email) { say({{ T.subscribe_error | jsonify }}); return; }
     btn.disabled = true;
     try {
-      const r = await fetch(f.dataset.url.replace(/\/$/, "") + "/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, hp: f.hp.value }) });
-      if (!r.ok) throw 0;
+      // 純文字送出（不設 content-type），Google Apps Script 才收得到
+      const r = await fetch(f.dataset.url, { method: "POST", body: JSON.stringify({ action: "subscribe", email, hp: f.hp.value }) });
+      if (!r.ok || !(await r.json()).ok) throw 0;
       say({{ T.subscribe_sent | jsonify }}); f.email.value = "";
     } catch (_) { say({{ T.subscribe_error | jsonify }}); }
     btn.disabled = false;

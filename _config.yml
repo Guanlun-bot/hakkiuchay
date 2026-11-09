@@ -4,7 +4,7 @@ title: 學鳩齋
 baseurl: ""
 url: "https://hakkiuchay.space"
 lang: zh-Hant
-# 新文章電子郵件通知的小程式網址（Cloudflare Worker，見 _notify/）。留空時文章下方不顯示訂閱欄。
+# 新文章電子郵件通知：Google Apps Script 網頁應用程式網址（程式在 _notify/Code.gs）。留空時文章下方不顯示訂閱欄。
 notify_url: ""
 timezone: Asia/Taipei
 markdown: kramdown

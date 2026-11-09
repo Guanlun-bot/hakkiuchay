@@ -314,12 +314,12 @@ async function getBuild(){
 }
 async function loadNotify(){
   const info=$("#notify-info"),last=$("#notify-last"),dot=$("#notify-dot");
-  let url="";try{url=(yload((await getFile("_config.yml")).text).notify_url||"").replace(/\/$/,"")}catch(e){}
+  let url="";try{url=yload((await getFile("_config.yml")).text).notify_url||""}catch(e){}
   if(!url){info.textContent="尚未啟用（文章下方不顯示訂閱欄）";return}
-  try{const st=await (await fetch(url+"/stats",{cache:"no-store"})).json();
+  try{const st=await (await fetch(url+(url.includes("?")?"&":"?")+"action=stats",{cache:"no-store"})).json();
     dot.className="dot "+(st.ready?"ok":"wait");
-    info.textContent="訂閱 "+st.active+" 人"+(st.pending?"，等確認 "+st.pending+" 人":"")+(st.ready?"":"；還沒設定 Resend 金鑰，不會寄信");
-    last.textContent=st.last?"上次寄出："+st.last.title+"（"+st.last.count+" 封，"+ago(st.last.at)+"）":(st.initialized?"還沒寄過新文章":"");
+    info.textContent="訂閱 "+st.active+" 人"+(st.pending?"，等確認 "+st.pending+" 人":"")+"；今天還能寄 "+st.quota+" 封";
+    last.textContent=st.sending?"正在寄送："+st.sending+"（額度用完，明天自動續寄）":st.last?"上次寄出："+st.last.title+"（"+st.last.count+" 封，"+ago(st.last.at)+"）":"還沒寄過新文章";
   }catch(e){dot.className="dot bad";info.textContent="連不到通知小程式"}
 }
 function loadHakki(){

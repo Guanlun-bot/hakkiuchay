@@ -16,7 +16,7 @@ subscribe_sent: 確認信已寄出。幾分鐘內沒收到的話，請看看垃�
 subscribe_error: 沒有成功，請確認信箱，或稍後再試。
 subscribe_page_title: 電子郵件通知
 subscribe_working: 處理中……
-subscribe_confirmed: 訂閱完成。之後有新文章，會寄到你的信箱。
+subscribe_confirmed: 訂閱完成。之後有新文章，會寄到您的信箱。
 subscribe_unsubscribed: 已退訂，不會再收到通知。
 subscribe_invalid: 這個連結已失效或已使用過。
 mail_sender_name: 學鳩齋

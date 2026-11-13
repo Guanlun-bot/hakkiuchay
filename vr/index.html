@@ -1509,7 +1509,7 @@ function startIR(){ const cur=sharedLatest('ir',myIR); if(cur&&(Date.now()-cur.a
 function teaList(after){ return `<ul class="list menu" id="tl">${TEAS.map(([n,d],i)=>`<li data-tea="${i}"><div><div class="bt">${n}</div><div class="ba">${d}</div></div><span class="ba">${i===myTea?'手邊這罐':'換這罐'}</span></li>`).join('')}</ul>`; }
 function bindTeaList(body,after){ const ul=body.querySelector('#tl'); if(ul) ul.onclick=e=>{ const li=e.target.closest('li[data-tea]'); if(!li) return; pickTea(+li.dataset.tea); after(); }; }
 function pickTea(i){ if(i<0) return; myTea=i; LS.set('hk-tea',myTea); toast(`從茶架取下一罐${TEAS[i][0]}。`); }
-function showTeaShelf(){ const body=openPanel('錫茶罐',`<p class="meta">右牆茶罐架上的錫罐都貼著紅紙茶名。取一罐下來，工夫茶席和囲炉裏泡的就是它。</p>${teaList()}`); bindTeaList(body,showTeaShelf); }
+function showTeaShelf(){ const body=openPanel('錫茶罐',`<p class="meta">茶室右牆的錫罐都貼著紅紙茶名。取一罐下來，工夫茶席和囲炉裏泡的就是它。</p>${teaList()}`); bindTeaList(body,showTeaShelf); }
 function showGongfu(){ const cur=sharedLatest('gf',myGF), el=cur?(Date.now()-cur.at)/1000:1e9;
   const state=!cur||el>TEA_LAST?'爐子是冷的。':el<22?`${cur.mine?'你':esc(cur.by)}正在泡${esc(TEAS[cur.t][0])}。`:`桌上是${cur.mine?'你':esc(cur.by)}泡的${esc(TEAS[cur.t][0])}，還溫著。`;
   const body=openPanel('工夫茶',`<p class="meta">潮州工夫茶：紅泥小火爐、玉書煨、孟臣罐、若琛甌。${state}</p><div class="vol">茶葉：<b>${esc(TEAS[myTea][0])}</b>　<span class="ba">${esc(TEAS[myTea][1])}</span></div><button class="btn pri" id="gfgo">起炭泡茶</button><div class="sec">換一罐茶</div>${teaList()}<p class="meta" style="margin-top:12px">茶泡好後，坐在茶席上的人面前都會有一杯；在知了間的人也會看到。</p>`);
@@ -1578,19 +1578,19 @@ function showSnacks(){ const body=openPanel('矮櫃',`<p class="meta">拉開櫃�
 const ZP={
   front:15.6, back:23.6, left:7.36, right:-7.36,      // hall inner faces
   corridorX:0,                                         // the entrance axis: door, 玄關桌 and scroll line up on it
-  tatami:2.73, tatamiRise:.15, tokoDepth:0,           // a real 四疊半 (3 x 0.91 m) and its tokonoma behind
+  tatami:2.73, tatamiRise:.15, tokoDepth:.6,           // a real 四疊半 (3 x 0.91 m) and its tokonoma behind
   irori:.62, jizaiTop:3.45,
   genkan:{w:.93,d:.3,h:.8},
-  display:{cx:-3.7,w:3.0,d:.4,h:1.9},
-  modern:{cx:-3.0,cz:21.33,w:2.2,d:.95,h:.72}, modernChairH:.45,
+  display:{cx:-4.6,w:2.4,d:.4,h:1.9},
+  modern:{cx:-4.5,cz:21.33,w:2.0,d:.95,h:.72}, modernChairH:.45,
   fireplace:{cz:21.55},
   basin:{x:-6.55,z:23.05},
   teaShelf:{z0:16.62,z1:18.5,d:.3,h:2.0},
-  gf:{cx:-3.32,cz:17.95,w:.9,h:.6,stool:.78}, stoolH:.38,
+  gf:{cx:-4.6,cz:17.95,w:.9,h:.6,stool:.78}, stoolH:.38,
 };
 const PLAN={corridorX:590};
 const PX=px=>-(px-590)/(1013-590)*7.36;   // kept for the plan's corridor reference (590 → x 0)
-const TATAMI={x0:ZP.left-ZP.tatami, x1:ZP.left, z0:ZP.back-ZP.tokoDepth-ZP.tatami, z1:ZP.back, h:ZP.tatamiRise};
+const TATAMI={x0:2.72, x1:ZP.left, z0:16.05, z1:ZP.back, h:ZP.tatamiRise};   // the whole left room, behind the front cabinets
 function floorY(x,z){ return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
 function zlBlocked(){ return false; }
 function toggleShoji(){}
@@ -1625,25 +1625,9 @@ const RUOCHEN=[[0,0],[.012,0],[.013,.004],[.011,.006],[.024,.026],[.029,.034],[.
 function ruochen(parent,x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z); parent.add(g); g.add(lathe(RUOCHEN,whitePorcelain,20));
   const tea=new THREE.Mesh(new THREE.CircleGeometry(.025,18),new THREE.MeshStandardMaterial({color:0xc8862c,roughness:.15})); tea.rotation.x=-Math.PI/2; tea.position.y=.027; tea.visible=false; g.add(tea); g.userData.tea=tea; return g; }
 
-/* ---------- tatami in the left-back corner: raised floor, 四疊半 mats, sunken irori, tokonoma ---------- */
-const TU=ZP.tatami/3, IRS=ZP.irori;
-const IRC={x:TX(310), z:TZ(480)};
-const IY=TATAMI.h;
-{ const T=TATAMI, zm=T.z1-ZP.tokoDepth, half=IRS/2;
-  const pit={x0:IRC.x-half,x1:IRC.x+half,z0:IRC.z-half,z1:IRC.z+half};
-  for(const [a,b,c,d] of [[T.x0,T.x1,pit.z1,T.z1],[T.x0,T.x1,T.z0,pit.z0],[T.x0,pit.x0,pit.z0,pit.z1],[pit.x1,T.x1,pit.z0,pit.z1]]) box(Math.abs(b-a),T.h,Math.abs(d-c),hinoki,(a+b)/2,T.h/2,(c+d)/2);
-  box(T.x1-T.x0,.03,.06,darkWood,(T.x0+T.x1)/2,T.h-.015,T.z0+.03); box(.06,.03,T.z1-T.z0,darkWood,T.x0+.03,T.h-.015,(T.z0+T.z1)/2);   // 框
-  const tex=(full)=>ctex(256,full?512:256,(g,w,h)=>{ g.fillStyle='#bdb46e'; g.fillRect(0,0,w,h); g.globalAlpha=.3; for(let y=0;y<h;y+=3){ g.fillStyle=y%6<3?'#8f8a48':'#ddd492'; g.fillRect(0,y,w,1.4); } g.globalAlpha=1; g.fillStyle='#1d2430'; g.fillRect(0,0,12,h); g.fillRect(w-12,0,12,h); g.strokeStyle='rgba(60,50,20,.5)'; g.strokeRect(1,1,w-2,h-2); });
-  const matTex=tex(true), halfTex=tex(false);
-  // 四疊半 pinwheel from the plan, plus a half mat round the hearth (cut by the pit)
-  for(const [a,b,c,d] of [[115,285,375,415],[375,285,505,545],[115,415,245,675],[245,545,505,675]]){ const x0=TX(a), x1=TX(c), z0=TZ(d), z1=TZ(b); const w=Math.abs(x1-x0), dz=Math.abs(z1-z0);
-    const m=new THREE.Mesh(w>dz?new THREE.PlaneGeometry(dz,w):new THREE.PlaneGeometry(w,dz),new THREE.MeshStandardMaterial({map:matTex,roughness:.95})); m.rotation.x=-Math.PI/2; if(w>dz) m.rotation.z=Math.PI/2;
-    m.position.set((x0+x1)/2,T.h+.003,(z0+z1)/2); m.userData={type:'floor'}; scene.add(m); pickables.push(m); }
-  const hx0=TX(245), hx1=TX(375), hz0=TZ(545), hz1=TZ(415);
-  for(const [a,b,c,d] of [[hx1,hx0,pit.z1,hz1],[hx1,hx0,hz0,pit.z0],[hx1,pit.x0,pit.z0,pit.z1],[pit.x1,hx0,pit.z0,pit.z1]]){ const w=Math.abs(b-a), dz=Math.abs(d-c); if(w<.01||dz<.01) continue;
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,dz),new THREE.MeshStandardMaterial({map:halfTex,roughness:.95})); m.rotation.x=-Math.PI/2; m.position.set((a+b)/2,T.h+.003,(c+d)/2); scene.add(m); }
-  const top=new THREE.Mesh(new THREE.PlaneGeometry(T.x1-T.x0,T.z1-T.z0),new THREE.MeshBasicMaterial({visible:false})); top.rotation.x=-Math.PI/2; top.position.set((T.x0+T.x1)/2,T.h+.001,(T.z0+T.z1)/2); top.userData={type:'floor'}; scene.add(top); pickables.push(top);
-}
+/* ---------- the hearth in the middle of the tatami room ---------- */
+const IRS=ZP.irori, IY=TATAMI.h;
+const IRC={x:(TATAMI.x0+TATAMI.x1)/2, z:20.4};
 // irori: thick wooden frame, ash bed in the pit, charcoal, jizai-kagi from the ceiling, Nanbu tetsubin
 const irori=(()=>{ const g=new THREE.Group(); g.position.set(IRC.x,IY,IRC.z); scene.add(g); const pick={type:'irori'}; const half=IRS/2, fw=.12;
   const frame=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.35});
@@ -1666,27 +1650,8 @@ const irori=(()=>{ const g=new THREE.Group(); g.position.set(IRC.x,IY,IRC.z); sc
   const sp=new THREE.Mesh(new THREE.CylinderGeometry(.012,.022,.12,10),ironBlack); sp.position.set(.16,.11,0); sp.rotation.z=-1.0; pot.add(sp);
   const bail=new THREE.Mesh(new THREE.TorusGeometry(.12,.008,8,28,Math.PI),ironBlack); bail.position.set(0,.16,0); pot.add(bail);
   const steam=[]; for(let i=0;i<6;i++){ const s=new THREE.Sprite(steamMatBase.clone()); s.material.opacity=0; g.add(s); steam.push({sp:s,t:i/6}); }
-  OB(IRC.x-half+.1,IRC.x+half-.1,IRC.z-half+.1,IRC.z+half-.1);   // the frame is low: you can step right up to it
+  OB(IRC.x-half+.1,IRC.x+half-.1,IRC.z-half+.1,IRC.z+half-.1);
   return {coals,light,steam,spout:new THREE.Vector3(.22,.25+.16,0),fire:0}; })();
-// zabuton by the hearth
-const IRORI_SEATS=[], IRORI_CUPS=[];
-{ const zab=new THREE.MeshStandardMaterial({color:0x5a2e2a,roughness:1}), zab2=new THREE.MeshStandardMaterial({color:0x2e3a52,roughness:1});
-  [[286,382,0],[348,382,0],[401,490,-1],[286,565,2],[348,565,2]].forEach(([px,py,f],i)=>{ const x=TX(px), z=TZ(py), yaw=faceYaw(f); const si=addSeat(x,z,yaw,'irori','囲炉裏・座布團'); IRORI_SEATS.push(si); SEATS[si].ap={x,z:Math.min(z,22.76)};
-    const c=box(.46,.07,.46,f===-1?zab2:zab,x,IY+.035,z,scene,{type:'seat',si}); c.rotation.y=yaw;
-    const [fx,fz]=lookY(yaw); const cup=ruochen(scene,x+fx*.24+fz*.1,IY+.002,z+fz*.24-fx*.1); cup.visible=false; IRORI_CUPS.push(cup); }); }
-{ const g=furn(TX(401),TZ(410),Math.PI/2); g.position.y=IY+.002; const pick={type:'irori'};
-  box(.32,.02,.22,new THREE.MeshStandardMaterial({color:0x2a1a12,roughness:.4}),0,.01,0,g,pick);
-  const gw=new THREE.Group(); gw.position.set(-.07,.02,0); g.add(gw);
-  gw.add(lathe([[0,0],[.05,0],[.055,.006],[.03,.008]],blueWhite)); const bowl=lathe([[0,.008],[.018,.008],[.02,.012],[.042,.05],[.048,.06]],blueWhite); gw.add(bowl); bowl.userData=pick; pickables.push(bowl);
-  gw.add(lathe([[0,.072],[.012,.07],[.04,.058],[.046,.052]],blueWhite)); cylinder(.008,.01,.012,blueWhite,0,.076,0,gw);
-  for(let i=0;i<3;i++) ruochen(g,.03+i*.05,.02,.065); }
-// andon at the front-left corner of the mats
-{ const x=ZP.left-.25, z=TATAMI.z0+.25, y=IY; const g=furn(x,z,0); g.position.y=y; const paperGlow=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffc88a,emissiveIntensity:.6,roughness:.95,side:THREE.DoubleSide});
-  for(const sx of [-1,1]) for(const sz of [-1,1]) box(.025,.72,.025,M.woodDark,sx*.15,.36,sz*.15,g);
-  for(const [px,pz,ry] of [[0,.15,0],[0,-.15,0],[.15,0,Math.PI/2],[-.15,0,Math.PI/2]]){ const p=new THREE.Mesh(new THREE.PlaneGeometry(.29,.56),paperGlow); p.position.set(px,.41,pz); p.rotation.y=ry; g.add(p); }
-  box(.34,.03,.34,M.woodDark,0,.015,0,g); LAMPS.push({f:{on:true},mat:paperGlow});
-  softLight(x,y+.5,z,3,3); OB(x-.2,x+.2,z-.2,z+.2); }
-
 /* ---------- 玄關桌 and its scroll, on the entrance axis ---------- */
 { const G=ZP.genkan, cx=ZP.corridorX, z=ZP.back-.06-G.d/2; const pick={type:'genkan'};
   const g=furn(cx,z,0);
@@ -1856,12 +1821,88 @@ const brazier=(()=>{ const x=GX+.72, z=GZ+.72; const g=furn(x,z,0); const pick={
   const light=new THREE.PointLight(0xffd29a,0,3.5,1.8); light.position.y=-.05; g.add(light); fixtures.push({light,power:4}); }
 
 
-/* ---------- lighting: even fill (no wall sconces in 知了間) ---------- */
-softLight(ZP.corridorX,2.8,19.4,8,7);
-softLight(GX,2.7,GZ,10,6.5);
-softLight(ZP.modern.cx,2.7,ZP.modern.cz,10,6.5);
-softLight(-6.0,2.7,19.4,7,6);
-softLight(IRC.x,2.4,IRC.z,8,5);
+/* ---------- lighting: each room lit on its own ---------- */
+softLight(0,2.9,19.6,7,7);
+softLight(IRC.x,2.6,IRC.z,9,6); softLight(IRC.x,2.6,17.4,6,5);
+softLight(GX,2.7,GZ,10,6); softLight(ZP.modern.cx,2.7,ZP.modern.cz,10,6); softLight(-6.0,2.7,19.6,6,5);
+
+
+/* ================= 知了間・分三間：明間、左間大和室、右間茶室 ================= */
+// Two partitions under the hall roof, red brick below and white plaster above like the hall's own walls,
+// standing between the inner and outer front windows; each has a doorway in the middle, opening off the centre bay.
+// the roof underside of the hall, so partitions close against it
+const roofUnder=zl=>3.70+1.28*Math.pow(1-Math.min(1,Math.abs(zl)/5.62),1.26)-.16;
+const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.2} };
+function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1,ZP.back]];
+  for(const [z0,z1] of segs){ const L=z1-z0, cz=(z0+z1)/2;
+    box(TW,ZR.brickH,L,mBrick(L*.78,ZR.brickH*1.05),x,ZR.brickH/2,cz,scene,BLOCK);
+    box(TW,D.h-ZR.brickH,L,mWhite(L/2,.7),x,(D.h+ZR.brickH)/2,cz,scene,BLOCK); OB(x-TW/2,x+TW/2,z0,z1); }
+  // above the doorway height the wall runs the full depth and follows the roof
+  const s=new THREE.Shape(); s.moveTo(-4.15,D.h); for(let i=0;i<=24;i++){ const z=-4.15+8.3*i/24; s.lineTo(z,roofUnder(z)); } s.lineTo(4.15,D.h); s.closePath();
+  const m=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:TW,bevelEnabled:false}),new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92}));
+  m.rotation.y=-Math.PI/2; m.position.set(x+TW/2,0,19.6); scene.add(m);
+  // doorway: dark wooden jambs, lintel and a low sill
+  for(const z of [D.z0,D.z1]) box(TW+.06,D.h,.08,darkWood,x,D.h/2,z);
+  box(TW+.06,.1,D.z1-D.z0+.16,darkWood,x,D.h+.02,(D.z0+D.z1)/2); box(TW+.04,.05,D.z1-D.z0,darkWood,x,.025,(D.z0+D.z1)/2); }
+partition(ZR.wallX); partition(-ZR.wallX);
+
+/* ---------- left room: a large tatami room, sunken irori in the middle ---------- */
+{ const Tm=TATAMI, W=Tm.x1-Tm.x0, Dp=Tm.z1-Tm.z0, cx=(Tm.x0+Tm.x1)/2, cz=(Tm.z0+Tm.z1)/2, half=IRS/2;
+  const pit={x0:IRC.x-half,x1:IRC.x+half,z0:IRC.z-half,z1:IRC.z+half};
+  for(const [a,b,c,d] of [[Tm.x0,Tm.x1,pit.z1,Tm.z1],[Tm.x0,Tm.x1,Tm.z0,pit.z0],[Tm.x0,pit.x0,pit.z0,pit.z1],[pit.x1,Tm.x1,pit.z0,pit.z1]]) box(Math.abs(b-a),Tm.h,Math.abs(d-c),hinoki,(a+b)/2,Tm.h/2,(c+d)/2);
+  box(W,.04,.06,darkWood,cx,Tm.h-.02,Tm.z0+.03);   // 框 along the front edge
+  // one texture for the whole floor: mats 1.82 x 0.91, rows staggered, cut at the walls; the hearth's half mat left open
+  const PPM=110, cw=Math.round(W*PPM), ch=Math.round(Dp*PPM);
+  const tex=textCanvas(cw,ch,(g,w,h)=>{ g.fillStyle='#b8b06a'; g.fillRect(0,0,w,h); const R=rnd(17), mw=1.82*PPM, mh=.91*PPM;
+    for(let r=0;r*mh<h;r++){ const off=(r%2)*.91*PPM; for(let x=-off;x<w;x+=mw){ const y=r*mh; const tone=165+Math.floor(R()*16); g.fillStyle=`rgb(${tone+18},${tone+12},${tone-62})`; g.fillRect(x,y,mw,mh);
+      g.globalAlpha=.25; for(let k=0;k<mh;k+=2.2){ g.fillStyle=k%4.4<2.2?'#8f8a48':'#d8d08a'; g.fillRect(x,y+k,mw,1); } g.globalAlpha=1;
+      g.fillStyle='#1d2430'; g.fillRect(x,y,mw,4); g.fillRect(x,y+mh-4,mw,4); g.strokeStyle='rgba(60,50,20,.5)'; g.lineWidth=1.5; g.strokeRect(x+.5,y+.5,mw-1,mh-1); } }
+    g.clearRect((pit.x0-Tm.x0)*PPM,(pit.z0-Tm.z0)*PPM,IRS*PPM,IRS*PPM); });
+  // canvas x runs from the room's right edge (Tm.x0) to the left wall; canvas y from the back wall forward
+  const geo=new THREE.PlaneGeometry(W,Dp); const top=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:tex,roughness:.95,alphaTest:.5}));
+  top.rotation.x=-Math.PI/2; top.position.set(cx,Tm.h+.003,cz); top.userData={type:'floor'}; scene.add(top); pickables.push(top);
+  // cover the pit area of the texture with the hearth itself (the irori frame sits over it)
+}
+// zabuton round the hearth
+const IRORI_SEATS=[], IRORI_CUPS=[];
+{ const zab=new THREE.MeshStandardMaterial({color:0x5a2e2a,roughness:1}), zab2=new THREE.MeshStandardMaterial({color:0x2e3a52,roughness:1}); const r=.78;
+  [[0,r,0],[0,-r,2],[r,0,1],[-r,0,-1],[-.55,-r,2]].forEach(([dx,dz,f],i)=>{ const x=IRC.x+dx, z=IRC.z+dz, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'irori','囲炉裏・座布團'); IRORI_SEATS.push(si); SEATS[si].ap={x,z};
+    const c=box(.48,.07,.48,i===2?zab2:zab,x,IY+.035,z,scene,{type:'seat',si}); c.rotation.y=yaw;
+    const [fx,fz]=lookY(yaw); const cup=ruochen(scene,x+fx*.28+fz*.1,IY+.002,z+fz*.28-fx*.1); cup.visible=false; IRORI_CUPS.push(cup); }); }
+{ const g=furn(IRC.x-.78,IRC.z+.55,-Math.PI/2); g.position.y=IY+.002; const pick={type:'irori'};
+  box(.32,.02,.22,new THREE.MeshStandardMaterial({color:0x2a1a12,roughness:.4}),0,.01,0,g,pick);
+  const gw=new THREE.Group(); gw.position.set(-.07,.02,0); g.add(gw);
+  gw.add(lathe([[0,0],[.05,0],[.055,.006],[.03,.008]],blueWhite)); const bowl=lathe([[0,.008],[.018,.008],[.02,.012],[.042,.05],[.048,.06]],blueWhite); gw.add(bowl); bowl.userData=pick; pickables.push(bowl);
+  gw.add(lathe([[0,.072],[.012,.07],[.04,.058],[.046,.052]],blueWhite)); cylinder(.008,.01,.012,blueWhite,0,.076,0,gw);
+  for(let i=0;i<3;i++) ruochen(g,.03+i*.05,.02,.065); }
+// two andon in the corners, a single camellia in a bamboo vase by the back wall
+for(const [x,z] of [[ZP.left-.3,ZP.back-.3],[ZP.left-.3,TATAMI.z0+.35]]){ const g=furn(x,z,0); g.position.y=IY; const paperGlow=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffc88a,emissiveIntensity:.6,roughness:.95,side:THREE.DoubleSide});
+  for(const sx of [-1,1]) for(const sz of [-1,1]) box(.025,.72,.025,M.woodDark,sx*.15,.36,sz*.15,g);
+  for(const [px,pz,ry] of [[0,.15,0],[0,-.15,0],[.15,0,Math.PI/2],[-.15,0,Math.PI/2]]){ const p=new THREE.Mesh(new THREE.PlaneGeometry(.29,.56),paperGlow); p.position.set(px,.41,pz); p.rotation.y=ry; g.add(p); }
+  box(.34,.03,.34,M.woodDark,0,.015,0,g); LAMPS.push({f:{on:true},mat:paperGlow}); softLight(x,IY+.5,z,3,3); OB(x-.2,x+.2,z-.2,z+.2); }
+{ const fx=TATAMI.x0+.9, fz=ZP.back-.25, y0=IY; const ipick={type:'ikebana'};
+  box(.36,.03,.28,darkWood,fx,y0+.015,fz);
+  const vase=cylinder(.045,.05,.32,new THREE.MeshStandardMaterial({color:0x8a7444,roughness:.6}),fx,y0+.03+.16,fz); vase.userData=ipick; pickables.push(vase);
+  const twig=new THREE.MeshStandardMaterial({color:0x3b2a1c,roughness:1}), leafM=new THREE.MeshStandardMaterial({color:0x234a2a,roughness:.6,side:THREE.DoubleSide}), petal=new THREE.MeshStandardMaterial({color:0xb21e2e,roughness:.6});
+  const c=new THREE.CatmullRomCurve3([[0,.3,0],[.03,.42,-.02],[.09,.5,-.05],[.16,.52,-.08]].map(p=>new THREE.Vector3(fx+p[0],y0+.03+p[1],fz+p[2]))); scene.add(new THREE.Mesh(new THREE.TubeGeometry(c,16,.005,6,false),twig));
+  for(let i=0;i<4;i++){ const p=c.getPoint(.3+i*.2); const l=new THREE.Mesh(new THREE.SphereGeometry(.03,8,6),leafM); l.scale.set(1.6,.25,.8); l.position.copy(p); l.rotation.y=i; scene.add(l); }
+  const fl=c.getPoint(1); for(let i=0;i<6;i++){ const pt=new THREE.Mesh(new THREE.SphereGeometry(.026,8,6),petal); pt.scale.set(1,.45,.8); const a=i/6*Math.PI*2; pt.position.set(fl.x+Math.cos(a)*.02,fl.y,fl.z+Math.sin(a)*.02); scene.add(pt); } OB(fx-.2,fx+.2,fz-.15,ZP.back); }
+// the yueqin and 殼仔弦 on the tatami room's left wall
+{ const wx=ZP.left-.02, iy=1.6, board=new THREE.MeshStandardMaterial({color:0xc29a62,roughness:.6}), sb=new THREE.MeshStandardMaterial({color:0x6a3a1e,roughness:.45}), str=new THREE.MeshStandardMaterial({color:0xd8d0b8});
+  const yq=new THREE.Group(); yq.position.set(wx,iy,19.4); yq.rotation.y=-Math.PI/2; scene.add(yq); const ypick={type:'inst',k:'yq'};
+  const bodyY=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.06,40),sb); bodyY.rotation.x=Math.PI/2; bodyY.position.z=.04; bodyY.userData=ypick; yq.add(bodyY); pickables.push(bodyY);
+  const face=new THREE.Mesh(new THREE.CircleGeometry(.18,40),board); face.position.z=.071; face.userData=ypick; yq.add(face); pickables.push(face);
+  box(.05,.26,.04,sb,0,.31,.05,yq,ypick); box(.07,.12,.04,sb,0,.49,.05,yq,ypick);
+  for(const [sx,y] of [[-1,.46],[1,.46],[-1,.52],[1,.52]]) cylinder(.008,.006,.08,M.woodDark,sx*.06,y,.05,yq).rotation.z=Math.PI/2;
+  for(let i=0;i<8;i++) box(.04,.006,.008,new THREE.MeshStandardMaterial({color:0xe8e0cc}),0,.2+i*.025,.075,yq);
+  for(const sx of [-.008,.008]) box(.0015,.62,.0015,str,sx,.2,.083,yq);
+  const kz=new THREE.Group(); kz.position.set(wx,iy-.15,20.2); kz.rotation.y=-Math.PI/2; scene.add(kz); const kpick={type:'inst',k:'kz'};
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(.075,20,12,0,Math.PI*2,0,Math.PI*.55),new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.7})); shell.rotation.x=Math.PI/2; shell.position.z=.04; shell.userData=kpick; kz.add(shell); pickables.push(shell);
+  const kf=new THREE.Mesh(new THREE.CircleGeometry(.07,24),board); kf.position.z=.042; kf.userData=kpick; kz.add(kf); pickables.push(kf);
+  const neck=cylinder(.01,.01,.72,sb,0,.36,.04,kz); neck.userData=kpick; pickables.push(neck);
+  for(const y of [.62,.68]) cylinder(.007,.005,.08,M.woodDark,.03,y,.04,kz).rotation.z=Math.PI/2;
+  for(const sx of [-.006,.006]) box(.0012,.62,.0012,str,sx,.34,.05,kz);
+  const bowC=new THREE.QuadraticBezierCurve3(new THREE.Vector3(.08,-.05,.06),new THREE.Vector3(.12,.3,.08),new THREE.Vector3(.08,.62,.06)); kz.add(new THREE.Mesh(new THREE.TubeGeometry(bowC,16,.004,6,false),M.woodDark)); }
 
 
 /* ================= 知了間・第三輪：矮櫃、羅漢床、書與壺、屏風、魚缸、博古架、普洱櫃、盆景、宋式大燈 ================= */
@@ -1871,7 +1912,7 @@ const ZM={
   bookshelf:{z0:17.8, z1:19.1, h:1.3, d:.35},
   potCase:{z0:19.2, z1:20.6, h:1.9, d:.36},
   screenH:1.5,
-  aquarium:{x:2.9, z:18.3, len:1.2, w:.45, standH:.7, tankH:.55},
+  aquarium:{x:2.26, z:17.3, len:1.2, w:.45, standH:.7, tankH:.55},
   bogu:{x0:1.15, x1:4.15, h:2.0, d:.35},
   puer:{z0:18.75, z1:20.45, h:1.9, d:.4},
   lamp:{x:0, y:3.0, z:19.6, r:.45, h:.75},
@@ -1883,8 +1924,8 @@ function zlCabinet(xa,xb){ const C=ZM.cabinet, x0=Math.min(xa,xb), x1=Math.max(x
   for(let i=0;i<n;i++){ const x=x0+dw*(i+.5); box(dw-.05,h-.16,.012,M.wood,x,(h-.03)/2+.01,z+C.d/2+.006,scene,pick); cylinder(.012,.012,.02,bronze,x+(i%2?-1:1)*(dw/2-.07),.42,z+C.d/2+.016).rotation.x=Math.PI/2; }
   box(len,.06,.01,M.woodDark,cx,.03,z+C.d/2+.005);
   OB(x0,x1,C.z,C.z+C.d); }
-zlCabinet(ZM.cabinet.doorGap,ZM.cabinet.leftEnd);
-zlCabinet(-ZM.cabinet.doorGap,ZP.right);
+zlCabinet(2.72,ZP.left);
+zlCabinet(-2.72,ZP.right);
 /* ---------- Chinese bonsai (盆景): pine / juniper on a glazed pot, and a pot of bamboo ---------- */
 function penjing(x,y,z,s=1,glaze=0x3c4a5a,seed=31){ const g=new THREE.Group(); g.position.set(x,y,z); g.scale.setScalar(s); scene.add(g); const pick={type:'bonsai'};
   const gl=new THREE.MeshStandardMaterial({color:glaze,roughness:.35});
@@ -1913,87 +1954,9 @@ function bamboo(x,z){ const g=new THREE.Group(); g.position.set(x,0,z); scene.ad
     for(let k=0;k<5;k++){ const l=new THREE.Mesh(new THREE.PlaneGeometry(.04,.16),leaf); l.position.set(bx+(R()-.5)*.2,.34+h*(.55+R()*.45),bz+(R()-.5)*.2); l.rotation.set(R()*1.2,R()*6,R()*1.2); g.add(l); } }
   OB(x-.25,x+.25,z-.25,z+.25); return g; }
 // small ones on the cabinets and in the curio shelf; floor ones round the room (the axis stays clear)
-penjing(3.0,ZM.cabinet.h,15.8,.9,0x3c4a5a,31); penjing(5.6,ZM.cabinet.h,15.8,.8,0x6a3a2a,32); penjing(-3.0,ZM.cabinet.h,15.8,.9,0x2f4a4a,33); penjing(-6.2,ZM.cabinet.h,15.8,.85,0x3c4a5a,34);
-{ const x=-1.3, z=23.15; const stand=new THREE.MeshStandardMaterial({color:0x2e1d14,roughness:.45});   // a tall stand with a pine beside the 玄關桌
+{ const x=-2.2, z=17.3; const stand=new THREE.MeshStandardMaterial({color:0x2e1d14,roughness:.45});   // a tall stand with a pine beside the 玄關桌
   box(.4,.04,.4,stand,x,.92,z,scene,{type:'bonsai'}); for(const sx of [-1,1]) for(const sz of [-1,1]) box(.035,.9,.035,stand,x+sx*.17,.45,z+sz*.17); box(.36,.03,.36,stand,x,.18,z); penjing(x,.94,z,1.0,0x5a2e2a,35); OB(x-.2,x+.2,z-.2,z+.2); }
-floorPine(4.1,17.0,1.7,8); bamboo(-4.95,16.65); floorPine(-6.2,20.0,1.4,9);
-
-/* ---------- left-front corner: a 羅漢床 with a kang table, the yueqin and 殼仔弦 on the wall above ---------- */
-const LUOHAN_SEATS=[];
-{ const L=ZM.luohan, x0=L.x0, x1=ZP.left, z0=L.z0, z1=L.z0+L.len, cx=(x0+x1)/2, cz=(z0+z1)/2, h=L.seatH, pick={type:'luohan'};
-  const wood=huanghuali, dk=huangDark;
-  box(x1-x0,.06,z1-z0,wood,cx,h-.03,cz,scene,BLOCK); box(x1-x0-.04,.08,z1-z0-.04,dk,cx,h-.1,cz);
-  for(const sx of [x0+.05,x1-.05]) for(const sz of [z0+.05,z1-.05]){ box(.07,h-.1,.07,wood,sx,(h-.1)/2,sz); box(.09,.04,.09,wood,sx,.02,sz); }
-  box(x1-x0-.1,.05,.03,dk,cx,.12,z0+.05); box(x1-x0-.1,.05,.03,dk,cx,.12,z1-.05);
-  // three-sided railing: back against the left wall, the two ends
-  const rh=.42; box(.05,rh,z1-z0,wood,x1-.04,h+rh/2,cz,scene,BLOCK); for(const z of [z0+.03,z1-.03]) box(x1-x0,rh*.75,.05,wood,cx,h+rh*.375,z,scene,BLOCK);
-  for(let i=1;i<6;i++) box(.02,rh-.1,.02,dk,x1-.07,h+rh/2,z0+i*(z1-z0)/6);
-  box(x1-x0-.1,.05,z1-z0-.1,songPad,cx,h+.025,cz,scene,pick);
-  // kang table in the middle with a tea set
-  const tg=furn(cx-.05,cz,0); tg.position.y=h+.05; box(.42,.03,.62,wood,0,.26,0,tg,pick); for(const sx of [-1,1]) for(const sz of [-1,1]) box(.035,.25,.035,wood,sx*.17,.125,sz*.27,tg); box(.38,.04,.02,dk,0,.22,-.27,tg); box(.38,.04,.02,dk,0,.22,.27,tg);
-  const pot=lathe([[0,0],[.025,0],[.04,.012],[.045,.03],[.04,.045],[.025,.054]],zisha,20); pot.position.set(0,.275,0); tg.add(pot); for(const dz of [-.15,.15]) ruochen(tg,0,.275,dz);
-  for(const [sz,i] of [[z0+.42,0],[z1-.42,1]]){ const si=addSeat(cx-.05,sz,Math.PI/2,'luohan','羅漢床'); LUOHAN_SEATS.push(si); SEATS[si].ap={x:6.0,z:Math.max(sz,16.35)}; box(.5,.05,.5,songPad,cx-.05,h+.06,sz,scene,{type:'seat',si}); }
-  OB(x0,x1,z0,z1);
-  // instruments on the wall above the bed
-  const wx=ZP.left-.02, iy=1.55, board=new THREE.MeshStandardMaterial({color:0xc29a62,roughness:.6}), sb=new THREE.MeshStandardMaterial({color:0x6a3a1e,roughness:.45}), str=new THREE.MeshStandardMaterial({color:0xd8d0b8});
-  const yq=new THREE.Group(); yq.position.set(wx,iy,cz-.4); yq.rotation.y=-Math.PI/2; scene.add(yq); const ypick={type:'inst',k:'yq'};
-  const bodyY=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.06,40),sb); bodyY.rotation.x=Math.PI/2; bodyY.position.z=.04; bodyY.userData=ypick; yq.add(bodyY); pickables.push(bodyY);
-  const face=new THREE.Mesh(new THREE.CircleGeometry(.18,40),board); face.position.z=.071; face.userData=ypick; yq.add(face); pickables.push(face);
-  box(.05,.26,.04,sb,0,.31,.05,yq,ypick); box(.07,.12,.04,sb,0,.49,.05,yq,ypick);
-  for(const [sx,y] of [[-1,.46],[1,.46],[-1,.52],[1,.52]]) cylinder(.008,.006,.08,M.woodDark,sx*.06,y,.05,yq).rotation.z=Math.PI/2;
-  for(let i=0;i<8;i++) box(.04,.006,.008,new THREE.MeshStandardMaterial({color:0xe8e0cc}),0,.2+i*.025,.075,yq);
-  for(const sx of [-.008,.008]) box(.0015,.62,.0015,str,sx,.2,.083,yq);
-  const kz=new THREE.Group(); kz.position.set(wx,iy-.15,cz+.35); kz.rotation.y=-Math.PI/2; scene.add(kz); const kpick={type:'inst',k:'kz'};
-  const shell=new THREE.Mesh(new THREE.SphereGeometry(.075,20,12,0,Math.PI*2,0,Math.PI*.55),new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.7})); shell.rotation.x=Math.PI/2; shell.position.z=.04; shell.userData=kpick; kz.add(shell); pickables.push(shell);
-  const kf=new THREE.Mesh(new THREE.CircleGeometry(.07,24),board); kf.position.z=.042; kf.userData=kpick; kz.add(kf); pickables.push(kf);
-  const neck=cylinder(.01,.01,.72,sb,0,.36,.04,kz); neck.userData=kpick; pickables.push(neck);
-  for(const y of [.62,.68]) cylinder(.007,.005,.08,M.woodDark,.03,y,.04,kz).rotation.z=Math.PI/2;
-  for(const sx of [-.006,.006]) box(.0012,.62,.0012,str,sx,.34,.05,kz);
-  const bowC=new THREE.QuadraticBezierCurve3(new THREE.Vector3(.08,-.05,.06),new THREE.Vector3(.12,.3,.08),new THREE.Vector3(.08,.62,.06)); kz.add(new THREE.Mesh(new THREE.TubeGeometry(bowC,16,.004,6,false),M.woodDark)); }
-
-/* ---------- left wall: a low bookshelf of tea books and scores, then a 多寶格 of teapots ---------- */
-{ const B=ZM.bookshelf, L=B.z1-B.z0, cz=(B.z0+B.z1)/2, x=ZP.left-B.d/2, pick={type:'teabooks'};
-  const g=furn(x,cz,Math.PI/2);    // front faces -x
-  box(L,.03,B.d,huanghuali,0,B.h,0,g,pick); for(const y of [.04,.45,.87]) box(L,.03,B.d,huanghuali,0,y,0,g,pick); for(const sx of [-1,1]) box(.03,B.h,B.d,huanghuali,sx*(L/2-.015),B.h/2,0,g,pick); box(L,B.h,.015,huangDark,0,B.h/2,B.d/2-.008,g);
-  const R=rnd(61), cols=[0x3e5873,0xa8343a,0xd8cdb2,0x3d6b4f,0x86683c,0x2e2a26,0xc9b48a,0x6e2e32];
-  for(const y of [.055,.465,.885]){ let s=-L/2+.04; while(s<L/2-.06){ const w=.025+R()*.03, hh=.24+R()*.12; const bk=box(w,hh,.22,new THREE.MeshStandardMaterial({color:cols[Math.floor(R()*cols.length)],roughness:.8}),s+w/2,y+hh/2+.015,-.02,g,pick); s+=w+.004; if(R()<.08){ s+=.12; } } }
-  OB(x-B.d/2,ZP.left,B.z0,B.z1); }
-{ const P=ZM.potCase, L=P.z1-P.z0, cz=(P.z0+P.z1)/2, x=ZP.left-P.d/2, pick={type:'potcase'};
-  const g=furn(x,cz,Math.PI/2); const wood=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.4});
-  box(L,.04,P.d,wood,0,P.h,0,g,pick); box(L,.06,P.d,wood,0,.03,0,g,pick); for(const sx of [-1,1]) box(.04,P.h,P.d,wood,sx*(L/2-.02),P.h/2,0,g,pick); box(L,P.h,.015,huangDark,0,P.h/2,P.d/2-.008,g);
-  // 多寶格: compartments of uneven size
-  const cells=[[0,.06,.5,.45],[.5,.06,1.0,.3],[.5,.36,1.0,.6],[0,.51,.3,.95],[.3,.51,1.0,.95],[0,.95,.65,1.35],[.65,.95,1.0,1.5],[0,1.35,.65,1.86],[.65,1.5,1.0,1.86]];
-  for(const [a,b,c,d] of cells){ const x0=-L/2+.02+a*(L-.04), x1=-L/2+.02+c*(L-.04); box(x1-x0,.025,P.d-.02,wood,(x0+x1)/2,b,0,g,pick); box(.025,d-b,P.d-.02,wood,x1,(b+d)/2,0,g,pick); }
-  const kinds=[zhuni,zisha,new THREE.MeshStandardMaterial({color:0x6a5a48,roughness:.9}),new THREE.MeshStandardMaterial({color:0xc8ccd0,metalness:.85,roughness:.25}),ironBlack];
-  cells.forEach(([a,b,c,d],i)=>{ const cx=-L/2+.02+(a+c)/2*(L-.04); const k=kinds[i%kinds.length]; const s=.9+(i%3)*.15;
-    const pg=new THREE.Group(); pg.position.set(cx,b+.013,-.02); pg.rotation.y=-.6; g.add(pg);
-    pg.add(lathe([[0,0],[.03*s,0],[.048*s,.014*s],[.054*s,.034*s],[.048*s,.054*s],[.03*s,.064*s],[.024*s,.064*s]],k,22)); pg.add(lathe([[0,.073*s],[.008,.073*s],[.022*s,.067*s],[.025*s,.064*s]],k,16));
-    const spc=new THREE.CatmullRomCurve3([[.043*s,.02*s,0],[.065*s,.034*s,0],[.076*s,.052*s,0]].map(v=>new THREE.Vector3(...v))); pg.add(new THREE.Mesh(new THREE.TubeGeometry(spc,8,.006,6,false),k));
-    if(i%4===3){ const arc=new THREE.Mesh(new THREE.TorusGeometry(.05*s,.006,8,20,Math.PI),k); arc.position.y=.068*s; pg.add(arc); } else { const hd=new THREE.Mesh(new THREE.TorusGeometry(.019*s,.005,8,14,Math.PI*1.3),k); hd.position.set(-.053*s,.034*s,0); hd.rotation.z=Math.PI*.35; pg.add(hd); }
-    if(i%3===1) for(let j=0;j<2;j++) ruochen(g,cx+.12+j*.05,b+.013,.04); });
-  OB(x-P.d/2,ZP.left,P.z0,P.z1); }
-
-/* ---------- a six-fold screen (六曲屏風) on the two open sides of the tatami, gold ground with ink pines ---------- */
-{ const H=ZM.screenH, T=TATAMI;
-  const art=ctex(1536,512,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#d8c48a'); gr.addColorStop(1,'#c8b070'); g.fillStyle=gr; g.fillRect(0,0,w,h);
-    g.globalAlpha=.25; for(let i=0;i<w;i+=w/24){ g.fillStyle=(i/(w/24))%2?'#e6d49a':'#c4aa66'; g.fillRect(i,0,w/24,h); } g.globalAlpha=1;
-    const R=rnd(88); g.strokeStyle='#2a2420'; g.lineCap='round';
-    const pine=(x,base,s)=>{ g.lineWidth=10*s; g.beginPath(); g.moveTo(x,h); g.bezierCurveTo(x+40*s,h-120*s,x-60*s,h-220*s,x+30*s,base); g.stroke();
-      for(let k=0;k<6;k++){ const yy=base+k*40*s, dir=k%2?1:-1; g.lineWidth=4*s; g.beginPath(); g.moveTo(x+10*s,yy); g.quadraticCurveTo(x+dir*80*s,yy-20*s,x+dir*150*s,yy+10*s); g.stroke();
-        g.fillStyle='rgba(40,48,36,.85)'; for(let n=0;n<14;n++){ const px=x+dir*(60+R()*100)*s, py=yy+(R()-.6)*30*s; g.beginPath(); g.ellipse(px,py,22*s,8*s,0,0,7); g.fill(); } } };
-    pine(260,150,1.1); pine(820,210,.9); pine(1240,120,1.2);
-    g.fillStyle='rgba(60,60,60,.25)'; for(let i=0;i<5;i++){ g.beginPath(); g.ellipse(500+i*180,h-40,140,28,0,0,7); g.fill(); } });
-  const frameM=new THREE.MeshStandardMaterial({color:0x1a1210,roughness:.3});
-  const fold=(x0,z0,x1,z1,u0,u1)=>{ const n=6, L=Math.hypot(x1-x0,z1-z0), ang=Math.atan2(z1-z0,x1-x0), pw=L/n/Math.cos(.32);
-    for(let i=0;i<n;i++){ const t=(i+.5)/n, px=x0+(x1-x0)*t, pz=z0+(z1-z0)*t, off=(i%2?1:-1)*Math.sin(.32)*pw/2*.6; const nx=-Math.sin(ang), nz=Math.cos(ang);
-      const g=new THREE.Group(); g.position.set(px+nx*off,0,pz+nz*off); g.rotation.y=-ang+(i%2?.32:-.32); scene.add(g);
-      const tex=art.clone(); tex.needsUpdate=true; tex.repeat.set((u1-u0)/n,1); tex.offset.set(u0+(u1-u0)*i/n,0);
-      const p=new THREE.Mesh(new THREE.PlaneGeometry(pw-.03,H-.08),new THREE.MeshStandardMaterial({map:tex,roughness:.8,side:THREE.DoubleSide})); p.position.y=H/2+.03; p.userData={type:'byobu'}; g.add(p); pickables.push(p);
-      for(const dx of [-1,1]) box(.02,H,.03,frameM,dx*(pw/2-.01),H/2,0,g); for(const y of [.02,H]) box(pw,.03,.03,frameM,0,y,0,g); } };
-  // front edge: from the left wall toward the corridor, stopping short of the corner; side edge: from the back wall toward the front
-  fold(ZP.left-.05,T.z0-.12,T.x0+.75,T.z0-.12,0,.5);
-  fold(T.x0-.12,ZP.back-.08,T.x0-.12,T.z0+.75,.5,1);
-  OB(T.x0+.7,ZP.left,T.z0-.3,T.z0+.05); OB(T.x0-.3,T.x0+.05,T.z0+.7,ZP.back); }
+bamboo(-3.1,16.45); floorPine(-6.2,20.0,1.4,9);
 
 /* ---------- a glass aquarium on a dark stand, goldfish among weed and stones ---------- */
 const FISH=[];
@@ -2014,19 +1977,6 @@ const FISH=[];
     const tail=new THREE.Mesh(new THREE.PlaneGeometry(.04,.035),new THREE.MeshStandardMaterial({color:orange[i],roughness:.5,transparent:true,opacity:.85,side:THREE.DoubleSide})); tail.position.x=-.05; f.add(tail);
     FISH.push({f,tail,ph:R()*6,sp:.25+R()*.25,y:y0+.12+R()*(H-.25),rz:.08+R()*.08,rx:.35+R()*.15}); ZL_DYN.push(f); }
   OB(A.x-A.w/2,A.x+A.w/2,A.z-A.len/2,A.z+A.len/2); }
-
-/* ---------- back wall: a curio shelf (博古架) between the 玄關桌 and the tatami ---------- */
-{ const B=ZM.bogu, W=B.x1-B.x0, cx=(B.x0+B.x1)/2, z=ZP.back-.04-B.d/2, pick={type:'bogu'}; const g=furn(cx,z,0); const wood=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.4});
-  box(W,.04,B.d,wood,0,B.h,0,g,pick); box(W,.08,B.d,wood,0,.04,0,g,pick); for(const sx of [-1,1]) box(.04,B.h,B.d,wood,sx*(W/2-.02),B.h/2,0,g,pick); box(W,B.h,.015,huangDark,0,B.h/2,B.d/2-.008,g);
-  const cells=[[0,.08,.3,.6],[.3,.08,.65,.45],[.65,.08,1,.6],[.3,.45,.65,.95],[0,.6,.3,1.05],[.65,.6,1,1.2],[0,1.05,.45,1.55],[.3,.95,.65,1.3],[.45,1.3,.65,1.96],[.65,1.2,1,1.96],[0,1.55,.45,1.96]];
-  for(const [a,b,c,d] of cells){ const x0=-W/2+.02+a*(W-.04), x1=-W/2+.02+c*(W-.04); box(x1-x0,.025,B.d-.02,wood,(x0+x1)/2,b,0,g,pick); box(.025,d-b,B.d-.02,wood,x1,(b+d)/2,0,g,pick); }
-  const R=rnd(5); cells.forEach(([a,b,c,d],i)=>{ const x=-W/2+.02+(a+c)/2*(W-.04), y=b+.013;
-    if(i===3){ const p=penjing(0,0,0,.55,0x3c4a5a,40); p.position.set(cx+x,y,z-.02); return; }
-    const m=[whitePorcelain,celadonGlaze,zisha,new THREE.MeshStandardMaterial({color:0x2a2a2e,roughness:.3}),new THREE.MeshStandardMaterial({color:0x8a4a2a,roughness:.5})][i%5];
-    if(i%3===0){ const bw=lathe([[0,0],[.03,0],[.065,.05],[.07,.055]],m,22); bw.position.set(x,y,0); g.add(bw); }
-    else if(i%3===1){ const v=lathe([[0,0],[.035,0],[.055,.06],[.05,.12],[.025,.17],[.03,.2]],m,22); v.position.set(x,y,0); g.add(v); }
-    else { const tc=new THREE.Mesh(new THREE.SphereGeometry(.035,10,8),new THREE.MeshStandardMaterial({color:0x5a3a22,roughness:.6})); tc.scale.set(1.3,.75,1); tc.position.set(x,y+.025,0); g.add(tc); box(.08,.012,.08,m,x+.09,y+.006,0,g); } });
-  OB(B.x0,B.x1,z-B.d/2,ZP.back); }
 
 /* ---------- right wall: a pu-erh cabinet between the tea caddies and the fireplace ---------- */
 { const P=ZM.puer, L=P.z1-P.z0, cz=(P.z0+P.z1)/2, x=ZP.right+P.d/2, pick={type:'puer'}; const g=furn(x,cz,-Math.PI/2); const wood=new THREE.MeshStandardMaterial({color:0x2e1d14,roughness:.45});
@@ -2110,7 +2060,7 @@ function setView(mode){ closePanel();
     toast(isTouch?'俯視平面：拖曳旋轉・按＋－縮放・點地面走進去':'俯視平面：拖曳旋轉・滾輪縮放・點地面走進去・按 W A S D 回到行走',8000); }
   else { VIEW.mode='walk'; renderer.clippingPlanes=[]; planFill.intensity=0; $('#planbar').classList.add('hide'); }
   if(mode==='entry'){ if(ME.seat>=0) standUp(); ME.path=[]; ME.x=ZP.corridorX; ME.z=14.15; ME.yaw=Math.PI; ME.pitch=-.06; ME.targetYaw=null; pushPresence();
-    if(DOORS.N&&!DOORS.N.open) toast('知了間的門閂著，從屋裡的人才能打開。'); else toast('院子入口。正前方是玄關桌與掛軸，左後是榻榻米與囲炉裏，右前是工夫茶席，右後是當代茶席與壁爐。',9000); } }
+    if(DOORS.N&&!DOORS.N.open) toast('知了間的門閂著，從屋裡的人才能打開。'); else toast('院子入口。正前方是玄關桌與掛軸，左邊門洞進大和室，右邊門洞進茶室。',9000); } }
 function applyCamera(){
   if(VIEW.mode==='plan'){ const t=VIEW.target, sp=Math.sin(VIEW.phi);
     rig.position.set(t.x+VIEW.r*sp*Math.sin(VIEW.theta),0,t.z+VIEW.r*sp*Math.cos(VIEW.theta)); rig.rotation.y=VIEW.theta;
@@ -2248,7 +2198,7 @@ function zoneOf(p){ const dx=p.x, dz=p.z-courtAxis, ax=Math.abs(dx), az=Math.abs
   return az>=ax ? (dz<0?'S':'N') : (dx<0?'W':'E'); }
 function doorPoint(zone,dist){ const [ux,uz]=ZONE_DIR[zone]; return {x:ux*dist+(zone==='N'?PX(PLAN.corridorX):0), z:courtAxis+uz*dist}; }   // 知了間: walk in along the corridor, clear of the divider wall
 // straight line if it is clear; otherwise a grid search (A*) over walkable cells, then pull the path tight
-function clearLine(a,b){ const n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.06)); for(let k=1;k<=n;k++){ if(!walkable(a.x+(b.x-a.x)*k/n,a.z+(b.z-a.z)*k/n)) return false; } return true; }
+function clearLine(a,b){ const n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.04)); for(let k=1;k<=n;k++){ if(!walkable(a.x+(b.x-a.x)*k/n,a.z+(b.z-a.z)*k/n)) return false; } return true; }
 function gridPath(a,b){ const h=.15, pad=3, x0=Math.min(a.x,b.x)-pad, z0=Math.min(a.z,b.z)-pad, nx=Math.ceil((Math.abs(a.x-b.x)+2*pad)/h)+1, nz=Math.ceil((Math.abs(a.z-b.z)+2*pad)/h)+1;
   const id=(i,j)=>j*nx+i, cx=i=>x0+i*h, cz=j=>z0+j*h, ok=new Int8Array(nx*nz).fill(-1);
   const free=(i,j)=>{ if(i<0||j<0||i>=nx||j>=nz) return false; const k=id(i,j); if(ok[k]<0) ok[k]=walkable(cx(i),cz(j))?1:0; return ok[k]===1; };
@@ -2310,7 +2260,7 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'hou': showText(`${HOU.term}・${HOU.hou}`,`<p style="font-size:22px;letter-spacing:.2em;margin:6px 0 14px">${esc(HOU.yu)}</p><p class="meta">七十二候，五日一候。今天是${esc(HOU.term)}${esc(HOU.hou)}。書齋的時節依臺北時間更新；天色也跟著日出日落（06:00～18:00 為白天）。</p>`); break;
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
-  case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">進門正對玄關桌與掛軸。左後角是一塊四疊半榻榻米，中央囲炉裏；右前是潮州工夫茶席，右後是當代茶席、茶壺展示櫃與壁爐。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
+  case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對玄關桌與葡萄知了圖；左邊是鋪滿榻榻米的大和室，中央囲炉裏；右邊是茶室：工夫茶席、當代茶席、茶壺展示櫃、普洱茶櫃與壁爐。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
   case 'shoji': toggleShoji(); break;
   case 'bonsai': showText('盆景','<p style="line-height:2">知了間裡的中式盆景：矮櫃上幾盆小松，玄關桌旁高几一盆，羅漢床邊和壁爐旁各一盆落地黑松，工夫茶席旁一盆竹。</p>'); break;

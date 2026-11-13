@@ -1590,7 +1590,7 @@ const ZP={
   tatami:2.73, tatamiRise:.15, tokoDepth:.6,           // a real 四疊半 (3 x 0.91 m) and its tokonoma behind
   irori:.62, jizaiTop:2.6,
   genkan:{w:.93,d:.3,h:.8},
-  display:{cx:-4.815,w:4.19,d:.45,h:1.5}, _d0:{d:.4,h:1.9},
+  display:{cx:-4.815,w:4.19,d:.45,h:1.8}, _d0:{d:.4,h:1.9},
   modern:{cx:-4.5,cz:21.33,w:2.0,d:.95,h:.72}, modernChairH:.45,
   fireplace:{cz:21.55},
   basin:{x:-6.2,z:19.6},
@@ -1632,6 +1632,7 @@ function ruochen(parent,x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z)
 
 
 /* ================= 知了間 v19：和室（土間→式台→縁側→障子→疊）、明間（條案觀音、太師椅）、茶室 ================= */
+const ZL_ANIM=[];   // per-frame updates of small living things (frogs in the tank)
 // the roof underside of the hall, so partitions close against it
 const roofUnder=zl=>3.70+1.28*Math.pow(1-Math.min(1,Math.abs(zl)/5.62),1.26)-.16;
 const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.2} };
@@ -1872,13 +1873,13 @@ for(const side of [1,-1]){ const x=side*(ZR.wallX-.38), yaw=side>0?Math.PI/2:-Ma
 // exactly as deep as the cabinets that meet it (the front low cabinet, the back teapot case), so both corners close flush.
 // Eight bays between the fillers (b0 at the back): lower half b0–b1 pu-erh, b6 the wash basin, the rest tins;
 // upper half b3–b5 (beside the basin) one wide rainforest tank, nothing over the basin, b0–b1 pu-erh, the rest tins.
-{ const d=ZP.display.d, H=.9, TOP=1.5, fF=.4, fB=ZP.display.d, z0=ZP.front, z1=ZP.back, wood=new THREE.MeshStandardMaterial({color:0xb48a58,roughness:.5}), inner=new THREE.MeshStandardMaterial({color:0x9a7448,roughness:.6});
+{ const d=ZP.display.d, H=.9, TOP=1.5, TOP2=1.8, fF=.4, fB=ZP.display.d, z0=ZP.front, z1=ZP.back, wood=new THREE.MeshStandardMaterial({color:0xb48a58,roughness:.5}), inner=new THREE.MeshStandardMaterial({color:0x9a7448,roughness:.6});
   const G=new THREE.Group(); G.position.set(ZP.right,0,(z0+z1)/2); G.rotation.y=Math.PI/2; scene.add(G);   // local x runs along the wall (toward -z), local z points into the room
   const Lall=z1-z0, xa=-Lall/2+fB, xb=Lall/2-fF, L=xb-xa, bays=8, bw=L/bays, U=b=>xa+bw*(b+.5), mid=.46, upY=1.2;
-  box(fB,TOP,d,wood,-Lall/2+fB/2,TOP/2,d/2,G,BLOCK); box(fF,TOP,d,wood,Lall/2-fF/2,TOP/2,d/2,G,BLOCK);          // blind corner fillers
+  box(fB,TOP2,d,wood,-Lall/2+fB/2,TOP2/2,d/2,G,BLOCK); box(fF,TOP2,d,wood,Lall/2-fF/2,TOP2/2,d/2,G,BLOCK);          // blind corner fillers
   box(L,.06,d,wood,(xa+xb)/2,.03,d/2,G,BLOCK); box(L,.04,d,wood,(xa+xb)/2,H-.02,d/2,G,BLOCK); box(Lall,.04,d,wood,0,TOP-.02,d/2,G,BLOCK);
-  box(L,TOP,.02,inner,(xa+xb)/2,TOP/2,.01,G);
-  for(let b=0;b<=bays;b++){ const hh=(b===4||b===5)?H:TOP-.04; box(.03,hh,d,wood,xa+bw*b,hh/2,d/2,G,BLOCK); }   // b3–b5 open into one wide tank above the counter
+  box(L,TOP2,.02,inner,(xa+xb)/2,TOP2/2,.01,G);
+  for(let b=0;b<=bays;b++){ if(b===4||b===5){ box(.03,H,d,wood,xa+bw*b,H/2,d/2,G,BLOCK); box(.03,TOP2-TOP,d,wood,xa+bw*b,(TOP+TOP2)/2,d/2,G); } else box(.03,TOP2,d,wood,xa+bw*b,TOP2/2,d/2,G,BLOCK); }   // b3–b5 open into one wide tank above the counter; an open top row over everything, no cap   // b3–b5 open into one wide tank above the counter
   OB(ZP.right,ZP.right+d,z0,z1);
   const TIN_PICK=TEAS.map((_,t)=>({type:'tin',t}));
   const LAB_M=TEAS.map(([n])=>new THREE.MeshStandardMaterial({roughness:.8,map:textCanvas(96,192,(c,w,h)=>{ c.fillStyle='#b4302a'; c.fillRect(0,0,w,h); speck(c,w,h,160,['#7a1a14','#d85a48'],.25); c.strokeStyle='#e6c27a'; c.lineWidth=3; c.strokeRect(6,6,w-12,h-12); c.fillStyle='#1a0f0a';
@@ -1890,6 +1891,8 @@ for(const side of [1,-1]){ const x=side*(ZR.wallX-.38), yaw=side>0?Math.PI/2:-Ma
   const tinRow=(b,y)=>{ for(let u=U(b)-bw/2+.09;u<U(b)+bw/2-.07;u+=.13) tin(u,y); };
   for(const b of [2,3,4,5,7]){ shelf(b,mid); tinRow(b,.06); tinRow(b,mid+.013); }
   for(const b of [2,7]){ shelf(b,upY); tinRow(b,H); tinRow(b,upY+.013); }
+  for(const b of [2,3,4,5,7]) tinRow(b,TOP);
+  { const u=U(6), tw=new THREE.MeshStandardMaterial({color:0xece6da,roughness:1}); for(let i=0;i<3;i++) box(.26,.035,.2,tw,u-.18,TOP+.018+i*.037,d/2,G,{type:'wash'}); const j=lathe([[0,0],[.05,0],[.07,.05],[.07,.12],[.04,.16],[.035,.17]],whitePorcelain,20); j.position.set(u+.2,TOP,d/2); G.add(j); }
   // pu-erh
   { const bamboo=new THREE.MeshStandardMaterial({color:0xb89a62,roughness:.9}), cord=new THREE.MeshStandardMaterial({color:0x7a5a34,roughness:1}), paper=new THREE.MeshStandardMaterial({color:0xece4d0,roughness:.95}); const pick={type:'puer'};
     const tongs=(u,y)=>{ const t=new THREE.Group(); t.position.set(u,y,d/2); G.add(t); const tong=cylinder(.1,.1,.34,bamboo,0,.1,0,t); tong.rotation.z=Math.PI/2; tong.userData=pick; pickables.push(tong); for(const dx of [-.11,0,.11]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.102,.006,6,20),cord); r.position.set(dx,.1,0); r.rotation.y=Math.PI/2; t.add(r); } };
@@ -1898,7 +1901,7 @@ for(const side of [1,-1]){ const x=side*(ZR.wallX-.38), yaw=side>0?Math.PI/2:-Ma
     for(const b of [0,1]){ shelf(b,mid); shelf(b,upY); tongs(U(b)-.2,.06); tongs(U(b)+.2,.06); cakes(b,mid+.013,5); }
     for(let i=0;i<4;i++) box(.16,.04,.22,new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.95}),U(0)-.2,H+.02+i*.045,d/2,G,pick);
     for(let i=0;i<6;i++){ const t=lathe([[0,0],[.04,0],[.045,.02],[.03,.04],[0,.04]],new THREE.MeshStandardMaterial({color:0x5a3a22,roughness:.95}),14); t.position.set(U(0)+.05+(i%3)*.1,H,d/2+(i<3?-.06:.06)); G.add(t); }
-    cakes(0,upY+.013,5); cakes(1,upY+.013,5);
+    cakes(0,upY+.013,5); cakes(1,upY+.013,5); tongs(U(0)-.2,TOP); tongs(U(0)+.2,TOP); cakes(1,TOP,5);
     const jar=lathe([[0,0],[.07,0],[.1,.07],[.1,.16],[.06,.22],[.05,.24]],new THREE.MeshStandardMaterial({color:0x5a4030,roughness:.5}),20); jar.scale.setScalar(.95); jar.position.set(U(1),H,d/2); G.add(jar); }
   // wash basin on the counter of b6, doors below, a short bronze tap, and a cupboard over it
   { const pick={type:'wash'}, u=U(6); for(const s of [-1,1]){ box(bw/2-.04,H-.16,.02,wood,u+s*bw/4,H/2-.02,d+.008,G,pick); box(.012,.08,.02,bronzeOld,u+s*.06,H-.2,d+.025,G); }
@@ -1919,9 +1922,17 @@ for(const side of [1,-1]){ const x=side*(ZR.wallX-.38), yaw=side>0?Math.PI/2:-Ma
     for(const [px,pz,m] of [[-.95,.12,leaf],[-.55,.26,leaf2],[-.2,.1,leaf],[.3,.24,leaf2],[.7,.12,leaf],[1.0,.28,leaf]]) for(let i=0;i<7;i++){ const a=i/7*Math.PI*2, l=new THREE.Mesh(new THREE.PlaneGeometry(.045,.16),m); l.position.set(u+px+Math.cos(a)*.03,y0+.16,pz+Math.sin(a)*.03); l.rotation.set(Math.sin(a)*.6,0,-Math.cos(a)*.6); G.add(l); }
     for(let i=0;i<5;i++){ const l=new THREE.Mesh(new THREE.PlaneGeometry(.12,.08),leaf); const p=br.getPoint(.2+i*.15); l.position.copy(p).add(new THREE.Vector3(0,.04,0)); l.rotation.set(-.6,i,0); G.add(l); }
     const frogM=new THREE.MeshStandardMaterial({color:0x5fb84a,roughness:.35}), eyeM=new THREE.MeshStandardMaterial({color:0xc42a1a,roughness:.2});
-    const frog=(p,ry)=>{ const f=new THREE.Group(); f.position.copy(p); f.rotation.y=ry; G.add(f); const b=new THREE.Mesh(new THREE.SphereGeometry(.03,12,8),frogM); b.scale.set(1.2,.7,1); b.userData=pick; f.add(b); pickables.push(b);
-      for(const s of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.011,8,6),eyeM); e.position.set(s*.016,.018,.022); f.add(e); const lg=new THREE.Mesh(new THREE.SphereGeometry(.012,6,4),frogM); lg.scale.set(1.6,.5,.8); lg.position.set(s*.032,-.01,-.01); f.add(lg); } };
-    frog(br.getPoint(.62).add(new THREE.Vector3(0,.03,.02)),.4); frog(new THREE.Vector3(u+.33,y0+.2,.3),-.3); frog(new THREE.Vector3(u-.6,y0+.12,.32),.7);
+    const frogs=[]; const spots=[]; for(let t=.08;t<.95;t+=.12){ const p=br.getPoint(t); spots.push(new THREE.Vector3(p.x,p.y+.03,p.z)); }
+    for(let i=0;i<8;i++) spots.push(new THREE.Vector3(u+(i/7-.5)*(w-.15),y0+.11,.14+(i%3)*.08));
+    const frog=(p,ry)=>{ const f=new THREE.Group(); f.position.copy(p); f.rotation.y=ry; G.add(f); ZL_DYN.push(f); const b=new THREE.Mesh(new THREE.SphereGeometry(.03,12,8),frogM); b.scale.set(1.2,.7,1); b.userData=pick; f.add(b); pickables.push(b);
+      for(const s of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.011,8,6),eyeM); e.position.set(s*.016,.018,.022); f.add(e); const lg=new THREE.Mesh(new THREE.SphereGeometry(.012,6,4),frogM); lg.scale.set(1.6,.5,.8); lg.position.set(s*.032,-.01,-.01); f.add(lg); }
+      const throat=new THREE.Mesh(new THREE.SphereGeometry(.014,8,6),new THREE.MeshStandardMaterial({color:0xe8e4b0,roughness:.5})); throat.position.set(0,-.012,.02); f.add(throat);
+      frogs.push({f,throat,from:p.clone(),to:p.clone(),t:1,wait:1+Math.random()*5,ph:Math.random()*6}); };
+    frog(spots[4],.4); frog(spots[10],-.3); frog(spots[13],.7);
+    ZL_ANIM.push(dt=>{ for(const F of frogs){ F.ph+=dt; F.throat.scale.setScalar(1+.35*Math.max(0,Math.sin(F.ph*7))*(F.t>=1?1:0));
+      if(F.t<1){ F.t=Math.min(1,F.t+dt/.45); const k=F.t; F.f.position.lerpVectors(F.from,F.to,k); F.f.position.y+=Math.sin(k*Math.PI)*.07; }
+      else if((F.wait-=dt)<=0){ const to=spots[Math.floor(Math.random()*spots.length)]; if(frogs.some(o=>o!==F&&o.to.distanceTo(to)<.06)){ F.wait=.5; continue; }
+        F.from.copy(F.f.position); F.to.copy(to); F.t=0; F.wait=2+Math.random()*7; F.f.rotation.y=Math.atan2(to.x-F.from.x,to.z-F.from.z); } } });
     const lamp=new THREE.MeshStandardMaterial({color:0xf2f6e8,emissive:0xd8f0c8,emissiveIntensity:.6}); LAMPS.push({f:{on:true},mat:lamp}); box(w-.1,.01,.04,lamp,u,y0+h-.03,cz,G); }
 }
 // the red-cased painting on the front wall beside the window, over the low cabinet
@@ -1946,15 +1957,15 @@ const fireplace={on:false,light:null,flames:[],glow:null};
   const glow=new THREE.MeshStandardMaterial({color:0xfff4e0,emissive:0xffd9a0,emissiveIntensity:1.2}); LAMPS.push({f:{on:true},mat:glow});
   const bulb=new THREE.Mesh(new THREE.SphereGeometry(.035,12,8),glow); bulb.position.set(x,y-.04,z); scene.add(bulb);
   softLight(x,y-.15,z,6,4); }
-// potted bamboo on the low cabinet, on the other side of the window from the painting
-{ const x=-6.33, z=ZP.front+.4/2, y=.9, pick={type:'bamboo2'};
-  const pot=lathe([[0,0],[.11,0],[.14,.03],[.15,.2],[.16,.22]],new THREE.MeshStandardMaterial({color:0x2f3f4a,roughness:.35}),28); pot.position.set(x,y,z); pot.userData=pick; scene.add(pot); pickables.push(pot);
-  const soil=new THREE.Mesh(new THREE.CircleGeometry(.15,24),new THREE.MeshStandardMaterial({color:0x3a2e22,roughness:1})); soil.rotation.x=-Math.PI/2; soil.position.set(x,y+.2,z); scene.add(soil);
-  const stem=new THREE.MeshStandardMaterial({color:0x7a8a3a,roughness:.55}), node=new THREE.MeshStandardMaterial({color:0x5a6a2a,roughness:.6}), leaf=new THREE.MeshStandardMaterial({color:0x3f6a2a,roughness:.7,side:THREE.DoubleSide}); const R=rnd(66);
-  for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+R(), r=.04+R()*.06, h=1.1+R()*.7, bx=x+Math.cos(a)*r, bz=z+Math.sin(a)*r*.6, lean=(R()-.5)*.08;
-    const c=cylinder(.011,.014,h,stem,bx,y+.2+h/2,bz); c.rotation.z=lean;
-    for(let n=1;n<5;n++) cylinder(.016,.016,.012,node,bx-Math.sin(lean)*h*(n/5-.5),y+.2+h*n/5,bz);
-    for(let k=0;k<7;k++){ const t=.5+R()*.5, px=bx-Math.sin(lean)*h*(t-.5)+(R()-.5)*.24, py=y+.2+h*t, pz=bz+(R()-.5)*.14; const l=new THREE.Mesh(new THREE.PlaneGeometry(.035,.17),leaf); l.position.set(px,py,pz); l.rotation.set(R()*.8-.4,R()*6,1.1+R()*.6); scene.add(l); } } }
+// an ikebana in a tall white porcelain vase on the low cabinet, on the other side of the window from the painting
+{ const x=-6.33, z=ZP.front+.2, y=.9, pick={type:'ikebana2'};
+  const vase=lathe([[0,0],[.06,0],[.075,.04],[.08,.16],[.06,.26],[.035,.32],[.03,.36],[.045,.39]],new THREE.MeshStandardMaterial({color:0xf6f3ec,roughness:.12}),32); vase.position.set(x,y,z); vase.userData=pick; scene.add(vase); pickables.push(vase);
+  const twig=new THREE.MeshStandardMaterial({color:0x3b2a1c,roughness:1}), leafM=new THREE.MeshStandardMaterial({color:0x2f5a2c,roughness:.6,side:THREE.DoubleSide}), petal=new THREE.MeshStandardMaterial({color:0xc8283a,roughness:.55}), petal2=new THREE.MeshStandardMaterial({color:0xf2ece0,roughness:.6}), stamen=new THREE.MeshStandardMaterial({color:0xe8c040}); const R=rnd(41);
+  // 真・副・控: a tall branch, a second leaning out, a short one low; camellias on them
+  for(const [pts,n,pm] of [[[[0,.38,0],[.03,.6,0],[.02,.85,.02],[.08,1.05,0]],3,petal],[[[0,.38,0],[-.1,.52,.04],[-.22,.62,.06],[-.3,.66,.05]],2,petal2],[[[0,.38,0],[.1,.44,.05],[.18,.46,.08]],1,petal]]){
+    const c=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(x+p[0],y+p[1],z+p[2]))); scene.add(new THREE.Mesh(new THREE.TubeGeometry(c,16,.006,6,false),twig));
+    for(let i=0;i<6;i++){ const p=c.getPoint(.3+i*.12); const l=new THREE.Mesh(new THREE.SphereGeometry(.026,8,6),leafM); l.scale.set(1.7,.25,.8); l.position.copy(p).add(new THREE.Vector3((R()-.5)*.04,0,(R()-.5)*.04)); l.rotation.y=R()*6; scene.add(l); }
+    for(let k=0;k<n;k++){ const fl=c.getPoint(1-k*.3); for(let i=0;i<6;i++){ const pt=new THREE.Mesh(new THREE.SphereGeometry(.024,8,6),pm); pt.scale.set(1,.45,.8); const a=i/6*Math.PI*2; pt.position.set(fl.x+Math.cos(a)*.02,fl.y,fl.z+Math.sin(a)*.02); scene.add(pt); } const st=new THREE.Mesh(new THREE.SphereGeometry(.01,6,4),stamen); st.position.copy(fl).add(new THREE.Vector3(0,.008,0)); scene.add(st); } } }
 /* ---------- glass teapot display cabinet on the back wall ---------- */
 { const x0=ZP.display.cx-ZP.display.w/2, x1=ZP.display.cx+ZP.display.w/2, W=x1-x0, D=ZP.display.d, H=ZP.display.h, cx=(x0+x1)/2, cz=ZP.back-D/2; const pick={type:'display'};
   const g=furn(cx,cz,0);
@@ -1963,7 +1974,7 @@ const fireplace={on:false,light:null,flames:[],glow:null};
   const bays=4; for(let i=1;i<bays;i++) box(.03,H,.03,darkWood,-W/2+i*W/bays,H/2,-D/2+.015,g,pick);
   const glass=new THREE.Mesh(new THREE.PlaneGeometry(W-.06,H-.1),new THREE.MeshStandardMaterial({color:0xdfe8ea,transparent:true,opacity:.12,roughness:.05,metalness:.1})); glass.position.set(0,H/2,-D/2); glass.rotation.y=Math.PI; glass.userData=pick; g.add(glass); pickables.push(glass);
   const strip=new THREE.MeshStandardMaterial({color:0xfff2d8,emissive:0xffd9a0,emissiveIntensity:.8,roughness:.6}); LAMPS.push({f:{on:true},mat:strip});
-  const shelves=[.47,.94];
+  const shelves=[.47,.94,1.41];
   for(const y of shelves){ box(W-.08,.025,D-.04,new THREE.MeshStandardMaterial({color:0xe6eef0,transparent:true,opacity:.35,roughness:.05}),0,y,0,g); }
   for(const y of [...shelves,H-.03]) box(W-.1,.012,.02,strip,0,y-.03,-D/2+.04,g);
   // pots: 朱泥, 紫砂, 白瓷, 青瓷 and a 提梁 pot, repeated along the shelves
@@ -2088,7 +2099,7 @@ function tickZhiliao(dt){ const now=Date.now(), tt=performance.now()/1000;
   // the fire: sprites lick upward at their own pace, the light flickers with them
   if(fireplace.light){ const f=fireplace.on?1:0; fireplace.light.intensity=f*3.2*(.8+.12*Math.sin(tt*11)+.08*Math.sin(tt*23.7)); fireplace.glow.material.opacity=f*(.7+.2*Math.sin(tt*7));
     for(const F of fireplace.flames){ const k=(.7+.3*Math.sin(tt*F.sp+F.ph))*(.85+.15*Math.sin(tt*F.sp*2.3+F.ph)); F.s.visible=f>0; const h=F.h*k+.05; F.s.scale.set(.15*(.8+.2*Math.sin(tt*3+F.ph)),h,1); F.s.position.y=.15+h/2; F.s.position.x=F.bx+Math.sin(tt*2.1+F.ph)*.012; F.s.material.opacity=.5+.45*k; } }
-  tickShoji(dt);
+  tickShoji(dt); for(const f of ZL_ANIM) f(dt);
   // gongfu
   const GF=sharedLatest('gf',myGF), gel=GF?(now-GF.at)/1000:1e9;
   const glow=gel<0?0:gel<5?gel/5:gel<TEA_LAST?1:Math.max(0,1-(gel-TEA_LAST)/600);
@@ -2327,7 +2338,7 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'hou': showText(`${HOU.term}・${HOU.hou}`,`<p style="font-size:22px;letter-spacing:.2em;margin:6px 0 14px">${esc(HOU.yu)}</p><p class="meta">七十二候，五日一候。今天是${esc(HOU.term)}${esc(HOU.hou)}。書齋的時節依臺北時間更新；天色也跟著日出日落（06:00～18:00 為白天）。</p>`); break;
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
-  case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米半高的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，《美人》畫掛在窗邊。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
+  case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，《美人》畫掛在窗邊。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
   case 'shoji': toggleShoji(); break;
   case 'bonsai': showText('盆景','<p style="line-height:2">知了間裡的中式盆景：矮櫃上幾盆小松，玄關桌旁高几一盆，羅漢床邊和壁爐旁各一盆落地黑松，工夫茶席旁一盆竹。</p>'); break;
@@ -2340,7 +2351,7 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'puer': showText('普洱茶櫃','<p style="line-height:2">上層是竹箬包好、麻繩綁著的一提提七子餅；中層幾餅拆開的放在餅架上，露出棉紙；下層是茶磚、沱茶和一甕散茶。</p>'); break;
   case 'cicada': showText('葡萄知了','<p style="line-height:2">水墨葡萄藤下垂著一隻知了，紙本，藍地小花紋的裱。掛在和室的床之間。</p><p class="meta">The Metropolitan Museum of Art 開放資料。</p>'); break;
   case 'beauty': showText('Beauty Revealed','<p style="line-height:2">Sarah Goodridge，1828 年，象牙上的水彩細密畫，裝在紅色皮盒裡。</p><p class="meta">The Metropolitan Museum of Art 開放資料。</p>'); break;
-  case 'bamboo2': showText('盆竹','<p style="line-height:2">窗戶另一邊，矮櫃上一盆觀音竹，青灰釉盆，竹竿細瘦，節節分明。</p>'); break;
+  case 'ikebana2': showText('插花','<p style="line-height:2">窗戶另一邊，矮櫃上一隻白瓷長頸瓶，依真、副、控三枝插山茶：高枝紅花，斜出一枝白花，低處一朵紅。</p>'); break;
   case 'pyra': showText('火棘','<p style="line-height:2">條案左側高几上一盆火棘，斜幹，細枝拱垂，小葉深綠，一簇簇紅果。</p>'); break;
   case 'plum2': showText('老樁梅','<p style="line-height:2">條案右側高几上一盆老樁梅：樹樁劈裂中空，只抽出幾條細枝，開著淡粉的花，紅苞未放；橢圓宜興盆裡伴一塊小靈璧石。</p>'); break;
   case 'viv': showText('雨林缸','<p style="line-height:2">茶櫃裡的一格做成雨林缸：苔蘚、沉木、鳳梨科，兩隻綠色樹蛙，紅眼睛。</p>'); break;
@@ -2351,7 +2362,7 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'console': showText('玄關桌','<p style="line-height:2">畫下的長桌，放隨身的東西。</p>'); break;
   case 'songlamp': showText('宋式大燈','<p style="line-height:2">八角木框，素紗，掛在中軸上方。</p>'); break;
   case 'fire': fireplace.on=!fireplace.on; toast(fireplace.on?'打開壁爐。':'關掉壁爐。'); break;
-  case 'display': showText('茶壺展示櫃','<p style="line-height:2">一米半高的玻璃櫃，三層，朱泥、紫砂、白瓷、青瓷，還有一把提梁壺，層板燈從前緣往裡照。</p>'); break;
+  case 'display': showText('茶壺展示櫃','<p style="line-height:2">一米八高的玻璃櫃，四層，朱泥、紫砂、白瓷、青瓷，還有一把提梁壺，層板燈從前緣往裡照。</p>'); break;
   case 'genkan': showText('玄關','<p style="line-height:2">入門直走道的盡頭：一張窄玄關桌，桌後掛一幅水墨山水。</p>'); break;
   case 'modern': showText('當代茶席','<p style="line-height:2">後牆前的長桌，一把側把壺放在陶質茶承上，幾只杯子。</p>'); break;
   case 'gongfu': showGongfu(); break;

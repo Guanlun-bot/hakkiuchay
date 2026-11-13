@@ -2193,40 +2193,48 @@ function statusOf(p){ const s=num(p.s,-1); const m=str(p.m,8), e=num(p.e);
 function occupant(si){ if(ME.seat===si) return myName+'（你）'; for(const [,o] of others) if(num(o.p.s,-1)===si) return str(o.p.n,12)||'訪客'; return null; }
 function occupied(si){ for(const [,o] of others) if(num(o.p.s,-1)===si) return true; return false; }
 function renderPeople(){ const list=[{n:myName+'（你）',c:myColor,st:statusOf(presenceObj())}]; for(const [,o] of others) list.push({n:str(o.p.n,12)||'訪客',c:/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888',st:statusOf(o.p)});
-  $('#pc').textContent=list.length+' 人'+(room?'':'・離線'); $('#pl').innerHTML=list.map(p=>`<div class="p"><span class="dot" style="background:${p.c}"></span><span>${esc(p.n)}</span><span class="st">${esc(p.st)}</span></div>`).join('');
+  $('#pc').textContent=list.length+' 人'+(room?(room.mode&&room.mode()?'・'+room.mode():''):'・離線'); $('#pl').innerHTML=list.map(p=>`<div class="p"><span class="dot" style="background:${p.c}"></span><span>${esc(p.n)}</span><span class="st">${esc(p.st)}</span></div>`).join('');
   for(const [,o] of others){ const st=statusOf(o.p), nm=str(o.p.n,12)||'訪客', key=nm+'|'+st+'|'+o.p.c; if(o.av.key!==key){ o.av.key=key; o.av.tag.material.map?.dispose(); o.av.tag.material.map=nameTex(nm,st,/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'); o.av.tag.material.needsUpdate=true; o.av.body.material.color.set(/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'); } } }
 // On hakkiuchay.space there is no Claude room: share presence through a Supabase Realtime channel instead.
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key) return null;
   if(!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-  const sb=window.supabase.createClient(C.url,C.key,{auth:{persistSession:false,autoRefreshToken:false},realtime:{params:{eventsPerSecond:20}}});
+  const sb=window.supabase.createClient(C.url,C.key,{auth:{persistSession:false,autoRefreshToken:false}});
   const me=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)), ch=sb.channel(C.channel||'hakkiuchay-vr',{config:{presence:{key:me},broadcast:{self:false,ack:false}}});
-  const peers=new Map();   // key -> {p, heard, skews[]}
-  let here=new Set(), peersFn=null, cur=null, sentAt=0, sentKey='', timer=null, emitT=null, ready=false;
-  // clocks differ between computers: keep the smallest (receive time - send time) as that peer's offset, and shift its timestamps onto our clock
-  const shift=(p,k)=>{ if(!p) return {}; const o={...p}, d=k; const at=v=>typeof v==='number'&&v>0?v+d:v;
+  // Two paths carry the same state: broadcast (fast, for walking) and presence (slower, but it also reaches anyone who joins later).
+  // Whichever copy is newer wins, so the room works even if one path is blocked.
+  const peers=new Map();   // key -> {p, t, heard, skews[], fast}
+  let peersFn=null, cur=null, sentAt=0, sentKey='', timer=null, emitT=null, ready=false, tracked='', trackAt=0, trackT=null;
+  const shift=(p,d)=>{ if(!p) return {}; const o={...p}; const at=v=>typeof v==='number'&&v>0?v+d:v;
     if(o.rec) o.rec={...o.rec,at:at(o.rec.at)}; if(o.gf) o.gf={...o.gf,at:at(o.gf.at)}; if(o.ir) o.ir={...o.ir,at:at(o.ir.at)}; o.e=at(o.e);
     if(o.dr&&typeof o.dr==='object'){ const dr={}; for(const key in o.dr){ const r=o.dr[key]; dr[key]=Array.isArray(r)?[r[0],at(r[1])]:r; } o.dr=dr; } return o; };
+  let here=new Set();
   const emit=()=>{ emitT=null; if(!peersFn) return; const now=Date.now(), list=[];
     for(const [k,v] of peers){ if(!here.has(k)&&now-v.heard>8000){ peers.delete(k); continue; } list.push({peer:k,kind:'viewer',sameTab:false,presence:shift(v.p,Math.min(...v.skews))}); }
     peersFn({peers:list}); };
   let lastEmit=0; const soon=()=>{ const d=Date.now()-lastEmit; if(d>100){ lastEmit=Date.now(); emit(); } else if(!emitT) emitT=setTimeout(()=>{ lastEmit=Date.now(); emit(); },100-d); };
-  ch.on('presence',{event:'sync'},()=>{ here=new Set(Object.keys(ch.presenceState())); for(const k of [...peers.keys()]) if(!here.has(k)) peers.delete(k); soon(); });
-  ch.on('broadcast',{event:'s'},({payload:m})=>{ if(!m||typeof m.k!=='string'||m.k===me||!m.p) return; const v=peers.get(m.k)||{skews:[]};
-    v.skews.push(Date.now()-num(m.t)); if(v.skews.length>12) v.skews.shift(); v.p=m.p; v.heard=Date.now(); peers.set(m.k,v); soon();
-    if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
+  const take=(k,t,p,fast)=>{ if(!k||k===me||!p||typeof p!=='object') return; const v=peers.get(k)||{skews:[],t:0};
+    // receive time minus send time = clock offset plus delay; the smallest recent value is the best guess at the offset
+    if(fast||num(t)>v.t){ v.skews.push(Date.now()-num(t)); if(v.skews.length>12) v.skews.shift(); } if(fast) v.fast=Date.now();
+    if(num(t)>=v.t){ v.t=num(t); v.p=p; } v.heard=Date.now(); peers.set(k,v); };
+  ch.on('presence',{event:'sync'},()=>{ const st=ch.presenceState(); here=new Set(Object.keys(st));
+    for(const k of here){ const m=st[k][st[k].length-1]; if(m&&m.p) take(k,m.t,m.p,false); }
+    for(const k of [...peers.keys()]) if(!here.has(k)&&Date.now()-peers.get(k).heard>8000) peers.delete(k); soon(); });
+  ch.on('broadcast',{event:'s'},msg=>{ const m=msg&&(msg.payload||msg); if(!m) return; take(m.k,m.t,m.p,true); soon(); if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
   const moving=(a,b)=>{ if(!a||!b) return false; const x={...a}, y={...b}; for(const f of ['x','z','r']){ delete x[f]; delete y[f]; } return JSON.stringify(x)===JSON.stringify(y); };
+  function track(){ trackT=null; if(!ready||!cur) return; const k=JSON.stringify(cur); if(k===tracked) return; tracked=k; trackAt=Date.now(); ch.track({t:Date.now(),p:cur}).catch(()=>{}); }
   function send(force,hi){ timer=null; if(!ready||!cur) return; const k=JSON.stringify(cur); if(!force&&k===sentKey) return; sentKey=k; sentAt=Date.now();
-    ch.send({type:'broadcast',event:'s',payload:{k:me,t:Date.now(),p:cur,hi:hi?1:0}}).catch(()=>{}); }
-  await new Promise((res,rej)=>{ const to=setTimeout(()=>rej(new Error('timeout')),12000);
-    ch.subscribe(st=>{ if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; ch.track({j:Date.now()}).catch(()=>{}); send(true,true); res(); } }); });
-  setInterval(()=>send(true),2500);   // heartbeat, so a late joiner and a dropped message both recover within seconds
+    try{ const r=ch.send({type:'broadcast',event:'s',payload:{k:me,t:Date.now(),p:cur,hi:hi?1:0}}); if(r&&r.catch) r.catch(()=>{}); }catch{}
+    if(!trackT) trackT=setTimeout(track,Math.max(0,800-(Date.now()-trackAt))); }
+  await new Promise((res,rej)=>{ const to=setTimeout(()=>rej(new Error('timeout')),15000);
+    ch.subscribe(st=>{ if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; track(); send(true,true); res(); } }); });
+  setInterval(()=>send(true),2500);
   setInterval(soon,3000);
   addEventListener('pagehide',()=>{ try{ ch.untrack(); sb.removeChannel(ch); }catch{} });
   return { presence(o){ const prev=cur; cur=o; if(timer) return Promise.resolve();
-      // only walking: about seven updates a second; anything else (sitting, drinks, doors, tea, records): at once
       const gap=moving(prev,o)?140:0, wait=Math.max(0,gap-(Date.now()-sentAt)); timer=setTimeout(send,wait); return Promise.resolve(); },
-    onPeers(fn){ peersFn=fn; emit(); } }; }
+    onPeers(fn){ peersFn=fn; emit(); },
+    mode(){ let fast=0, n=0; for(const v of peers.values()){ n++; if(v.fast&&Date.now()-v.fast<6000) fast++; } return n?(fast?'即時':'慢速'):''; } }; }
 async function connectRoom(){ try{ if(window.claude&&typeof window.claude.use==='function') room=await window.claude.use('room'); }catch{ room=null; }
   if(!room){ try{ room=await supabaseRoom(); }catch{ room=null; } }
   if(!room) { renderPeople(); return; }

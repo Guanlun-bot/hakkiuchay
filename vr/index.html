@@ -169,7 +169,7 @@ $('#today').textContent = `${cnNum(now.getMonth()+1)}月${cnNum(now.getDate())}�
 /* ---------------- renderer / scene ---------------- */
 const canvas = $('#c');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch?1.5:2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch?1.25:1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -629,7 +629,7 @@ const daylight=new THREE.DirectionalLight(0xfff0d8,1.4);
 const ambientSky=new THREE.HemisphereLight(0xe6eef5,0x827666,1.1);
 daylight.target.position.copy(skyCenter);
 scene.add(daylight,daylight.target,ambientSky);
-renderer.shadowMap.enabled=!isTouch;
+renderer.shadowMap.enabled=!isTouch; renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 daylight.castShadow=true;
 daylight.shadow.mapSize.set(isTouch?1024:2048,isTouch?1024:2048);
@@ -693,6 +693,7 @@ function updateSky(){
   cloudMaterial.color.set('#60708e').lerp(new THREE.Color('#f6f5ec'),day);
   cloudMaterial.opacity=.36+.36*day;
   starMat.opacity=Math.max(0,1-day*1.6); moon.visible=day<.5; moon.material.opacity=1-day*2;
+  daylight.castShadow=daylight.intensity>.02; renderer.shadowMap.needsUpdate=true;
 }
 updateSky();
 setInterval(updateSky,30000);
@@ -1697,12 +1698,12 @@ const TIN_LABEL=TEAS.map(([n])=>textCanvas(96,192,(g,w,h)=>{ g.fillStyle='#b4302
   for(const y of levels) box(x1-x0,.03,D,huanghuali,(x0+x1)/2,y-.015,z,g,BLOCK);
   for(const x of [x0,x1]) box(.04,H,D,huanghuali,x,H/2,z,g,BLOCK);
   box(x1-x0,H,.02,huangDark,(x0+x1)/2,H/2,z+D/2-.01,g);
-  const R=rnd(23); let k=0;
+  const R=rnd(23); let k=0; const TIN_PICK=TEAS.map((_,t)=>({type:'tin',t})), TIN_MAT=TIN_LABEL.map(m=>new THREE.MeshStandardMaterial({map:m,roughness:.8}));
   for(const y of levels){ let x=x0+.1; while(x<x1-.08){ const t=k%TEAS.length; k+=1+(R()<.3?1:0); const r=.045+R()*.025, h=.13+R()*.11; if(x+r>x1-.06) break;
-      const tg=new THREE.Group(); tg.position.set(x+r,y,z-.02); g.add(tg); const pick={type:'tin',t};
+      const tg=new THREE.Group(); tg.position.set(x+r,y,z-.02); g.add(tg); const pick=TIN_PICK[t];
       cylinder(r,r,h,pewter,0,h/2,0,tg).userData=pick; pickables.push(tg.children[0]);
       const cap=cylinder(r+.004,r+.004,.035,pewter,0,h+.012,0,tg); cap.userData=pick; pickables.push(cap); cylinder(r*.4,r*.5,.015,pewter,0,h+.035,0,tg);
-      const lab=new THREE.Mesh(new THREE.CylinderGeometry(r+.0015,r+.0015,h*.62,20,1,true,-.65,1.3),new THREE.MeshStandardMaterial({map:TIN_LABEL[t],roughness:.8})); lab.position.y=h*.48; lab.rotation.y=Math.PI; lab.userData=pick; tg.add(lab); pickables.push(lab);
+      const lab=new THREE.Mesh(new THREE.CylinderGeometry(r+.0015,r+.0015,h*.62,20,1,true,-.65,1.3),TIN_MAT[t]); lab.position.y=h*.48; lab.rotation.y=Math.PI; lab.userData=pick; tg.add(lab); pickables.push(lab);
       x+=2*r+.035+R()*.03; } }
   OBST.push({x0,x1,z0:z-D/2,z1:z+D/2}); }
 
@@ -2198,15 +2199,33 @@ function renderPeople(){ const list=[{n:myName+'（你）',c:myColor,st:statusOf
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key) return null;
   if(!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-  const sb=window.supabase.createClient(C.url,C.key,{auth:{persistSession:false,autoRefreshToken:false}});
-  const me=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)), ch=sb.channel(C.channel||'hakkiuchay-vr',{config:{presence:{key:me}}});
-  let peersFn=null, pending=null, last=0, timer=null;
-  const emit=()=>{ if(!peersFn) return; const st=ch.presenceState(), peers=[]; for(const k in st){ const m=st[k][st[k].length-1]; peers.push({peer:k,kind:'viewer',sameTab:k===me,presence:(m&&m.p)||{}}); } peersFn({peers}); };
-  ch.on('presence',{event:'sync'},emit);
-  await new Promise((res,rej)=>{ const to=setTimeout(()=>rej(new Error('timeout')),12000); ch.subscribe(st=>{ if(st==='SUBSCRIBED'){ clearTimeout(to); res(); if(pending||last) { last=0; flush(); } } }); });
-  function flush(){ timer=null; if(!pending) return; last=Date.now(); const o=pending; pending=null; ch.track({p:o}).catch(()=>{}); }
+  const sb=window.supabase.createClient(C.url,C.key,{auth:{persistSession:false,autoRefreshToken:false},realtime:{params:{eventsPerSecond:20}}});
+  const me=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)), ch=sb.channel(C.channel||'hakkiuchay-vr',{config:{presence:{key:me},broadcast:{self:false,ack:false}}});
+  const peers=new Map();   // key -> {p, heard, skews[]}
+  let here=new Set(), peersFn=null, cur=null, sentAt=0, sentKey='', timer=null, emitT=null, ready=false;
+  // clocks differ between computers: keep the smallest (receive time - send time) as that peer's offset, and shift its timestamps onto our clock
+  const shift=(p,k)=>{ if(!p) return {}; const o={...p}, d=k; const at=v=>typeof v==='number'&&v>0?v+d:v;
+    if(o.rec) o.rec={...o.rec,at:at(o.rec.at)}; if(o.gf) o.gf={...o.gf,at:at(o.gf.at)}; if(o.ir) o.ir={...o.ir,at:at(o.ir.at)}; o.e=at(o.e);
+    if(o.dr&&typeof o.dr==='object'){ const dr={}; for(const key in o.dr){ const r=o.dr[key]; dr[key]=Array.isArray(r)?[r[0],at(r[1])]:r; } o.dr=dr; } return o; };
+  const emit=()=>{ emitT=null; if(!peersFn) return; const now=Date.now(), list=[];
+    for(const [k,v] of peers){ if(!here.has(k)&&now-v.heard>8000){ peers.delete(k); continue; } list.push({peer:k,kind:'viewer',sameTab:false,presence:shift(v.p,Math.min(...v.skews))}); }
+    peersFn({peers:list}); };
+  let lastEmit=0; const soon=()=>{ const d=Date.now()-lastEmit; if(d>100){ lastEmit=Date.now(); emit(); } else if(!emitT) emitT=setTimeout(()=>{ lastEmit=Date.now(); emit(); },100-d); };
+  ch.on('presence',{event:'sync'},()=>{ here=new Set(Object.keys(ch.presenceState())); for(const k of [...peers.keys()]) if(!here.has(k)) peers.delete(k); soon(); });
+  ch.on('broadcast',{event:'s'},({payload:m})=>{ if(!m||typeof m.k!=='string'||m.k===me||!m.p) return; const v=peers.get(m.k)||{skews:[]};
+    v.skews.push(Date.now()-num(m.t)); if(v.skews.length>12) v.skews.shift(); v.p=m.p; v.heard=Date.now(); peers.set(m.k,v); soon();
+    if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
+  const moving=(a,b)=>{ if(!a||!b) return false; const x={...a}, y={...b}; for(const f of ['x','z','r']){ delete x[f]; delete y[f]; } return JSON.stringify(x)===JSON.stringify(y); };
+  function send(force,hi){ timer=null; if(!ready||!cur) return; const k=JSON.stringify(cur); if(!force&&k===sentKey) return; sentKey=k; sentAt=Date.now();
+    ch.send({type:'broadcast',event:'s',payload:{k:me,t:Date.now(),p:cur,hi:hi?1:0}}).catch(()=>{}); }
+  await new Promise((res,rej)=>{ const to=setTimeout(()=>rej(new Error('timeout')),12000);
+    ch.subscribe(st=>{ if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; ch.track({j:Date.now()}).catch(()=>{}); send(true,true); res(); } }); });
+  setInterval(()=>send(true),2500);   // heartbeat, so a late joiner and a dropped message both recover within seconds
+  setInterval(soon,3000);
   addEventListener('pagehide',()=>{ try{ ch.untrack(); sb.removeChannel(ch); }catch{} });
-  return { presence(o){ pending=o; if(!timer) timer=setTimeout(flush,Math.max(0,300-(Date.now()-last))); return Promise.resolve(); },
+  return { presence(o){ const prev=cur; cur=o; if(timer) return Promise.resolve();
+      // only walking: about seven updates a second; anything else (sitting, drinks, doors, tea, records): at once
+      const gap=moving(prev,o)?140:0, wait=Math.max(0,gap-(Date.now()-sentAt)); timer=setTimeout(send,wait); return Promise.resolve(); },
     onPeers(fn){ peersFn=fn; emit(); } }; }
 async function connectRoom(){ try{ if(window.claude&&typeof window.claude.use==='function') room=await window.claude.use('room'); }catch{ room=null; }
   if(!room){ try{ room=await supabaseRoom(); }catch{ room=null; } }
@@ -2371,10 +2390,10 @@ function step(dt){
       if(spot) o.av.cup.position.set(.18,spot[1]-y-.045,-spot[0]); else o.av.cup.position.set(.27,.88,-.14);
       const sn=num(p.sn,-1); if(o.av.snI!==sn){ o.av.snI=sn; o.av.g.remove(o.av.snack); o.av.snack=snackMesh(SNACKS[sn]?sn:-1); o.av.g.add(o.av.snack); }
       if(spot) o.av.snack.position.set(-.2,spot[1]-y-.04,-spot[0]-.08); else o.av.snack.position.set(-.27,.86,-.14); }
-    const g=o.av.g; g.position.x+=(x-g.position.x)*Math.min(1,dt*6); g.position.z+=(z-g.position.z)*Math.min(1,dt*6); g.position.y+=(y-g.position.y)*Math.min(1,dt*6); let dy=r-g.rotation.y; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); g.rotation.y+=dy*Math.min(1,dt*6); }
+    const g=o.av.g; g.position.x+=(x-g.position.x)*Math.min(1,dt*9); g.position.z+=(z-g.position.z)*Math.min(1,dt*9); g.position.y+=(y-g.position.y)*Math.min(1,dt*6); let dy=r-g.rotation.y; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); g.rotation.y+=dy*Math.min(1,dt*6); }
   // seat cushions show occupancy
-  presT+=dt; if(presT>0.2){ presT=0; pushPresence(); }
-  tickExtras(dt);
+  presT+=dt; if(presT>0.12){ presT=0; pushPresence(); }
+  tickExtras(dt); tickLights(dt);
   // XR snap turn
   if(renderer.xr.isPresenting){
     const axes=Array.from(renderer.xr.getSession().inputSources,src=>src.gamepad?.axes?.[2]||0);
@@ -2399,6 +2418,58 @@ function step(dt){
   }
 }
 function tryMove(dx,dz){ if(walkable(ME.x+dx,ME.z+dz)){ ME.x+=dx; ME.z+=dz; return true; } if(walkable(ME.x+dx,ME.z)){ ME.x+=dx; return true; } if(walkable(ME.x,ME.z+dz)){ ME.z+=dz; return true; } return false; }
+/* ---------------- performance: merge static meshes, share a small pool of point lights ---------------- */
+function mergeGeos(list){ let nv=0, ni=0; for(const g of list){ nv+=g.attributes.position.count; ni+=g.index?g.index.count:g.attributes.position.count; }
+  const pos=new Float32Array(nv*3), nor=new Float32Array(nv*3), uv=new Float32Array(nv*2), idx=new Uint32Array(ni); let vo=0, io=0;
+  for(const g of list){ const n=g.attributes.position.count; pos.set(g.attributes.position.array.subarray(0,n*3),vo*3);
+    if(g.attributes.normal) nor.set(g.attributes.normal.array.subarray(0,n*3),vo*3); if(g.attributes.uv) uv.set(g.attributes.uv.array.subarray(0,n*2),vo*2);
+    if(g.index){ const a=g.index.array; for(let i=0;i<a.length;i++) idx[io+i]=a[i]+vo; io+=a.length; } else { for(let i=0;i<n;i++) idx[io+i]=vo+i; io+=n; }
+    vo+=n; }
+  const out=new THREE.BufferGeometry(); out.setAttribute('position',new THREE.BufferAttribute(pos,3)); out.setAttribute('normal',new THREE.BufferAttribute(nor,3)); out.setAttribute('uv',new THREE.BufferAttribute(uv,2)); out.setIndex(new THREE.BufferAttribute(idx,1)); out.computeBoundingSphere(); out.computeBoundingBox(); return out; }
+let LIGHT_POOL=[], VLIGHTS=[];
+// one material per look: a texture's repeat/offset is baked into the UVs so walls sharing a texture merge into one draw
+const canonMats=new Map();
+function canonical(m){ const live=[lampPaper,lanternSilk,ember,emberGF,...LAMPS.map(l=>l.mat)]; if(live.includes(m)) return {m,uv:null};
+  const t=m.map; const sig=[m.type,m.color?m.color.getHex():'',m.roughness,m.metalness,m.emissive?m.emissive.getHex():'',m.emissiveIntensity,m.side,m.transparent,m.opacity,m.flatShading,m.toneMapped,m.fog,m.depthWrite,m.alphaTest,m.vertexColors,
+    t?t.source.uuid+','+t.wrapS+','+t.wrapT+','+t.colorSpace+','+t.anisotropy+','+t.flipY:''].join('|');
+  let uv=null; if(t){ if(t.matrixAutoUpdate) t.updateMatrix(); const e=t.matrix.elements; if(!(e[0]===1&&e[4]===1&&e[6]===0&&e[7]===0&&e[1]===0&&e[3]===0)) uv=t.matrix.clone(); }
+  let c=canonMats.get(sig); if(!c){ c=m; if(uv){ c=m.clone(); c.map=t.clone(); c.map.repeat.set(1,1); c.map.offset.set(0,0); c.map.rotation=0; c.map.updateMatrix(); } canonMats.set(sig,c); }
+  return {m:c,uv}; }
+function optimizeScene(){
+  try{
+  scene.updateMatrixWorld(true);
+  // anything that moves, changes visibility or is picked stays as it is
+  const dyn=new Set();
+  const keep=o=>{ if(o) o.traverse(c=>dyn.add(c)); };
+  for(const k in DOORS){ for(const l of DOORS[k].leaves) keep(l.pv); keep(DOORS[k].bar); }
+  [platter,cuckoo.g,PINE,myCup,mySnackMesh,hl,hlGlow,marker,floorShade,...LANTERNS,...GF_CUPS,...IRORI_CUPS,...PINZI,...LEAVES.map(l=>l.m)].forEach(keep);
+  const groups=new Map(), victims=[], pickId=new Map();
+  scene.traverse(o=>{ if(!o.isMesh||o.isInstancedMesh||dyn.has(o)||!o.visible) return; let p=o.parent; while(p&&p!==scene){ if(!p.visible) return; p=p.parent; }
+    if(Array.isArray(o.material)) return; const m=o.material, u=o.userData&&o.userData.type?o.userData:null;
+    if(!(m.isMeshStandardMaterial||m.isMeshBasicMaterial)||m.visible===false||o.geometry.morphAttributes&&Object.keys(o.geometry.morphAttributes).length) return;
+    if(u&&['shelf','lamp'].includes(u.type)) return;
+    const g=o.geometry; if(!g.attributes.position||!g.attributes.normal) return;
+    if(u&&!pickId.has(u)) pickId.set(u,pickId.size+1);
+    const cm=canonical(m);
+    const key=cm.m.uuid+'|'+(o.castShadow?1:0)+(o.receiveShadow?1:0)+'|'+(u?pickId.get(u):0); if(!groups.has(key)) groups.set(key,{m:cm.m,u,cast:o.castShadow,recv:o.receiveShadow,geos:[]});
+    const gg=g.clone().applyMatrix4(o.matrixWorld); for(const name of Object.keys(gg.attributes)) if(!['position','normal','uv'].includes(name)) gg.deleteAttribute(name);
+    if(cm.uv&&gg.attributes.uv){ const a=gg.attributes.uv, v=new THREE.Vector3(); for(let i=0;i<a.count;i++){ v.set(a.getX(i),a.getY(i),1).applyMatrix3(cm.uv); a.setXY(i,v.x,v.y); } }
+    groups.get(key).geos.push(gg); victims.push(o); });
+  const gone=new Set(victims); for(const o of victims) o.parent.remove(o);
+  for(let i=pickables.length-1;i>=0;i--) if(gone.has(pickables[i])) pickables.splice(i,1);
+  for(const {m,u,cast,recv,geos} of groups.values()){ for(let i=0;i<geos.length;i+=4000){ const mesh=new THREE.Mesh(mergeGeos(geos.slice(i,i+4000)),m); mesh.castShadow=cast; mesh.receiveShadow=recv; mesh.matrixAutoUpdate=false; if(u){ mesh.userData=u; pickables.push(mesh); } scene.add(mesh); } for(const g of geos) g.dispose(); }
+  // point lights: keep every light's settings (code still animates them), but light the scene with the nearest few
+  scene.traverse(o=>{ if(o.isPointLight&&!LIGHT_POOL.includes(o)) VLIGHTS.push(o); });
+  for(const l of VLIGHTS){ l.userData.wp=new THREE.Vector3().setFromMatrixPosition(l.matrixWorld); l.userData.zone=zoneOf({x:l.userData.wp.x,z:l.userData.wp.z}); l.visible=false; }
+  for(let i=0;i<7;i++){ const l=new THREE.PointLight(0xffffff,0,5,2); scene.add(l); LIGHT_POOL.push(l); }
+  renderer.shadowMap.needsUpdate=true;
+  }catch(e){ console.warn('optimize',e); }
+}
+let lightPick=[], lightT=1;
+function tickLights(dt){ if(!LIGHT_POOL.length) return; lightT+=dt;
+  if(lightT>.25){ lightT=0; const zone=zoneOf(ME), here=new THREE.Vector3(ME.x,1.5,ME.z);
+    lightPick=VLIGHTS.filter(l=>l.intensity>.001).map(l=>({l,s:l.userData.wp.distanceTo(here)/Math.max(1,l.distance*.35)+(l.userData.zone===zone?0:(zone==='C'||l.userData.zone==='C'?3:12))})).sort((a,b)=>a.s-b.s).slice(0,LIGHT_POOL.length).map(o=>o.l); }
+  LIGHT_POOL.forEach((p,i)=>{ const v=lightPick[i]; if(!v){ p.intensity=0; return; } p.position.copy(v.userData.wp); p.color.copy(v.color); p.intensity=v.intensity; p.distance=v.distance; p.decay=v.decay; }); }
 renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); renderer.render(scene,camera); });
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.fov=fovFor(camera.aspect); camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
@@ -2415,6 +2486,7 @@ renderPeople();
   // redraw text textures that were built before fonts were ready
   for(const ci of CASES.keys()) buildCase(ci);
   buildCabinets(); buildPerimeterShelves(); buildPlaques();
+  optimizeScene();
 })();
 </script>
 </body>

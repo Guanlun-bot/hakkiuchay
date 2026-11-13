@@ -130,6 +130,7 @@ collections:
           - { name: nav_home, label: 選單：關於書齋（首頁）, widget: string }
           - { name: nav_tajiyu, label: 選單：獺祭魚, widget: string }
           - { name: nav_chanroom, label: 選單：禪修室, widget: string, required: false }
+          - { name: nav_vr, label: 選單：線上書齋（留空就不顯示）, widget: string, required: false }
           - { name: footer, label: 頁尾文字, widget: string }
           - { name: owner_heading, label: 齋主／聯絡：齋主欄標題, widget: string }
           - { name: contact_heading, label: 齋主／聯絡：聯絡欄標題, widget: string }

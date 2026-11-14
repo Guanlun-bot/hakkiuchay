@@ -1635,11 +1635,24 @@ function ruochen(parent,x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z)
 const ZL_ANIM=[];   // per-frame updates of small living things (frogs in the tank)
 // the roof underside of the hall, so partitions close against it
 const roofUnder=zl=>3.70+1.28*Math.pow(1-Math.min(1,Math.abs(zl)/5.62),1.26)-.16;
-const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.2} };
+const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.2}, win:{z:21.95,y:1.55,r:.5} };
 function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1,ZP.back]];
   for(const [z0,z1] of segs){ const L=z1-z0, cz=(z0+z1)/2;
     box(TW,ZR.brickH,L,mBrick(L*.78,ZR.brickH*1.05),x,ZR.brickH/2,cz,scene,BLOCK);
-    box(TW,D.h-ZR.brickH,L,mWhite(L/2,.7),x,(D.h+ZR.brickH)/2,cz,scene,BLOCK); OB(x-TW/2,x+TW/2,z0,z1); }
+    if(z0<D.z0) box(TW,D.h-ZR.brickH,L,mWhite(L/2,.7),x,(D.h+ZR.brickH)/2,cz,scene,BLOCK);
+    else { // the white upper wall beside the door, pierced by an octagonal window
+      const W=ZR.win, oct=(r)=>[...Array(8)].map((_,k)=>{ const a=Math.PI/8+k*Math.PI/4; return [W.z-19.6+Math.cos(a)*r, W.y+Math.sin(a)*r]; });
+      const sh=new THREE.Shape(); sh.moveTo(z0-19.6,ZR.brickH); sh.lineTo(z1-19.6,ZR.brickH); sh.lineTo(z1-19.6,D.h); sh.lineTo(z0-19.6,D.h); sh.closePath();
+      const h=new THREE.Path(); oct(W.r).forEach(([a,b],k)=>k?h.lineTo(a,b):h.moveTo(a,b)); h.closePath(); sh.holes.push(h);
+      const m=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:TW,bevelEnabled:false}),new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92})); m.rotation.y=-Math.PI/2; m.position.set(x+TW/2,0,19.6); scene.add(m);
+      // wooden frame and a simple bagua lattice: an inner octagon tied to the frame by eight spokes
+      const ring=(ro,ri,dep,mat)=>{ const s2=new THREE.Shape(); oct(ro).forEach(([a,b],k)=>k?s2.lineTo(a,b):s2.moveTo(a,b)); s2.closePath(); const hh=new THREE.Path(); oct(ri).forEach(([a,b],k)=>k?hh.lineTo(a,b):hh.moveTo(a,b)); hh.closePath(); s2.holes.push(hh);
+        const g=new THREE.ExtrudeGeometry(s2,{depth:dep,bevelEnabled:false}); g.translate(0,0,-dep/2); const r=new THREE.Mesh(g,mat); r.rotation.y=-Math.PI/2; r.position.set(x,0,19.6); scene.add(r); };
+      ring(W.r+.07,W.r-.03,TW+.06,darkWood);
+      const lat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.6}); ring(.17,.14,.04,lat);
+      for(let k=0;k<8;k++){ const a=k*Math.PI/4, r0=.155, r1=W.r-.02, L2=r1-r0, mz=(r0+r1)/2;
+        const b=box(.035,.025,L2,lat,x,W.y+Math.sin(a)*mz,W.z+Math.cos(a)*mz); b.rotation.x=-a; } }
+    OB(x-TW/2,x+TW/2,z0,z1); }
   const s=new THREE.Shape(); s.moveTo(-4.15,D.h); for(let i=0;i<=24;i++){ const z=-4.15+8.3*i/24; s.lineTo(z,roofUnder(z)); } s.lineTo(4.15,D.h); s.closePath();
   const m=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:TW,bevelEnabled:false}),new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92}));
   m.rotation.y=-Math.PI/2; m.position.set(x+TW/2,0,19.6); scene.add(m);
@@ -1657,7 +1670,7 @@ JR.tat.x0=JR.tat.x1-3*JR.u; JR.tat.z0=JR.tat.z1-6*JR.u;
 const TATAMI={x0:JR.dama.x1, x1:ZP.left, z0:16.05, z1:ZP.back, h:JR.rise};
 function floorY(x,z){ return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
 const SHOJI={open:true,k:1,leaves:[]};
-function zlBlocked(x,z){ return !SHOJI.open&&x>JR.shojiX-.3&&x<JR.shojiX+.3&&z>JR.shojiDoor.z0&&z<JR.shojiDoor.z1; }
+function zlBlocked(x,z){ return false; }
 const IRS=ZP.irori, IY=JR.rise;
 const TXu=(ux)=>JR.tat.x1-ux*JR.u, TZu=(uz)=>JR.tat.z1-uz*JR.u;
 const IRC={x:TXu(1.5), z:TZu(1.5)};
@@ -1734,8 +1747,7 @@ const IRC={x:TXu(1.5), z:TZu(1.5)};
   { const n=3, x0=JR.tat.x0, w=(ZP.left-x0)/n; for(let i=0;i<n;i++){ const g=new THREE.Group(); g.position.set(x0+w*(i+.5),R+H/2,zA); g.rotation.y=Math.PI/2; scene.add(g); panel(g,w,null); } OB(x0,ZP.left,zA-.05,zA+.05); }
   box(.08,.06,zB-zA+.08,darkWood,X,R+H+.03,(zA+zB)/2); box(ZP.left-JR.tat.x0+.08,.06,.08,darkWood,(JR.tat.x0+ZP.left)/2,R+H+.03,zA);   // 鴨居
   box(.1,H+.1,.1,darkWood,X,R+(H+.1)/2,zA);    // corner post
-  const lw=(D.z1-D.z0)/2+.02;
-  [[X-.02,0],[X+.02,1]].forEach(([x,i])=>{ const g=new THREE.Group(); g.position.set(x,R+H/2,0); scene.add(g); panel(g,lw,{type:'shoji'}); SHOJI.leaves.push({g,i,lw}); ZL_DYN.push(g); }); }
+  /* the sliding leaves were taken out: the doorway in the shoji stays open */ }
 function shojiPose(){ const D=JR.shojiDoor, k=SHOJI.k; for(const L of SHOJI.leaves){ const closed=L.i===0?D.z0+L.lw/2-.01:D.z1-L.lw/2+.01, open=D.z1+L.lw/2-.04+L.i*.0; L.g.position.z=closed+(open-closed)*k; } }
 shojiPose();
 function toggleShoji(){ const open=!SHOJI.open; myDoors={...myDoors,Z:[open?1:0,Date.now()]}; pushPresence(); SHOJI.open=open; noiseBurst(.5,600,.8,.05); toast(open?'拉開障子。':'拉上障子。'); }

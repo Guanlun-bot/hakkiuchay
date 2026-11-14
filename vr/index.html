@@ -1596,7 +1596,7 @@ const ZP={
   irori:.62, jizaiTop:3.45,
   genkan:{w:.93,d:.3,h:.8},
   display:{cx:-4.815,w:4.19,d:.45,h:1.8}, _d0:{d:.4,h:1.9},
-  modern:{cx:-4.5,cz:21.95,w:2.0,d:.95,h:.72}, modernChairH:.45,
+  modern:{cx:-4.95,cz:21.95,w:2.5,d:.95,h:.72}, modernChairH:.45,
   fireplace:{cz:21.55},
   basin:{x:-6.2,z:19.6},
   teaShelf:{z0:16.62,z1:18.5,d:.3,h:2.0},
@@ -2016,15 +2016,19 @@ const MODERN_SEATS=[];
   const tp=new THREE.Group(); tp.position.set(cx,h+.03,cz); scene.add(tp);
   const tb=lathe([[0,0],[.04,0],[.06,.02],[.062,.05],[.05,.075],[.03,.082]],new THREE.MeshStandardMaterial({color:0xe9e4da,roughness:.35}),28); tb.userData=pick; tp.add(tb); pickables.push(tb);
   tp.add(lathe([[0,.092],[.01,.092],[.03,.085],[.032,.082]],tb.material,20)); const hdl=cylinder(.008,.01,.11,new THREE.MeshStandardMaterial({color:0x3a2416}),.11,.045,0,tp); hdl.rotation.z=Math.PI/2;
-  for(let i=0;i<4;i++){ const c=lathe([[0,0],[.018,0],[.03,.03],[.032,.045]],new THREE.MeshStandardMaterial({color:[0xd8d2c4,0x6a6a62,0xd8d2c4,0x9a8a70][i],roughness:.4}),20); c.position.set(cx-.45+i*.3,h,cz+(i%2?.2:-.2)); scene.add(c); }
-  // seats: simple contemporary chairs
-  [[0,z1+.3,0],[-.55,z0-.3,2],[.55,z0-.3,2]].forEach(([dx,z,f])=>{ const x=cx+dx, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'modern','當代茶席'); MODERN_SEATS.push(si); const g=furn(x,z,yaw); const tag={type:'seat',si}; const sh=ZP.modernChairH;
-    box(.44,.04,.42,oak,0,sh,0,g,tag); for(const sx of [-1,1]) for(const sz of [-1,1]) box(.035,sh,.035,darkWood,sx*.19,sh/2,sz*.18,g,tag);
-    box(.44,.18,.025,oak,0,sh+.28,.2,g,tag); for(const sx of [-1,1]) box(.025,.3,.025,darkWood,sx*.19,sh+.15,.2,g); });
+  for(let i=0;i<4;i++){ const c=lathe([[0,0],[.018,0],[.03,.03],[.032,.045]],new THREE.MeshStandardMaterial({color:[0xd8d2c4,0x6a6a62,0xd8d2c4,0x9a8a70][i],roughness:.4}),20); c.position.set(cx+[-.66,0,.66,.3][i],h,cz+(i<3?-.3:.28)); scene.add(c); }
+  // seats: long benches with linen cushions, three guests on the window side facing the host, the host alone on the
+  //        screen side, sitting square to the window
+  { const bench=(z,L)=>{ const bh=.4, bd=.36; box(L,.05,bd,oak,cx,bh-.025,z,scene); for(const sx of [-1,1]) box(.05,bh-.05,bd-.04,darkWood,cx+sx*(L/2-.12),(bh-.05)/2,z); box(L-.3,.04,.04,darkWood,cx,.12,z); };
+    const cushM=new THREE.MeshStandardMaterial({color:0xcfc2a4,roughness:1}), pipe=new THREE.MeshStandardMaterial({color:0x6b5d48,roughness:1});
+    bench(z0-.32,Math.min(W-.2,2.1)); bench(z1+.32,.8);
+    [[-.66,z0-.32,2],[0,z0-.32,2],[.66,z0-.32,2],[0,z1+.32,0]].forEach(([dx,z,f])=>{ const x=cx+dx, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'modern','當代茶席'); MODERN_SEATS.push(si); const tag={type:'seat',si};
+      const c=new THREE.Mesh(new THREE.BoxGeometry(.5,.05,.33),cushM); c.position.set(x,.425,z); c.userData=tag; scene.add(c); pickables.push(c);
+      for(const sx of [-1,1]) box(.012,.012,.3,pipe,x+sx*.235,.432,z); }); }
   // a linear pendant over the table
   const pend=new THREE.Group(); pend.position.set(cx,1.75,cz); scene.add(pend);
   const glow=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffcf96,emissiveIntensity:.7,roughness:.9}); LAMPS.push({f:{on:true},mat:glow});
-  box(1.2,.05,.08,darkWood,0,0,0,pend); box(1.14,.012,.06,glow,0,-.03,0,pend); for(const sx of [-.5,.5]) cylinder(.003,.003,1.6,M.ink,sx,.8,0,pend);
+  box(1.7,.05,.08,darkWood,0,0,0,pend); box(1.64,.012,.06,glow,0,-.03,0,pend); for(const sx of [-.72,.72]) cylinder(.003,.003,1.6,M.ink,sx,.8,0,pend);
   softLight(cx,1.65,cz,3.2,3.4); }
 
 

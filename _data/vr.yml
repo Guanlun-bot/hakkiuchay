@@ -1,159 +1,150 @@
-# 線上書齋（/vr/）的內容。在後台「線上書齋」分頁修改；留空的圖片就用書齋內建的那張。
-# texts 的 key 是程式代號，請不要改；title、body 可以自由改，body 空一行就是分段。
 couplet:
   upper: 知味粗茶堪作伴
   lower: 了心陋室可安身
-images:
-  scroll: ''
-  teapaint: ''
-  beauty: ''
-  screen: ''
 texts:
-- key: zl_enter
-  title: 進入知了間的提示
-  body: 院子入口。正前方是條案與丁雲鵬《玉川煎茶圖》；左邊門洞進和室，右邊門洞進茶室。
-- key: teapaint
-  title: 玉川煎茶圖
-  body: '明・丁雲鵬《玉川煎茶圖》，壬子年（1612）冬作。畫盧仝（玉川子）在芭蕉、太湖石下烹茶，一僕提壺汲水，一婢捧盒。
+  - key: zl_enter
+    title: 進入知了間的提示
+    body: 院子入口。正前方是條案與丁雲鵬《玉川煎茶圖》；左邊門洞進和室，右邊門洞進茶室。
+  - key: teapaint
+    title: 玉川煎茶圖
+    body: 明・丁雲鵬《玉川煎茶圖》，壬子年（1612）冬作。畫盧仝（玉川子）在芭蕉、太湖石下烹茶，一僕提壺汲水，一婢捧盒。
+  - key: couplet
+    title: 對聯
+    body: |-
+      上聯　知味粗茶堪作伴
+      下聯　了心陋室可安身
+
+      兩句句首合為「知了」。
+  - key: altar2
+    title: 翹頭案
+    body: 明間正中的翹頭案，案上一隻錫茶罐、一副蓋碗；牆上掛《玉川煎茶圖》與對聯。
+  - key: chandelier2
+    title: 水晶吊燈
+    body: 跟學鳩齋一樣的兩層銅吊燈，S 形燈臂、燭台和水晶垂珠，從屋脊垂下。
+  - key: plum2
+    title: 老樁梅
+    body: 條案右側高几上一盆老樁梅：樹樁劈裂中空，只抽出幾條細枝，開著淡粉的花，紅苞未放；橢圓宜興盆裡伴一塊小靈璧石。
+  - key: pyra
+    title: 火棘
+    body: 條案左側高几上一盆火棘，斜幹，細枝拱垂，小葉深綠，一簇簇紅果。
+  - key: taishi
+    title: 太師椅
+    body: 明間兩側各一對太師椅，中間一張茶几。點椅子可以坐下。
+  - key: cicada
+    title: 葡萄知了
+    body: |-
+      水墨葡萄藤下垂著一隻知了，紙本，藍地小花紋的裱。掛在和室的床之間。
+
+      The Metropolitan Museum of Art 開放資料。
+  - key: shoin
+    title: 付書院
+    body: 窗前的書院板：硯箱、筆、三冊線裝書，一只小銅香爐。
+  - key: ikebana2
+    title: 插花
+    body: 窗戶另一邊，矮櫃上一隻白瓷長頸瓶，依真、副、控三枝插山茶：高枝紅花，斜出一枝白花，低處一朵紅。
+  - key: screen
+    title: 山水屏風
+    body: 後牆前立一架六曲水墨屏風：右起崖上老松、瀑布、草堂裡對坐的高士，中段雪後山徑的行旅，左端一片空闊的水面、遠山與飛雁。
+  - key: banana
+    title: 芭蕉
+    body: 茶室後角一盆芭蕉，大葉子越過屏風的左端。隔壁明間的《玉川煎茶圖》裡，盧仝就坐在芭蕉下煎茶。
+  - key: fountain
+    title: 獅頭吐水
+    body: 博古架旁的角落，牆上一面古銅獅頭，細水從口中吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。
+  - key: teaware
+    title: 茶櫃
+    body: 一格一個樣子：大陶壺、鐵壺、木茶箱、紙包茶、幾隻錫罐、一疊杯子、幾本書，留些空處。
+  - key: puer
+    title: 普洱茶櫃
+    body: 上層是竹箬包好、麻繩綁著的一提提七子餅；中層幾餅拆開的放在餅架上，露出棉紙；下層是茶磚、沱茶和一甕散茶。
+  - key: viv
+    title: 雨林缸
+    body: 茶櫃裡的一格做成雨林缸：苔蘚、沉木、鳳梨科，兩隻綠色樹蛙，紅眼睛。
+  - key: beauty
+    title: Beauty Revealed
+    body: >-
+      Sarah Goodridge，1828 年，象牙上的水彩細密畫，裝在紅色皮盒裡。
 
 
-    兩旁對聯：上聯「知味粗茶堪作伴」，下聯「了心陋室可安身」。'
-- key: couplet
-  title: 對聯
-  body: '上聯　知味粗茶堪作伴
+      According to descendants of the statesman Daniel Webster (1782-1852), this
+      miniature is a self-portrait Goodridge made for him.
+  - key: teapendant
+    title: 宋燈
+    body: 茶室正中高掛一盞小宋燈，八角木框糊素絹，紅穗垂在下緣，把整間照得均勻。
+  - key: modern
+    title: 當代茶席
+    body: 後牆前的長桌，一把側把壺放在陶質茶承上，幾只杯子。
+  - key: altar
+    title: 插花
+    body: |-
+      掛軸右下一瓶梅。
 
-    下聯　了心陋室可安身
+      中軸留空，從大門一路看得到掛軸。
+  - key: otter
+    title: 水獺圖
+    body: |-
+      三隻水獺在水中嬉游，絹本設色，裱成掛軸，掛在咖啡機上方。
 
-
-    兩句句首合為「知了」。'
-- key: altar2
-  title: 翹頭案
-  body: 明間正中的翹頭案，案上一隻錫茶罐、一副蓋碗；牆上掛《玉川煎茶圖》與對聯。
-- key: chandelier2
-  title: 水晶吊燈
-  body: 跟學鳩齋一樣的兩層銅吊燈，S 形燈臂、燭台和水晶垂珠，從屋脊垂下。
-- key: plum2
-  title: 老樁梅
-  body: 條案右側高几上一盆老樁梅：樹樁劈裂中空，只抽出幾條細枝，開著淡粉的花，紅苞未放；橢圓宜興盆裡伴一塊小靈璧石。
-- key: pyra
-  title: 火棘
-  body: 條案左側高几上一盆火棘，斜幹，細枝拱垂，小葉深綠，一簇簇紅果。
-- key: taishi
-  title: 太師椅
-  body: 明間兩側各一對太師椅，中間一張茶几。點椅子可以坐下。
-- key: cicada
-  title: 葡萄知了
-  body: '水墨葡萄藤下垂著一隻知了，紙本，藍地小花紋的裱。掛在和室的床之間。
-
-
-    The Metropolitan Museum of Art 開放資料。'
-- key: shoin
-  title: 付書院
-  body: 窗前的書院板：硯箱、筆、三冊線裝書，一只小銅香爐。
-- key: ikebana2
-  title: 插花
-  body: 窗戶另一邊，矮櫃上一隻白瓷長頸瓶，依真、副、控三枝插山茶：高枝紅花，斜出一枝白花，低處一朵紅。
-- key: screen
-  title: 山水屏風
-  body: 後牆前立一架六曲水墨屏風：右起崖上老松、瀑布、草堂裡對坐的高士，中段雪後山徑的行旅，左端一片空闊的水面、遠山與飛雁。
-- key: banana
-  title: 芭蕉
-  body: 茶室後角一盆芭蕉，大葉子越過屏風的左端。隔壁明間的《玉川煎茶圖》裡，盧仝就坐在芭蕉下煎茶。
-- key: fountain
-  title: 獅頭吐水
-  body: 博古架旁的角落，牆上一面古銅獅頭，細水從口中吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。
-- key: teaware
-  title: 茶櫃
-  body: 一格一個樣子：大陶壺、鐵壺、木茶箱、紙包茶、幾隻錫罐、一疊杯子、幾本書，留些空處。
-- key: puer
-  title: 普洱茶櫃
-  body: 上層是竹箬包好、麻繩綁著的一提提七子餅；中層幾餅拆開的放在餅架上，露出棉紙；下層是茶磚、沱茶和一甕散茶。
-- key: viv
-  title: 雨林缸
-  body: 茶櫃裡的一格做成雨林缸：苔蘚、沉木、鳳梨科，兩隻綠色樹蛙，紅眼睛。
-- key: beauty
-  title: Beauty Revealed
-  body: 'Sarah Goodridge，1828 年，象牙上的水彩細密畫，裝在紅色皮盒裡。
-
-
-    The Metropolitan Museum of Art 開放資料。'
-- key: teapendant
-  title: 宋燈
-  body: 茶室正中高掛一盞小宋燈，八角木框糊素絹，紅穗垂在下緣，把整間照得均勻。
-- key: modern
-  title: 當代茶席
-  body: 後牆前的長桌，一把側把壺放在陶質茶承上，幾只杯子。
-- key: altar
-  title: 插花
-  body: '掛軸右下一瓶梅。
-
-
-    中軸留空，從大門一路看得到掛軸。'
-- key: otter
-  title: 水獺圖
-  body: '三隻水獺在水中嬉游，絹本設色，裱成掛軸，掛在咖啡機上方。
-
-
-    獺祭魚：水獺把捕到的魚排在岸邊，像在祭祀。'
+      獺祭魚：水獺把捕到的魚排在岸邊，像在祭祀。
 teas:
-- name: 凍頂烏龍
-  note: 南投鹿谷・中焙火・熟果蜜香
-- name: 安溪鐵觀音
-  note: 福建安溪・觀音韻・蘭花香
-- name: 木柵鐵觀音
-  note: 臺北木柵・重焙・果酸回甘
-- name: 鳳凰單叢・鴨屎香
-  note: 廣東潮州・銀花香
-- name: 鳳凰單叢・蜜蘭香
-  note: 廣東潮州・蜜香蘭韻
-- name: 鳳凰單叢・宋種
-  note: 烏崠老欉・韻深
-- name: 大紅袍
-  note: 武夷岩茶・岩骨花香
-- name: 武夷肉桂
-  note: 武夷岩茶・桂皮辛香
-- name: 老欉水仙
-  note: 武夷岩茶・木質苔香
-- name: 東方美人
-  note: 新竹北埔・蜜果香
-- name: 文山包種
-  note: 新北坪林・清香
-- name: 梨山高山茶
-  note: 臺中梨山・冷礦清甜
-- name: 阿里山烏龍
-  note: 嘉義阿里山・高山氣
-- name: 白毫銀針
-  note: 福建福鼎・毫香
-- name: 普洱熟茶
-  note: 雲南・陳香
-- name: 正山小種
-  note: 武夷桐木關・松煙
+  - name: 凍頂烏龍
+    note: 南投鹿谷・中焙火・熟果蜜香
+  - name: 安溪鐵觀音
+    note: 福建安溪・觀音韻・蘭花香
+  - name: 木柵鐵觀音
+    note: 臺北木柵・重焙・果酸回甘
+  - name: 鳳凰單叢・鴨屎香
+    note: 廣東潮州・銀花香
+  - name: 鳳凰單叢・蜜蘭香
+    note: 廣東潮州・蜜香蘭韻
+  - name: 鳳凰單叢・宋種
+    note: 烏崠老欉・韻深
+  - name: 大紅袍
+    note: 武夷岩茶・岩骨花香
+  - name: 武夷肉桂
+    note: 武夷岩茶・桂皮辛香
+  - name: 老欉水仙
+    note: 武夷岩茶・木質苔香
+  - name: 東方美人
+    note: 新竹北埔・蜜果香
+  - name: 文山包種
+    note: 新北坪林・清香
+  - name: 梨山高山茶
+    note: 臺中梨山・冷礦清甜
+  - name: 阿里山烏龍
+    note: 嘉義阿里山・高山氣
+  - name: 白毫銀針
+    note: 福建福鼎・毫香
+  - name: 普洱熟茶
+    note: 雲南・陳香
+  - name: 正山小種
+    note: 武夷桐木關・松煙
 incense:
-- name: 沉香
-  note: 木質甘甜，沉穩綿長
-- name: 檀香
-  note: 奶香溫潤
-- name: 降真香
-  note: 清涼帶藥香
-- name: 龍腦
-  note: 清冽提神
-- name: 柏子香
-  note: 山林清氣
-- name: 艾草
-  note: 草本微苦
+  - name: 老沉
+    note: 木質甘甜，沉穩綿長
+  - name: 檀香
+    note: 奶香溫潤
+  - name: 降真香
+    note: 清涼帶藥香
+  - name: 龍腦
+    note: 清冽提神
+  - name: 柏子香
+    note: 山林清氣
+  - name: 艾草
+    note: 草本微苦
 music:
-- title: Bach Cello Suite No. 1 Prelude
-  artist: Yo-Yo Ma
-  file: Bach Cello Suite No. 1 Prelude - Yo-Yo Ma.mp3
-- title: Consolation No. 3
-  artist: Liszt
-  file: Consolation No. 3 - Liszt.mp3
-- title: La cathedrale engloutie
-  artist: Debussy
-  file: La cathedrale engloutie - Debussy.mp3
-- title: Nuvole Bianche
-  artist: Ludovico Einaudi
-  file: Nuvole Bianche - Ludovico Einaudi.mp3
-- title: Silent Night
-  artist: Piano
-  file: Silent Night - Piano.mp3
+  - title: Bach Cello Suite No. 1 Prelude
+    artist: Yo-Yo Ma
+    file: Bach Cello Suite No. 1 Prelude - Yo-Yo Ma.mp3
+  - title: Consolation No. 3
+    artist: Liszt
+    file: Consolation No. 3 - Liszt.mp3
+  - title: La cathedrale engloutie
+    artist: Debussy
+    file: La cathedrale engloutie - Debussy.mp3
+  - title: Nuvole Bianche
+    artist: Ludovico Einaudi
+    file: Nuvole Bianche - Ludovico Einaudi.mp3
+  - title: Silent Night
+    artist: Piano
+    file: Silent Night - Piano.mp3

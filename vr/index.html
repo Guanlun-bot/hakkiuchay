@@ -1494,7 +1494,6 @@ const SNACKS=[
   ['鳳梨酥','土鳳梨餡，酸甜','box',0xd9a441],
   ['牛軋糖','花生奶香','box',0xefe8da],
   ['芒果乾','一整包','bag',0xeea12e],
-  ['魷魚絲','鹹香耐嚼','bag',0xb8452a],
   ['洋芋片','薄鹽','bag',0x3a6fb0],
   ['綠豆糕','配茶剛好','box',0x9fb36a],
   ['黑巧克力','七成','bar',0x3a2214],
@@ -1502,7 +1501,6 @@ const SNACKS=[
   ['沙士','冰的','can',0x6a2a1a],
   ['麥仔茶','罐裝','can',0xb88a3a],
   ['冬瓜茶','鋁箔包','pack',0xd2a84a],
-  ['啤酒','冰的','can',0xe2dac2],
   ['香菸','一包，附打火機','cig',0xf3efe6],
   ['小雪茄','一盒','cig2',0x6a3e22],
 ];
@@ -1910,23 +1908,23 @@ for(const side of [1,-1]){ const x=side*(ZR.wallX-.38), yaw=side>0?Math.PI/2:-Ma
   const L0=.06, L1=mid+.013, L2=H, L3=upY+.013, L4=TOP;
   for(const b of [0,1,2,3,4,5,7,8]) shelf(b,mid); for(const b of [0,1,2,7,8]) shelf(b,upY);
   const u=b=>U(b);
-  // sparse: one or two pieces per level, many levels left empty
-  bigPot(u(1),L0,1.15,clay); pot(u(1),L2,clay); woodBox(u(1),L3);
-  kettle(u(2),L0,false); pack(u(2)-.07,L1); pack(u(2)+.07,L1); tin(u(2)-.07,L3); tin(u(2)+.07,L3);
-  woodBox(u(3),L1);
-  bigPot(u(4),L0,1.25,clay2);
-  tin(u(5)-.07,L1); tin(u(5)+.07,L1);
-  kettle(u(7),L0,true); jar1(u(7),L1,whitePorcelain,.9); tin(u(7)-.07,L2); tin(u(7)+.07,L2);
-  bigPot(u(8),L0,1.1,clay2); books(u(8),L2,2); cups(u(8),L3,3);
+  // full shelves, mostly tins, with the big pots, kettles, boxes and packets breaking up the rows
+  bigPot(u(1),L0,1.15,clay); tinRow(1,L1); cups(u(1)-.2,L2); pot(u(1)+.05,L2,clay); tin(u(1)+.25,L2); woodBox(u(1)-.12,L3); tin(u(1)+.2,L3); tinRow(1,L4);
+  kettle(u(2)-.15,L0,false); pack(u(2)+.12,L0); pack(u(2)+.24,L0); for(let i=0;i<4;i++) pack(u(2)-.27+i*.13,L1); tinRow(2,L2); tinRow(2,L3); jar1(u(2)-.2,L4,celadon,1); tin(u(2)+.05,L4); tin(u(2)+.2,L4);
+  tinRow(3,L0); woodBox(u(3)-.12,L1); tin(u(3)+.2,L1); tin(u(3)+.33,L1);
+  bigPot(u(4)-.12,L0,1.25,clay2); tin(u(4)+.22,L0); tin(u(4)+.34,L0); tinRow(4,L1);
+  for(let i=0;i<3;i++) pack(u(5)-.25+i*.13,L0); tin(u(5)+.22,L0); tinRow(5,L1);
+  kettle(u(7)-.15,L0,true); tin(u(7)+.15,L0); tin(u(7)+.28,L0); jar1(u(7)-.15,L1,whitePorcelain,.9); jar1(u(7)+.15,L1,clay2,.95); tinRow(7,L2); tinRow(7,L3); tinRow(7,L4);
+  bigPot(u(8)-.12,L0,1.1,clay2); tin(u(8)+.22,L0); tin(u(8)+.34,L0); tinRow(8,L1); books(u(8)-.15,L2,2); tin(u(8)+.15,L2); tin(u(8)+.28,L2); cups(u(8)-.2,L3,3); pot(u(8)+.05,L3,clay2); tin(u(8)+.27,L3); tinRow(8,L4);
   // pu-erh
   { const bamboo=new THREE.MeshStandardMaterial({color:0xb89a62,roughness:.9}), cord=new THREE.MeshStandardMaterial({color:0x7a5a34,roughness:1}), paper=new THREE.MeshStandardMaterial({color:0xece4d0,roughness:.95}); const pick={type:'puer'};
     const tongs=(u,y)=>{ const t=new THREE.Group(); t.position.set(u,y,d/2); G.add(t); const tong=cylinder(.1,.1,.34,bamboo,0,.1,0,t); tong.rotation.z=Math.PI/2; tong.userData=pick; pickables.push(tong); for(const dx of [-.11,0,.11]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.102,.006,6,20),cord); r.position.set(dx,.1,0); r.rotation.y=Math.PI/2; t.add(r); } };
     const cakes=(b,y,n)=>{ for(let i=0;i<n;i++){ const cx=U(b)-bw/2+.13+i*(bw-.26)/(n-1); const cake=cylinder(.1,.1,.025,new THREE.MeshStandardMaterial({color:[0x5a3a22,0x6a4a2a,0x3a2416,0x7a5a34][(i+b)%4],roughness:.95}),cx,y+.11,d/2,G); cake.rotation.x=Math.PI/2-.25; cake.userData=pick; pickables.push(cake);
       const wrap=new THREE.Mesh(new THREE.CircleGeometry(.112,24),paper); wrap.position.set(cx,y+.11,d/2+.015); wrap.rotation.x=-.25; G.add(wrap); } };
     // pu-erh, one bay only (b0)
-    tongs(U(0),L0); cakes(0,L1,3);
+    tongs(U(0)-.2,L0); tongs(U(0)+.2,L0); cakes(0,L1,4);
     for(let i=0;i<4;i++) box(.16,.04,.22,new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.95}),U(0)-.2,L2+.02+i*.045,d/2,G,pick);
-    const jar=lathe([[0,0],[.1,0],[.14,.1],[.14,.22],[.09,.3],[.07,.32]],new THREE.MeshStandardMaterial({color:0x5a4030,roughness:.5}),20); jar.position.set(U(0),L3,d/2); G.add(jar); }
+    const jar=lathe([[0,0],[.1,0],[.14,.1],[.14,.22],[.09,.3],[.07,.32]],new THREE.MeshStandardMaterial({color:0x5a4030,roughness:.5}),20); jar.position.set(U(0),L3,d/2); G.add(jar); cakes(0,L4,4); }
   // wash basin on the counter of b6, doors below, a short bronze tap, and a cupboard over it
   { const pick={type:'wash'}, u=U(6); for(const s of [-1,1]){ box(bw/2-.04,H-.16,.02,wood,u+s*bw/4,H/2-.02,d+.008,G,pick); box(.012,.08,.02,bronzeOld,u+s*.06,H-.2,d+.025,G); }
     const stone=new THREE.MeshStandardMaterial({color:0xb8b5ae,roughness:.9}); box(bw-.03,.03,d,stone,u,H+.015,d/2,G,pick);
@@ -2023,7 +2021,11 @@ const MODERN_SEATS=[];
   [[0,z1+.3,0],[-.55,z0-.3,2],[.55,z0-.3,2]].forEach(([dx,z,f])=>{ const x=cx+dx, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'modern','當代茶席'); MODERN_SEATS.push(si); const g=furn(x,z,yaw); const tag={type:'seat',si}; const sh=ZP.modernChairH;
     box(.44,.04,.42,oak,0,sh,0,g,tag); for(const sx of [-1,1]) for(const sz of [-1,1]) box(.035,sh,.035,darkWood,sx*.19,sh/2,sz*.18,g,tag);
     box(.44,.18,.025,oak,0,sh+.28,.2,g,tag); for(const sx of [-1,1]) box(.025,.3,.025,darkWood,sx*.19,sh+.15,.2,g); });
- }
+  // a linear pendant over the table
+  const pend=new THREE.Group(); pend.position.set(cx,1.75,cz); scene.add(pend);
+  const glow=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffcf96,emissiveIntensity:.7,roughness:.9}); LAMPS.push({f:{on:true},mat:glow});
+  box(1.2,.05,.08,darkWood,0,0,0,pend); box(1.14,.012,.06,glow,0,-.03,0,pend); for(const sx of [-.5,.5]) cylinder(.003,.003,1.6,M.ink,sx,.8,0,pend);
+  softLight(cx,1.65,cz,3.2,3.4); }
 
 
 /* ---------- right-front: Chaozhou gongfu tea, small square table, four backless stools ---------- */
@@ -2075,7 +2077,7 @@ softLight(0,2.35,ZP.back-1.0,3,3);                           // hall: a gentle w
 for(const s of [-1,1]) softLight(s*1.55,1.1,ZP.back-.3,1,1.4);   // up-light under each penjing stand
 softLight(IRC.x,1.5,IRC.z,4,4.6); softLight(3.15,2.3,19.9,1.6,3);   // washitsu: low over the hearth; the 土間
 softLight(6.45,1.9,22.7,1.5,1.8);                            // the tokonoma
-softLight(-4.8,2.8,20.2,4.8,7.5);                            // tea room: the small Song lamp in the middle, one broad even light
+softLight(-4.8,2.75,19.8,4.6,7.5);                           // tea room: the slim LED bar along the ceiling, one broad even light
 const ZM={
   cabinet:{z:15.6, d:.45, h:.9, doorGap:1.95, leftEnd:6.35},   // front wall: starts clear of the folded door leaves
   luohan:{x0:6.41, z0:15.62, len:2.0, depth:.95, seatH:.45},
@@ -2221,18 +2223,32 @@ function roomOf(p){ const z=zoneOf(p); if(z!=='N'||p.z<15.6||p.z>ZP.back+.5) ret
 // the contemporary table now sits close to the screen: its back chair is approached from the side
 for(const st of SEATS) if(st.z>ZP.modern.cz+.5&&Math.abs(st.x-ZP.modern.cx)<.2) st.ap={x:st.x+.7,z:st.z};
 
-// ---- the tea room's main light: a small Song-style lamp (octagonal wooden frame, plain silk) hung high in the middle
-{ const x=-4.8, y=2.95, z=20.2, r=.26, h=.44, pick={type:'teapendant'}, g=new THREE.Group(); g.position.set(x,y,z); scene.add(g); LANTERNS.push(g);
-  const wood=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.4});
-  const silk=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffcf96,emissiveIntensity:.7,roughness:.9,side:THREE.DoubleSide}); LAMPS.push({f:{on:true},mat:silk});
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,8,1,true),silk); body.rotation.y=Math.PI/8; body.userData=pick; g.add(body); pickables.push(body);
-  for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; box(.02,h+.03,.02,wood,Math.cos(a)*r,0,Math.sin(a)*r,g); }
-  for(const yy of [-h/2,h/2]){ const ring=new THREE.Mesh(new THREE.CylinderGeometry(r+.02,r+.02,.03,8),wood); ring.rotation.y=Math.PI/8; ring.position.y=yy; g.add(ring); }
-  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.07,r+.035,.1,8),wood); cap.rotation.y=Math.PI/8; cap.position.y=h/2+.06; g.add(cap);
-  const foot=new THREE.Mesh(new THREE.CylinderGeometry(r*.7,.05,.07,8),wood); foot.rotation.y=Math.PI/8; foot.position.y=-h/2-.05; g.add(foot);
-  for(let i=0;i<8;i++){ const a=(i+.5)/8*Math.PI*2; cylinder(.003,.003,.12,new THREE.MeshStandardMaterial({color:0xa8343a}),Math.cos(a)*(r+.012),-h/2-.07,Math.sin(a)*(r+.012),g); }
-  cylinder(.006,.006,.9,M.ink,0,h/2+.55,0,g);
+// ---- the tea room's main light: one slim LED bar hung along the room, dark metal body, a warm strip of light underneath
+{ const x=-4.8, y=2.85, z=19.8, L=2.6, pick={type:'teapendant'};
+  const body=new THREE.MeshStandardMaterial({color:0x2a2622,metalness:.5,roughness:.45});
+  const strip=new THREE.MeshStandardMaterial({color:0xfff4e4,emissive:0xffdcb0,emissiveIntensity:.9,roughness:.6}); LAMPS.push({f:{on:true},mat:strip});
+  box(.045,.035,L,body,x,y,z,scene,pick); box(.03,.006,L-.04,strip,x,y-.02,z,scene,pick);
+  for(const s of [-1,1]) cylinder(.0025,.0025,.75,M.ink,x,y+.39,z+s*(L/2-.25));
 }
+
+// ---- a second gramophone, on the low cabinet to the right of the tea room window; it plays the same record as the study's
+let TEA_REC=null, TEA_PLATTER=null;
+{ const x=-3.55, z=ZP.front+.24, g=new THREE.Group(); g.position.set(x,.9-.58,z); scene.add(g); const pick={type:'record'};
+  const walnut=new THREE.MeshStandardMaterial({color:0x3b2416,roughness:.4}), brass=new THREE.MeshStandardMaterial({color:0xc29a4a,metalness:.85,roughness:.28,side:THREE.DoubleSide});
+  box(.38,.15,.38,walnut,0,.655,0,g,pick); box(.4,.02,.4,walnut,0,.735,0,g,pick); box(.34,.1,.005,new THREE.MeshStandardMaterial({color:0x4a2e1c,roughness:.5}),0,.655,.191,g);
+  const pl=new THREE.Group(); pl.position.set(0,.75,0); g.add(pl); ZL_DYN.push(pl);
+  cylinder(.15,.15,.012,new THREE.MeshStandardMaterial({color:0x3a1f1a,roughness:.9}),0,0,0,pl);
+  const disc=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.005,40),new THREE.MeshStandardMaterial({color:0x111111,roughness:.3,metalness:.2})); disc.position.y=.009; pl.add(disc);
+  const lab=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.006,24),new THREE.MeshStandardMaterial({color:0x3e5873,roughness:.7})); lab.position.y=.010; pl.add(lab);
+  const crank=cylinder(.006,.006,.12,brass,.25,.65,.05,g); crank.rotation.z=Math.PI/2; box(.012,.07,.012,brass,.31,.62,.05,g);
+  const neck=new THREE.CatmullRomCurve3([[.13,.74,-.13],[.13,.86,-.14],[.1,.98,-.1],[.04,1.06,.0],[-.04,1.1,.1]].map(p=>new THREE.Vector3(...p))); g.add(new THREE.Mesh(new THREE.TubeGeometry(neck,30,.018,10,false),brass));
+  const arm=new THREE.CatmullRomCurve3([[.13,.76,-.13],[.08,.78,-.05],[.05,.775,.04]].map(p=>new THREE.Vector3(...p))); g.add(new THREE.Mesh(new THREE.TubeGeometry(arm,12,.007,8,false),brass));
+  cylinder(.022,.022,.03,brass,.13,.755,-.13,g); box(.025,.02,.035,brass,.05,.77,.05,g);
+  const prof=[]; for(let i=0;i<=24;i++){ const t=i/24; prof.push(new THREE.Vector2(.02+.22*Math.pow(t,2.6),t*.42)); }
+  const horn=new THREE.Mesh(new THREE.LatheGeometry(prof,36),brass); horn.userData=pick; pickables.push(horn);
+  const hornG=new THREE.Group(); hornG.position.set(-.04,1.1,.1); hornG.add(horn); g.add(hornG); hornG.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(-.3,.5,.8).normalize());
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.24,.006,8,48),brass); rim.position.y=.42; rim.rotation.x=Math.PI/2; horn.add(rim);
+  TEA_REC={x,z}; TEA_PLATTER=pl; }
 
 // ---- a potted banana (芭蕉) in the back-left corner of the tea room, its leaves reaching over the screen's left end:
 //      the plant Lu Tong sits under in 玉川煎茶圖 on the hall wall next door
@@ -2394,9 +2410,10 @@ function tickExtras(dt){
   // record player: shared state, spatial volume, spinning platter
   syncT+=dt; if(syncT>.5){ syncT=0; syncRecord(); }
   trySeek();
-  const playing=!audio.paused&&recEff&&recEff.t>=0; if(playing) platter.rotation.y-=dt*3.49;
+  const playing=!audio.paused&&recEff&&recEff.t>=0; if(playing){ platter.rotation.y-=dt*3.49; if(TEA_PLATTER) TEA_PLATTER.rotation.y-=dt*3.49; }
   const d=Math.hypot(ME.x-recPos.x,ME.z-recPos.z), zone=zoneOf(ME);
   let v=Math.max(.06,Math.min(1,1.15-d/11)); if(zone==='C') v*=.25; else if(zone!=='S') v=0;
+  if(TEA_REC){ const d2=Math.hypot(ME.x-TEA_REC.x,ME.z-TEA_REC.z), rm=roomOf(ME); v=Math.max(v,rm==='NR'?Math.max(.2,Math.min(1,1.1-d2/7)):rm==='NM'?.3:rm==='NL'?.15:0); }   // the tea room has its own gramophone
   audio.volume=recMuted?0:Math.min(1,recVolume*v*.7);
 }
 /* ---------------- avatars (others) ---------------- */
@@ -2525,7 +2542,7 @@ function act(h){ const u=h.object.userData; if(VRT[u.type]&&String(VRT[u.type].b
   case 'chandelier2': showText('水晶吊燈','<p style="line-height:2">跟學鳩齋一樣的兩層銅吊燈，S 形燈臂、燭台和水晶垂珠，從屋脊垂下。</p>'); break;
   case 'banana': showText('芭蕉','<p style="line-height:2">茶室後角一盆芭蕉，大葉子越過屏風的左端。隔壁明間的《玉川煎茶圖》裡，盧仝就坐在芭蕉下煎茶。</p>'); break;
   case 'floorlamp': toggleFloorLamp(u.i); break;
-  case 'teapendant': showText('宋燈','<p style="line-height:2">茶室正中高掛一盞小宋燈，八角木框糊素絹，紅穗垂在下緣，把整間照得均勻。</p>'); break;
+  case 'teapendant': showText('長條燈','<p style="line-height:2">茶室天花板下一支細長的燈，深色金屬燈身，底下一條柔和的暖光，把整間照得均勻。</p>'); break;
   case 'vivlamp': toggleViv(); break;
   case 'fountain': showText('獅頭吐水','<p style="line-height:2">博古架旁的角落，牆上一面古銅獅頭，細水從口中吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。</p>'); break;
   case 'teaware': showText('茶櫃','<p style="line-height:2">一格一個樣子：大陶壺、鐵壺、木茶箱、紙包茶、幾隻錫罐、一疊杯子、幾本書，留些空處。</p>'); break;

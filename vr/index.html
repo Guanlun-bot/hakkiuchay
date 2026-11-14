@@ -2068,7 +2068,7 @@ softLight(0,2.35,ZP.back-1.0,3,3);                           // hall: a gentle w
 for(const s of [-1,1]) softLight(s*1.55,1.1,ZP.back-.3,1,1.4);   // up-light under each penjing stand
 softLight(IRC.x,1.5,IRC.z,4,4.6); softLight(3.15,2.3,19.9,1.6,3);   // washitsu: low over the hearth; the 土間
 softLight(6.45,1.9,22.7,1.5,1.8);                            // the tokonoma
-softLight(-4.8,2.42,20.2,4.6,7);                             // tea room: the washi pendant in the middle, one broad even light
+softLight(-4.8,2.8,20.2,4.8,7.5);                            // tea room: the small Song lamp in the middle, one broad even light
 const ZM={
   cabinet:{z:15.6, d:.45, h:.9, doorGap:1.95, leftEnd:6.35},   // front wall: starts clear of the folded door leaves
   luohan:{x0:6.41, z0:15.62, len:2.0, depth:.95, seatH:.45},
@@ -2214,12 +2214,38 @@ function roomOf(p){ const z=zoneOf(p); if(z!=='N'||p.z<15.6||p.z>ZP.back+.5) ret
 // the contemporary table now sits close to the screen: its back chair is approached from the side
 for(const st of SEATS) if(st.z>ZP.modern.cz+.5&&Math.abs(st.x-ZP.modern.cx)<.2) st.ap={x:st.x+.7,z:st.z};
 
-// ---- the tea room's main light: a large round washi pendant in the middle of the ceiling, for an even light over the whole room
-{ const x=-4.8, y=2.5, z=20.2, R=.34, pick={type:'teapendant'};
-  const paper=new THREE.MeshStandardMaterial({color:0xf6efe2,roughness:.95,emissive:0xffe0b0,emissiveIntensity:.8,side:THREE.DoubleSide}); LAMPS.push({f:{on:true},mat:paper});
-  const globe=new THREE.Mesh(new THREE.SphereGeometry(R,32,20),paper); globe.scale.y=.92; globe.position.set(x,y,z); globe.userData=pick; scene.add(globe); pickables.push(globe);
-  const rib=new THREE.MeshStandardMaterial({color:0xd8ccb4,roughness:.9}); for(let i=1;i<9;i++){ const yy=-R*.92+i*(2*R*.92)/9, rr=Math.sqrt(Math.max(0,R*R-(yy/.92)**2)); const t=new THREE.Mesh(new THREE.TorusGeometry(rr+.002,.003,4,40),rib); t.rotation.x=Math.PI/2; t.position.set(x,y+yy,z); scene.add(t); }
-  const wood=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.5}); cylinder(.05,.05,.03,wood,x,y+R*.92+.01,z); cylinder(.004,.004,1.3,M.ink,x,y+R*.92+.66,z);
+// ---- the tea room's main light: a small Song-style lamp (octagonal wooden frame, plain silk) hung high in the middle
+{ const x=-4.8, y=2.95, z=20.2, r=.26, h=.44, pick={type:'teapendant'}, g=new THREE.Group(); g.position.set(x,y,z); scene.add(g); LANTERNS.push(g);
+  const wood=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.4});
+  const silk=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffcf96,emissiveIntensity:.7,roughness:.9,side:THREE.DoubleSide}); LAMPS.push({f:{on:true},mat:silk});
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,8,1,true),silk); body.rotation.y=Math.PI/8; body.userData=pick; g.add(body); pickables.push(body);
+  for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; box(.02,h+.03,.02,wood,Math.cos(a)*r,0,Math.sin(a)*r,g); }
+  for(const yy of [-h/2,h/2]){ const ring=new THREE.Mesh(new THREE.CylinderGeometry(r+.02,r+.02,.03,8),wood); ring.rotation.y=Math.PI/8; ring.position.y=yy; g.add(ring); }
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.07,r+.035,.1,8),wood); cap.rotation.y=Math.PI/8; cap.position.y=h/2+.06; g.add(cap);
+  const foot=new THREE.Mesh(new THREE.CylinderGeometry(r*.7,.05,.07,8),wood); foot.rotation.y=Math.PI/8; foot.position.y=-h/2-.05; g.add(foot);
+  for(let i=0;i<8;i++){ const a=(i+.5)/8*Math.PI*2; cylinder(.003,.003,.12,new THREE.MeshStandardMaterial({color:0xa8343a}),Math.cos(a)*(r+.012),-h/2-.07,Math.sin(a)*(r+.012),g); }
+  cylinder(.006,.006,.9,M.ink,0,h/2+.55,0,g);
+}
+
+// ---- a potted banana (芭蕉) in the back-left corner of the tea room, its leaves reaching over the screen's left end:
+//      the plant Lu Tong sits under in 玉川煎茶圖 on the hall wall next door
+{ const x=-3.02, z=ZP.back-.42, pick={type:'banana'};
+  const pot=lathe([[0,0],[.17,0],[.21,.06],[.23,.3],[.22,.38],[.235,.4]],new THREE.MeshStandardMaterial({color:0x3a2c22,roughness:.55}),32); pot.position.set(x,0,z); pot.userData=pick; scene.add(pot); pickables.push(pot);
+  const soil=new THREE.Mesh(new THREE.CircleGeometry(.215,28),new THREE.MeshStandardMaterial({color:0x3a2e22,roughness:1})); soil.rotation.x=-Math.PI/2; soil.position.set(x,.37,z); scene.add(soil);
+  const stemM=new THREE.MeshStandardMaterial({color:0x6f7d3e,roughness:.7});
+  const leafTex=ctex(128,512,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#3f7a34'; g.beginPath(); g.moveTo(w/2,0); g.bezierCurveTo(w*1.05,h*.15,w*1.02,h*.8,w/2,h); g.bezierCurveTo(-w*.02,h*.8,-w*.05,h*.15,w/2,0); g.fill();
+    g.strokeStyle='rgba(200,220,150,.55)'; g.lineWidth=4; g.beginPath(); g.moveTo(w/2,0); g.lineTo(w/2,h); g.stroke(); g.strokeStyle='rgba(30,70,30,.35)'; g.lineWidth=1; for(let y=12;y<h-10;y+=7){ g.beginPath(); g.moveTo(w/2,y); g.lineTo(2,y+16); g.moveTo(w/2,y); g.lineTo(w-2,y+16); g.stroke(); }
+    g.globalCompositeOperation='destination-out'; g.lineWidth=2; for(const [y,s] of [[180,1],[260,-1],[330,1]]){ g.beginPath(); g.moveTo(w/2+s*6,y); g.lineTo(s>0?w:0,y+22); g.stroke(); } g.globalCompositeOperation='source-over'; });
+  const leafM=new THREE.MeshStandardMaterial({map:leafTex,alphaTest:.5,side:THREE.DoubleSide,roughness:.6});
+  const R=rnd(23);
+  for(const [dx,dz,h] of [[0,0,1.05],[.07,-.05,.85],[-.06,.04,.7]]){
+    cylinder(.035,.05,h,stemM,x+dx,.37+h/2,z+dz);
+    const nL=dx===0?4:2;
+    for(let i=0;i<nL;i++){ const L=.85+R()*.3, W=.26, geo=new THREE.PlaneGeometry(W,L,1,10); geo.translate(0,L/2,0);
+      const p=geo.attributes.position; for(let k=0;k<p.count;k++){ const t=p.getY(k)/L; p.setZ(k,p.getZ(k)+.45*t*t); p.setX(k,p.getX(k)*(1-.15*t)); } geo.computeVertexNormals();
+      const lf=new THREE.Mesh(geo,leafM); const a=(i/nL)*Math.PI*2+R()*.8+(dx>0?1:0);
+      lf.position.set(x+dx,.37+h-.05,z+dz); lf.rotation.order='YXZ'; lf.rotation.y=a; lf.rotation.x=.45+R()*.35; lf.userData=pick; scene.add(lf); pickables.push(lf); } }
+  OB(x-.25,x+.25,z-.25,z+.25);
 }
 
 const SEAT_SPOT={desk:[.45,.85],lounge:[1.25,.51],gongfu:[.36,.645],irori:[.32,TATAMI.h+.045],modern:[.42,ZP.modern.h+.045]};
@@ -2490,8 +2516,9 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'taishi': showText('太師椅','<p style="line-height:2">明間兩側各一對太師椅，中間一張茶几。點椅子可以坐下。</p>'); break;
   case 'console': showText('玄關桌','<p style="line-height:2">畫下的長桌，放隨身的東西。</p>'); break;
   case 'chandelier2': showText('水晶吊燈','<p style="line-height:2">跟學鳩齋一樣的兩層銅吊燈，S 形燈臂、燭台和水晶垂珠，從屋脊垂下。</p>'); break;
+  case 'banana': showText('芭蕉','<p style="line-height:2">茶室後角一盆芭蕉，大葉子越過屏風的左端。隔壁明間的《玉川煎茶圖》裡，盧仝就坐在芭蕉下煎茶。</p>'); break;
   case 'floorlamp': toggleFloorLamp(u.i); break;
-  case 'teapendant': showText('和紙吊燈','<p style="line-height:2">茶室正中的主燈，一顆和紙大圓燈，竹骨一圈圈，把整間照得均勻。</p>'); break;
+  case 'teapendant': showText('宋燈','<p style="line-height:2">茶室正中高掛一盞小宋燈，八角木框糊素絹，紅穗垂在下緣，把整間照得均勻。</p>'); break;
   case 'vivlamp': toggleViv(); break;
   case 'fountain': showText('獅頭吐水','<p style="line-height:2">博古架旁的角落，牆上一面古銅獅頭，細水從口中吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。</p>'); break;
   case 'teaware': showText('茶櫃','<p style="line-height:2">一格一個樣子：大陶壺、鐵壺、木茶箱、紙包茶、幾隻錫罐、一疊杯子、幾本書，留些空處。</p>'); break;

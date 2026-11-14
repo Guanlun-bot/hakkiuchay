@@ -129,7 +129,7 @@ button{font-family:var(--f);cursor:pointer}
     <div class="clk" id="tclk">25:00</div>
     <div class="row"><button class="pri" id="tfocus">專注 25 分</button><button id="tbreak">休息 5 分</button><button id="tup">起身</button></div>
   </div>
-  <div id="drink" class="hide"><span id="dname"></span><button id="dfin">喝完</button></div>
+  <div id="drink" class="hide"><span id="dname"></span><button id="dsip">喝一口</button><button id="dfin">不喝了</button></div>
   <div id="hint"></div>
   <div id="bar">
     <button id="bBooks">找書</button>
@@ -1273,7 +1273,7 @@ const SEAT_KIND={
   gongfu:{eye:1.06,pitch:-.42,front:false,sink:-.52,label:'食茶',hello:'在茶席坐下。點紅泥小爐或孟臣罐，起炭泡一泡工夫茶。',status:()=>'在知了間食茶'+teaStatus('gongfu')},
   taishi:{eye:1.18,pitch:-.08,front:true, sink:-.38,label:'小坐',hello:'在太師椅坐下。',status:()=>'在明間坐著'},
   luohan:{eye:1.12,pitch:-.1, front:true, sink:-.42,label:'小憩',hello:'在羅漢床上坐下。牆上的月琴和殼仔弦可以點來調弦。',status:()=>'在羅漢床上'},
-  modern:{eye:1.15,pitch:-.3, front:false,sink:-.42,label:'品茗',hello:'在當代茶席坐下。',status:()=>'在當代茶席'},
+  modern:{eye:1.15,pitch:-.3, front:false,sink:-.42,label:'品茗',hello:'在當代茶席坐下。點提梁壺或紫砂壺，點爐泡一壺茶。',status:()=>'在當代茶席'+teaStatus('modern')},
   qin:   {eye:1.12,pitch:-.05,front:false,sink:-.42,label:'調弦',hello:'在琴凳坐下。點牆上的月琴或殼仔弦，撥弦調音。',status:()=>'在調月琴'},
 };
 function deskNo(i){ let n=0; for(let k=0;k<=i;k++) if(SEATS[k].kind==='desk'&&!SEATS[k].name) n++; return n; }
@@ -2009,6 +2009,7 @@ const fireplace={on:false,light:null,flames:[],glow:null};
     for(let k=0;k<n;k++){ const fl=c.getPoint(1-k*.3); for(let i=0;i<6;i++){ const pt=new THREE.Mesh(new THREE.SphereGeometry(.024,8,6),pm); pt.scale.set(1,.45,.8); const a=i/6*Math.PI*2; pt.position.set(fl.x+Math.cos(a)*.02,fl.y,fl.z+Math.sin(a)*.02); scene.add(pt); } const st=new THREE.Mesh(new THREE.SphereGeometry(.01,6,4),stamen); st.position.copy(fl).add(new THREE.Vector3(0,.008,0)); scene.add(st); } } }
 /* ---------- right-back: contemporary tea table with three seats ---------- */
 const MODERN_SEATS=[];
+var MD_FX={cups:[],cupG:[],pitcher:null,flame:[],steam:[]};   /* the contemporary table's moving parts: tea in the cups and pitcher, the burner flame, kettle steam */
 { const MT=ZP.modern, x0=MT.cx-MT.w/2, x1=MT.cx+MT.w/2, z0=MT.cz-MT.d/2, z1=MT.cz+MT.d/2, W=MT.w, D=MT.d, cx=MT.cx, cz=MT.cz, h=MT.h; const pick={type:'modern'};
   const slab=new THREE.MeshStandardMaterial({color:0x6e4a2e,roughness:.5});
   box(W,.06,D,slab,cx,h-.03,cz,scene,BLOCK);
@@ -2026,7 +2027,7 @@ const MODERN_SEATS=[];
   stdPot(scene,cx,T+.018,HZ,.05,zn,Math.PI,pick);   // spout toward the host's left, handle to the right hand
   // 公道杯: glass pitcher with a pinched lip and its tea
   { const gx=cx+.22, gz=HZ+.02; const gp=lathe([[0,0],[.032,0],[.036,.01],[.036,.085],[.04,.092]],glassM,24); gp.position.set(gx,T,gz); scene.add(gp);
-    const tea=new THREE.Mesh(new THREE.CylinderGeometry(.034,.032,.045,20),new THREE.MeshStandardMaterial({color:0xc8862c,roughness:.1,transparent:true,opacity:.8})); tea.position.set(gx,T+.025,gz); scene.add(tea);
+    const tea=new THREE.Mesh(new THREE.CylinderGeometry(.034,.032,.045,20),new THREE.MeshStandardMaterial({color:0xc8862c,roughness:.1,transparent:true,opacity:.8})); tea.position.set(gx,T+.025,gz); scene.add(tea); tea.visible=false; MD_FX.pitcher=tea; ZL_DYN.push(tea);
     const lip=new THREE.Mesh(new THREE.ConeGeometry(.012,.02,8),glassM); lip.rotation.z=Math.PI/2; lip.position.set(gx-.045,T+.088,gz); scene.add(lip); }
   // spirit burner under a three-legged brass trivet, and the clay 提梁壺 (boiling kettle) with its arched cane handle
   { const bx=cx+.5, bz=HZ-.02;
@@ -2034,7 +2035,8 @@ const MODERN_SEATS=[];
     const fuel=new THREE.Mesh(new THREE.CylinderGeometry(.046,.046,.03,20),new THREE.MeshStandardMaterial({color:0x9fc4d8,transparent:true,opacity:.45,roughness:.1})); fuel.position.set(bx,T+.016,bz); scene.add(fuel);
     cylinder(.01,.012,.018,brass,bx,T+.072,bz);
     const flame=new THREE.Mesh(new THREE.ConeGeometry(.012,.05,10),new THREE.MeshBasicMaterial({color:0x9fb8ff,transparent:true,opacity:.55,depthWrite:false})); flame.position.set(bx,T+.106,bz); scene.add(flame);
-    const core=new THREE.Mesh(new THREE.ConeGeometry(.006,.026,8),new THREE.MeshBasicMaterial({color:0xffc070,transparent:true,opacity:.8,depthWrite:false})); core.position.set(bx,T+.095,bz); scene.add(core); ZL_DYN.push(flame,core);
+    const core=new THREE.Mesh(new THREE.ConeGeometry(.006,.026,8),new THREE.MeshBasicMaterial({color:0xffc070,transparent:true,opacity:.8,depthWrite:false})); core.position.set(bx,T+.095,bz); scene.add(core); ZL_DYN.push(flame,core); flame.visible=core.visible=false; MD_FX.flame=[flame,core];
+    for(let i=0;i<5;i++){ const sp=new THREE.Sprite(steamMatBase.clone()); sp.material.opacity=0; scene.add(sp); ZL_DYN.push(sp); MD_FX.steam.push({sp,t:i/5}); } MD_FX.spout=new THREE.Vector3(bx+.107,T+.27,bz+.073);
     ZL_ANIM.push(()=>{ const t=performance.now()/1000, k=1+.08*Math.sin(t*13)+.05*Math.sin(t*29); flame.scale.set(1,k,1); core.scale.set(1,k*1.05,1); });
     const ring=new THREE.Mesh(new THREE.TorusGeometry(.07,.005,6,32),brass); ring.rotation.x=Math.PI/2; ring.position.set(bx,T+.15,bz); scene.add(ring);
     for(let i=0;i<3;i++){ const a=i/3*Math.PI*2, lx=Math.cos(a)*.075, lz=Math.sin(a)*.075; const lg=cylinder(.004,.004,.15,brass,bx+lx,T+.075,bz+lz); }
@@ -2054,8 +2056,8 @@ const MODERN_SEATS=[];
   // cups: host's at the right of the pot, guests' in front of each cushion
   for(const [dx,dz] of [[.17,.3],[-.66,-.28],[0,-.28],[.66,-.28]]){ const x=cx+dx, z=cz+dz;
     const tuo=lathe([[0,0],[.038,0],[.042,.008],[.04,.01]],walnut,24); tuo.position.set(x,T,z); scene.add(tuo);
-    const c=lathe([[0,0],[.014,0],[.016,.004],[.013,.006],[.026,.03],[.03,.04],[.0305,.042]],whitePorcelain,22); c.position.set(x,T+.01,z); scene.add(c);
-    const tea=new THREE.Mesh(new THREE.CircleGeometry(.026,18),new THREE.MeshStandardMaterial({color:0xb87a2a,roughness:.15})); tea.rotation.x=-Math.PI/2; tea.position.set(x,T+.042,z); scene.add(tea); }
+    const cg=new THREE.Group(); cg.position.set(x,T+.01,z); scene.add(cg); cg.add(lathe([[0,0],[.014,0],[.016,.004],[.013,.006],[.026,.03],[.03,.04],[.0305,.042]],whitePorcelain,22));
+    const tea=new THREE.Mesh(new THREE.CircleGeometry(.026,18),new THREE.MeshStandardMaterial({color:0xb87a2a,roughness:.15})); tea.rotation.x=-Math.PI/2; tea.position.y=.032; cg.add(tea); tea.visible=false; cg.userData.tea=tea; MD_FX.cups.push(tea); MD_FX.cupG.push(cg); ZL_DYN.push(cg); }
   // seats: long benches with linen cushions, three guests on the window side facing the host, the host alone on the
   //        screen side, sitting square to the window
   { const bench=(z,L)=>{ const bh=.4, bd=.36; box(L,.05,bd,oak,cx,bh-.025,z,scene); for(const sx of [-1,1]) box(.05,bh-.05,bd-.04,darkWood,cx+sx*(L/2-.12),(bh-.05)/2,z); box(L-.3,.04,.04,darkWood,cx,.12,z); };
@@ -2388,6 +2390,74 @@ function fanFire(){ FAN.t=0; FAN.boost=1; try{ actx=actx||new (window.AudioConte
 ZL_ANIM.push(dt=>{ FAN.t+=dt; FAN.boost=Math.max(0,FAN.boost-dt*.12);
   if(GF_FAN){ const on=FAN.t<2.4; GF_FAN.rotation.x=on?.55+Math.sin(FAN.t*Math.PI*4.2)*.45:0; GF_FAN.position.y=on?.36:.3; GF_FAN.rotation.z=on?-.4:0; } });
 
+// ---- brewing at the contemporary table: the host lights the spirit burner under the 提梁壺 and brews in the 紫泥 pot;
+//      shared like the gongfu pot, so everyone in 知了間 sees the flame, the steam and the poured cups
+var myMD=null, mdStepSeen='';
+const MD_STEPS=[[0,t=>'點起酒精爐，提梁壺裡的水慢慢熱起來。'],[6,t=>'壺裡響起蟹眼聲，水快滾了。'],[10,t=>'水滾了。溫壺，燙公道杯和四只杯子，水倒進水盂。'],[13,t=>`置茶：從茶荷把${t}撥進紫砂壺。`],[15,t=>'注水醒茶，第一泡倒掉。'],[17,t=>'再注水，蓋上壺蓋，靜候片刻。'],[21,t=>'出湯到公道杯。'],[23,t=>'分杯：主人一杯，三位客人各一杯。'],[25,t=>'請茶。']];
+const MD_SERVE=25;
+function startMD(){ const cur=sharedLatest('md',myMD); if(cur&&(Date.now()-cur.at)/1000<MD_SERVE){ toast(`${cur.by==='你'?'你':cur.by}正在泡這一壺。`); return; }
+  myMD={t:myTea,at:Date.now()}; pushPresence(); closePanel(); }
+function showModern(){ const cur=sharedLatest('md',myMD), el=cur?(Date.now()-cur.at)/1000:1e9;
+  const state=!cur||el>TEA_LAST?'酒精爐熄著。':el<MD_SERVE?`${cur.mine?'你':esc(cur.by)}正在泡${esc(TEAS[cur.t][0])}。`:`桌上是${cur.mine?'你':esc(cur.by)}泡的${esc(TEAS[cur.t][0])}，還溫著。`;
+  const body=openPanel('當代茶席',`<p class="meta">主人對窗而坐，三位客人坐長凳。酒精爐上的提梁壺煮水，紫泥標準壺泡茶，玻璃公道杯分茶。${state}</p><div class="vol">茶葉：<b>${esc(TEAS[myTea][0])}</b>　<span class="ba">${esc(TEAS[myTea][1])}</span></div><button class="btn pri" id="mdgo">點爐泡茶</button><div class="sec">換一罐茶</div>${teaList()}<p class="meta" style="margin-top:12px">茶泡好後，主人和三位客人面前各有一杯；在知了間的人也會看到。</p>`);
+  body.querySelector('#mdgo').onclick=()=>{ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{} startMD(); }; bindTeaList(body,showModern); }
+ZL_ANIM.push(dt=>{ const MD=sharedLatest('md',myMD), el=MD?(Date.now()-MD.at)/1000:1e9, t=performance.now()/1000;
+  const lit=el>=0&&el<TEA_LAST; for(const f of MD_FX.flame){ f.visible=lit; } if(lit&&MD_FX.flame[0]){ const k=1+.08*Math.sin(t*13)+.05*Math.sin(t*29); MD_FX.flame[0].scale.set(1,k,1); MD_FX.flame[1].scale.set(1,k*1.05,1); }
+  const hot=el>6&&el<TEA_LAST?Math.min(1,(el-6)/4):0;
+  for(const s of MD_FX.steam){ s.t=(s.t+dt*.45)%1; s.sp.position.set(MD_FX.spout.x+s.t*.04+Math.sin(s.t*7)*.008,MD_FX.spout.y+s.t*.28,MD_FX.spout.z+Math.sin(s.t*5+s.sp.id)*.012); s.sp.material.opacity=.3*hot*Math.sin(s.t*Math.PI); s.sp.scale.setScalar(.025+s.t*.09); }
+  const col=MD?TEAS[MD.t][2]:0, inPitcher=el>=21&&el<TEA_LAST, served=el>=23&&el<TEA_LAST;
+  if(MD_FX.pitcher){ MD_FX.pitcher.visible=inPitcher; if(inPitcher) MD_FX.pitcher.material.color.setHex(col); }
+  for(const c of MD_FX.cups){ c.visible=served; if(served) c.material.color.setHex(col); }
+  if(MD&&el<40&&(MD.mine||MODERN_SEATS.includes(ME.seat))){ const idx=MD_STEPS.filter(([s])=>el>=s).length-1, sk=MD.at+':'+idx;
+    if(idx>=0&&sk!==mdStepSeen){ mdStepSeen=sk; toast(MD_STEPS[idx][1](TEAS[MD.t][0]),6000);
+      if(idx===0) noiseBurst(.25,3000,1.5,.05); if(idx===1) boil(4,0,.6); if(idx===2){ boil(2.5,0,1); pour(1.4,2); } if(idx===4){ pour(1.2); pour(.8,1.4); } if(idx===5) pour(1.6); if(idx===6) pour(1.4); if(idx===7){ for(let i=0;i<4;i++) pour(.45,i*.55); } } } });
+
+// ---- drinking: a cup is three sips. Each sip lifts the cup from the table to the drinker's lips, tips it, and sets it
+//      back where it was, a little emptier; the third leaves it empty on the table. Tea at the three tea tables and
+//      coffee in 學鳩齋 alike. Shared, so others see your cup rise and go down.
+var mySip=null, myCoffeeAt=0;
+const SIP_T=3.0;
+const LIQ={ tea:{y:[.027,.02,.013],s:[1,.8,.62]}, md:{y:[.032,.024,.016],s:[1,.85,.68]}, coffee:{y:[.078,.064,.048],s:[1,.93,.8]} };
+const SIP_TEXT={ tea:[t=>`第一口：${t}，先聞香，再小口啜。`,t=>'第二口：茶湯溫了，回甘慢慢出來。',t=>'最後一口：杯底留香，把杯子放回桌上。'],
+  coffee:[t=>`第一口：${t}還燙，小口啜。`,t=>'第二口：溫度剛好，香氣出來了。',t=>'最後一口：杯子空了，放回碟上。'] };
+function coffeeLiquid(){ if(myCup.userData.liq) return myCup.userData.liq; let m=null; myCup.traverse(o=>{ if(o.isMesh&&o.geometry.type==='CircleGeometry') m=o; }); return myCup.userData.liq=m; }
+// the cup in front of seat si right now: {g, liq, type, key, name}
+function cupOf(si,mine){ if(si<0) return null; const st=SEATS[si]; if(!st) return null; const now=Date.now();
+  if(st.kind==='gongfu'){ const S=sharedLatest('gf',myGF); if(!S||(now-S.at)/1000<22||(now-S.at)/1000>=TEA_LAST) return null; const i=GF_SEATS.indexOf(si); return i<0?null:{g:GF_CUPS[i],liq:GF_CUPS[i].userData.tea,type:'tea',key:'gf'+S.at,name:TEAS[S.t][0]}; }
+  if(st.kind==='irori'){ const S=sharedLatest('ir',myIR); if(!S||(now-S.at)/1000<12||(now-S.at)/1000>=TEA_LAST) return null; const i=IRORI_SEATS.indexOf(si); return i<0?null:{g:IRORI_CUPS[i],liq:IRORI_CUPS[i].userData.tea,type:'tea',key:'ir'+S.at,name:TEAS[S.t][0]}; }
+  if(st.kind==='modern'){ const S=sharedLatest('md',myMD); if(!S||(now-S.at)/1000<23||(now-S.at)/1000>=TEA_LAST) return null; const i=MODERN_SEATS.indexOf(si); const g=MD_FX.cupG[(i+1)%4]; return i<0||!g?null:{g,liq:g.userData.tea,type:'md',key:'md'+S.at,name:TEAS[S.t][0]}; }
+  if(mine&&myDrink>=0&&myCup.visible) return {g:myCup,liq:coffeeLiquid(),type:'coffee',key:'cf'+myCoffeeAt,name:DRINKS[myDrink][0]};
+  return null; }
+function sipsLeft(c){ return mySip&&mySip.k===c.key?mySip.l:3; }
+function takeSip(){ const c=cupOf(ME.seat,true); if(!c){ toast(ME.seat<0?'先坐下，杯子在桌上。':'面前還沒有茶。'); return; }
+  const left=sipsLeft(c); if(left<=0){ toast('杯子已經空了。'); return; } if(mySip&&mySip.k===c.key&&(Date.now()-mySip.a)/1000<SIP_T) return;
+  mySip={k:c.key,l:left-1,a:Date.now(),s:ME.seat}; pushPresence();
+  const txt=SIP_TEXT[c.type==='coffee'?'coffee':'tea'][3-left]; setTimeout(()=>toast(txt(c.name),4500),900);
+  try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{} noiseBurst(.45,650,.9,.03,1.1); noiseBurst(.04,3400,9,.06,SIP_T-.08); }
+const _sv=new THREE.Vector3(), _sq=new THREE.Quaternion(), _sa=new THREE.Vector3();
+function poseCup(c,st,t,level){ const g=c.g; if(!g.userData.rest||g===myCup) g.userData.rest=g.position.clone(); const R=g.userData.rest;
+  const L=LIQ[c.type], liq=c.liq;
+  if(liq){ if(level<=0) liq.visible=false; else { const i=3-level; liq.position.y=L.y[i]; liq.scale.setScalar(L.s[i]); } }
+  if(t<0||t>=SIP_T){ g.position.copy(R); g.quaternion.identity(); return; }
+  const ease=x=>x*x*(3-2*x), k=t<.8?ease(t/.8):t<2.2?1:1-ease((t-2.2)/.8), bump=t<.9||t>2.1?0:Math.sin((t-.9)/1.2*Math.PI);
+  const fx=-Math.sin(st.yaw), fz=-Math.cos(st.yaw), rx=Math.cos(st.yaw), rz=-Math.sin(st.yaw), eye=(SEAT_KIND[st.kind]||{eye:1.1}).eye;
+  _sv.set(st.x+fx*.24+rx*.03,eye-.13,st.z+fz*.24+rz*.03); g.position.lerpVectors(R,_sv,k);
+  _sa.set(rx,0,rz); _sq.setFromAxisAngle(_sa,.85*bump); g.quaternion.copy(_sq); }
+function tickSips(){ const now=Date.now(), done=new Set();
+  // mine
+  const c=cupOf(ME.seat,true);
+  if(c){ const left=sipsLeft(c), t=mySip&&mySip.k===c.key?(now-mySip.a)/1000:-1; poseCup(c,SEATS[ME.seat],t,t>=0&&t<1.5?left+1:left); done.add(c.g); }
+  // everyone else seated with a cup
+  for(const [,o] of others){ const p=o.p||{}; if(typeof p.s!=='number'||p.s<0) continue; const oc=cupOf(p.s,false); if(!oc||done.has(oc.g)) continue;
+    const sp=p.sp&&p.sp.k===oc.key?p.sp:null, left=sp?Math.max(0,Math.min(3,+sp.l||0)):3, t=sp?(now-(+sp.a||0))/1000:-1;
+    poseCup(oc,SEATS[p.s],t,t>=0&&t<1.5?left+1:left); done.add(oc.g); }
+  // the bar at the bottom left
+  const bar=$('#drink'), show=!!c||myDrink>=0; if(bar.classList.contains('hide')===show) bar.classList.toggle('hide',!show);
+  const left=c?sipsLeft(c):-1, label=c?(c.type==='coffee'?'☕ ':'🍵 ')+c.name+'　'+(left>0?'●'.repeat(left)+'○'.repeat(3-left):'已喝完'):myDrink>=0?'☕ '+DRINKS[myDrink][0]+'（坐下再喝）':'';
+  if(tickSips.l!==label){ tickSips.l=label; $('#dname').textContent=label; }
+  const sb=$('#dsip'), sv=!!c&&left>0; if(sb&&sb.classList.contains('hide')===sv) sb.classList.toggle('hide',!sv);
+  const fb=$('#dfin'), fv=myDrink>=0; if(fb&&fb.classList.contains('hide')===fv) fb.classList.toggle('hide',!fv); }
+
 const SEAT_SPOT={desk:[.45,.85],lounge:[1.25,.51],gongfu:[.36,.645],irori:[.32,TATAMI.h+.045],modern:[.42,ZP.modern.h+.045]};
 /* ---------- per frame ---------- */
 function tickZhiliao(dt){ const now=Date.now(), tt=performance.now()/1000;
@@ -2422,7 +2492,7 @@ function tickZhiliao(dt){ const now=Date.now(), tt=performance.now()/1000;
   mySnackMesh.visible=mySnack>=0&&!!sp&&sp[0]>0;
   if(mySnackMesh.visible){ const [fx,fz]=lookY(st.yaw); mySnackMesh.position.set(st.x+fx*(sp[0]+.08)+fz*.2,sp[1]-.04,st.z+fz*(sp[0]+.08)-fx*.2); mySnackMesh.rotation.y=st.yaw; }
 }
-function teaStatus(kind){ const f=kind==='gongfu'?['gf',myGF,22]:['ir',myIR,12]; const s=sharedLatest(f[0],f[1]); if(!s) return ''; const el=(Date.now()-s.at)/1000; return el>=f[2]&&el<TEA_LAST?'・'+TEAS[s.t][0]:el>=0&&el<f[2]?'・泡茶中':''; }
+function teaStatus(kind){ const f=kind==='gongfu'?['gf',myGF,22]:kind==='modern'?['md',myMD,MD_SERVE]:['ir',myIR,12]; const s=sharedLatest(f[0],f[1]); if(!s) return ''; const el=(Date.now()-s.at)/1000; return el>=f[2]&&el<TEA_LAST?'・'+TEAS[s.t][0]:el>=0&&el<f[2]?'・泡茶中':''; }
 
 /* ---------- two preset views: the plan, seen from above with the roof cut away, and the courtyard entrance at eye height ---------- */
 const VIEW={mode:'walk',theta:Math.PI,phi:.001,r:15.5,target:new THREE.Vector3(0,0,(ZP.front+ZP.back)/2)};
@@ -2459,8 +2529,8 @@ function showCoffee(){ const body=openPanel('咖啡',`<p class="meta">點一杯�
   body.querySelector('.list').onclick=e=>{ const li=e.target.closest('li[data-d]'); if(!li) return; if(brewing){ toast('咖啡機正在做上一杯。'); return; } const i=+li.dataset.d; closePanel();
     brewing={i,t0:performance.now(),dur:9000}; grind(1.6); setTimeout(()=>hiss(5.5),1700); toast(`磨${BEANS[myBean][0]}，做${DRINKS[i][0]}……`,9000); }; }
 function grind(sec){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const o=actx.createOscillator(), n=actx.createGain(), f=actx.createBiquadFilter(); o.type='sawtooth'; o.frequency.value=95; f.type='lowpass'; f.frequency.value=900; n.gain.setValueAtTime(.0001,actx.currentTime); n.gain.exponentialRampToValueAtTime(.05,actx.currentTime+.1); n.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+sec); o.connect(f).connect(n).connect(actx.destination); o.start(); o.stop(actx.currentTime+sec+.05); }catch{} }
-function setDrink(i){ myDrink=i; $('#drink').classList.toggle('hide',i<0); if(i>=0) $('#dname').textContent='☕ '+DRINKS[i][0]+'（'+BEANS[myBean][0]+'）'; pushPresence(); renderPeople(); }
-$('#dfin').onclick=()=>setDrink(-1);
+function setDrink(i){ if(i>=0&&i!==myDrink||i>=0&&myDrink<0) myCoffeeAt=Date.now(); myDrink=i; $('#drink').classList.toggle('hide',i<0); if(i>=0) $('#dname').textContent='☕ '+DRINKS[i][0]+'（'+BEANS[myBean][0]+'）'; pushPresence(); renderPeople(); }
+$('#dfin').onclick=()=>setDrink(-1); $('#dsip').onclick=()=>takeSip();
 const myCup=classicCup(scene,0,0,0,{saucer:true}); myCup.visible=false;
 if(false){ const crema=new THREE.Mesh(new THREE.CircleGeometry(.04,16),new THREE.MeshStandardMaterial({color:0x9a6a3e,roughness:.6})); crema.rotation.x=-Math.PI/2; crema.position.y=.042; myCup.add(crema); }
 
@@ -2669,7 +2739,7 @@ function act(h){ const u=h.object.userData; if(VRT[u.type]&&String(VRT[u.type].b
   case 'fire': fireplace.on=!fireplace.on; toast(fireplace.on?'打開壁爐。':'關掉壁爐。'); break;
   case 'display': showText('博古架','<p style="line-height:2">後牆一座圓形博古架，圓框裡錯落幾層，只擺幾件：青瓷瓶、朱泥壺、一塊供石、紫砂壺、鐵壺、兩隻白瓷杯。背後襯一輪和紙圓光。</p>'); break;
   case 'genkan': showText('玄關','<p style="line-height:2">入門直走道的盡頭：一張窄玄關桌，桌後掛一幅水墨山水。</p>'); break;
-  case 'modern': showText('當代茶席','<p style="line-height:2">主人對窗而坐，三位客人坐長凳。桌上一套茶具：酒精爐上的提梁壺煮水，紫泥標準壺放在壺承上，玻璃公道杯，茶荷、茶巾，茶筒裡插著茶則和茶針，旁邊一只水盂。</p>'); break;
+  case 'modern': showModern(); break;
   case 'gongfu': showGongfu(); break;
     case 'gffan': fanFire(); break;
   case 'tin': if(u.t>=0) pickTea(u.t); showTeaShelf(); break;
@@ -2784,7 +2854,7 @@ const AV_COLORS=['#3e5873','#3d6b4f','#86683c','#a8343a','#5b4b6b','#2f5f6b','#7
 if(!myColor){ myColor=AV_COLORS[Math.floor(Math.random()*AV_COLORS.length)]; LS.set('hk-color',myColor); }
 const others=new Map(); // peer -> {av, p}
 let lastPush=0, lastSent='';
-function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0}; }
+function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0}; }
 function pushPresence(force){ if(!room) return; const o=presenceObj(); const k=JSON.stringify(o); if(k===lastSent) return; lastSent=k; room.presence(o).catch(()=>{}); }
 function str(v,n){ return typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').slice(0,n):''; }
 function num(v,d=0){ return typeof v==='number'&&isFinite(v)?v:d; }
@@ -3012,6 +3082,7 @@ for(let i=0;i<2;i++){
     else if(u.type==='about') vrShow('學鳩齋',D.intro.split('\n\n')[0]);
     else if(u.type==='zhiliao') vrShow('知了間','左手榻榻米圍著囲炉裏，右手是福建工夫茶席。');
     else if(u.type==='gffan') fanFire();
+    else if(u.type==='modern'){ startMD(); vrShow('當代茶席','點爐泡'+TEAS[myTea][0]+'。'); }
     else if(u.type==='gongfu'){ startGF(); vrShow('工夫茶','起炭泡'+TEAS[myTea][0]+'。'); }
     else if(u.type==='irori'){ startIR(); vrShow('囲炉裏','用蓋碗泡'+TEAS[myTea][0]+'。'); }
     else if(u.type==='tin'){ if(u.t>=0) pickTea(u.t); vrShow('錫茶罐','手邊這罐：'+TEAS[myTea][0]); }
@@ -3147,7 +3218,7 @@ function tickLights(dt){ if(!LIGHT_POOL.length) return; lightT+=dt;
     if(u.src&&!want.has(u.src)){ u.k=Math.max(0,u.k-dt*3); if(u.k===0) u.src=null; } else if(u.src) u.k=Math.min(1,u.k+dt*3);
     if(!u.src&&queue.length){ u.src=queue.shift(); u.k=0; }
     const v=u.src; if(!v){ p.intensity=0; return; } p.position.copy(v.userData.wp); p.color.copy(v.color); p.intensity=v.intensity*u.k; p.distance=v.distance; p.decay=v.decay; }); }
-renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); tickPeople(dt); tickFPS(dt); renderer.render(scene,camera); });
+renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); tickPeople(dt); tickSips(); tickFPS(dt); renderer.render(scene,camera); });
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.fov=fovFor(camera.aspect); camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
 /* ---------------- boot ---------------- */

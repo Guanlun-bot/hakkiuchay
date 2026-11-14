@@ -40,6 +40,33 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1b1714;color:var(--in
 button{font-family:var(--f);cursor:pointer}
 .hide{display:none!important}
 /* gate */
+#gate{position:fixed;inset:0;z-index:50;background:#f1efe8;color:var(--ink);overflow:auto;transition:opacity .6s}
+#gate.out{opacity:0;pointer-events:none}
+#gate .gwrap{max-width:760px;margin:0 auto;padding:4vh 22px 30px}
+#gate .gsky{height:120px;position:relative;overflow:hidden}
+#gate .gbird{position:absolute;width:118px;left:-130px;top:30px;animation:gfly 9s linear infinite;filter:contrast(1.05)}
+@keyframes gfly{0%{transform:translate(0,10px) rotate(-4deg)}20%{transform:translate(22vw,-14px) rotate(3deg)}40%{transform:translate(44vw,8px) rotate(-3deg)}60%{transform:translate(64vw,-16px) rotate(4deg)}80%{transform:translate(84vw,6px) rotate(-2deg)}100%{transform:translate(110vw,-10px) rotate(2deg)}}
+#gate .gtitle{font-family:Reisho,ReishoFull,var(--f);font-size:46px;letter-spacing:.12em;line-height:1.1}
+#gate .gsub{font-size:14px;color:#6b6358;margin:6px 0 22px;border-left:3px solid var(--seal);padding-left:10px}
+#gate .gmain{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+#gate .gprev{flex:0 0 160px;display:flex;justify-content:center;padding-top:6px;border:1px solid var(--rule);background:#faf8f3}
+#gate .gform{flex:1 1 320px;display:grid;grid-template-columns:52px 1fr;gap:10px 12px;align-items:center}
+#gate .gl{font-size:14px;color:#6b6358}
+#gate input{font-family:var(--f);font-size:17px;padding:7px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px;width:100%;max-width:260px;box-sizing:border-box}
+#gate input.need{border-color:var(--seal)}
+#gate .gopt{display:flex;flex-wrap:wrap;gap:6px}
+#gate .gopt button{font-size:14px;padding:5px 12px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px}
+#gate .gopt button.on{background:var(--ink);color:#f1efe8;border-color:var(--ink)}
+#gate .gsw{display:flex;gap:7px;flex-wrap:wrap}
+#gate .gsw button{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--rule)}
+#gate .gsw button.on{box-shadow:0 0 0 2px var(--ink)}
+#gate .gnote{grid-column:1/-1;font-size:12px;color:#857c70;margin:2px 0 0}
+#gate .gbtn{grid-column:1/-1;justify-self:start;font-size:17px;padding:9px 34px;background:var(--seal);color:#fff;border:0;border-radius:2px;letter-spacing:.3em;margin-top:6px}
+#gate .gbtn:disabled{opacity:.6}
+#planlabels{position:fixed;inset:0;pointer-events:none;z-index:9}
+#planlabels .pl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;margin:-9px 0 0 -6px;background:rgba(241,239,232,.88);padding:1px 6px 1px 3px;border-radius:9px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+#planlabels .pl i{width:10px;height:10px;border-radius:50%;display:inline-block}
+#planlabels .pl.me{background:var(--ink);color:#f1efe8}
 /* hud */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
 #hud>*{pointer-events:auto}
@@ -120,7 +147,63 @@ button{font-family:var(--f);cursor:pointer}
 </head>
 <body>
 <canvas id="c" tabindex="0"></canvas>
+<div id="gate">
+  <div class="gwrap">
+    <div class="gsky"><img class="gbird" src="data:image/png;base64,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" alt=""></div>
+    <div class="gtitle">學鳩齋</div>
+    <div class="gsub" id="gsub">線上書齋・入門前，先報上名來</div>
+    <div class="gmain">
+      <div class="gprev" id="gprev"></div>
+      <div class="gform">
+        <label class="gl">名字</label><input id="gname" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname">
+        <label class="gl">身形</label><div class="gopt" data-k="g"><button data-v="m">男</button><button data-v="f">女</button></div>
+        <label class="gl">衣著</label><div class="gopt" data-k="o"><button data-v="robe">長袍</button><button data-v="suit">西裝</button><button data-v="modern">便服</button></div>
+        <label class="gl">顏色</label><div class="gsw" id="gsw"></div>
+        <label class="gl">隨身</label><div class="gopt" data-k="a"><button data-v="none">無</button><button data-v="douli">斗笠</button><button data-v="straw">草帽</button><button data-v="scarf">圍巾</button><button data-v="glasses">眼鏡</button><button data-v="bag">書袋</button><button data-v="fan">摺扇</button></div>
+        <p class="gnote">隨身還帶著一只菸盒，進門後按「抽菸」或 C 鍵點一支。</p>
+        <button id="genter" class="gbtn">進門</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(()=>{ const COLORS=['#3e5873','#3d6b4f','#86683c','#a8343a','#5b4b6b','#2f5f6b','#7a5a2e','#6c7163'];
+  const LS={get:k=>{ try{ return localStorage.getItem(k); }catch{ return null; } }};
+  let look={g:'m',o:'robe',a:'none'}; try{ const l=JSON.parse(LS.get('hk-look')||'null'); if(l&&typeof l==='object') look=Object.assign(look,l); }catch{}
+  const G=window.__gate={name:(LS.get('hk-name')||'').trim().slice(0,12),color:LS.get('hk-color')||COLORS[Math.floor(Math.random()*COLORS.length)],look};
+  if(G.name==='訪客') G.name='';
+  const $=s=>document.querySelector(s), inp=$('#gname'), btn=$('#genter'); inp.value=G.name;
+  const sw=$('#gsw'); sw.innerHTML=COLORS.map(c=>`<button data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('');
+  function svg(){ const L=G.look, c=G.color, f=L.g==='f', sh=f?24:28, skin='#e7cfb4', hair='#1d1a18'; let s='';
+    const dark=(()=>{ const n=parseInt(c.slice(1),16); const r=(n>>16)*.62|0, g=(n>>8&255)*.62|0, b=(n&255)*.62|0; return `rgb(${r},${g},${b})`; })();
+    if(L.o==='robe'){ s+=`<path d="M${60-sh} 70 L${60+sh} 70 L${60+(f?27:36)} 196 L${60-(f?27:36)} 196 Z" fill="${c}"/><rect x="53" y="64" width="14" height="8" fill="${dark}"/><rect x="${55}" y="198" width="9" height="5" fill="#1a1716"/><rect x="66" y="198" width="9" height="5" fill="#1a1716"/>`; }
+    else if(L.o==='suit'){ s+=`<path d="M${60-sh} 70 L${60+sh} 70 L${60+sh-3} 132 L${60-sh+3} 132 Z" fill="${c}"/><path d="M53 70 L67 70 L60 96 Z" fill="#f2efe8"/>`+(f?'':`<path d="M58 74 L62 74 L63 98 L60 103 L57 98 Z" fill="#7a2a2a"/>`)+
+        (f?`<path d="M38 130 L82 130 L88 166 L32 166 Z" fill="${dark}"/><rect x="47" y="166" width="7" height="32" fill="${skin}"/><rect x="66" y="166" width="7" height="32" fill="${skin}"/>`:`<rect x="41" y="130" width="17" height="68" fill="${dark}"/><rect x="62" y="130" width="17" height="68" fill="${dark}"/>`)+`<rect x="41" y="198" width="17" height="6" fill="#1a1716"/><rect x="62" y="198" width="17" height="6" fill="#1a1716"/>`; }
+    else { s+=`<path d="M${60-sh} 70 L${60+sh} 70 L${60+sh-2} 132 L${60-sh+2} 132 Z" fill="${c}"/><rect x="41" y="130" width="17" height="68" fill="#3b4a66"/><rect x="62" y="130" width="17" height="68" fill="#3b4a66"/><rect x="40" y="198" width="19" height="7" rx="2" fill="#ece8e0" stroke="#bbb"/><rect x="61" y="198" width="19" height="7" rx="2" fill="#ece8e0" stroke="#bbb"/>`; }
+    s+=`<rect x="${60-sh-9}" y="72" width="9" height="56" rx="4" fill="${c}"/><rect x="${60+sh}" y="72" width="9" height="56" rx="4" fill="${c}"/><circle cx="${60-sh-4.5}" cy="131" r="5" fill="${skin}"/><circle cx="${60+sh+4.5}" cy="131" r="5" fill="${skin}"/>`;
+    s+=`<rect x="55" y="54" width="10" height="12" fill="${skin}"/>`+(f&&L.o!=='robe'?`<rect x="44" y="34" width="32" height="40" rx="6" fill="${hair}"/>`:'')+`<circle cx="60" cy="40" r="17" fill="${skin}"/><path d="M43 40 A17 17 0 0 1 77 40 L77 34 A17 15 0 0 0 43 34 Z" fill="${hair}"/><path d="M43 38 Q60 18 77 38 Q72 26 60 24 Q48 26 43 38 Z" fill="${hair}"/>`+(f&&L.o==='robe'?`<circle cx="60" cy="22" r="8" fill="${hair}"/>`:'');
+    const A=L.a; if(A==='douli') s+=`<path d="M20 34 L60 10 L100 34 Z" fill="#c8a96a" stroke="#a88a4e"/>`;
+    if(A==='straw') s+=`<ellipse cx="60" cy="27" rx="34" ry="5" fill="#c8a96a"/><rect x="44" y="13" width="32" height="15" rx="4" fill="#c8a96a"/><rect x="44" y="22" width="32" height="4" fill="#7a2a2a"/>`;
+    if(A==='scarf') s+=`<rect x="46" y="62" width="28" height="9" rx="4" fill="${c==='#a8343a'?'#2f4f6f':'#a8343a'}"/><rect x="62" y="68" width="8" height="30" fill="${c==='#a8343a'?'#2f4f6f':'#a8343a'}"/>`;
+    if(A==='glasses') s+=`<circle cx="53" cy="41" r="5" fill="none" stroke="#2a2622" stroke-width="1.6"/><circle cx="67" cy="41" r="5" fill="none" stroke="#2a2622" stroke-width="1.6"/><path d="M58 41 L62 41" stroke="#2a2622" stroke-width="1.6"/>`;
+    if(A==='bag') s+=`<path d="M${60-sh} 70 L${60+sh+10} 118" stroke="#8a7a5c" stroke-width="4"/><rect x="${60+sh+2}" y="110" width="24" height="28" rx="2" fill="#8a7a5c"/>`;
+    if(A==='fan') s+=`<path d="M${60+sh+5} 132 L${60+sh+30} 112 A28 28 0 0 1 ${60+sh+33} 140 Z" fill="#efe6d0" stroke="#b9a77d"/>`;
+    $('#gprev').innerHTML=`<svg viewBox="0 0 120 210" width="150" height="262">${s}</svg>`; }
+  function sync(){ document.querySelectorAll('.gopt').forEach(d=>d.querySelectorAll('button').forEach(b=>b.classList.toggle('on',G.look[d.dataset.k]===b.dataset.v)));
+    sw.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===G.color)); svg(); }
+  document.querySelectorAll('.gopt').forEach(d=>d.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.look[d.dataset.k]=b.dataset.v; sync(); });
+  sw.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.color=b.dataset.c; sync(); };
+  inp.oninput=()=>{ G.name=inp.value; };
+  function go(){ G.name=inp.value.trim(); if(!G.name){ inp.focus(); inp.classList.add('need'); inp.placeholder='請先取個名字'; return; }
+    if(window.__houseReady&&window.__enterHouse) window.__enterHouse(); else { window.__wantEnter=true; btn.textContent='宅院整理中…'; btn.disabled=true; } }
+  btn.onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } e.stopPropagation(); };
+  window.__openGate=()=>{ const g=$('#gate'); inp.value=G.name; btn.textContent='換好了'; btn.disabled=false; g.classList.remove('hide','out'); sync(); };
+  sync(); if(!G.name) setTimeout(()=>inp.focus(),50);
+})();
+</script>
 
+
+<div id="planlabels" class="hide"></div>
 <div id="hud">
   <div id="brand"><div class="n">學鳩齋</div><div class="t" id="today"></div><label id="lighting">燈光 <input id="lightLevel" type="range" min="0" max="100" value="45"><output id="lightValue" for="lightLevel">45%</output></label><label id="ctempRow">色溫 <input id="ctemp" type="range" min="2200" max="6500" step="100" value="3000"><output id="ctempValue" for="ctemp">3000K</output></label></div>
   <div id="people"><div class="h"><span>在齋</span><span id="pc"></span></div><div id="pl"></div></div>
@@ -135,8 +218,9 @@ button{font-family:var(--f);cursor:pointer}
     <button id="bBooks">找書</button>
     <button id="bPosts">文章</button>
     <button id="bSeat">找位子</button>
-    <button id="bName">改名</button>
-    <button id="bPlan">知了間平面</button>
+    <button id="bName">名字・裝扮</button>
+    <button id="bPlan">宅院平面</button>
+    <button id="bSmoke">抽菸</button>
     <button id="bEntry">入口視角</button>
     <button id="bVR">進入 VR</button>
   </div>
@@ -2458,6 +2542,124 @@ function tickSips(){ const now=Date.now(), done=new Set();
   const sb=$('#dsip'), sv=!!c&&left>0; if(sb&&sb.classList.contains('hide')===sv) sb.classList.toggle('hide',!sv);
   const fb=$('#dfin'), fv=myDrink>=0; if(fb&&fb.classList.contains('hide')===fv) fb.classList.toggle('hide',!fv); }
 
+/* ================= v45: who you are (name, figure, clothes, accessory), a cigarette, the door of 學鳩齋, the whole compound in plan ================= */
+// ---- looks: gender, outfit, accessory; shared with everyone as presence `av`
+const LOOK_G=['m','f'], LOOK_O=['suit','modern','robe'], LOOK_A=['none','douli','straw','scarf','glasses','bag','fan'];
+function cleanLook(l){ l=l&&typeof l==='object'?l:{}; return {g:LOOK_G.includes(l.g)?l.g:'m',o:LOOK_O.includes(l.o)?l.o:'robe',a:LOOK_A.includes(l.a)?l.a:'none'}; }
+var myLook=cleanLook((()=>{ try{ return JSON.parse(LS.get('hk-look')||'null'); }catch{ return null; } })());
+const AVM={ skin:new THREE.MeshStandardMaterial({color:0xe7cfb4,roughness:.7}), hair:new THREE.MeshStandardMaterial({color:0x1d1a18,roughness:.8}),
+  shirt:new THREE.MeshStandardMaterial({color:0xf2efe8,roughness:.8}), shoe:new THREE.MeshStandardMaterial({color:0x1a1716,roughness:.5}), sneaker:new THREE.MeshStandardMaterial({color:0xece8e0,roughness:.7}),
+  jeans:new THREE.MeshStandardMaterial({color:0x3b4a66,roughness:.9}), straw:new THREE.MeshStandardMaterial({color:0xc8a96a,roughness:.9,side:THREE.DoubleSide}), tie:new THREE.MeshStandardMaterial({color:0x7a2a2a,roughness:.6}),
+  metal:new THREE.MeshStandardMaterial({color:0x2a2622,metalness:.5,roughness:.4}), canvas:new THREE.MeshStandardMaterial({color:0x8a7a5c,roughness:.95}), paper:new THREE.MeshStandardMaterial({color:0xefe6d0,roughness:.9,side:THREE.DoubleSide}) };
+function buildFigure(look,color){ const L=cleanLook(look), F=new THREE.Group(), c=new THREE.Color(color), dark=c.clone().multiplyScalar(.62);
+  const cloth=new THREE.MeshStandardMaterial({color:c,roughness:.85}), clothD=new THREE.MeshStandardMaterial({color:dark,roughness:.85});
+  const cyl=(rt,rb,h,m,x,y,z,seg=14)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),m); o.position.set(x,y,z); F.add(o); return o; };
+  const sph=(r,m,x,y,z)=>{ const o=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),m); o.position.set(x,y,z); F.add(o); return o; };
+  const bx=(w,h,d,m,x,y,z)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); F.add(o); return o; };
+  const fem=L.g==='f', sh=fem?.17:.2;
+  // head, neck, hair
+  sph(.105,AVM.skin,0,1.56,0); bx(.026,.036,.03,AVM.skin,0,1.55,-.105); cyl(.042,.046,.09,AVM.skin,0,1.43,0);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.112,14,8,0,Math.PI*2,0,Math.PI/2),AVM.hair); cap.position.set(0,1.585,.02); cap.rotation.x=-.32; F.add(cap);
+  for(const sx of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.011,8,6),AVM.hair); e.scale.set(1,.7,.5); e.position.set(sx*.038,1.57,-.097); F.add(e); }
+  if(fem){ if(L.o==='robe'){ sph(.06,AVM.hair,0,1.62,.1); } else { bx(.21,.3,.07,AVM.hair,0,1.44,.07); } }
+  // body by outfit
+  let body;
+  if(L.o==='robe'){ body=cyl(fem?.15:.18,fem?.19:.26,1.32,cloth,0,.74,0); cyl(.05,.052,.05,clothD,0,1.4,0);   /* 長袍 / 旗袍: to the ankle, standing collar */
+    bx(.012,.4,.01,clothD,.05,1.22,-(fem?.15:.18)+.01); cyl(.05,.05,.04,AVM.shoe,-.07,.02,-.02); cyl(.05,.05,.04,AVM.shoe,.07,.02,-.02); }
+  else if(L.o==='suit'){ body=cyl(sh,fem?.15:.17,.56,cloth,0,1.12,0);   /* jacket over a white shirt */
+    bx(.09,.2,.01,AVM.shirt,0,1.3,-(fem?.155:.18)); if(!fem) bx(.03,.22,.012,AVM.tie,0,1.24,-.185);
+    if(fem){ cyl(.16,.21,.42,clothD,0,.65,0); cyl(.04,.035,.44,AVM.skin,-.06,.22,0); cyl(.04,.035,.44,AVM.skin,.06,.22,0); }
+    else { cyl(.07,.065,.86,clothD,-.08,.43,0); cyl(.07,.065,.86,clothD,.08,.43,0); }
+    bx(.08,.05,.15,AVM.shoe,-.08,.025,-.03); bx(.08,.05,.15,AVM.shoe,.08,.025,-.03); }
+  else { body=cyl(fem?.16:.18,fem?.15:.17,.54,cloth,0,1.12,0);   /* sweater and jeans */
+    cyl(.07,.065,.86,AVM.jeans,-.08,.43,0); cyl(.07,.065,.86,AVM.jeans,.08,.43,0); bx(.085,.06,.16,AVM.sneaker,-.08,.03,-.03); bx(.085,.06,.16,AVM.sneaker,.08,.03,-.03); }
+  // arms in sleeves, hands
+  const sleeve=L.o==='modern'?cloth:cloth; for(const sx of [-1,1]){ cyl(.045,.05,.5,sleeve,sx*(sh+.03),1.13,0); sph(.038,AVM.skin,sx*(sh+.03),.85,0); }
+  // accessory
+  const A=L.a;
+  if(A==='douli'){ const h=new THREE.Mesh(new THREE.ConeGeometry(.3,.15,24,1,true),AVM.straw); h.position.y=1.72; F.add(h); }
+  if(A==='straw'){ cyl(.22,.22,.012,AVM.straw,0,1.655,0,24); cyl(.115,.12,.1,AVM.straw,0,1.71,0,20); cyl(.121,.121,.025,AVM.tie,0,1.675,0,20); }
+  if(A==='scarf'){ const sc=new THREE.MeshStandardMaterial({color:c.getHSL({}).l>.3&&Math.abs(c.r-.66)<.1?0x2f4f6f:0xa8343a,roughness:.95}); const t=new THREE.Mesh(new THREE.TorusGeometry(.065,.032,8,18),sc); t.rotation.x=Math.PI/2; t.position.y=1.41; F.add(t); bx(.07,.26,.025,sc,.05,1.25,-.17); }
+  if(A==='glasses'){ for(const sx of [-1,1]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.027,.0045,6,16),AVM.metal); r.position.set(sx*.042,1.575,-.1); F.add(r); } bx(.03,.005,.005,AVM.metal,0,1.58,-.1); }
+  if(A==='bag'){ bx(.26,.3,.07,AVM.canvas,sh+.1,.95,.0); const st=bx(.025,.62,.012,AVM.canvas,0,1.15,-.185); st.rotation.z=-.62; }
+  if(A==='fan'){ const f=new THREE.Mesh(new THREE.CircleGeometry(.14,16,Math.PI*.2,Math.PI*.6),AVM.paper); f.position.set(sh+.06,.86,-.05); f.rotation.y=Math.PI/2; F.add(f); }
+  return {F,body}; }
+function makeAvatar(color,look){ const g=new THREE.Group(); const fig=buildFigure(look||{},color); g.add(fig.F);
+  const tag=new THREE.Sprite(new THREE.SpriteMaterial({depthTest:false,transparent:true})); tag.scale.set(0.9,0.26,1); tag.position.y=1.95; tag.renderOrder=5; g.add(tag);
+  const cup=classicCup(g,.27,.88,-.14,{saucer:true,scale:1.1}); cup.visible=false;
+  const snack=new THREE.Group(); g.add(snack);
+  const smoke=smokeRig(g);
+  scene.add(g); return {g,fig:fig.F,body:fig.body,tag,cup,snack,smoke,snI:-1,key:'',look:''}; }
+function setAvatarLook(av,color,look){ const k=JSON.stringify(cleanLook(look))+color; if(av.look===k) return; av.look=k; av.g.remove(av.fig); const fig=buildFigure(look,color); av.g.add(fig.F); av.fig=fig.F; av.body=fig.body; }
+
+// ---- smoking: a silver case, a lighter's flame, the ember and smoke; ~2½ minutes a cigarette, shared as presence `sm`
+var mySmoke=0; const SMOKE_T=150;
+const smokeMat=()=>{ const m=steamMatBase.clone(); m.color=new THREE.Color(0xd8d6d2); m.opacity=0; return m; };
+function smokeRig(parent){ const R=new THREE.Group(); parent.add(R); R.visible=false;
+  const cig=new THREE.Group(); R.add(cig); const paper=new THREE.Mesh(new THREE.CylinderGeometry(.0045,.0045,.07,8),AVM.shirt); paper.rotation.z=Math.PI/2; paper.position.x=.035; cig.add(paper);
+  const filt=new THREE.Mesh(new THREE.CylinderGeometry(.0047,.0047,.022,8),new THREE.MeshStandardMaterial({color:0xc89a5a,roughness:.8})); filt.rotation.z=Math.PI/2; filt.position.x=-.011; cig.add(filt);
+  const ember=new THREE.Mesh(new THREE.SphereGeometry(.0055,8,6),new THREE.MeshBasicMaterial({color:0xff6a1a})); ember.position.x=.071; cig.add(ember);
+  const kase=new THREE.Mesh(new THREE.BoxGeometry(.085,.012,.055),new THREE.MeshStandardMaterial({color:0xb8b8b4,metalness:.85,roughness:.25})); kase.position.set(0,-.02,.02); R.add(kase);
+  const lighter=new THREE.Group(); R.add(lighter); const lb=new THREE.Mesh(new THREE.BoxGeometry(.022,.05,.012),new THREE.MeshStandardMaterial({color:0x8a1f1f,metalness:.3,roughness:.4})); lb.position.y=-.03; lighter.add(lb);
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(.007,.03,8),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.9,depthWrite:false})); flame.position.y=.012; lighter.add(flame);
+  const glow=new THREE.PointLight(0xff9a40,0,1.2,2); lighter.add(glow);
+  const puffs=[]; for(let i=0;i<10;i++){ const s=new THREE.Sprite(smokeMat()); scene.add(s); puffs.push({s,t:1,v:new THREE.Vector3()}); }
+  return {R,cig,ember,kase,lighter,flame,glow,puffs,next:0,exhale:6}; }
+const _tip=new THREE.Vector3();
+// t: seconds since lighting (-1 when not smoking). Phases: case 0–1.2, lighter 1.0–2.6, then smoke until SMOKE_T
+function poseSmoke(S,t,dt,mouth){ const on=t>=0&&t<SMOKE_T; S.R.visible=on; if(!on){ for(const p of S.puffs) p.s.material.opacity=0; return; }
+  S.kase.visible=t<1.2; S.cig.visible=t>.7; S.lighter.visible=t>1.0&&t<2.6;
+  const burnt=Math.min(1,t/SMOKE_T); S.cig.children[0].scale.y=1-burnt*.7; S.cig.children[0].position.x=.035-burnt*.0245; S.ember.position.x=.071-burnt*.049;
+  const draw=(t%9)<1.2&&t>3;   /* every nine seconds a draw: the ember brightens */
+  S.ember.material.color.setHex(draw?0xffb050:0xff5a10); S.ember.scale.setScalar(draw?1.4:1);
+  if(S.lighter.visible){ const k=1+.15*Math.sin(t*40); S.flame.scale.set(1,k,1); S.glow.intensity=.6*k; } else S.glow.intensity=0;
+  S.ember.getWorldPosition(_tip);
+  S.next-=dt; if(t>2.4&&S.next<=0){ S.next=.28; const p=S.puffs.find(p=>p.t>=1); if(p){ p.t=0; p.big=false; p.s.position.copy(_tip); p.v.set((Math.random()-.5)*.02,.12,(Math.random()-.5)*.02); } }
+  if(t>3&&(t%9)>2.2&&(t%9)<2.2+dt*1.01&&mouth){ for(let i=0;i<3;i++){ const p=S.puffs.find(p=>p.t>=1); if(!p) break; p.t=0; p.big=true; p.s.position.copy(mouth.p); p.v.copy(mouth.f).multiplyScalar(.25+i*.05).add(new THREE.Vector3(0,.05,0)); } }
+  for(const p of S.puffs){ if(p.t>=1){ p.s.material.opacity=0; continue; } p.t+=dt/(p.big?2.6:3.2); p.s.position.addScaledVector(p.v,dt); p.v.y+=dt*.02; p.v.multiplyScalar(1-dt*.4);
+    p.s.material.opacity=(p.big?.5:.4)*Math.sin(Math.min(1,p.t)*Math.PI); p.s.scale.setScalar((p.big?.07:.03)+p.t*(p.big?.4:.26)); } }
+// my own cigarette, held low in the right of view
+const FP_SMOKE=smokeRig(camera); FP_SMOKE.R.position.set(.15,-.11,-.4); FP_SMOKE.R.rotation.set(.25,.6,.2); FP_SMOKE.R.scale.setScalar(.8);
+function toggleSmoke(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{}
+  if(mySmoke&&(Date.now()-mySmoke)/1000<SMOKE_T){ mySmoke=0; pushPresence(); toast('把菸捻熄了。'); return; }
+  mySmoke=Date.now(); pushPresence(); toast('從菸盒取出一支菸。',2500); noiseBurst(.03,2600,6,.06,.15); noiseBurst(.03,2400,6,.05,.85);
+  setTimeout(()=>{ noiseBurst(.025,4200,3,.09); noiseBurst(.6,900,.7,.035,.05); toast('打火機「喀」一聲，點著了。',3000); },1050); }
+const _mouth={p:new THREE.Vector3(),f:new THREE.Vector3()};
+ZL_ANIM.push(dt=>{ const now=Date.now();
+  // mine
+  const t=mySmoke?(now-mySmoke)/1000:-1; if(mySmoke&&t>=SMOKE_T){ mySmoke=0; pushPresence(); toast('菸抽完了，捻熄在菸灰缸裡。'); }
+  camera.getWorldPosition(_mouth.p); _mouth.p.y-=.08; _mouth.f.set(-Math.sin(ME.yaw),0,-Math.cos(ME.yaw)); _mouth.p.addScaledVector(_mouth.f,.15);
+  FP_SMOKE.R.visible=VIEW.mode!=='plan'; poseSmoke(FP_SMOKE,VIEW.mode==='plan'?-1:t,dt,_mouth);
+  const sb=$('#bSmoke'); if(sb){ const lab=mySmoke?'捻熄':'抽菸'; if(sb.textContent!==lab) sb.textContent=lab; }
+  // everyone else: cigarette by the right hand, raised toward the mouth on a draw
+  if(typeof others==='undefined') return;
+  for(const [,o] of others){ const S=o.av.smoke; if(!S) continue; const at=num(o.p.sm,0), ot=at>0?(now-at)/1000:-1;
+    const draw=ot>3&&(ot%9)<1.6; S.R.position.set(.22,draw?1.5:.92,draw?-.14:-.08); S.R.rotation.set(0,Math.PI/2,0);
+    const g=o.av.g; _mouth.p.set(0,1.5,-.15).applyMatrix4(g.matrixWorld); _mouth.f.set(-Math.sin(g.rotation.y),0,-Math.cos(g.rotation.y));
+    poseSmoke(S,ot,dt,_mouth); } });
+
+// ---- others' looks follow their presence
+ZL_ANIM.push(()=>{ if(typeof others==='undefined') return; for(const [,o] of others){ if(!o.av.fig) continue; const c=/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888888'; setAvatarLook(o.av,c,o.p.av); } });
+
+// ---- plan of the whole compound: name tags for everyone, yourself marked
+function tickPlanLabels(){ const box=$('#planlabels'); if(!box) return; const on=VIEW.mode==='plan'; box.classList.toggle('hide',!on); if(!on) return;
+  const W=innerWidth, H=innerHeight, v=new THREE.Vector3(), list=[{n:myName,c:myColor,x:ME.x,z:ME.z,me:true}];
+  for(const [,o] of others){ const g=o.av.g; list.push({n:str(o.p.n,12)||'訪客',c:/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888',x:g.position.x,z:g.position.z}); }
+  while(box.children.length<list.length){ const d=document.createElement('div'); d.className='pl'; d.innerHTML='<i></i><span></span>'; box.appendChild(d); }
+  [...box.children].forEach((d,i)=>{ const p=list[i]; if(!p){ d.style.display='none'; return; } v.set(p.x,1.2,p.z).project(camera); d.style.display=v.z<1?'':'none';
+    d.style.transform=`translate(${(v.x*.5+.5)*W}px,${(-v.y*.5+.5)*H}px)`; d.firstChild.style.background=p.c; d.classList.toggle('me',!!p.me); const nm=p.me?p.n+'（你）':p.n; if(d.lastChild.textContent!==nm) d.lastChild.textContent=nm; }); }
+ZL_ANIM.push(tickPlanLabels);
+
+// ---- the gate: whoever opens the page names themselves and dresses first; the house is built behind it meanwhile
+function enterHouse(){ const G=window.__gate||{}; const nm=String(G.name||'').trim().slice(0,12);
+  if(nm){ myName=nm; LS.set('hk-name',myName); }
+  if(G.color&&/^#[0-9a-f]{6}$/i.test(G.color)){ myColor=G.color; LS.set('hk-color',myColor); }
+  myLook=cleanLook(G.look); LS.set('hk-look',JSON.stringify(myLook));
+  try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{}
+  const gate=document.getElementById('gate'); if(gate){ gate.classList.add('out'); setTimeout(()=>gate.classList.add('hide'),700); }
+  if(!window.__entered){ window.__entered=true; setView('entry'); } else toast('換好了。');
+  pushPresence(); renderPeople(); try{ $('#c').focus(); }catch{} }
+
 const SEAT_SPOT={desk:[.45,.85],lounge:[1.25,.51],gongfu:[.36,.645],irori:[.32,TATAMI.h+.045],modern:[.42,ZP.modern.h+.045]};
 /* ---------- per frame ---------- */
 function tickZhiliao(dt){ const now=Date.now(), tt=performance.now()/1000;
@@ -2499,11 +2701,11 @@ const VIEW={mode:'walk',theta:Math.PI,phi:.001,r:15.5,target:new THREE.Vector3(0
 const planClip=[new THREE.Plane(new THREE.Vector3(0,-1,0),2.35)];
 const planFill=new THREE.AmbientLight(0xfff1dc,0); scene.add(planFill);
 function setView(mode){ closePanel();
-  if(mode==='plan'){ if(ME.seat>=0) standUp(); ME.path=[]; VIEW.mode='plan'; VIEW.theta=Math.PI; VIEW.phi=.001; VIEW.r=15.5; renderer.clippingPlanes=planClip; planFill.intensity=1.1; $('#planbar').classList.remove('hide');
+  if(mode==='plan'){ if(ME.seat>=0) standUp(); ME.path=[]; VIEW.mode='plan'; VIEW.theta=Math.PI; VIEW.phi=.001; VIEW.r=28; VIEW.target.set(0,0,10.2); renderer.clippingPlanes=planClip; planFill.intensity=1.1; $('#planbar').classList.remove('hide');
     toast(isTouch?'俯視平面：拖曳旋轉・按＋－縮放・點地面走進去':'俯視平面：拖曳旋轉・滾輪縮放・點地面走進去・按 W A S D 回到行走',8000); }
   else { VIEW.mode='walk'; renderer.clippingPlanes=[]; planFill.intensity=0; $('#planbar').classList.add('hide'); }
-  if(mode==='entry'){ if(ME.seat>=0) standUp(); ME.path=[]; ME.x=ZP.corridorX; ME.z=14.15; ME.yaw=Math.PI; ME.pitch=-.06; ME.targetYaw=null; pushPresence();
-    if(DOORS.N&&!DOORS.N.open) toast('知了間的門閂著，從屋裡的人才能打開。'); else toast((VRT.zl_enter&&String(VRT.zl_enter.body||'').trim())||'院子入口。正前方是條案與丁雲鵬《玉川煎茶圖》；左邊門洞進和室，右邊門洞進茶室。',9000); } }
+  if(mode==='entry'){ if(ME.seat>=0) standUp(); ME.path=[]; ME.x=0; ME.z=5.9; ME.yaw=0; ME.pitch=-.02; ME.targetYaw=null; pushPresence();
+    toast((VRT.entry&&String(VRT.entry.body||'').trim())||'學鳩齋門口。推門進書齋；轉身是院子，對面是知了間。按「宅院平面」看大家在哪。',9000); } }
 function applyCamera(){
   if(VIEW.mode==='plan'){ const t=VIEW.target, sp=Math.sin(VIEW.phi);
     rig.position.set(t.x+VIEW.r*sp*Math.sin(VIEW.theta),0,t.z+VIEW.r*sp*Math.cos(VIEW.theta)); rig.rotation.y=VIEW.theta;
@@ -2511,7 +2713,7 @@ function applyCamera(){
   rig.position.set(ME.x,0,ME.z); rig.rotation.y=ME.yaw;
   if(!renderer.xr.isPresenting){ camera.position.set(0,ME.eye,0); camera.rotation.set(ME.pitch,0,0); } }
 function planDrag(dx,dy){ const k=isTouch?.006:.0042; VIEW.theta-=dx*k; VIEW.phi=Math.max(.001,Math.min(1.3,VIEW.phi+dy*k)); }
-function planZoom(f){ VIEW.r=Math.max(4,Math.min(26,VIEW.r*f)); }
+function planZoom(f){ VIEW.r=Math.max(4,Math.min(44,VIEW.r*f)); }
 
 
 applyLighting();
@@ -2607,7 +2809,7 @@ function tickExtras(dt){
 function nameTex(name,status,color){ const w=Math.round(512), h=Math.round(150); return textCanvas(w,h,(g)=>{ g.font=F(600,46); const tw=Math.min(w-20,Math.max(g.measureText(name).width, status?(g.font=F(400,34),g.measureText(status).width):0)+60);
   g.fillStyle='rgba(30,26,23,.78)'; const x0=(w-tw)/2; g.beginPath(); g.roundRect?g.roundRect(x0,8,tw,h-16,10):g.rect(x0,8,tw,h-16); g.fill(); g.fillStyle=color; g.fillRect(x0,8,8,h-16);
   g.textAlign='center'; g.fillStyle='#f3ecdc'; g.font=F(600,46); g.textBaseline='middle'; g.fillText(name,w/2,status?52:h/2); if(status){ g.font=F(400,32); g.fillStyle='#d7c9a8'; g.fillText(status,w/2,104);} }); }
-function makeAvatar(color){ const g=new THREE.Group(); const body=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.3,1.15,16),new THREE.MeshStandardMaterial({color,roughness:.85})); body.position.y=0.6; g.add(body);
+function makeAvatarOld(color){ const g=new THREE.Group(); const body=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.3,1.15,16),new THREE.MeshStandardMaterial({color,roughness:.85})); body.position.y=0.6; g.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(0.13,16,12),new THREE.MeshStandardMaterial({color:0xe7cfb4,roughness:.7})); head.position.y=1.32; g.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(0.135,16,8,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x1d1a18,roughness:.8})); hair.position.y=1.34; g.add(hair);
   const nose=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.04,0.04),head.material); nose.position.set(0,1.31,-0.13); g.add(nose);
@@ -2677,7 +2879,7 @@ function sit(si){ const s=SEATS[si]; if(occupied(si)){ toast('這個位子有人
 
 /* ---------------- input ---------------- */
 const keys=new Set();
-addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; if(e.key==='Enter'&&!e.repeat){ e.preventDefault(); openChat(); return; } if(e.key===' '){ e.preventDefault(); if(!e.repeat) doJump(); return; } if(e.key.toLowerCase()==='z'&&!e.repeat){ toggleCrouch(); return; } if(e.key==='F2'){ e.preventDefault(); toggleDiag(); return; } keys.add(e.key.toLowerCase()); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())){ if(VIEW.mode==='plan') setView('walk'); ME.path=[]; if(ME.seat>=0) standUp(); } if(e.key==='Escape'){ closePanel(); closeReader(); } });
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; if(e.key==='Enter'&&!e.repeat){ e.preventDefault(); openChat(); return; } if(e.key===' '){ e.preventDefault(); if(!e.repeat) doJump(); return; } if(e.key.toLowerCase()==='z'&&!e.repeat){ toggleCrouch(); return; } if(e.key.toLowerCase()==='c'&&!e.repeat){ toggleSmoke(); return; } if(e.key==='F2'){ e.preventDefault(); toggleDiag(); return; } keys.add(e.key.toLowerCase()); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())){ if(VIEW.mode==='plan') setView('walk'); ME.path=[]; if(ME.seat>=0) standUp(); } if(e.key==='Escape'){ closePanel(); closeReader(); } });
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 addEventListener('blur',()=>keys.clear());
 let drag=null;
@@ -2805,7 +3007,7 @@ function showPosts(){ const body=openPanel('學鳩齋文章',CAB.map(c=>`<div cl
 function showSeats(){ const rows=SEATS.map((s,i)=>{ const who=occupant(i); return `<li data-s="${i}"><div class="bt">${esc(seatLabel(i))}</div><div class="ba">${who?esc(who)+' 坐著':'空位'}</div></li>`; }).join('');
   const body=openPanel('找位子',`<p class="meta">坐下後可以開始 25 分鐘專注計時，在齋裡的人會看到彼此在專注還是休息。</p><ul class="list">${rows}</ul>`); body.querySelector('.list').onclick=e=>{ const li=e.target.closest('li[data-s]'); if(li){ sit(+li.dataset.s); if(isTouch) closePanel(); } }; }
 $('#bBooks').onclick=showSearch; $('#bPosts').onclick=showPosts; $('#bSeat').onclick=showSeats;
-$('#bName').onclick=()=>{ const body=openPanel('改名',`<input class="srch" maxlength="12" value="${esc(myName)}"><button class="btn pri">好</button>`); const inp=body.querySelector('input'); body.querySelector('button').onclick=()=>{ myName=(inp.value.trim()||'訪客').slice(0,12); LS.set('hk-name',myName); pushPresence(); renderPeople(); closePanel(); }; };
+$('#bName').onclick=()=>{ if(window.__openGate){ window.__openGate(); return; } const body=openPanel('改名',`<input class="srch" maxlength="12" value="${esc(myName)}"><button class="btn pri">好</button>`); const inp=body.querySelector('input'); body.querySelector('button').onclick=()=>{ myName=(inp.value.trim()||'訪客').slice(0,12); LS.set('hk-name',myName); pushPresence(); renderPeople(); closePanel(); }; };
 
 /* ---------------- reader (markdown) ---------------- */
 function inline(s){ let h=esc(s);
@@ -2854,7 +3056,7 @@ const AV_COLORS=['#3e5873','#3d6b4f','#86683c','#a8343a','#5b4b6b','#2f5f6b','#7
 if(!myColor){ myColor=AV_COLORS[Math.floor(Math.random()*AV_COLORS.length)]; LS.set('hk-color',myColor); }
 const others=new Map(); // peer -> {av, p}
 let lastPush=0, lastSent='';
-function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0}; }
+function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0}; }
 function pushPresence(force){ if(!room) return; const o=presenceObj(); const k=JSON.stringify(o); if(k===lastSent) return; lastSent=k; room.presence(o).catch(()=>{}); }
 function str(v,n){ return typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').slice(0,n):''; }
 function num(v,d=0){ return typeof v==='number'&&isFinite(v)?v:d; }
@@ -3218,6 +3420,8 @@ function tickLights(dt){ if(!LIGHT_POOL.length) return; lightT+=dt;
     if(u.src&&!want.has(u.src)){ u.k=Math.max(0,u.k-dt*3); if(u.k===0) u.src=null; } else if(u.src) u.k=Math.min(1,u.k+dt*3);
     if(!u.src&&queue.length){ u.src=queue.shift(); u.k=0; }
     const v=u.src; if(!v){ p.intensity=0; return; } p.position.copy(v.userData.wp); p.color.copy(v.color); p.intensity=v.intensity*u.k; p.distance=v.distance; p.decay=v.decay; }); }
+window.__enterHouse=enterHouse; window.__houseReady=true; { const b=document.getElementById('genter'); if(b&&!window.__wantEnter){ b.disabled=false; } } if(window.__wantEnter) enterHouse();
+if(VRT.gate&&String(VRT.gate.body||'').trim()){ const s=document.getElementById('gsub'); if(s) s.textContent=String(VRT.gate.body).trim(); }
 renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); tickPeople(dt); tickSips(); tickFPS(dt); renderer.render(scene,camera); });
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.fov=fovFor(camera.aspect); camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
@@ -3226,7 +3430,7 @@ canvas.focus();
 toast(isTouch?'拖曳看四周・點地面走過去・右下角：聊天、跑、跳、蹲':'拖曳看四周・點地面走過去（或 W A S D）・Shift 跑・空白鍵跳・Z 蹲・Enter 聊天'+(myName==='訪客'?'・按「改名」讓同伴認得你':''),9000);
 connectRoom();
 renderPeople();
-$('#bPlan').onclick=()=>setView('plan'); $('#bEntry').onclick=()=>setView('entry');
+$('#bPlan').onclick=()=>setView('plan'); $('#bSmoke').onclick=()=>toggleSmoke(); $('#bEntry').onclick=()=>setView('entry');
 $('#pzIn').onclick=()=>planZoom(.8); $('#pzOut').onclick=()=>planZoom(1.25); $('#pTop').onclick=()=>{ VIEW.theta=Math.PI; VIEW.phi=.001; }; $('#pWalk').onclick=()=>setView('walk');
 if(location.hash==='#plan') setTimeout(()=>setView('plan'),50); if(location.hash==='#entry') setTimeout(()=>setView('entry'),50);
 (async()=>{

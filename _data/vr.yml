@@ -2,6 +2,12 @@ couplet:
   upper: 知味粗茶堪作伴
   lower: 了心陋室可安身
 texts:
+  - key: gate
+    title: 開場頁的副標題
+    body: 線上書齋・入門前，先報上名來
+  - key: entry
+    title: 進門後在學鳩齋門口的提示
+    body: 學鳩齋門口。推門進書齋；轉身是院子，對面是知了間。按「宅院平面」看大家在哪。
   - key: zl_enter
     title: 進入知了間的提示
     body: 院子入口。正前方是條案與丁雲鵬《玉川煎茶圖》；左邊門洞進和室，右邊門洞進茶室。

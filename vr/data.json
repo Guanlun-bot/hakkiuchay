@@ -1,0 +1,5 @@
+---
+layout: null
+permalink: /vr/data.json
+---
+{{ site.data.vr | jsonify }}

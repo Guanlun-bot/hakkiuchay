@@ -185,6 +185,60 @@ content:
         label: 照片輪播秒數
         type: number
 
+  - name: vr
+    label: 線上書齋
+    type: file
+    path: _data/vr.yml
+    format: yaml
+    fields:
+      - name: couplet
+        label: 知了間對聯
+        type: object
+        description: 換字之後，書法字型會自動補上新字。
+        fields:
+          - { name: upper, label: 上聯（右）, type: string }
+          - { name: lower, label: 下聯（左）, type: string }
+      - name: images
+        label: 畫與圖片（留空就用書齋內建的那張；新圖會置中裁切成原本畫框的比例）
+        type: object
+        fields:
+          - { name: scroll, label: "和室床之間的掛軸（直幅，約 1:2）", type: image }
+          - { name: teapaint, label: "明間中堂畫（直幅，約 1:2）", type: image }
+          - { name: beauty, label: "茶室雨林缸上方的畫（橫幅，約 6:5）", type: image }
+          - { name: screen, label: "茶室屏風（橫幅，約 2.2:1，會分成六扇）", type: image }
+      - name: texts
+        label: 點擊物件跳出的說明
+        type: object
+        list: true
+        fields:
+          - { name: key, label: 代號（程式用，請不要改）, type: string }
+          - { name: title, label: 標題, type: string }
+          - { name: body, label: 內文（空一行就是分段）, type: text }
+      - name: teas
+        label: 茶單（錫罐上的茶名與茶席可選的茶）
+        type: object
+        list: true
+        fields:
+          - { name: name, label: 茶名, type: string }
+          - { name: note, label: 說明（產地・風味）, type: string }
+      - name: incense
+        label: 香爐可選的香（「不點香」會自動放在最後）
+        type: object
+        list: true
+        fields:
+          - { name: name, label: 香名, type: string }
+          - { name: note, label: 說明, type: string }
+      - name: music
+        label: 唱片（可拖曳排序）
+        type: object
+        list: true
+        fields:
+          - { name: title, label: 曲名, type: string }
+          - { name: artist, label: 演出者, type: string }
+          - name: file
+            label: 音檔（上傳 mp3；舊的幾首是 vr/music 裡的檔名）
+            type: file
+
   - name: text
     label: 網站文字
     type: file

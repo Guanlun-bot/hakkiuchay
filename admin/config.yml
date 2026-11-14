@@ -122,6 +122,54 @@ collections:
           - { name: intro_image, label: 介紹下方的畫, widget: image, required: false }
           - { name: intro_image_caption, label: 畫的說明, widget: string, required: false }
           - { name: slide_seconds, label: 照片輪播秒數, widget: number, value_type: int, min: 2, required: false }
+      - name: vr
+        label: 線上書齋
+        file: _data/vr.yml
+        fields:
+          - name: couplet
+            label: 知了間對聯
+            widget: object
+            fields:
+              - { name: upper, label: 上聯（右）, widget: string }
+              - { name: lower, label: 下聯（左）, widget: string }
+          - name: images
+            label: 畫與圖片（留空就用內建的那張；新圖會置中裁切成原本畫框的比例）
+            widget: object
+            fields:
+              - { name: scroll, label: "和室床之間的掛軸（直幅，約 1:2）", widget: image, required: false }
+              - { name: teapaint, label: "明間中堂畫（直幅，約 1:2）", widget: image, required: false }
+              - { name: beauty, label: "茶室雨林缸上方的畫（橫幅，約 6:5）", widget: image, required: false }
+              - { name: screen, label: "茶室屏風（橫幅，約 2.2:1，會分成六扇）", widget: image, required: false }
+          - name: texts
+            label: 點擊物件跳出的說明
+            widget: list
+            summary: "{{fields.title}}"
+            fields:
+              - { name: key, label: 代號（程式用，請不要改）, widget: string }
+              - { name: title, label: 標題, widget: string }
+              - { name: body, label: 內文（空一行就是分段）, widget: text, required: false }
+          - name: teas
+            label: 茶單
+            widget: list
+            summary: "{{fields.name}}"
+            fields:
+              - { name: name, label: 茶名, widget: string }
+              - { name: note, label: 說明, widget: string, required: false }
+          - name: incense
+            label: 香爐可選的香（「不點香」會自動放在最後）
+            widget: list
+            summary: "{{fields.name}}"
+            fields:
+              - { name: name, label: 香名, widget: string }
+              - { name: note, label: 說明, widget: string, required: false }
+          - name: music
+            label: 唱片
+            widget: list
+            summary: "{{fields.title}}"
+            fields:
+              - { name: title, label: 曲名, widget: string }
+              - { name: artist, label: 演出者, widget: string, required: false }
+              - { name: file, label: 音檔（mp3）, widget: file }
       - name: text
         label: 網站文字
         file: _data/text.yml

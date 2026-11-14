@@ -1705,11 +1705,11 @@ const darkWood=new THREE.MeshStandardMaterial({color:0x2e1d14,roughness:.5});
 // solid wood with grain, for the tea room's tables, stools and benches: one texture per wood, laid along the length of
 // tops and rails (H) or up the legs (V)
 function woodPair(base,line,rough=.5){ const mk=vert=>{ const t=ctex(512,128,(g,w,h)=>{ g.fillStyle=base; g.fillRect(0,0,w,h); const R=rnd(base.length*97+line.length);
-    for(let i=0;i<70;i++){ const y=R()*h, a=.05+R()*.18, amp=2+R()*5, ph=R()*6; g.strokeStyle=`rgba(${line},${a})`; g.lineWidth=.6+R()*1.8; g.beginPath(); for(let x=0;x<=w;x+=8){ const yy=y+Math.sin(x/(60+R()*40)+ph)*amp; x?g.lineTo(x,yy):g.moveTo(x,yy); } g.stroke(); }
+    for(let i=0;i<70;i++){ const y=R()*h, a=.04+R()*.12, amp=1+R()*2.5, ph=R()*6; g.strokeStyle=`rgba(${line},${a})`; g.lineWidth=.6+R()*1.8; g.beginPath(); for(let x=0;x<=w;x+=8){ const yy=y+Math.sin(x/(60+R()*40)+ph)*amp; x?g.lineTo(x,yy):g.moveTo(x,yy); } g.stroke(); }
     for(let i=0;i<3;i++){ const cx=R()*w, cy=R()*h; for(let k=1;k<7;k++){ g.strokeStyle=`rgba(${line},.12)`; g.beginPath(); g.ellipse(cx,cy,k*7,k*2.2,0,0,Math.PI*2); g.stroke(); } } });
     if(vert){ t.center.set(.5,.5); t.rotation=Math.PI/2; } return new THREE.MeshStandardMaterial({map:t,roughness:rough}); };
   return {H:mk(false),V:mk(true)}; }
-const WD_HHL=woodPair('#7c4b28','40,20,8',.42), WD_HHD=woodPair('#4a2c1a','20,10,4',.48), WD_WAL=woodPair('#6e4a2e','35,20,10',.5), WD_OAK=woodPair('#a9825a','70,45,25',.55), WD_WALD=woodPair('#3a2618','15,8,4',.5);
+const WD_HHL=woodPair('#b8936a','95,65,35',.45), WD_HHD=woodPair('#9a7550','70,45,22',.48), WD_WAL=woodPair('#6e4a2e','35,20,10',.5), WD_OAK=woodPair('#a9825a','70,45,25',.55), WD_WALD=woodPair('#3a2618','15,8,4',.5);
 
 const oak=new THREE.MeshStandardMaterial({color:0x8a6a48,roughness:.55});
 const hinoki=new THREE.MeshStandardMaterial({color:0xcfae7e,roughness:.6});
@@ -2153,7 +2153,7 @@ var MD_FX={cups:[],cupG:[],pitcher:null,flame:[],steam:[]};   /* the contemporar
     const tea=new THREE.Mesh(new THREE.CircleGeometry(.026,18),new THREE.MeshStandardMaterial({color:0xb87a2a,roughness:.15})); tea.rotation.x=-Math.PI/2; tea.position.y=.032; cg.add(tea); tea.visible=false; cg.userData.tea=tea; MD_FX.cups.push(tea); MD_FX.cupG.push(cg); ZL_DYN.push(cg); }
   // seats: long benches with linen cushions, three guests on the window side facing the host, the host alone on the
   //        screen side, sitting square to the window
-  { const bench=(z,L)=>{ const bh=.4, bd=.36; box(L,.05,bd,WD_OAK.H,cx,bh-.025,z,scene); for(const sx of [-1,1]) box(.05,bh-.05,bd-.04,WD_WALD.V,cx+sx*(L/2-.12),(bh-.05)/2,z); box(L-.3,.04,.04,WD_WALD.H,cx,.12,z); };
+  { const bench=(z,L)=>{ const bh=.4, bd=.36; box(L,.05,bd,WD_WAL.H,cx,bh-.025,z,scene); for(const sx of [-1,1]) box(.05,bh-.05,bd-.04,WD_WAL.V,cx+sx*(L/2-.12),(bh-.05)/2,z); box(L-.3,.04,.04,WD_WAL.H,cx,.12,z); };
     const cushM=new THREE.MeshStandardMaterial({color:0xcfc2a4,roughness:1}), pipe=new THREE.MeshStandardMaterial({color:0x6b5d48,roughness:1});
     bench(z0-.32,Math.min(W-.2,2.1)); bench(z1+.32,.8);
     [[-.66,z0-.32,2],[0,z0-.32,2],[.66,z0-.32,2],[0,z1+.32,0]].forEach(([dx,z,f])=>{ const x=cx+dx, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'modern','當代茶席'); MODERN_SEATS.push(si); const tag={type:'seat',si};

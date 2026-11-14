@@ -2663,6 +2663,12 @@ utility.querySelector('#bar').addEventListener('click',event=>{if(event.target.c
 canvas.addEventListener('pointerdown',()=>{utility.open=false;});
 
 const locked=()=>document.pointerLockElement===canvas;
+// two ways to look around on a desktop, chosen by the visitor: 'aim' (click to lock the mouse, crosshair) or 'drag' (drag to look, click the floor to walk)
+let lookMode=LS.get('hk-look-mode')==='drag'?'drag':'aim';
+const LOOK_HELP={aim:'準心模式：點畫面鎖定視角・滑鼠轉頭・左鍵操作準心對到的東西・Esc 釋放滑鼠',drag:'拖曳模式：按住拖曳看四周・點地面走過去・點東西操作'};
+function setLookMode(m,say=true){ lookMode=m==='drag'?'drag':'aim'; LS.set('hk-look-mode',lookMode); if(lookMode==='drag'&&locked()) document.exitPointerLock();
+  const b=document.getElementById('bLook'); if(b) b.textContent='視角：'+(lookMode==='aim'?'準心':'拖曳'); if(say) toast(LOOK_HELP[lookMode],7000); }
+{ const b=document.getElementById('bLook'); if(b){ if(isTouch) b.classList.add('hide'); b.onclick=()=>setLookMode(lookMode==='aim'?'drag':'aim'); } setLookMode(lookMode,false); }
 document.addEventListener('pointerlockchange',()=>{ drag=null; keys.clear(); aim.hidden=!locked(); });
 document.addEventListener('mousemove',e=>{
   if(!locked()||VIEW.mode!=='walk'||renderer.xr.isPresenting) return;
@@ -2678,7 +2684,7 @@ let drag=null;
 canvas.addEventListener('pointerdown',e=>{ canvas.focus();
   if(e.pointerType==='mouse'&&e.button===0&&VIEW.mode==='walk'&&window.__entered&&!renderer.xr.isPresenting){
     if(locked()){ applyCamera(); camera.updateWorldMatrix(true,false); click(innerWidth/2,innerHeight/2); return; }
-    if(canvas.requestPointerLock){ try{ canvas.requestPointerLock()?.catch(()=>{}); return; }catch{} }
+    if(lookMode==='aim'&&canvas.requestPointerLock){ try{ canvas.requestPointerLock()?.catch(()=>{}); return; }catch{} }
   }
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now()}; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove',e=>{ if(locked()) return; if(!drag||drag.id!==e.pointerId) { hover(e); return; } const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY; if(VIEW.mode==='plan'){ planDrag(dx,dy); return; } const k=isTouch?0.006:0.0042; ME.yaw+=dx*k; ME.pitch=Math.max(-1.25,Math.min(1.2,ME.pitch+dy*k)); });
@@ -3337,7 +3343,7 @@ addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.fov
 
 /* ---------------- boot ---------------- */
 canvas.focus();
-toast(isTouch?'拖曳看四周・點地面走過去・右下角：聊天、跑、跳、蹲':'點畫面鎖定視角・滑鼠轉頭・Esc 釋放滑鼠・W A S D 移動・Shift 跑・空白鍵跳・Z 蹲・Enter 聊天'+(myName==='訪客'?'・按「改名」讓同伴認得你':''),9000);
+toast(isTouch?'拖曳看四周・點地面走過去・右下角：聊天、跑、跳、蹲':(lookMode==='aim'?'點畫面鎖定視角・滑鼠轉頭・Esc 釋放滑鼠':'拖曳看四周・點地面走過去')+'・W A S D 移動・Shift 跑・空白鍵跳・Z 蹲・Enter 聊天・選單裡可切換視角模式'+(myName==='訪客'?'・按「改名」讓同伴認得你':''),9000);
 renderPeople();
 $('#bPlan').onclick=()=>setView('plan'); $('#bSmoke').onclick=()=>toggleSmoke(); $('#bEntry').onclick=()=>setView('entry');
 $('#pzIn').onclick=()=>planZoom(.8); $('#pzOut').onclick=()=>planZoom(1.25); $('#pTop').onclick=()=>{ VIEW.theta=Math.PI; VIEW.phi=.001; }; $('#pWalk').onclick=()=>setView('walk');

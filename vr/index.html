@@ -2473,7 +2473,7 @@ function sit(si){ const s=SEATS[si]; if(occupied(si)){ toast('這個位子有人
 
 /* ---------------- input ---------------- */
 const keys=new Set();
-addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; keys.add(e.key.toLowerCase()); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())){ if(VIEW.mode==='plan') setView('walk'); ME.path=[]; if(ME.seat>=0) standUp(); } if(e.key==='Escape'){ closePanel(); closeReader(); } });
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return; if(e.key==='Enter'&&!e.repeat){ e.preventDefault(); openChat(); return; } if(e.key===' '){ e.preventDefault(); if(!e.repeat) doJump(); return; } if(e.key.toLowerCase()==='z'&&!e.repeat){ toggleCrouch(); return; } if(e.key==='F2'){ e.preventDefault(); toggleDiag(); return; } keys.add(e.key.toLowerCase()); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())){ if(VIEW.mode==='plan') setView('walk'); ME.path=[]; if(ME.seat>=0) standUp(); } if(e.key==='Escape'){ closePanel(); closeReader(); } });
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 addEventListener('blur',()=>keys.clear());
 let drag=null;
@@ -2649,7 +2649,7 @@ const AV_COLORS=['#3e5873','#3d6b4f','#86683c','#a8343a','#5b4b6b','#2f5f6b','#7
 if(!myColor){ myColor=AV_COLORS[Math.floor(Math.random()*AV_COLORS.length)]; LS.set('hk-color',myColor); }
 const others=new Map(); // peer -> {av, p}
 let lastPush=0, lastSent='';
-function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,sn:mySnack}; }
+function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0}; }
 function pushPresence(force){ if(!room) return; const o=presenceObj(); const k=JSON.stringify(o); if(k===lastSent) return; lastSent=k; room.presence(o).catch(()=>{}); }
 function str(v,n){ return typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').slice(0,n):''; }
 function num(v,d=0){ return typeof v==='number'&&isFinite(v)?v:d; }
@@ -2666,7 +2666,7 @@ function renderPeople(){ const list=[{n:myName+'（你）',c:myColor,st:statusOf
 // On hakkiuchay.space there is no Claude room: share presence through a Supabase Realtime channel instead.
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key) return null;
-  if(!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+  if(!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
   const sb=window.supabase.createClient(C.url,C.key,{auth:{persistSession:false,autoRefreshToken:false}});
   const me=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)), ch=sb.channel(C.channel||'hakkiuchay-vr',{config:{presence:{key:me},broadcast:{self:false,ack:false}}});
   // Two paths carry the same state: broadcast (fast, for walking) and presence (slower, but it also reaches anyone who joins later).
@@ -2686,16 +2686,17 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key) 
     if(fast||num(t)>v.t){ v.skews.push(Date.now()-num(t)); if(v.skews.length>12) v.skews.shift(); } if(fast) v.fast=Date.now();
     if(num(t)>=v.t){ v.t=num(t); v.p=p; } v.heard=Date.now(); peers.set(k,v); };
   ch.on('presence',{event:'sync'},()=>{ const st=ch.presenceState(); here=new Set(Object.keys(st));
-    for(const k of here){ const m=st[k][st[k].length-1]; if(m&&m.p) take(k,m.t,m.p,false); }
+    for(const k of here){ const m=st[k][st[k].length-1]; if(m&&m.p){ take(k,m.t,m.p,false); const v=peers.get(k); if(v) v.slow=Date.now(); } }
     for(const k of [...peers.keys()]) if(!here.has(k)&&Date.now()-peers.get(k).heard>8000) peers.delete(k); soon(); });
   ch.on('broadcast',{event:'s'},msg=>{ const m=msg&&(msg.payload||msg); if(!m) return; take(m.k,m.t,m.p,true); soon(); if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
   const moving=(a,b)=>{ if(!a||!b) return false; const x={...a}, y={...b}; for(const f of ['x','z','r']){ delete x[f]; delete y[f]; } return JSON.stringify(x)===JSON.stringify(y); };
   function track(){ trackT=null; if(!ready||!cur) return; const k=JSON.stringify(cur); if(k===tracked) return; tracked=k; trackAt=Date.now(); ch.track({t:Date.now(),p:cur}).catch(()=>{}); }
   function send(force,hi){ timer=null; if(!ready||!cur) return; const k=JSON.stringify(cur); if(!force&&k===sentKey) return; sentKey=k; sentAt=Date.now();
     try{ const r=ch.send({type:'broadcast',event:'s',payload:{k:me,t:Date.now(),p:cur,hi:hi?1:0}}); if(r&&r.catch) r.catch(()=>{}); }catch{}
-    if(!trackT) trackT=setTimeout(track,Math.max(0,800-(Date.now()-trackAt))); }
+    if(!trackT) trackT=setTimeout(track,Math.max(0,1500-(Date.now()-trackAt))); }
   await new Promise((res,rej)=>{ const to=setTimeout(()=>rej(new Error('timeout')),15000);
-    ch.subscribe(st=>{ if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; track(); send(true,true); res(); } }); });
+    ch.subscribe(st=>{ NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; tracked=''; track(); send(true,true); res(); } else { ready=false; NET.errs++; } }); });
+  NET.peers=peers;
   setInterval(()=>send(true),2500);
   setInterval(soon,3000);
   addEventListener('pagehide',()=>{ try{ ch.untrack(); sb.removeChannel(ch); }catch{} });
@@ -2709,6 +2710,64 @@ async function connectRoom(){ try{ if(window.claude&&typeof window.claude.use===
   room.onPeers(ch=>{ const seen=new Set(); for(const p of ch.peers){ if(p.sameTab||p.kind!=='viewer') continue; seen.add(p.peer); let o=others.get(p.peer); if(!o){ o={av:makeAvatar(0x888888),p:{}}; others.set(p.peer,o); } o.p=p.presence||{}; }
     for(const [k,o] of others) if(!seen.has(k)){ scene.remove(o.av.g); others.delete(k); } renderPeople(); }, ()=>{ room=null; renderPeople(); });
   lastSent=''; pushPresence(); renderPeople(); }
+
+/* ---------------- people: chat, run / jump / crouch, a network check panel, adaptive resolution ---------------- */
+const NET={st:'',run:false,peers:null,errs:0};
+// chat: the last line each person said rides along in their shared state; new lines show in the log and over their head
+const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
+#chatlog{position:fixed;left:14px;bottom:66px;width:min(360px,70vw);display:flex;flex-direction:column;gap:4px;pointer-events:none;z-index:6;font:14px/1.5 "Noto Serif TC",serif}
+#chatlog .m{background:rgba(241,239,232,.92);color:#3f3a39;border-left:3px solid #a8343a;padding:4px 8px;border-radius:2px;transition:opacity .8s}
+#chatlog .m b{font-weight:700;margin-right:.4em}
+#chatbox{position:fixed;left:14px;bottom:24px;width:min(360px,70vw);z-index:7;display:none}
+#chatbox input{width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #b9b2a6;background:#f6f3ec;font:15px "Noto Serif TC",serif;color:#3f3a39;outline:none}
+#actbtns{position:fixed;right:12px;bottom:76px;display:flex;flex-direction:column;gap:8px;z-index:6}
+#actbtns button{width:52px;height:52px;border-radius:50%;border:1px solid #b9b2a6;background:rgba(241,239,232,.9);font:15px "Noto Serif TC",serif;color:#3f3a39}
+#actbtns button.on{background:#a8343a;color:#fff;border-color:#a8343a}
+#netdiag{position:fixed;right:12px;top:90px;z-index:8;background:rgba(20,18,16,.86);color:#e8e2d6;font:12px/1.6 ui-monospace,monospace;padding:8px 10px;max-width:360px;white-space:pre;display:none}`; document.head.appendChild(css);
+  const log=document.createElement('div'); log.id='chatlog'; document.body.appendChild(log);
+  const box=document.createElement('div'); box.id='chatbox'; box.innerHTML='<input maxlength="120" placeholder="說點什麼，Enter 送出，Esc 取消">'; document.body.appendChild(box);
+  const diag=document.createElement('div'); diag.id='netdiag'; document.body.appendChild(diag);
+  const inp=box.querySelector('input');
+  inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ const t=inp.value.trim(); if(t) sendChat(t); inp.value=''; closeChat(); } else if(e.key==='Escape'){ inp.value=''; closeChat(); } });
+  return {log,box,inp,diag}; })();
+let myChat=null, myAct=null;
+function openChat(){ chatUI.box.style.display='block'; keys.clear(); chatUI.inp.focus(); }
+function closeChat(){ chatUI.box.style.display='none'; chatUI.inp.blur(); }
+function chatLine(name,text,color){ const d=document.createElement('div'); d.className='m'; if(color) d.style.borderLeftColor=color; const b=document.createElement('b'); b.textContent=name+'：'; d.appendChild(b); d.appendChild(document.createTextNode(text)); chatUI.log.appendChild(d);
+  while(chatUI.log.children.length>6) chatUI.log.firstChild.remove(); setTimeout(()=>{ d.style.opacity=0; setTimeout(()=>d.remove(),900); },14000); }
+function sendChat(t){ t=t.replace(/[\u0000-\u001f]/g,'').slice(0,120); myChat=[t,Date.now()]; chatLine(myName+'（你）',t,myColor); pushPresence(); }
+function bubbleTex(text){ const c=document.createElement('canvas'); c.width=512; c.height=160; const g=c.getContext('2d'); g.font='30px "Noto Serif TC",serif';
+  const lines=[]; let cur=''; for(const ch of text){ if(g.measureText(cur+ch).width>460){ lines.push(cur); cur=ch; if(lines.length===2) break; } else cur+=ch; } if(lines.length<3&&cur) lines.push(cur); if(lines.length>3) lines.length=3;
+  const h=24+lines.length*40; g.fillStyle='rgba(246,243,236,.95)'; g.strokeStyle='#8a8478'; g.lineWidth=2; g.beginPath(); g.roundRect(4,4,504,h,10); g.fill(); g.stroke();
+  g.fillStyle='#3f3a39'; g.textBaseline='top'; lines.forEach((l,i)=>g.fillText(l,20,16+i*40)); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return {t,h}; }
+function showBubble(o,text){ if(o.bub){ o.av.g.remove(o.bub); o.bub.material.map.dispose(); }
+  const {t,h}=bubbleTex(text); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true})); sp.scale.set(1.2,1.2*160/512,1); sp.center.set(.5,1-(h+8)/160); sp.position.y=2.02; sp.renderOrder=6; o.av.g.add(sp); o.bub=sp; o.bubT=6.5; }
+// actions
+function doJump(){ if(ME.seat>=0||ME.jy>0||ME.jv>0) return; ME.jv=3.3; ME.jy=0.0001; myAct=['j',Date.now()]; pushPresence(); }
+function toggleCrouch(){ if(ME.seat>=0) return; ME.crouch=!ME.crouch; actBtn('蹲',ME.crouch); pushPresence(); }
+function toggleRun(){ NET.run=!NET.run; actBtn('跑',NET.run); }
+function actBtn(label,on){ const b=[...document.querySelectorAll('#actbtns button')].find(x=>x.textContent===label); if(b) b.classList.toggle('on',on); }
+if(isTouch){ const w=document.createElement('div'); w.id='actbtns'; for(const [l,f] of [['聊',openChat],['跑',toggleRun],['跳',doJump],['蹲',toggleCrouch]]){ const b=document.createElement('button'); b.textContent=l; b.onclick=e=>{ e.stopPropagation(); f(); }; w.appendChild(b); } document.body.appendChild(w); }
+// others: chat bubbles, jumps and crouching, every frame
+function tickPeople(dt){ for(const [,o] of others){ const p=o.p||{};
+    const cm=Array.isArray(p.cm)?p.cm:null; if(o.cmAt===undefined) o.cmAt=cm?cm[1]:null; else if(cm&&cm[1]!==o.cmAt){ if(typeof cm[0]==='string'){ const nm=str(p.n,12)||'訪客'; chatLine(nm,cm[0].slice(0,120),/^#[0-9a-f]{6}$/i.test(p.c)?p.c:'#888'); showBubble(o,cm[0].slice(0,120)); } o.cmAt=cm[1]; }
+    if(o.bub){ o.bubT-=dt; if(o.bubT<=0){ o.av.g.remove(o.bub); o.bub.material.map.dispose(); o.bub=null; } }
+    const ac=Array.isArray(p.ac)?p.ac:null; if(o.acAt===undefined) o.acAt=ac?ac[1]:null; else if(ac&&ac[1]!==o.acAt){ if(ac[0]==='j') o.jt=0; o.acAt=ac[1]; }
+    let jy=0; if(o.jt!==undefined&&o.jt<.68){ o.jt+=dt; jy=Math.max(0,Math.sin(Math.PI*Math.min(1,o.jt/.68)))*.55; }
+    const cr=p.cr===1&&num(p.s,-1)<0; o.cs=(o.cs??1)+((cr?.66:1)-(o.cs??1))*Math.min(1,dt*8); o.av.g.scale.y=o.cs; o.av.g.children.forEach(c=>{ if(c.isSprite) c.scale.y=(c===o.bub?1.2*160/512:.26)/o.cs; });
+    o.jyNow=jy; }
+  if(chatUI.diag.style.display==='block'){ diagT+=dt; if(diagT>.5){ diagT=0; renderDiag(); } } }
+let diagT=0;
+function renderDiag(){ const now=Date.now(); const L=[`連線：${room?(window.claude&&typeof window.claude.use==='function'?'Claude 房間':'Supabase'):'離線'}  狀態：${NET.st||'-'}  ${room&&room.mode?room.mode():''}`,`我：${myName}  x ${ME.x.toFixed(1)}  z ${ME.z.toFixed(1)}  畫質 ${renderer.getPixelRatio().toFixed(2)}  ${FPS.v.toFixed(0)} fps`];
+  if(!others.size) L.push('（目前沒有收到其他人的資料）');
+  for(const [k,o] of others){ const p=o.p||{}, v=NET.peers&&NET.peers.get(k); L.push(`${str(p.n,12)||'訪客'}  x ${num(p.x).toFixed(1)}  z ${num(p.z).toFixed(1)}  座位 ${num(p.s,-1)}`+(v?`  即時 ${v.fast?((now-v.fast)/1000).toFixed(1)+'s':'—'}  同步 ${v.slow?((now-v.slow)/1000).toFixed(1)+'s':'—'}`:'')); }
+  chatUI.diag.textContent=L.join('\n'); }
+function toggleDiag(){ chatUI.diag.style.display=chatUI.diag.style.display==='block'?'none':'block'; if(chatUI.diag.style.display==='block') renderDiag(); }
+// resolution follows the frame rate: down when it stutters, back up when there is room
+const FPS={v:60,n:0,t:0,pr:renderer.getPixelRatio(),max:renderer.getPixelRatio(),good:0};
+function tickFPS(dt){ FPS.n++; FPS.t+=dt; if(FPS.t<2) return; FPS.v=FPS.n/FPS.t; FPS.n=0; FPS.t=0; if(renderer.xr.isPresenting) return;
+  if(FPS.v<38&&FPS.pr>.6){ FPS.pr=Math.max(.6,FPS.pr-.15); renderer.setPixelRatio(FPS.pr); FPS.good=0; }
+  else if(FPS.v>56&&FPS.pr<FPS.max){ if(++FPS.good>=3){ FPS.pr=Math.min(FPS.max,FPS.pr+.1); renderer.setPixelRatio(FPS.pr); FPS.good=0; } } else FPS.good=0; }
 
 /* ---------------- toast ---------------- */
 let toastT=0; function toast(s,ms=5200){ const h=$('#hint'); h.textContent=s; h.style.opacity=1; clearTimeout(toastT); toastT=setTimeout(()=>h.style.opacity=0,ms); }
@@ -2843,13 +2902,13 @@ function step(dt){
   // keyboard
   let mx=0,mz=0; if(keys.has('w')||keys.has('arrowup')) mz-=1; if(keys.has('s')||keys.has('arrowdown')) mz+=1; if(keys.has('a')) mx-=1; if(keys.has('d')) mx+=1;
   if(keys.has('arrowleft')) ME.yaw+=dt*1.8; if(keys.has('arrowright')) ME.yaw-=dt*1.8;
-  if(mx||mz){ const sp=(keys.has('shift')?3.6:2.2)*dt; const s=Math.sin(ME.yaw), c=Math.cos(ME.yaw); const dx=(mx*c+mz*s)*sp, dz=(-mx*s+mz*c)*sp; tryMove(dx,dz); }
-  else if(ME.path.length){ const t=ME.path[0]; const dx=t.x-ME.x, dz=t.z-ME.z, d=Math.hypot(dx,dz); const sp=2.4*dt;
+  if(mx||mz){ const sp=(ME.crouch?1.1:(keys.has('shift')||NET.run)?4.4:2.2)*dt; const s=Math.sin(ME.yaw), c=Math.cos(ME.yaw); const dx=(mx*c+mz*s)*sp, dz=(-mx*s+mz*c)*sp; tryMove(dx,dz); }
+  else if(ME.path.length){ const t=ME.path[0]; const dx=t.x-ME.x, dz=t.z-ME.z, d=Math.hypot(dx,dz); const sp=(ME.crouch?1.2:NET.run?4.4:2.4)*dt;
     const want=Math.atan2(-dx,-dz); if(d>0.4 && !ME.faceTo){ let dy=want-ME.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); ME.yaw+=dy*Math.min(1,dt*3.2); }
     if(d<=sp){ ME.x=t.x; ME.z=t.z; ME.path.shift(); if(!ME.path.length){ if(ME.faceTo){ const f=ME.faceTo; ME.targetYaw=Math.atan2(-(f.x-ME.x),-(f.z-ME.z)); ME.targetPitch=Math.atan2(f.y-ME.eye,Math.hypot(f.x-ME.x,f.z-ME.z)); ME.faceTo=null; } const a=ME.afterArrive; ME.afterArrive=null; a&&a(); } }
     else { const ok=tryMove(dx/d*sp,dz/d*sp); if(!ok){ ME.path=[]; ME.afterArrive=null; } } }
   if(ME.targetYaw!=null){ let dy=ME.targetYaw-ME.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); ME.yaw+=dy*Math.min(1,dt*5); ME.pitch+=(ME.targetPitch-ME.pitch)*Math.min(1,dt*5); if(Math.abs(dy)<0.01){ ME.targetYaw=null; } }
-  const eyeT=ME.seat>=0?SEAT_KIND[SEATS[ME.seat].kind].eye:1.6+floorY(ME.x,ME.z); ME.eye+=(eyeT-ME.eye)*Math.min(1,dt*6);
+  const eyeT=ME.seat>=0?SEAT_KIND[SEATS[ME.seat].kind].eye:(ME.crouch?1.05:1.6)+floorY(ME.x,ME.z); ME.eb=(ME.eb??ME.eye); ME.eb+=(eyeT-ME.eb)*Math.min(1,dt*6); if(ME.jv||ME.jy){ ME.jv-=9.8*dt; ME.jy=Math.max(0,(ME.jy||0)+ME.jv*dt); if(ME.jy===0){ ME.jv=0; } } ME.eye=ME.eb+(ME.jy||0);
   applyCamera();
   marker.material.opacity=Math.max(0,marker.material.opacity-dt*1.2);
   if(hl.visible){ const t=(performance.now()-hl.userData.t0)/1000; hl.material.opacity=0.6+0.4*Math.sin(t*5); hlGlow.material.opacity=0.18+0.12*Math.sin(t*5); if(t>40){ hl.visible=hlGlow.visible=false; } }
@@ -2866,7 +2925,7 @@ function step(dt){
       if(spot) o.av.cup.position.set(.18,spot[1]-y-.045,-spot[0]); else o.av.cup.position.set(.27,.88,-.14);
       const sn=num(p.sn,-1); if(o.av.snI!==sn){ o.av.snI=sn; o.av.g.remove(o.av.snack); o.av.snack=snackMesh(SNACKS[sn]?sn:-1); o.av.g.add(o.av.snack); }
       if(spot) o.av.snack.position.set(-.2,spot[1]-y-.04,-spot[0]-.08); else o.av.snack.position.set(-.27,.86,-.14); }
-    const g=o.av.g; g.position.x+=(x-g.position.x)*Math.min(1,dt*9); g.position.z+=(z-g.position.z)*Math.min(1,dt*9); g.position.y+=(y-g.position.y)*Math.min(1,dt*6); let dy=r-g.rotation.y; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); g.rotation.y+=dy*Math.min(1,dt*6); }
+    const g=o.av.g; g.position.x+=(x-g.position.x)*Math.min(1,dt*9); g.position.z+=(z-g.position.z)*Math.min(1,dt*9); o.by=(o.by??g.position.y); o.by+=(y-o.by)*Math.min(1,dt*6); g.position.y=o.by+(o.jyNow||0); let dy=r-g.rotation.y; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); g.rotation.y+=dy*Math.min(1,dt*6); }
   // seat cushions show occupancy
   presT+=dt; if(presT>0.12){ presT=0; pushPresence(); }
   tickExtras(dt); tickLights(dt);
@@ -2952,12 +3011,12 @@ function tickLights(dt){ if(!LIGHT_POOL.length) return; lightT+=dt;
     if(u.src&&!want.has(u.src)){ u.k=Math.max(0,u.k-dt*3); if(u.k===0) u.src=null; } else if(u.src) u.k=Math.min(1,u.k+dt*3);
     if(!u.src&&queue.length){ u.src=queue.shift(); u.k=0; }
     const v=u.src; if(!v){ p.intensity=0; return; } p.position.copy(v.userData.wp); p.color.copy(v.color); p.intensity=v.intensity*u.k; p.distance=v.distance; p.decay=v.decay; }); }
-renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); renderer.render(scene,camera); });
+renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); tickPeople(dt); tickFPS(dt); renderer.render(scene,camera); });
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.fov=fovFor(camera.aspect); camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
 /* ---------------- boot ---------------- */
 canvas.focus();
-toast(isTouch?'拖曳看四周・點地面走過去・點書架找書・點椅子坐下':'拖曳看四周・點地面走過去（或 W A S D）・點書架找書・點椅子坐下自習'+(myName==='訪客'?'・按「改名」讓同伴認得你':''),9000);
+toast(isTouch?'拖曳看四周・點地面走過去・右下角：聊天、跑、跳、蹲':'拖曳看四周・點地面走過去（或 W A S D）・Shift 跑・空白鍵跳・Z 蹲・Enter 聊天'+(myName==='訪客'?'・按「改名」讓同伴認得你':''),9000);
 connectRoom();
 renderPeople();
 $('#bPlan').onclick=()=>setView('plan'); $('#bEntry').onclick=()=>setView('entry');

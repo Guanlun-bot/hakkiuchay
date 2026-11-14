@@ -2061,7 +2061,7 @@ const brazier=(()=>{ const x=GX+.72, z=GZ+.72; const g=furn(x,z,0); const pick={
   OB(x-.16,x+.16,z-.16,z+.16);
   return {steam,light,spout:new THREE.Vector3(.11,.56,0),g}; })();
 /* ---------- lighting: each room lit on its own ---------- */
-softLight(0,2.9,19.6,4,6);                                   // hall: the Song lamp leads, a low fill
+softLight(0,2.9,19.6,2,6);                                   // hall: the chandelier leads, a low fill
 softLight(0,2.35,ZP.back-.9,5,2.4);                          // a narrow wash on 玉川煎茶圖 and the couplet
 for(const s of [-1,1]) softLight(s*1.55,1.2,ZP.back-.25,1.6,1.3);   // up-light under each penjing stand
 softLight(IRC.x,1.5,IRC.z,5,4.2); softLight(3.15,2.3,19.9,2,3);   // washitsu: low over the hearth; the 土間
@@ -2087,19 +2087,8 @@ function zlCabinet(xa,xb){ const C=ZM.cabinet, x0=Math.min(xa,xb), x1=Math.max(x
   box(len,.06,.01,M.woodDark,cx,.03,z+C.d/2+.005);
   OB(x0,x1,C.z,C.z+C.d); }
 zlCabinet(-2.72,ZP.right+ZP.display.d);
-/* ---------- the Song-style lamp on the axis: an octagonal wooden frame with plain silk ---------- */
-{ const Lp=ZM.lamp, g=new THREE.Group(); g.position.set(Lp.x,Lp.y,Lp.z); scene.add(g); LANTERNS.push(g); const pick={type:'songlamp'};
-  const wood=new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.4});
-  const silk=new THREE.MeshStandardMaterial({color:0xf3ead6,emissive:0xffcf96,emissiveIntensity:.7,roughness:.9,side:THREE.DoubleSide}); LAMPS.push({f:{on:true},mat:silk});
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(Lp.r,Lp.r,Lp.h,8,1,true),silk); body.rotation.y=Math.PI/8; body.userData=pick; g.add(body); pickables.push(body);
-  for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; box(.03,Lp.h+.04,.03,wood,Math.cos(a)*Lp.r,0,Math.sin(a)*Lp.r,g); }
-  for(const y of [-Lp.h/2,Lp.h/2]){ const ring=new THREE.Mesh(new THREE.CylinderGeometry(Lp.r+.03,Lp.r+.03,.05,8),wood); ring.rotation.y=Math.PI/8; ring.position.y=y; g.add(ring); }
-  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.12,Lp.r+.06,.16,8),wood); cap.rotation.y=Math.PI/8; cap.position.y=Lp.h/2+.1; g.add(cap);
-  const foot=new THREE.Mesh(new THREE.CylinderGeometry(Lp.r*.7,.08,.12,8),wood); foot.rotation.y=Math.PI/8; foot.position.y=-Lp.h/2-.08; g.add(foot);
-  cylinder(.02,.02,.08,wood,0,-Lp.h/2-.18,0,g);
-  for(let i=0;i<8;i++){ const a=(i+.5)/8*Math.PI*2; cylinder(.004,.004,.2,new THREE.MeshStandardMaterial({color:0xa8343a}),Math.cos(a)*(Lp.r+.02),-Lp.h/2-.12,Math.sin(a)*(Lp.r+.02),g); }
-  cylinder(.008,.008,1.2,M.ink,0,Lp.h/2+.75,0,g);
-  const light=new THREE.PointLight(0xffd8a8,0,9,1.6); g.add(light); fixtures.push({light,power:14}); }
+/* ---------- the hall's lamp: the same two-tier bronze chandelier with crystal drops as the study's ---------- */
+{ const ch=chandelier.clone(true); ch.position.set(0,2.72,19.6); scene.add(ch); ch.traverse(o=>{ if(o.isMesh){ o.userData={type:'chandelier2'}; } }); softLight(0,2.55,19.6,9,7.5); }
 
 /* ================= v29: 書院 in the washitsu, 博古架, a dragon spout, a censer, light that has a shape ================= */
 
@@ -2210,6 +2199,11 @@ ZL_ANIM.push(()=>{ const want=doorState('V'); if(VIV.f&&want!==VIV.on){ VIV.on=w
   ZL_ANIM.push(dt=>{ const inN=VIEW.mode!=='plan'&&ME.z>15.6&&Math.abs(ME.x)<7.6; k+=((inN?.42:1)-k)*Math.min(1,dt*2.5); ambientSky.userData.k=k;
     if(ambientSky.userData.base!==undefined) ambientSky.intensity=ambientSky.userData.base*k;
     if(fill) fill.light.intensity=fill.power*(Number(lightLevel.value)/100)*(.35+.65*k); }); }
+
+// ---- wall sconces like the study's, where the light is thin: the hall's side walls either side of the octagonal windows,
+//      and the tea room's front wall either side of the window
+for(const sx of [-1,1]) for(const z of [16.55,23.05]){ const x=sx*(ZR.wallX-ZR.wallT/2); sconce(x,2.05,z,sx>0?-Math.PI/2:Math.PI/2); softLight(x-sx*.25,2.0,z,1.6,2.6); }
+for(const x of [-3.62,-6.3]){ sconce(x,2.1,ZP.front+.01,0); softLight(x,2.0,ZP.front+.3,1.5,2.4); }
 
 const SEAT_SPOT={desk:[.45,.85],lounge:[1.25,.51],gongfu:[.36,.645],irori:[.32,TATAMI.h+.045],modern:[.42,ZP.modern.h+.045]};
 /* ---------- per frame ---------- */
@@ -2478,6 +2472,7 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'altar2': showText('翹頭案','<p style="line-height:2">明間正中的翹頭案，案上一隻錫茶罐、一副蓋碗；牆上掛《玉川煎茶圖》與對聯。</p>'); break;
   case 'taishi': showText('太師椅','<p style="line-height:2">明間兩側各一對太師椅，中間一張茶几。點椅子可以坐下。</p>'); break;
   case 'console': showText('玄關桌','<p style="line-height:2">畫下的長桌，放隨身的東西。</p>'); break;
+  case 'chandelier2': showText('水晶吊燈','<p style="line-height:2">跟學鳩齋一樣的兩層銅吊燈，S 形燈臂、燭台和水晶垂珠，從屋脊垂下。</p>'); break;
   case 'vivlamp': toggleViv(); break;
   case 'fountain': showText('獅頭吐水','<p style="line-height:2">博古架旁的角落，牆上一面古銅獅頭，細水從口中吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。</p>'); break;
   case 'teaware': showText('茶櫃','<p style="line-height:2">一格一個樣子：大陶壺、鐵壺、木茶箱、紙包茶、幾隻錫罐、一疊杯子、幾本書，留些空處。</p>'); break;

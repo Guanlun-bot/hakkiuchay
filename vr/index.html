@@ -2213,10 +2213,35 @@ ZL_ANIM.push(()=>{ const want=swState('V'); if(VIV.f&&want!==VIV.on){ VIV.on=wan
     if(ambientSky.userData.base!==undefined) ambientSky.intensity=ambientSky.userData.base*k;
     if(fill) fill.light.intensity=fill.power*(Number(lightLevel.value)/100)*(.35+.65*k); }); }
 
+// ---- the tea room's wall lanterns: antique-bronze, oval back plate, a scrolled arm curling over the top, and a six-sided
+//      frosted-glass lantern flaring toward its roof, with a curled bracket and drop finial underneath
+function lanternSconce(x,y,z,ry){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry; scene.add(g);
+  const br=new THREE.MeshStandardMaterial({color:0x6b5333,metalness:.55,roughness:.42});
+  const glass=new THREE.MeshStandardMaterial({color:0xf3e2bc,emissive:0xffc77a,emissiveIntensity:.8,roughness:.5,side:THREE.DoubleSide}); LAMPS.push({f:{on:true},mat:glass});
+  const tube=(pts,r=.007)=>{ const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))),28,r,6),br); g.add(m); return m; };
+  const plate=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.016,28),br); plate.rotation.x=Math.PI/2; plate.scale.set(1,1,1.9); plate.position.set(0,.02,.008); g.add(plate);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.05,.005,6,28),br); rim.scale.set(1,1.9,1); rim.position.set(0,.02,.017); g.add(rim);
+  const cz=.2, s=[];   // scrolled arm: up off the plate, over in a curl, down onto the lantern's ring
+  for(let i=0;i<=14;i++){ const a=Math.PI*1.75*i/14, r=.045*(1-i/18); s.push([0,.27+Math.sin(a)*r,.08-Math.cos(a)*r]); }
+  tube([[0,.1,.02],[0,.2,.03],...s.reverse()]);
+  tube([[0,.21,.06],[0,.26,.13],[0,.25,cz],[0,.215,cz]]);
+  tube([[0,-.08,.02],[0,-.15,.05],[0,-.17,.12],[0,-.13,cz-.03],[0,-.105,cz]],.006);
+  // lantern
+  const gl=new THREE.Mesh(new THREE.CylinderGeometry(.085,.062,.17,6,1,true),glass); gl.position.set(0,.03,cz); g.add(gl);
+  for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; tube([[Math.sin(a)*.064,-.055,cz+Math.cos(a)*.064],[Math.sin(a)*.087,.115,cz+Math.cos(a)*.087]],.005); }
+  const ring=(r0,r1,h,yy)=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(r0,r1,h,6),br); m.position.set(0,yy,cz); g.add(m); return m; };
+  ring(.092,.09,.012,.12); ring(.035,.112,.055,.152); ring(.026,.036,.03,.192); ring(.012,.02,.02,.215);
+  const fin=new THREE.Mesh(new THREE.SphereGeometry(.013,10,8),br); fin.position.set(0,.232,cz); g.add(fin);
+  ring(.066,.05,.02,-.062); ring(.045,.02,.03,-.085);
+  const drop=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),br); drop.position.set(0,-.11,cz); g.add(drop);
+  for(const sd of [-1,1]) tube([[sd*.05,-.06,cz],[sd*.075,-.09,cz],[sd*.07,-.12,cz],[sd*.05,-.115,cz]],.004);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(.018,10,8),new THREE.MeshBasicMaterial({color:0xffe2a8})); bulb.position.set(0,.02,cz); g.add(bulb);
+  return g; }
+
 // ---- wall sconces like the study's, where the light is thin: the hall's side walls either side of the octagonal windows,
 //      and the tea room's front wall either side of the window
 for(const sx of [-1,1]){ const x=sx*(ZR.wallX-ZR.wallT/2); for(const z of [16.55,23.05]) sconce(x,2.05,z,sx>0?-Math.PI/2:Math.PI/2); softLight(x-sx*.35,2.0,19.9,1.4,4.6); }
-for(const x of [-3.62,-6.3]) sconce(x,2.1,ZP.front+.01,0); softLight(-4.95,2.0,ZP.front+.4,1.4,3.6);
+for(const x of [-3.62,-6.3]) lanternSconce(x,2.05,ZP.front+.01,0); softLight(-4.95,2.0,ZP.front+.4,1.4,3.6);
 
 // which room a point is in: inside 知了間 the hall, the washitsu (left) and the tea room (right) each count as their own
 function roomOf(p){ const z=zoneOf(p); if(z!=='N'||p.z<15.6||p.z>ZP.back+.5) return z; return 'N'+(p.x>ZR.wallX?'L':p.x<-ZR.wallX?'R':'M'); }
@@ -2250,24 +2275,41 @@ let TEA_REC=null, TEA_PLATTER=null;
   const rim=new THREE.Mesh(new THREE.TorusGeometry(.24,.006,8,48),brass); rim.position.y=.42; rim.rotation.x=Math.PI/2; horn.add(rim);
   TEA_REC={x,z}; TEA_PLATTER=pl; }
 
-// ---- a potted banana (芭蕉) in the back-left corner of the tea room, its leaves reaching over the screen's left end:
-//      the plant Lu Tong sits under in 玉川煎茶圖 on the hall wall next door
+// ---- a potted banana (芭蕉) in the back-left corner of the tea room: a clump of four pseudostems, fibrous brown at the
+//      foot and green above, carrying broad oblong leaves on short stalks that spiral up the stems and arch outward
 { const x=-3.02, z=ZP.back-.42, pick={type:'banana'};
-  const pot=lathe([[0,0],[.17,0],[.21,.06],[.23,.3],[.22,.38],[.235,.4]],new THREE.MeshStandardMaterial({color:0x3a2c22,roughness:.55}),32); pot.position.set(x,0,z); pot.userData=pick; scene.add(pot); pickables.push(pot);
-  const soil=new THREE.Mesh(new THREE.CircleGeometry(.215,28),new THREE.MeshStandardMaterial({color:0x3a2e22,roughness:1})); soil.rotation.x=-Math.PI/2; soil.position.set(x,.37,z); scene.add(soil);
-  const stemM=new THREE.MeshStandardMaterial({color:0x6f7d3e,roughness:.7});
-  const leafTex=ctex(128,512,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#3f7a34'; g.beginPath(); g.moveTo(w/2,0); g.bezierCurveTo(w*1.05,h*.15,w*1.02,h*.8,w/2,h); g.bezierCurveTo(-w*.02,h*.8,-w*.05,h*.15,w/2,0); g.fill();
-    g.strokeStyle='rgba(200,220,150,.55)'; g.lineWidth=4; g.beginPath(); g.moveTo(w/2,0); g.lineTo(w/2,h); g.stroke(); g.strokeStyle='rgba(30,70,30,.35)'; g.lineWidth=1; for(let y=12;y<h-10;y+=7){ g.beginPath(); g.moveTo(w/2,y); g.lineTo(2,y+16); g.moveTo(w/2,y); g.lineTo(w-2,y+16); g.stroke(); }
-    g.globalCompositeOperation='destination-out'; g.lineWidth=2; for(const [y,s] of [[180,1],[260,-1],[330,1]]){ g.beginPath(); g.moveTo(w/2+s*6,y); g.lineTo(s>0?w:0,y+22); g.stroke(); } g.globalCompositeOperation='source-over'; });
-  const leafM=new THREE.MeshStandardMaterial({map:leafTex,alphaTest:.5,side:THREE.DoubleSide,roughness:.6});
-  const R=rnd(23);
-  for(const [dx,dz,h] of [[0,0,1.05],[.07,-.05,.85],[-.06,.04,.7]]){
-    cylinder(.035,.05,h,stemM,x+dx,.37+h/2,z+dz);
-    const nL=dx===0?4:2;
-    for(let i=0;i<nL;i++){ const L=.85+R()*.3, W=.26, geo=new THREE.PlaneGeometry(W,L,1,10); geo.translate(0,L/2,0);
-      const p=geo.attributes.position; for(let k=0;k<p.count;k++){ const t=p.getY(k)/L; p.setZ(k,p.getZ(k)+.45*t*t); p.setX(k,p.getX(k)*(1-.15*t)); } geo.computeVertexNormals();
-      const lf=new THREE.Mesh(geo,leafM); const a=(i/nL)*Math.PI*2+R()*.8+(dx>0?1:0);
-      lf.position.set(x+dx,.37+h-.05,z+dz); lf.rotation.order='YXZ'; lf.rotation.y=a; lf.rotation.x=.45+R()*.35; lf.userData=pick; scene.add(lf); pickables.push(lf); } }
+  const pot=lathe([[0,0],[.15,0],[.16,.02],[.19,.34],[.2,.36]],new THREE.MeshStandardMaterial({color:0x1d1c1b,roughness:.5}),32); pot.position.set(x,0,z); pot.userData=pick; scene.add(pot); pickables.push(pot);
+  const soil=new THREE.Mesh(new THREE.CircleGeometry(.185,28),new THREE.MeshStandardMaterial({color:0x3a2e22,roughness:1})); soil.rotation.x=-Math.PI/2; soil.position.set(x,.34,z); scene.add(soil);
+  const barkTex=ctex(64,256,(g,w,h)=>{ g.fillStyle='#7a5c3c'; g.fillRect(0,0,w,h); const R0=rnd(5);
+    for(let i=0;i<90;i++){ g.strokeStyle=`rgba(${60+R0()*80|0},${40+R0()*50|0},${25+R0()*30|0},.7)`; g.lineWidth=1+R0()*3; const xx=R0()*w, y0=R0()*h; g.beginPath(); g.moveTo(xx,y0); g.lineTo(xx+(R0()-.5)*6,y0+30+R0()*80); g.stroke(); }
+    g.fillStyle='rgba(190,160,110,.25)'; for(let i=0;i<14;i++) g.fillRect(R0()*w,R0()*h,2+R0()*6,20+R0()*40); });
+  const barkM=new THREE.MeshStandardMaterial({map:barkTex,roughness:.95}), stemM=new THREE.MeshStandardMaterial({color:0x6e8a3a,roughness:.65}), stalkM=new THREE.MeshStandardMaterial({color:0x7d9a45,roughness:.6});
+  const mkLeafTex=(base,vein)=>ctex(128,512,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle=base; g.beginPath(); g.moveTo(w/2,0);   /* blunt rounded tip (top), broadest a third down, easing in to a rounded base */
+      g.quadraticCurveTo(w*.62,h*.005,w*.82,h*.04); g.bezierCurveTo(w*1.0,h*.12,w*1.0,h*.55,w*.9,h*.8); g.quadraticCurveTo(w*.78,h*.97,w/2,h); g.quadraticCurveTo(w*.22,h*.97,w*.1,h*.8); g.bezierCurveTo(w*0,h*.55,w*0,h*.12,w*.18,h*.04); g.quadraticCurveTo(w*.38,h*.005,w/2,0); g.fill();
+      const gr=g.createLinearGradient(0,0,w,0); gr.addColorStop(0,'rgba(0,0,0,.18)'); gr.addColorStop(.45,'rgba(255,255,220,.08)'); gr.addColorStop(.55,'rgba(255,255,220,.08)'); gr.addColorStop(1,'rgba(0,0,0,.18)');
+      g.globalCompositeOperation='source-atop'; g.fillStyle=gr; g.fillRect(0,0,w,h);
+      g.strokeStyle='rgba(20,50,20,.28)'; g.lineWidth=1; for(let y=6;y<h-6;y+=5){ g.beginPath(); g.moveTo(w/2,y); g.quadraticCurveTo(w*.3,y+10,2,y+26); g.moveTo(w/2,y); g.quadraticCurveTo(w*.7,y+10,w-2,y+26); g.stroke(); }
+      g.strokeStyle=vein; g.lineWidth=5; g.beginPath(); g.moveTo(w/2,0); g.lineTo(w/2,h*.97); g.stroke();
+      g.globalCompositeOperation='destination-out'; g.lineWidth=2; for(const [y,sd] of [[220,1],[300,-1],[380,1]]){ g.beginPath(); g.moveTo(w/2+sd*7,y); g.quadraticCurveTo(w/2+sd*30,y+8,sd>0?w:0,y+26); g.stroke(); } g.globalCompositeOperation='source-over'; });
+  const leafMs=[mkLeafTex('#4f9a3c','rgba(215,232,160,.75)'),mkLeafTex('#3f8432','rgba(200,225,150,.7)'),mkLeafTex('#5aa443','rgba(225,240,170,.75)')].map(t=>new THREE.MeshStandardMaterial({map:t,alphaTest:.5,side:THREE.DoubleSide,roughness:.45}));
+  const R=rnd(23), up=new THREE.Vector3(0,1,0), base=.34;
+  const aim=Math.atan2(-1,-1.15);   // lean the plant out of the corner, toward the room
+  const stems=[[.03,.02,1.5,.065,10],[-.07,.05,1.2,.055,8],[.06,-.07,.95,.05,6],[-.04,-.06,.65,.045,5]];
+  for(const [dx,dz,h,r,nL] of stems){
+    const lean=.06+Math.hypot(dx,dz)*.6, la=Math.atan2(dx,dz)*.4+aim*.6;
+    const top=new THREE.Vector3(x+dx+Math.sin(la)*lean*h,base+h,z+dz+Math.cos(la)*lean*h), foot=new THREE.Vector3(x+dx,base,z+dz);
+    const dir=top.clone().sub(foot), len=dir.length(); dir.normalize(); const q=new THREE.Quaternion().setFromUnitVectors(up,dir);
+    const barkH=len*.45, low=new THREE.Mesh(new THREE.CylinderGeometry(r*.9,r*1.25,barkH,10),barkM); low.position.copy(foot).addScaledVector(dir,barkH/2); low.quaternion.copy(q); low.userData=pick; scene.add(low); pickables.push(low);
+    const hi=new THREE.Mesh(new THREE.CylinderGeometry(r*.55,r*.9,len-barkH,10),stemM); hi.position.copy(foot).addScaledVector(dir,barkH+(len-barkH)/2); hi.quaternion.copy(q); scene.add(hi);
+    for(let i=0;i<nL;i++){ const t=.42+.58*(i+.5)/nL, at=foot.clone().addScaledVector(dir,len*t);
+      const a=aim+(i*2.4+R()*.7)%(Math.PI*2.2)-1.25+(dx<0?-.3:.3);   // spiral round, but mostly facing the room
+      const tilt=.28+(1-t)*.6+R()*.18, stalk=.08+R()*.1, L=.62+R()*.25+(t>.9?-.08:0), W=L*(.44+R()*.06);
+      const sx=Math.sin(a)*Math.sin(tilt), sy=Math.cos(tilt), sz=Math.cos(a)*Math.sin(tilt);
+      const st=new THREE.Mesh(new THREE.CylinderGeometry(.007,.012,stalk,6),stalkM); st.position.set(at.x+sx*stalk/2,at.y+sy*stalk/2,at.z+sz*stalk/2); st.quaternion.setFromUnitVectors(up,new THREE.Vector3(sx,sy,sz)); scene.add(st);
+      const geo=new THREE.PlaneGeometry(W,L,4,12); geo.translate(0,L/2,0);
+      const p=geo.attributes.position; for(let k=0;k<p.count;k++){ const tt=p.getY(k)/L, xx=p.getX(k); p.setZ(k,.22*tt*tt*(.7+tilt*.4)-Math.abs(xx)*.12-.04*Math.sin(tt*9)*Math.sign(xx)*.2); } geo.computeVertexNormals();
+      const lf=new THREE.Mesh(geo,leafMs[(i+nL)%3]); lf.position.set(at.x+sx*stalk,at.y+sy*stalk,at.z+sz*stalk); lf.rotation.order='YXZ'; lf.rotation.y=a; lf.rotation.x=tilt; lf.rotation.z=(R()-.5)*.4;
+      lf.userData=pick; scene.add(lf); pickables.push(lf); } }
   OB(x-.25,x+.25,z-.25,z+.25);
 }
 

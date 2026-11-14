@@ -541,6 +541,8 @@ const starMat=new THREE.PointsMaterial({color:0xe8eeff,size:.45,sizeAttenuation:
   const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3)); const stars=new THREE.Points(sg,starMat); stars.position.copy(new THREE.Vector3(0,0,courtAxis)); stars.renderOrder=-1; scene.add(stars); }
 const moon=new THREE.Sprite(new THREE.SpriteMaterial({map:textCanvas(128,128,(g,w,h)=>{ const r=g.createRadialGradient(64,64,0,64,64,64); r.addColorStop(0,'#fffbe8'); r.addColorStop(.42,'#fff4d0'); r.addColorStop(.48,'rgba(255,240,200,.35)'); r.addColorStop(1,'rgba(255,240,200,0)'); g.fillStyle=r; g.fillRect(0,0,w,h); }),fog:false,depthWrite:false,transparent:true,toneMapped:false}));
 moon.scale.set(9,9,1); moon.position.set(-30,52,courtAxis+60); scene.add(moon);
+// ---- weather: what the sky over Taipei is doing right now (Open-Meteo, no key). rain 0–1, cloud 0–1.
+var WX={rain:0,cloud:0,thunder:false,label:'',temp:null,target:0,targetCloud:0};
 function updateSky(){
   const [hour,minute]=taipeiClock.format(new Date()).split(':').map(Number);
   const time=location.hash==='#night'?0:location.hash==='#day'?12:hour+minute/60;
@@ -562,6 +564,11 @@ function updateSky(){
   cloudMaterial.color.set('#60708e').lerp(new THREE.Color('#f6f5ec'),day);
   cloudMaterial.opacity=.36+.36*day;
   starMat.opacity=Math.max(0,1-day*1.6); moon.visible=day<.5; moon.material.opacity=1-day*2;
+  { const c=WX.cloud, r=WX.rain, grey=new THREE.Color('#8f979d').lerp(new THREE.Color('#2a2f38'),1-day), g2=new THREE.Color('#aab1b5').lerp(new THREE.Color('#333944'),1-day);   /* overcast and rain: the sky greys over, the sun goes in */
+    skyTop.lerp(grey,c*.9); skyHorizon.lerp(g2,c*.85); scene.fog.color.copy(skyHorizon); scene.fog.near=30-14*r; scene.fog.far=85-30*r;
+    daylight.intensity*=1-.8*c; ambientSky.userData.base*=1-.22*c; ambientSky.intensity=ambientSky.userData.base*(ambientSky.userData.k??1); ambientSky.color.copy(skyHorizon);
+    sunDisk.visible=sunDisk.visible&&c<.6; cloudMaterial.color.lerp(new THREE.Color('#5d646b').lerp(new THREE.Color('#2c3038'),1-day),c*.8); cloudMaterial.opacity=Math.min(.95,cloudMaterial.opacity+.3*c);
+    starMat.opacity*=1-c; moon.material.opacity*=1-.8*c; }
   daylight.castShadow=daylight.intensity>.02; renderer.shadowMap.needsUpdate=true;
 }
 updateSky();
@@ -2141,6 +2148,59 @@ ZL_ANIM.push(()=>{ const want=swState('V'); if(VIV.f&&want!==VIV.on){ VIV.on=wan
   ZL_ANIM.push(dt=>{ const inN=VIEW.mode!=='plan'&&ME.z>15.6&&Math.abs(ME.x)<7.6; k+=((inN?.65:1)-k)*Math.min(1,dt*2.5); ambientSky.userData.k=k;
     if(ambientSky.userData.base!==undefined) ambientSky.intensity=ambientSky.userData.base*k;
     if(fill) fill.light.intensity=fill.power*(Number(lightLevel.value)/100)*(.35+.65*k); }); }
+// ---- rain in the courtyard, following Taipei's weather: streaks falling into the open court, splashes on the paving,
+//      wet stone, the sound of it (muffled indoors), and thunder when there is a storm
+{ const WX_CODE={0:['晴',0],1:['晴時多雲',0],2:['多雲',0],3:['陰',0],45:['霧',0],48:['霧',0],51:['毛毛雨',.18],53:['毛毛雨',.28],55:['毛毛雨',.38],56:['毛毛雨',.25],57:['毛毛雨',.38],
+    61:['小雨',.35],63:['中雨',.62],65:['大雨',.92],66:['小雨',.35],67:['大雨',.9],80:['陣雨',.45],81:['陣雨',.72],82:['大陣雨',1],95:['雷雨',.9],96:['雷雨',.95],99:['雷雨',1]};
+  const todayBase=$('#today').textContent;
+  function setWeather(code,cloud,temp,precip){ const e=WX_CODE[code]||['',0]; let r=e[1]; if(!r&&precip>.1) r=.25;
+    WX.target=r; WX.targetCloud=Math.max(r>0?.88:0,Math.min(1,(cloud||0)/100)*(code>=3?1:.75)); WX.thunder=code>=95; WX.label=e[0]||(r?'雨':''); WX.temp=temp; if(!WX.init){ WX.init=true; WX.rain=WX.target; WX.cloud=WX.targetCloud; updateSky(); }   /* the first reading applies at once; later changes drift in */
+    $('#today').textContent=todayBase+(WX.label?'・臺北'+WX.label+(Number.isFinite(temp)?' '+Math.round(temp)+'°':''):''); }
+  async function fetchWeather(){ const h=location.hash;
+    if(h.includes('storm')) return setWeather(95,100,NaN,5); if(h.includes('rain')) return setWeather(63,100,NaN,2); if(h.includes('clear')) return setWeather(0,0,NaN,0);
+    try{ const c=new AbortController(), t=setTimeout(()=>c.abort(),8000);
+      const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0375&longitude=121.5637&current=temperature_2m,precipitation,weather_code,cloud_cover&timezone=Asia%2FTaipei',{signal:c.signal}); clearTimeout(t);
+      if(!r.ok) return; const j=await r.json(), k=j&&j.current; if(!k) return; setWeather(+k.weather_code,+k.cloud_cover,+k.temperature_2m,+k.precipitation||0); }catch{} }
+  fetchWeather(); setInterval(fetchWeather,600000); addEventListener('hashchange',fetchWeather);
+  // streaks
+  const N=1500, X0=-5.05, X1=5.05, Z0=courtAxis-5.05, Z1=courtAxis+5.05, TOP=11, LEN=.42, WIND=.12;
+  const pos=new Float32Array(N*6), sp=new Float32Array(N), R=rnd(777);
+  const reset=(i,any)=>{ const x=X0+R()*(X1-X0), z=Z0+R()*(Z1-Z0), y=any?R()*TOP:TOP+R()*2; pos[i*6]=x; pos[i*6+1]=y; pos[i*6+2]=z; sp[i]=8.5+R()*3.5; };
+  for(let i=0;i<N;i++) reset(i,true);
+  const rg=new THREE.BufferGeometry(); rg.setAttribute('position',new THREE.BufferAttribute(pos,3)); rg.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,5,courtAxis),14);
+  const rainM=new THREE.LineBasicMaterial({color:0xc9d3dc,transparent:true,opacity:.32,depthWrite:false});
+  const rain=new THREE.LineSegments(rg,rainM); rain.visible=false; rain.frustumCulled=false; scene.add(rain); ZL_DYN.push(rain);
+  // splashes: flecks on the paving that jump about
+  const SN=160, spos=new Float32Array(SN*3); for(let i=0;i<SN;i++){ spos[i*3]=X0+R()*(X1-X0); spos[i*3+1]=.03; spos[i*3+2]=Z0+R()*(Z1-Z0); }
+  const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(spos,3)); sg.boundingSphere=rg.boundingSphere;
+  const splash=new THREE.Points(sg,new THREE.PointsMaterial({color:0xdfe6ec,size:.09,sizeAttenuation:true,transparent:true,opacity:.38,depthWrite:false,map:textCanvas(32,32,(g,w,h)=>{ g.strokeStyle='#fff'; g.lineWidth=3; g.beginPath(); g.ellipse(16,16,12,6,0,0,Math.PI*2); g.stroke(); })})); splash.visible=false; splash.frustumCulled=false; scene.add(splash); ZL_DYN.push(splash);
+  // wet paving
+  const wetMats=[court.material,yard.material].filter(m=>m&&m.color).map(m=>({m,c:m.color.clone(),r:m.roughness}));
+  // sound: a looped hiss, brighter outdoors, low and muffled under a roof
+  let snd=null;
+  function rainSound(){ if(snd||!actx||actx.state!=='running') return; const sr=actx.sampleRate, n=sr*3, buf=actx.createBuffer(1,n,sr), d=buf.getChannelData(0); let b=0;
+    for(let i=0;i<n;i++){ const w=Math.random()*2-1; b=.6*b+.4*w; d[i]=(w*.55+b*.45)*(.8+.2*Math.sin(i/sr*2.1)); }
+    for(let i=0;i<2000;i++){ const f=i/2000; d[n-2000+i]=d[n-2000+i]*(1-f)+d[i]*f; }
+    const src=actx.createBufferSource(); src.buffer=buf; src.loop=true; const hp=actx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=350; const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=5000;
+    const g=actx.createGain(); g.gain.value=0; src.connect(hp).connect(lp).connect(g).connect(actx.destination); src.start(); snd={g,lp}; }
+  function thunder(){ try{ if(!actx||actx.state!=='running') return; const sr=actx.sampleRate, n=sr*4, buf=actx.createBuffer(1,n,sr), d=buf.getChannelData(0); let b=0;
+      for(let i=0;i<n;i++){ b=.985*b+.015*(Math.random()*2-1); const t=i/sr; d[i]=b*9*Math.exp(-t*.9)*(1+.6*Math.sin(t*7)); }
+      const src=actx.createBufferSource(); src.buffer=buf; const g=actx.createGain(); g.gain.value=.5; src.connect(g).connect(actx.destination); src.start(actx.currentTime+.6+Math.random()*1.5); }catch{} }
+  const flashL=new THREE.HemisphereLight(0xdfe8ff,0x8090a8,0); scene.add(flashL); let flash=0, nextThunder=12+Math.random()*20, sunk=0;
+  ZL_ANIM.push(dt=>{ const prevR=WX.rain, prevC=WX.cloud; WX.rain+=(WX.target-WX.rain)*Math.min(1,dt*.25); WX.cloud+=(WX.targetCloud-WX.cloud)*Math.min(1,dt*.25);
+    if(Math.abs(WX.rain-WX.target)<.004) WX.rain=WX.target; if(Math.abs(WX.cloud-WX.targetCloud)<.004) WX.cloud=WX.targetCloud;
+    sunk+=dt; if((prevR!==WX.rain||prevC!==WX.cloud)&&sunk>.5){ sunk=0; updateSky(); }
+    const r=WX.rain, show=r>.01&&VIEW.mode!=='plan'; rain.visible=splash.visible=show;
+    const wet=Math.min(1,r*1.6); for(const w of wetMats){ w.m.color.copy(w.c).multiplyScalar(1-.38*wet); w.m.roughness=w.r-(w.r-.22)*wet; }
+    if(show){ const n=Math.floor(N*Math.min(1,.25+r*.85)); rg.setDrawRange(0,n*2); rainM.opacity=.2+.2*r;
+      for(let i=0;i<n;i++){ const k=i*6, v=sp[i]*dt; pos[k+1]-=v; pos[k]+=WIND*v; if(pos[k+1]<0||pos[k]>X1) reset(i,false); pos[k+3]=pos[k]-WIND*LEN; pos[k+4]=pos[k+1]+LEN; pos[k+5]=pos[k+2]; }
+      rg.attributes.position.needsUpdate=true;
+      const m=Math.floor(SN*Math.min(1,.3+r)); sg.setDrawRange(0,m); for(let j=0;j<12;j++){ const i=Math.floor(Math.random()*m); spos[i*3]=X0+Math.random()*(X1-X0); spos[i*3+2]=Z0+Math.random()*(Z1-Z0); spos[i*3+1]=.03+Math.random()*.05; } sg.attributes.position.needsUpdate=true; }
+    if(r>.01) rainSound();
+    if(snd){ const out=zoneOf(ME)==='C', near=Math.max(0,1-Math.max(0,Math.hypot(ME.x,ME.z-courtAxis)-5)/9), tg=VIEW.mode==='plan'?0:r*(out?.2:.035+.05*near), now=actx.currentTime;
+      snd.g.gain.setTargetAtTime(tg,now,.4); snd.lp.frequency.setTargetAtTime(out?5200:900,now,.4); }
+    if(WX.thunder&&r>.3){ nextThunder-=dt; if(nextThunder<=0){ nextThunder=25+Math.random()*50; flash=1; thunder(); } }
+    if(flash>0){ flash=Math.max(0,flash-dt*2.2); flashL.intensity=2.2*flash*(flash>.55||flash<.35?1:.25); } else if(flashL.intensity) flashL.intensity=0; }); }
 
 // ---- the tea room's wall lanterns: antique-bronze, oval back plate, a scrolled arm curling over the top, and a six-sided
 //      frosted-glass lantern flaring toward its roof, with a curled bracket and drop finial underneath

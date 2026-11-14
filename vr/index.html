@@ -1961,9 +1961,11 @@ for(const side of [1,-1]){ const x=side*(ZR.wallX-.38), yaw=side>0?Math.PI/2:-Ma
       if(F.t<1){ F.t=Math.min(1,F.t+dt/.45); const k=F.t; F.f.position.lerpVectors(F.from,F.to,k); F.f.position.y+=Math.sin(k*Math.PI)*.07; }
       else if((F.wait-=dt)<=0){ const to=spots[Math.floor(Math.random()*spots.length)]; if(frogs.some(o=>o!==F&&o.to.distanceTo(to)<.06)){ F.wait=.5; continue; }
         F.from.copy(F.f.position); F.to.copy(to); F.t=0; F.wait=2+Math.random()*7; F.f.rotation.y=Math.atan2(to.x-F.from.x,to.z-F.from.z); } } });
-    const lampM=new THREE.MeshStandardMaterial({color:0xf2f6e8,emissive:0xd8f4dc,emissiveIntensity:1.1}); const bar=box(w-.1,.025,.06,lampM,u,y0+h-.03,cz,G,{type:'vivlamp'}); box(w-.06,.012,.1,new THREE.MeshStandardMaterial({color:0x2a2016,roughness:.5}),u,y0+h-.012,cz,G,{type:'vivlamp'});
-    const vl=new THREE.PointLight(0xd6ffe2,0,2.6,1.6); vl.position.set(u,y0+h-.12,cz+.1); G.add(vl); const f={light:vl,power:3.2,keepColor:true,on:true}; fixtures.push(f);
-    VIV.f=f; VIV.mat=lampM; }
+    const lampM=new THREE.MeshStandardMaterial({color:0xf2f6e8,emissive:0xd8f4dc,emissiveIntensity:.45}); const bar=box(w-.1,.025,.06,lampM,u,y0+h-.03,cz,G,{type:'vivlamp'}); box(w-.06,.012,.1,new THREE.MeshStandardMaterial({color:0x2a2016,roughness:.5}),u,y0+h-.012,cz,G,{type:'vivlamp'});
+    const vl=new THREE.PointLight(0xe6ffe8,0,1.1,2); vl.position.set(u,y0+h-.08,cz-.02); G.add(vl); const f={light:vl,power:1.1,keepColor:true,on:true}; fixtures.push(f);   /* small and low: lights the inside, not the room */
+    VIV.f=f; VIV.mat=lampM;
+    // the light falls downward inside the glass: plants and frogs take a faint cool glow when it is on
+    VIV.glow=[]; G.updateMatrixWorld(true); G.traverse(o=>{ if(!o.isMesh||!o.material||o.material===lampM||o.material===glass) return; const p=o.getWorldPosition(new THREE.Vector3()); if(Math.abs(p.z-(ZP.front+ZP.back)/2)<w/2+.02&&p.y>y0&&p.y<y0+h&&p.x<ZP.right+d-.03){ const m=o.material; if(m.emissive&&!VIV.glow.includes(m)){ m.emissive.setHex(0x9ad8a8); m.emissiveIntensity=0; VIV.glow.push(m); } } }); }
 }
 // pleated floor lamps by the two tables (no hanging lamps)
 function pleatFloorLamp(x,z){ const b=new THREE.Mesh(new THREE.SphereGeometry(.16,24,10,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x1c1b1a,roughness:.45,metalness:.2})); b.scale.y=.5; b.position.set(x,0,z); scene.add(b);
@@ -2136,67 +2138,73 @@ zlCabinet(-2.72,ZP.right+ZP.display.d);
   ZL_ANIM.push(dt=>{ const dist=Math.hypot(ME.x-nx,ME.z-(D.z0+D.z1)/2), amp=.03+.3*Math.max(0,1-dist/.9); for(const p of panels){ p.ph+=dt*(1.4+amp*4); p.m.rotation.x=Math.sin(p.ph)*amp; } });
 }
 
-// ---- tea room back wall: a round 博古架 (a moon ring with stepped shelves inside, on a low plinth),
-//      standing before a larger circle of backlit washi framed in dark wood
-{ const cx=(-2.72+ZP.right+ZP.display.d)/2, zb=ZP.back, R=.84, t=.055, dz=.3, base=.13, cy=base+R-.05, zc=zb-.08-dz/2;
+// ---- tea room back wall: a round 博古架 (a moon ring with stepped shelves inside) set on a low dark cabinet,
+//      before a large cut circle of backlit washi on the wall
+{ const cx=(-2.72+ZP.right+ZP.display.d)/2, zb=ZP.back, R=.95, t=.06, dz=.32, CH=.45, cy=CH+R-.03, zc=zb-.1-dz/2, k=(R-.06)/.785;
   const rw=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.45}), disp={type:'display'};
-  // washi circle on the wall, softly lit from behind
-  const WR=1.12, wy=cy+.08;
-  const paper=ctex(512,512,(g,w,h)=>{ g.fillStyle='#f4ecdc'; g.fillRect(0,0,w,h); const Rr=rnd(9); g.globalAlpha=.22; g.strokeStyle='#d8c8a8'; g.lineWidth=1;
-    for(let i=0;i<500;i++){ g.beginPath(); const x=Rr()*w, y=Rr()*h, a=Rr()*6.3, l=10+Rr()*40; g.moveTo(x,y); g.quadraticCurveTo(x+Math.cos(a)*l*.5+Rr()*8,y+Math.sin(a)*l*.5,x+Math.cos(a)*l,y+Math.sin(a)*l); g.stroke(); }
-    g.globalAlpha=1; const gr=g.createRadialGradient(w/2,h/2,10,w/2,h/2,w/2); gr.addColorStop(0,'rgba(255,240,210,0)'); gr.addColorStop(1,'rgba(150,120,80,.18)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
-  const washiM=new THREE.MeshStandardMaterial({map:paper,emissive:0xffe2b8,emissiveMap:paper,emissiveIntensity:.55,roughness:.95}); LAMPS.push({f:{on:true},mat:washiM});
-  const washi=new THREE.Mesh(new THREE.CircleGeometry(WR,64),washiM); washi.position.set(cx,wy,zb-.015); washi.rotation.y=Math.PI; washi.userData=disp; scene.add(washi); pickables.push(washi);
-  const fr=new THREE.Mesh(new THREE.TorusGeometry(WR+.015,.022,10,96),new THREE.MeshStandardMaterial({color:0x2a1810,roughness:.4})); fr.position.set(cx,wy,zb-.02); scene.add(fr);
-  softLight(cx,wy,zb-.5,2.2,1.8);
-  // plinth with a cut-out apron, like the reference stand
-  box(1.5,.05,dz+.06,rw,cx,base-.025,zc,scene,BLOCK); box(1.42,base-.05,dz+.02,rw,cx,(base-.05)/2,zc,scene,BLOCK);
-  box(1.1,.05,.012,new THREE.MeshStandardMaterial({color:0x1e120c}),cx,.025,zc+dz/2+.012);
+  // washi: paper fibres, a crisp edge
+  const WS=1.6, wy=cy;
+  const paper=ctex(512,512,(g,w,h)=>{ g.fillStyle='#f6eedf'; g.fillRect(0,0,w,h); const Rr=rnd(9); g.globalAlpha=.2; g.strokeStyle='#d6c4a2'; g.lineWidth=1;
+    for(let i=0;i<600;i++){ g.beginPath(); const x=Rr()*w, y=Rr()*h, a=Rr()*6.3, l=10+Rr()*40; g.moveTo(x,y); g.quadraticCurveTo(x+Math.cos(a)*l*.5+Rr()*8,y+Math.sin(a)*l*.5,x+Math.cos(a)*l,y+Math.sin(a)*l); g.stroke(); }
+    g.globalAlpha=1; const gr=g.createRadialGradient(w/2,h/2,10,w/2,h/2,w/2); gr.addColorStop(0,'rgba(255,240,210,0)'); gr.addColorStop(1,'rgba(150,120,80,.12)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
+  const washiM=new THREE.MeshStandardMaterial({map:paper,emissive:0xffe2b8,emissiveMap:paper,emissiveIntensity:.5,roughness:.95}); LAMPS.push({f:{on:true},mat:washiM});
+  const washi=new THREE.Mesh(new THREE.CircleGeometry(1.25,96),washiM);   /* a cut circle of paper on the wall, no frame */ washi.position.set(cx,wy,zb-.015); washi.rotation.y=Math.PI; washi.renderOrder=-1; scene.add(washi);
+  softLight(cx,wy,zb-.55,2.2,1.9);
+  // the cabinet it stands on: two doors, bronze pulls, a thin top
+  box(2*R,CH-.03,dz+.08,rw,cx,(CH-.03)/2,zc,scene,BLOCK); box(2*R+.03,.03,dz+.1,rw,cx,CH-.015,zc,scene,BLOCK);
+  for(const sx of [-1,1]){ box(R-.05,CH-.12,.012,new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.4}),cx+sx*R/2,(CH-.03)/2+.01,zc+(dz+.08)/2+.006,scene,disp); box(.012,.08,.02,bronzeOld,cx+sx*.06,CH/2,zc+(dz+.08)/2+.018); }
+  box(2*R,.06,.012,new THREE.MeshStandardMaterial({color:0x1e120c}),cx,.03,zc+(dz+.08)/2+.006);
   // the ring
   const ring=new THREE.Shape(); ring.absarc(0,0,R,0,Math.PI*2,false); const hole=new THREE.Path(); hole.absarc(0,0,R-t,0,Math.PI*2,true); ring.holes.push(hole);
-  const rg=new THREE.ExtrudeGeometry(ring,{depth:dz,bevelEnabled:false,curveSegments:64}); rg.translate(0,0,-dz/2); const rm=new THREE.Mesh(rg,rw); rm.position.set(cx,cy,zc); rm.userData=disp; scene.add(rm); pickables.push(rm);
-  // stepped shelves inside, clipped to the inner circle (local x right = toward the partition, i.e. world +x)
-  const Ri=R-t, T=.022, hw=y=>Math.sqrt(Math.max(0,Ri*Ri-y*y));
-  const H=(y,a,b)=>{ const lo=Math.max(a,-hw(y)), hi=Math.min(b,hw(y)); box(hi-lo,T,dz-.02,rw,cx+(lo+hi)/2,cy+y,zc,scene); };
-  const V=(x,a,b)=>{ const lo=Math.max(a,-hw(x)), hi=Math.min(b,hw(x)); box(T,hi-lo,dz-.02,rw,cx+x,cy+(lo+hi)/2,zc,scene); };
-  const floorY=-Ri*.82; box(2*hw(floorY),T+.01,dz-.02,rw,cx,cy+floorY,zc,scene);
-  H(.33,-1,0); V(-.02,.33,1); H(.12,-.02,1); V(-.5,-.2,.33); H(-.2,-1,-.18); V(-.18,floorY,-.2); H(-.3,-.18,1); V(.5,-.3,.12);
-  OB(cx-.75,cx+.75,zc-dz/2-.03,zb);
+  const rg=new THREE.ExtrudeGeometry(ring,{depth:dz,bevelEnabled:false,curveSegments:72}); rg.translate(0,0,-dz/2); const rm=new THREE.Mesh(rg,rw); rm.position.set(cx,cy,zc); rm.userData=disp; scene.add(rm); pickables.push(rm);
+  // stepped shelves inside, clipped to the inner circle
+  const Ri=R-t, T=.024, hw=y=>Math.sqrt(Math.max(0,Ri*Ri-y*y));
+  const Hb=(y,a,b)=>{ y*=k; a*=k; b*=k; const lo=Math.max(a,-hw(y)), hi=Math.min(b,hw(y)); box(hi-lo,T,dz-.02,rw,cx+(lo+hi)/2,cy+y,zc,scene); };
+  const Vb=(x,a,b)=>{ x*=k; a*=k; b*=k; const lo=Math.max(a,-hw(x)), hi=Math.min(b,hw(x)); box(T,hi-lo,dz-.02,rw,cx+x,cy+(lo+hi)/2,zc,scene); };
+  const floorY=-Ri*.82/k; box(2*hw(floorY*k),T+.01,dz-.02,rw,cx,cy+floorY*k,zc,scene);
+  Hb(.33,-1,0); Vb(-.02,.33,1); Hb(.12,-.02,1); Vb(-.5,-.2,.33); Hb(-.2,-1,-.18); Vb(-.18,floorY,-.2); Hb(-.3,-.18,1); Vb(.5,-.3,.12);
+  OB(cx-R,cx+R,zc-(dz+.08)/2,zb);
   // a few pieces only
   const zisha=new THREE.MeshStandardMaterial({color:0x5a3424,roughness:.55}), zhuni=new THREE.MeshStandardMaterial({color:0x9a3a22,roughness:.45}), celadon=new THREE.MeshStandardMaterial({color:0x8fa898,roughness:.2}), iron=new THREE.MeshStandardMaterial({color:0x2a2826,roughness:.6,metalness:.35});
-  const put=(m,x,y)=>{ m.position.set(cx+x,cy+y+T/2,zc); m.userData=disp; scene.add(m); pickables.push(m); return m; };
-  const teapot=(x,y,m,s=1)=>{ const g=new THREE.Group(); g.position.set(cx+x,cy+y+T/2,zc); g.scale.setScalar(s); scene.add(g);
+  const put=(m,x,y)=>{ m.position.set(cx+x*k,cy+y*k+T/2,zc); m.userData=disp; scene.add(m); pickables.push(m); return m; };
+  const teapot=(x,y,m,s=1)=>{ const g=new THREE.Group(); g.position.set(cx+x*k,cy+y*k+T/2,zc); g.scale.setScalar(s); scene.add(g);
     const body=lathe([[0,0],[.05,0],[.07,.04],[.065,.08],[.03,.095],[.02,.1]],m,22); body.userData=disp; pickables.push(body); g.add(body);
-    const sp=cylinder(.008,.012,.06,m,.085,.055,0,g); sp.rotation.z=-.8; const hd=new THREE.Mesh(new THREE.TorusGeometry(.03,.007,6,14),m); hd.position.set(-.08,.05,0); g.add(hd); const k=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),m); k.position.y=.105; g.add(k); };
-  put(lathe([[0,0],[.045,0],[.09,.07],[.1,.15],[.065,.25],[.025,.3],[.03,.35],[.04,.37]],celadon,26),.42,.12);          // a celadon vase, upper right
-  teapot(-.3,.33,zhuni,1.1);                                                                                              // zhuni pot, upper left
-  { const st=put(new THREE.Mesh(new THREE.DodecahedronGeometry(.07,1),new THREE.MeshStandardMaterial({color:0x5a5a58,roughness:.85,flatShading:true})),-.36,-.2+.12); st.scale.set(.75,1.5,.6); }   // a scholar's rock, middle left
-  teapot(.2,-.3,zisha,1.15);                                                                                              // zisha pot, middle right
-  { const k=put(lathe([[0,0],[.08,0],[.11,.04],[.115,.1],[.09,.15],[.04,.17],[.035,.18]],iron,22),-.5,floorY); const hd=new THREE.Mesh(new THREE.TorusGeometry(.07,.008,6,18,Math.PI),iron); hd.position.set(cx-.5,cy+floorY+.19,zc); scene.add(hd); }   // iron kettle, bottom left
-  for(const dx of [.15,.28]) put(lathe([[0,0],[.022,0],[.04,.035],[.042,.04]],whitePorcelain,16),dx,floorY);      // two cups, bottom right
+    const sp=cylinder(.008,.012,.06,m,.085,.055,0,g); sp.rotation.z=-.8; const hd=new THREE.Mesh(new THREE.TorusGeometry(.03,.007,6,14),m); hd.position.set(-.08,.05,0); g.add(hd); const kn=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),m); kn.position.y=.105; g.add(kn); };
+  put(lathe([[0,0],[.045,0],[.09,.07],[.1,.15],[.065,.25],[.025,.3],[.03,.35],[.04,.37]],celadon,26),.42,.12).scale.setScalar(1.15);
+  teapot(-.3,.33,zhuni,1.25);
+  { const st=put(new THREE.Mesh(new THREE.DodecahedronGeometry(.07,1),new THREE.MeshStandardMaterial({color:0x5a5a58,roughness:.85,flatShading:true})),-.36,-.2); st.position.y+=.12; st.scale.set(.85,1.7,.7); }
+  teapot(.2,-.3,zisha,1.3);
+  { const kt=put(lathe([[0,0],[.08,0],[.11,.04],[.115,.1],[.09,.15],[.04,.17],[.035,.18]],iron,22),-.5,floorY); kt.scale.setScalar(1.1); const hd=new THREE.Mesh(new THREE.TorusGeometry(.077,.009,6,18,Math.PI),iron); hd.position.set(kt.position.x,kt.position.y+.2,zc); scene.add(hd); }
+  for(const dx of [.15,.28]) put(lathe([[0,0],[.022,0],[.04,.035],[.042,.04]],whitePorcelain,16),dx,floorY);
 }
 
-// ---- a bronze dragon spouting into a tall pottery urn, in the corner between the 博古架 and the partition
+// ---- a bronze lion mask spouting into a tall pottery urn, in the corner between the 博古架 and the partition
 { const ux=-3.07, uz=ZP.back-.42, H=.78, pick={type:'fountain'};
   const urnM=new THREE.MeshStandardMaterial({color:0x5a3e2c,roughness:.6}), glaze=new THREE.MeshStandardMaterial({color:0x2e3a34,roughness:.25});
   const urn=lathe([[0,0],[.12,0],[.18,.12],[.21,.36],[.2,.56],[.15,.7],[.13,.76],[.145,.78]],urnM,32); urn.position.set(ux,0,uz); urn.userData=pick; scene.add(urn); pickables.push(urn);
   const band=new THREE.Mesh(new THREE.CylinderGeometry(.212,.212,.08,32,1,true),glaze); band.position.set(ux,.5,uz); scene.add(band);
   const water=new THREE.Mesh(new THREE.CircleGeometry(.135,32),new THREE.MeshStandardMaterial({color:0x24403a,roughness:.04,metalness:.4})); water.rotation.x=-Math.PI/2; water.position.set(ux,H-.03,uz); scene.add(water);
   const ring=new THREE.Mesh(new THREE.RingGeometry(.02,.03,32),new THREE.MeshBasicMaterial({color:0xcfe6e0,transparent:true,opacity:.5,depthWrite:false})); ring.rotation.x=-Math.PI/2; ring.position.set(ux,H-.028,uz); scene.add(ring); ZL_DYN.push(ring);
-  // the dragon head on a round plaque on the back wall
-  const bronze=new THREE.MeshStandardMaterial({color:0x6a5a3a,metalness:.7,roughness:.35}), my=1.32, mz=ZP.back-.03;
-  const plaque=cylinder(.17,.17,.03,bronze,ux,my+.04,mz); plaque.rotation.x=Math.PI/2;
-  const head=new THREE.Group(); head.position.set(ux,my,mz-.06); scene.add(head);
-  const skull=new THREE.Mesh(new THREE.SphereGeometry(.07,16,12),bronze); skull.scale.set(1,.85,1.2); head.add(skull);
-  const snout=new THREE.Mesh(new THREE.CylinderGeometry(.035,.055,.13,12),bronze); snout.rotation.x=Math.PI/2; snout.position.set(0,-.01,-.1); head.add(snout);
-  for(const s of [-1,1]){ const horn=new THREE.Mesh(new THREE.ConeGeometry(.014,.12,8),bronze); horn.position.set(s*.04,.08,.03); horn.rotation.set(-.7,0,s*.3); head.add(horn);
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(.013,8,6),new THREE.MeshStandardMaterial({color:0x1a1410,roughness:.2})); eye.position.set(s*.04,.03,-.06); head.add(eye);
-    const wh=new THREE.Mesh(new THREE.CylinderGeometry(.003,.001,.12,5),bronze); wh.position.set(s*.05,-.03,-.13); wh.rotation.set(1.2,0,s*.6); head.add(wh); }
-  const mane=new THREE.Mesh(new THREE.TorusGeometry(.07,.018,8,18,Math.PI),bronze); mane.position.set(0,.01,.05); mane.rotation.y=Math.PI/2; head.add(mane);
+  // a lion mask on the wall, aged bronze to go with the iron, the dark rosewood and the urn
+  const bronze=new THREE.MeshStandardMaterial({color:0x7a603c,metalness:.5,roughness:.45}), patina=new THREE.MeshStandardMaterial({color:0x5e6650,metalness:.3,roughness:.65}), my=1.36, mz=ZP.back-.02;
+  const head=new THREE.Group(); head.position.set(ux,my,mz); head.rotation.y=Math.PI; scene.add(head);   // local +z faces into the room
+  // mane: two rings of flowing locks round the face, longer below like a beard
+  for(const [r0,n,len,th,z,m] of [[.14,30,.13,.062,.0,patina],[.105,24,.1,.055,.035,bronze]]) for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, down=Math.max(0,-Math.sin(a)), L=len*(1+down*.9);
+    const lock=new THREE.Mesh(new THREE.SphereGeometry(th,10,8),m); lock.scale.set(.9,L/th*.42,.5); lock.position.set(Math.cos(a)*(r0+L*.3),Math.sin(a)*(r0+L*.3)-.02,z); lock.rotation.z=a-Math.PI/2+(i%2?.12:-.12); head.add(lock); }
+  const face=new THREE.Mesh(new THREE.SphereGeometry(.105,20,16),bronze); face.scale.set(1,1.08,.75); face.position.set(0,0,.06); head.add(face);
+  const brow=new THREE.Mesh(new THREE.SphereGeometry(.05,12,8),bronze); brow.scale.set(1.9,.5,.8); brow.position.set(0,.045,.12); head.add(brow);
+  const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.055,14,10),bronze); muzzle.scale.set(1.15,.85,1); muzzle.position.set(0,-.045,.13); head.add(muzzle);
+  const nose=new THREE.Mesh(new THREE.SphereGeometry(.024,10,8),bronze); nose.scale.set(1.3,.8,1); nose.position.set(0,-.01,.18); head.add(nose);
+  const ridge=new THREE.Mesh(new THREE.CylinderGeometry(.014,.022,.07,8),bronze); ridge.position.set(0,.02,.165); ridge.rotation.x=-.5; head.add(ridge);
+  for(const sx of [-1,1]){ const eye=new THREE.Mesh(new THREE.SphereGeometry(.014,10,8),new THREE.MeshStandardMaterial({color:0x2a2218,roughness:.4})); eye.scale.set(1.4,.8,.6); eye.position.set(sx*.042,.025,.14); head.add(eye);
+    const cheek=new THREE.Mesh(new THREE.SphereGeometry(.035,10,8),bronze); cheek.position.set(sx*.04,-.06,.14); head.add(cheek);
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),patina); ear.scale.set(1,1.2,.5); ear.position.set(sx*.1,.1,.06); head.add(ear); }
+  const mouth=new THREE.Mesh(new THREE.SphereGeometry(.026,12,8),new THREE.MeshStandardMaterial({color:0x14100c,roughness:.8})); mouth.scale.set(1.3,.75,.6); mouth.position.set(0,-.1,.155); head.add(mouth);
+  const chin=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),bronze); chin.scale.set(1.2,.7,.8); chin.position.set(0,-.135,.13); head.add(chin);
   // the stream: a thin arc from the mouth into the urn, its texture running
   const sCan=ctex(32,256,(g,w,h)=>{ g.fillStyle='#ffffff'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=16){ g.fillStyle='rgba(160,200,200,.55)'; g.fillRect(0,y,w,6); } });
   sCan.wrapS=sCan.wrapT=THREE.RepeatWrapping; sCan.repeat.set(1,3);
-  const curve=new THREE.QuadraticBezierCurve3(new THREE.Vector3(ux,my-.02,mz-.22),new THREE.Vector3(ux,my-.05,uz-.02),new THREE.Vector3(ux,H-.02,uz+.02));
+  const curve=new THREE.QuadraticBezierCurve3(new THREE.Vector3(ux,my-.1,mz-.17),new THREE.Vector3(ux,my-.14,uz-.04),new THREE.Vector3(ux,H-.02,uz+.02));
   const stream=new THREE.Mesh(new THREE.TubeGeometry(curve,24,.007,8,false),new THREE.MeshStandardMaterial({map:sCan,color:0xdff2ee,transparent:true,opacity:.6,roughness:.05,depthWrite:false})); scene.add(stream); ZL_DYN.push(stream);
   // a bamboo ladle resting across the rim
   const lad=new THREE.MeshStandardMaterial({color:0xc8b078,roughness:.8}); const hl=cylinder(.007,.007,.42,lad,ux+.06,H+.02,uz+.04); hl.rotation.z=Math.PI/2-.12; hl.rotation.y=.5; const cup=cylinder(.03,.028,.05,lad,ux+.24,H+.04,uz+.15);
@@ -2215,7 +2223,7 @@ censer(ZP.modern.cx+.66,ZP.modern.h,ZP.modern.cz-.2);
 
 // ---- the rainforest tank light: click to switch, shared with everyone in the room
 function toggleViv(){ const on=!VIV.on; myDoors={...myDoors,V:[on?1:0,Date.now()]}; pushPresence(); toast(on?'打開雨林缸的燈。':'關掉雨林缸的燈。'); }
-ZL_ANIM.push(()=>{ const want=doorState('V'); if(VIV.f&&want!==VIV.on){ VIV.on=want; VIV.f.on=want; applyLighting(); } if(VIV.mat) VIV.mat.emissiveIntensity=VIV.on?1.1:0; });
+ZL_ANIM.push(()=>{ const want=doorState('V'); if(VIV.f&&want!==VIV.on){ VIV.on=want; VIV.f.on=want; applyLighting(); } if(VIV.mat) VIV.mat.emissiveIntensity=VIV.on?.45:0; if(VIV.glow&&VIV.glowOn!==VIV.on){ VIV.glowOn=VIV.on; for(const m of VIV.glow) m.emissiveIntensity=VIV.on?.07:0; } });
 
 // ---- inside 知了間 the sky's fill steps back, so the room's own lights carry it
 { let k=1; const fill=fixtures.find(f=>f.light.isAmbientLight);
@@ -2491,7 +2499,7 @@ function act(h){ const u=h.object.userData; switch(u.type){
   case 'taishi': showText('太師椅','<p style="line-height:2">明間兩側各一對太師椅，中間一張茶几。點椅子可以坐下。</p>'); break;
   case 'console': showText('玄關桌','<p style="line-height:2">畫下的長桌，放隨身的東西。</p>'); break;
   case 'vivlamp': toggleViv(); break;
-  case 'fountain': showText('龍吐水','<p style="line-height:2">博古架旁的角落，牆上一個銅龍頭，細水吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。</p>'); break;
+  case 'fountain': showText('獅頭吐水','<p style="line-height:2">博古架旁的角落，牆上一面古銅獅頭，細水從口中吐進高陶甕，甕口一圈圈水紋。旁邊擱一支竹杓，取水煮茶。</p>'); break;
   case 'teaware': showText('茶櫃','<p style="line-height:2">一格一個樣子：大陶壺、鐵壺、木茶箱、紙包茶、幾隻錫罐、一疊杯子、幾本書，留些空處。</p>'); break;
   case 'shoin': showText('付書院','<p style="line-height:2">窗前的書院板：硯箱、筆、三冊線裝書，一只小銅香爐。</p>'); break;
   case 'songlamp': showText('宋式大燈','<p style="line-height:2">八角木框，素紗，掛在中軸上方。</p>'); break;

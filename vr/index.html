@@ -1702,6 +1702,15 @@ const OB=(x0,x1,z0,z1)=>OBST.push({x0:Math.min(x0,x1),x1:Math.max(x0,x1),z0:Math
 const huanghuali=new THREE.MeshStandardMaterial({color:0x7c4b28,roughness:.42});
 const huangDark=new THREE.MeshStandardMaterial({color:0x4a2c1a,roughness:.48});
 const darkWood=new THREE.MeshStandardMaterial({color:0x2e1d14,roughness:.5});
+// solid wood with grain, for the tea room's tables, stools and benches: one texture per wood, laid along the length of
+// tops and rails (H) or up the legs (V)
+function woodPair(base,line,rough=.5){ const mk=vert=>{ const t=ctex(512,128,(g,w,h)=>{ g.fillStyle=base; g.fillRect(0,0,w,h); const R=rnd(base.length*97+line.length);
+    for(let i=0;i<70;i++){ const y=R()*h, a=.05+R()*.18, amp=2+R()*5, ph=R()*6; g.strokeStyle=`rgba(${line},${a})`; g.lineWidth=.6+R()*1.8; g.beginPath(); for(let x=0;x<=w;x+=8){ const yy=y+Math.sin(x/(60+R()*40)+ph)*amp; x?g.lineTo(x,yy):g.moveTo(x,yy); } g.stroke(); }
+    for(let i=0;i<3;i++){ const cx=R()*w, cy=R()*h; for(let k=1;k<7;k++){ g.strokeStyle=`rgba(${line},.12)`; g.beginPath(); g.ellipse(cx,cy,k*7,k*2.2,0,0,Math.PI*2); g.stroke(); } } });
+    if(vert){ t.center.set(.5,.5); t.rotation=Math.PI/2; } return new THREE.MeshStandardMaterial({map:t,roughness:rough}); };
+  return {H:mk(false),V:mk(true)}; }
+const WD_HHL=woodPair('#7c4b28','40,20,8',.42), WD_HHD=woodPair('#4a2c1a','20,10,4',.48), WD_WAL=woodPair('#6e4a2e','35,20,10',.5), WD_OAK=woodPair('#a9825a','70,45,25',.55), WD_WALD=woodPair('#3a2618','15,8,4',.5);
+
 const oak=new THREE.MeshStandardMaterial({color:0x8a6a48,roughness:.55});
 const hinoki=new THREE.MeshStandardMaterial({color:0xcfae7e,roughness:.6});
 const whitePorcelain=new THREE.MeshStandardMaterial({color:0xf6f3ec,roughness:.18,side:THREE.DoubleSide});
@@ -2095,10 +2104,10 @@ const fireplace={on:false,light:null,flames:[],glow:null};
 const MODERN_SEATS=[];
 var MD_FX={cups:[],cupG:[],pitcher:null,flame:[],steam:[]};   /* the contemporary table's moving parts: tea in the cups and pitcher, the burner flame, kettle steam */
 { const MT=ZP.modern, x0=MT.cx-MT.w/2, x1=MT.cx+MT.w/2, z0=MT.cz-MT.d/2, z1=MT.cz+MT.d/2, W=MT.w, D=MT.d, cx=MT.cx, cz=MT.cz, h=MT.h; const pick={type:'modern'};
-  const slab=new THREE.MeshStandardMaterial({color:0x6e4a2e,roughness:.5});
-  box(W,.06,D,slab,cx,h-.03,cz,scene,BLOCK);
-  for(const sx of [-1,1]) box(.07,h-.06,D-.2,slab,cx+sx*(W/2-.25),(h-.06)/2,cz,scene,BLOCK);
-  box(W-.5,.05,.05,slab,cx,.2,cz);
+  /* a single solid walnut slab on two slab legs */
+  box(W,.06,D,WD_WAL.H,cx,h-.03,cz,scene,BLOCK);
+  for(const sx of [-1,1]) box(.07,h-.06,D-.2,WD_WAL.V,cx+sx*(W/2-.25),(h-.06)/2,cz,scene,BLOCK);
+  box(W-.5,.05,.05,WD_WAL.H,cx,.2,cz);
   OB(x0,x1,z0,z1);
   // the host's full set, laid out in front of the host (screen side, facing the window; host's right is +x):
   //   茶巾 · 茶荷 | 壺承 with a 紫泥 standard pot | 公道杯 | 提梁壺 on a spirit burner; 茶筒 with 茶則 and 茶針 at the
@@ -2144,7 +2153,7 @@ var MD_FX={cups:[],cupG:[],pitcher:null,flame:[],steam:[]};   /* the contemporar
     const tea=new THREE.Mesh(new THREE.CircleGeometry(.026,18),new THREE.MeshStandardMaterial({color:0xb87a2a,roughness:.15})); tea.rotation.x=-Math.PI/2; tea.position.y=.032; cg.add(tea); tea.visible=false; cg.userData.tea=tea; MD_FX.cups.push(tea); MD_FX.cupG.push(cg); ZL_DYN.push(cg); }
   // seats: long benches with linen cushions, three guests on the window side facing the host, the host alone on the
   //        screen side, sitting square to the window
-  { const bench=(z,L)=>{ const bh=.4, bd=.36; box(L,.05,bd,oak,cx,bh-.025,z,scene); for(const sx of [-1,1]) box(.05,bh-.05,bd-.04,darkWood,cx+sx*(L/2-.12),(bh-.05)/2,z); box(L-.3,.04,.04,darkWood,cx,.12,z); };
+  { const bench=(z,L)=>{ const bh=.4, bd=.36; box(L,.05,bd,WD_OAK.H,cx,bh-.025,z,scene); for(const sx of [-1,1]) box(.05,bh-.05,bd-.04,WD_WALD.V,cx+sx*(L/2-.12),(bh-.05)/2,z); box(L-.3,.04,.04,WD_WALD.H,cx,.12,z); };
     const cushM=new THREE.MeshStandardMaterial({color:0xcfc2a4,roughness:1}), pipe=new THREE.MeshStandardMaterial({color:0x6b5d48,roughness:1});
     bench(z0-.32,Math.min(W-.2,2.1)); bench(z1+.32,.8);
     [[-.66,z0-.32,2],[0,z0-.32,2],[.66,z0-.32,2],[0,z1+.32,0]].forEach(([dx,z,f])=>{ const x=cx+dx, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'modern','當代茶席'); MODERN_SEATS.push(si); const tag={type:'seat',si};
@@ -2161,15 +2170,15 @@ var MD_FX={cups:[],cupG:[],pitcher:null,flame:[],steam:[]};   /* the contemporar
 const GX=ZP.gf.cx, GZ=ZP.gf.cz, GH=ZP.gf.h, GW=ZP.gf.w;
 const GF_SEATS=[], GF_CUPS=[];
 { const g=furn(GX,GZ,0); const pick=BLOCK, hw=GW/2;
-  box(GW,.04,GW,huanghuali,0,GH-.02,0,g,pick); box(GW-.04,.03,GW-.04,huangDark,0,GH-.055,0,g); box(GW-.08,.05,GW-.08,huanghuali,0,GH-.095,0,g);
-  for(const sx of [-1,1]) for(const sz of [-1,1]){ box(.05,GH-.04,.05,huanghuali,sx*(hw-.04),(GH-.04)/2,sz*(hw-.04),g); box(.06,.04,.06,huanghuali,sx*(hw-.035),.02,sz*(hw-.035),g); }
-  for(const s of [-1,1]){ box(GW-.12,.025,.025,huangDark,0,.13,s*(hw-.04),g); box(.025,.025,GW-.12,huangDark,s*(hw-.04),.13,0,g); }
+  box(GW,.04,GW,WD_HHL.H,0,GH-.02,0,g,pick); box(GW-.04,.03,GW-.04,WD_HHD.H,0,GH-.055,0,g); box(GW-.08,.05,GW-.08,WD_HHL.H,0,GH-.095,0,g);
+  for(const sx of [-1,1]) for(const sz of [-1,1]){ box(.05,GH-.04,.05,WD_HHL.V,sx*(hw-.04),(GH-.04)/2,sz*(hw-.04),g); box(.06,.04,.06,WD_HHL.V,sx*(hw-.035),.02,sz*(hw-.035),g); }
+  for(const s of [-1,1]){ box(GW-.12,.025,.025,WD_HHD.H,0,.13,s*(hw-.04),g); box(.025,.025,GW-.12,WD_HHD.H,s*(hw-.04),.13,0,g); }
   OB(GX-hw,GX+hw,GZ-hw,GZ+hw);
   const o=ZP.gf.stool;   // host on the corridor side, facing the window side
   [[o,0,1,'茶席・主位'],[0,o,0,'茶席・客位'],[-o,0,-1,'茶席・客位'],[0,-o,2,'茶席・客位']].forEach(([dx,dz,f,name])=>{ const x=GX+dx, z=GZ+dz, yaw=faceYaw(f); const si=addSeat(x,z,yaw,'gongfu',name); GF_SEATS.push(si); const sg=furn(x,z,yaw); const tag={type:'seat',si}; const sh=ZP.stoolH;
-    box(.36,.035,.36,huanghuali,0,sh-.015,0,sg,tag); box(.31,.012,.31,M.rattan,0,sh+.006,0,sg,tag);
-    for(const sx of [-1,1]) for(const sz of [-1,1]) box(.035,sh-.03,.035,huanghuali,sx*.155,(sh-.03)/2,sz*.155,sg,tag);
-    for(const s of [-1,1]){ box(.3,.02,.02,huangDark,0,.1,s*.155,sg); box(.02,.02,.3,huangDark,s*.155,.1,0,sg); }
+    box(.36,.035,.36,WD_HHL.H,0,sh-.015,0,sg,tag); box(.33,.01,.33,WD_HHL.H,0,sh+.005,0,sg,tag);   /* solid board seat */
+    for(const sx of [-1,1]) for(const sz of [-1,1]) box(.035,sh-.03,.035,WD_HHL.V,sx*.155,(sh-.03)/2,sz*.155,sg,tag);
+    for(const s of [-1,1]){ box(.3,.02,.02,WD_HHD.H,0,.1,s*.155,sg); box(.02,.02,.3,WD_HHD.H,s*.155,.1,0,sg); }
     const cup=ruochen(scene,GX+dx*.36,GH+.002,GZ+dz*.36); cup.visible=false; GF_CUPS.push(cup); }); }
 // the standard Yixing pot (標準壺, the 水平 form exported in the 1970s): squat round body broadest at the middle, a pressed
 // lid with a pearl knob, a short straight spout and a round ear handle, spout tip, rim and handle top all level.
@@ -2198,7 +2207,7 @@ const PINZI=[];
   const scoop=box(.03,.006,.11,new THREE.MeshStandardMaterial({color:0xc9b48a,roughness:.6}),.22,.006,.19,g); scoop.rotation.y=.3; }
 // a compact red-clay brazier with the 玉書煨, tucked at the corner between the host's stool and the back stool
 const brazier=(()=>{ const x=GX+.72, z=GZ+.72; const g=furn(x,z,0); const pick={type:'gongfu'};
-  box(.3,.03,.3,huanghuali,0,.285,0,g,pick); for(const sx of [-1,1]) for(const sz of [-1,1]) box(.03,.27,.03,huanghuali,sx*.13,.135,sz*.13,g);
+  box(.3,.03,.3,WD_HHL.H,0,.285,0,g,pick); for(const sx of [-1,1]) for(const sz of [-1,1]) box(.03,.27,.03,WD_HHL.V,sx*.13,.135,sz*.13,g);
   const stove=lathe([[0,0],[.09,0],[.095,.04],[.088,.16],[.08,.19],[.066,.195],[.062,.18]],redClay,24); stove.position.y=.302; stove.userData=pick; g.add(stove); pickables.push(stove);
   const mouth=new THREE.Mesh(new THREE.PlaneGeometry(.055,.045),emberGF); mouth.position.set(0,.36,-.094); mouth.rotation.y=Math.PI; g.add(mouth);
   for(let i=0;i<5;i++){ const c=new THREE.Mesh(new THREE.BoxGeometry(.028,.02,.024),emberGF); c.position.set((i%3-1)*.022,.47,(i>2?.018:-.014)); g.add(c); }

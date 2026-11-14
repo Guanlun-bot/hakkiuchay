@@ -1535,6 +1535,11 @@ function showIrori(){ const cur=sharedLatest('ir',myIR); const lit=irori.fire>.5
   body.querySelector('#irgo').onclick=()=>{ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{} startIR(); }; bindTeaList(body,showIrori); }
 function noiseBurst(sec,freq,q,gain,delay=0){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const n=Math.floor(actx.sampleRate*sec), buf=actx.createBuffer(1,n,actx.sampleRate), d=buf.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.min(1,i/3000)*Math.min(1,(n-i)/6000);
   const src=actx.createBufferSource(); src.buffer=buf; const f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q; const g=actx.createGain(); g.gain.value=gain; src.connect(f).connect(g).connect(actx.destination); src.start(actx.currentTime+delay); }catch{} }
+function boil(sec,delay=0,lvl=1){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const sr=actx.sampleRate, n=Math.floor(sr*sec), buf=actx.createBuffer(1,n,sr), d=buf.getChannelData(0);
+  let lp=0; for(let i=0;i<n;i++){ const e=Math.min(1,i/(sr*.6))*Math.min(1,(n-i)/(sr*.8)), grow=.35+.65*Math.min(1,i/(n*.7)); lp+=((Math.random()*2-1)-lp)*.06; d[i]=lp*.5*e*grow*lvl; }   /* the low roar under the lid */
+  const nb=Math.floor(sec*90*lvl); for(let b=0;b<nb;b++){ const t0=Math.floor(Math.pow(Math.random(),.7)*(n-sr*.06)), f0=280+Math.random()*700, len=Math.floor(sr*(.012+Math.random()*.03)), a0=.12+Math.random()*.25;   /* bubbles: short rising blips, thicker as it comes to the boil */
+    for(let i=0;i<len;i++){ const t=i/sr; d[t0+i]+=Math.sin(2*Math.PI*f0*(1+t*12)*t)*a0*Math.exp(-i/(len*.35))*Math.min(1,(n-t0)/(sr*.8)); } }
+  const src=actx.createBufferSource(); src.buffer=buf; const f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=2200; const g=actx.createGain(); g.gain.value=.22; src.connect(f).connect(g).connect(actx.destination); src.start(actx.currentTime+delay); }catch{} }
 function crackle(sec){ try{ if(!actx) return; for(let i=0;i<sec*6;i++) noiseBurst(.02,2500+Math.random()*2000,2,.06,Math.random()*sec); }catch{} }
 function pour(sec,delay=0){ noiseBurst(sec,1400,1.2,.07,delay); }
 function wash(){ pour(2.2); setTimeout(()=>noiseBurst(1.2,900,.8,.04),2300); toast('扳開古銅龍頭，在石盆裡洗了手，用手巾擦乾。'); }
@@ -2334,7 +2339,7 @@ function tickZhiliao(dt){ const now=Date.now(), tt=performance.now()/1000;
   for(const c of GF_CUPS){ c.visible=served; c.userData.tea.visible=served; if(served) c.userData.tea.material.color.setHex(col); }
   for(const c of PINZI){ c.userData.tea.visible=served; if(served) c.userData.tea.material.color.setHex(col); }
   if(GF&&gel<40&&(GF.mine||GF_SEATS.includes(ME.seat))){ const idx=GF_STEPS.filter(([t])=>gel>=t).length-1; const sk=GF.at+':'+idx;
-    if(idx>=0&&sk!==gfStepSeen){ gfStepSeen=sk; toast(GF_STEPS[idx][1](TEAS[GF.t][0]),6000); if(idx===0) crackle(4); if(idx===1) noiseBurst(5,300,.6,.05); if(idx===4) pour(1.6); if(idx===5) pour(1.2); if(idx===6) bell(); } }
+    if(idx>=0&&sk!==gfStepSeen){ gfStepSeen=sk; toast(GF_STEPS[idx][1](TEAS[GF.t][0]),6000); if(idx===0) crackle(4); if(idx===1) boil(6.5,0,.6); if(idx===2) boil(3,0,1); if(idx===4) pour(1.6); if(idx===5) pour(1.2); } }
   // irori
   const IR=sharedLatest('ir',myIR), iel=IR?(now-IR.at)/1000:1e9;
   const want=irMode==='on'||(irMode==='auto'&&irSeason())||(iel<TEA_LAST&&irMode!=='off')?1:0;
@@ -2345,7 +2350,7 @@ function tickZhiliao(dt){ const now=Date.now(), tt=performance.now()/1000;
   const iserv=iel>=12&&iel<TEA_LAST;
   IRORI_CUPS.forEach(c=>{ c.visible=iserv; c.userData.tea.visible=iserv; if(iserv) c.userData.tea.material.color.setHex(TEAS[IR.t][2]); });
   if(IR&&iel<30&&(IR.mine||IRORI_SEATS.includes(ME.seat))){ const idx=IR_STEPS.filter(([t])=>iel>=t).length-1; const sk=IR.at+':'+idx;
-    if(idx>=0&&sk!==irStepSeen){ irStepSeen=sk; toast(IR_STEPS[idx][1](TEAS[IR.t][0]),5000); if(idx===0||idx===2) pour(1.4); if(idx===3) pour(1.0); if(idx===4) bell(); } }
+    if(idx>=0&&sk!==irStepSeen){ irStepSeen=sk; toast(IR_STEPS[idx][1](TEAS[IR.t][0]),5000); if(idx===0){ boil(2.8,0,.9); pour(1.4,1.6); } if(idx===2) pour(1.4); if(idx===3) pour(1.0); } }
   // my snack in front of me
   const st=ME.seat>=0?SEATS[ME.seat]:null, sp=st&&SEAT_SPOT[st.kind];
   mySnackMesh.visible=mySnack>=0&&!!sp&&sp[0]>0;

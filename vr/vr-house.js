@@ -95,6 +95,27 @@ T.doorWood = ctex(512,1024,(g,w,h)=>{ const R=rnd(57), P=4, pw=w/P;
     for(let k=0;k<2;k++){ const kx=p*pw+pw*(.25+R()*.5), ky=R()*h; for(let r=3;r<16;r+=3){ g.strokeStyle=`rgba(45,26,12,${.4-r*.015})`; g.lineWidth=1.2; g.beginPath(); g.ellipse(kx,ky,r*.55,r*1.6,0,0,Math.PI*2); g.stroke(); } }
     g.fillStyle='rgba(45,26,14,.75)'; g.fillRect(p*pw,0,2,h); }
   speck(g,w,h,900,['#3a2414','#9a7a58'],.18); });
+// 觀音山石 / granite: cool pale grey, fine dark and light grains, a few pits; the same picture drives the bump map
+function graniteDraw(g,w,h){ g.fillStyle='#d9d8d4'; g.fillRect(0,0,w,h); const R=rnd(91);
+  for(let i=0;i<7000;i++){ const v=R(); g.fillStyle=v<.45?'rgba(90,90,92,.55)':v<.8?'rgba(140,138,134,.5)':v<.95?'rgba(245,244,240,.7)':'rgba(30,30,32,.7)'; const s=.6+R()*1.8; g.fillRect(R()*w,R()*h,s,s); }
+  for(let i=0;i<60;i++){ g.fillStyle=`rgba(70,70,72,${.15+R()*.25})`; g.beginPath(); g.arc(R()*w,R()*h,1+R()*2.2,0,Math.PI*2); g.fill(); }
+  for(let i=0;i<14;i++){ g.strokeStyle=`rgba(120,118,112,${.08+R()*.1})`; g.lineWidth=6+R()*14; g.beginPath(); g.moveTo(R()*w,R()*h); g.lineTo(R()*w,R()*h); g.stroke(); } }
+T.granite=ctex(256,256,graniteDraw); T.graniteBump=ctex(256,256,graniteDraw,{color:false});
+// wood with a straight vertical grain: fine lines, slow colour drift, a few flecks; bump from the same lines
+function grainDraw(base,dark,light,seed,{planks=1,wear=false,lines=150}={}){ return (g,w,h)=>{ const R=rnd(seed), pw=w/planks;
+  g.fillStyle=base; g.fillRect(0,0,w,h);
+  for(let p=0;p<planks;p++){ g.fillStyle=`rgba(${R()<.5?'0,0,0':'255,230,200'},${R()*.06})`; g.fillRect(p*pw,0,pw,h);
+    for(let i=0;i<lines/planks;i++){ g.strokeStyle=R()<.6?`rgba(${dark},${.1+R()*.25})`:`rgba(${light},${.06+R()*.14})`; g.lineWidth=.5+R()*1.4; g.beginPath(); let x=p*pw+R()*pw; g.moveTo(x,0);
+      for(let y=0;y<=h;y+=16){ x+=(R()-.5)*1.2; x=Math.max(p*pw+1,Math.min((p+1)*pw-1,x)); g.lineTo(x,y); } g.stroke(); }
+    if(planks>1){ g.fillStyle=`rgba(${dark},.85)`; g.fillRect(p*pw,0,1.5,h); } }
+  if(wear){ // worn edges: the lacquer rubbed thin along the borders and round the middle where hands push
+    for(let i=0;i<260;i++){ const side=R(), d=Math.pow(R(),3)*.05, x=side<.25?d*w:side<.5?w-d*w:R()*w, y=side>=.5&&side<.75?d*h:side>=.75?h-d*h:R()*h;
+      g.fillStyle=`rgba(${R()<.6?'120,72,40':'60,30,18'},${.15+R()*.35})`; g.beginPath(); g.ellipse(x,y,1+R()*4,2+R()*9,0,0,Math.PI*2); g.fill(); }
+    for(let i=0;i<40;i++){ g.fillStyle=`rgba(130,80,46,${.05+R()*.12})`; g.beginPath(); g.ellipse(w*(.2+R()*.6),h*(.45+R()*.12),2+R()*8,3+R()*10,0,0,Math.PI*2); g.fill(); } } }; }
+const DOOR_DRAW=grainDraw('#7a2021','40,8,8','160,70,60',63,{planks:4,wear:true,lines:220});
+T.doorRed=ctex(256,1024,DOOR_DRAW); T.doorRedBump=ctex(256,1024,grainDraw('#808080','0,0,0','255,255,255',63,{planks:4,wear:true,lines:220}),{color:false});
+T.cypress=ctex(256,512,grainDraw('#5c3a21','30,16,6','140,96,60',71,{lines:140})); T.cypressBump=ctex(256,512,grainDraw('#808080','0,0,0','255,255,255',71,{lines:140}),{color:false});
+T.cypressDark=ctex(256,512,grainDraw('#4e2f1a','24,12,4','120,80,48',73,{lines:140}));
 T.boards = ctex(512,512,(g,w,h)=>{ const R=rnd(31); for(let i=0;i<8;i++){ g.fillStyle=shade('#4a2f1f',(R()-.5)*.08); g.fillRect(0,i*64,w,62); g.fillStyle='#24160d'; g.fillRect(0,i*64+62,w,2);} speck(g,w,h,1200,['#1b0f08','#6e4a33'],.3); });
 T.roof = ctex(512,512,(g,w,h)=>{
   const random=rnd(41);
@@ -145,7 +166,7 @@ scene.add(mainHall);
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(16,8), std(T.tile,20,10)); floor.rotation.x=-Math.PI/2; floor.userData={type:'floor'}; mainHall.add(floor); pickables.push(floor);
 const yard = new THREE.Mesh(new THREE.PlaneGeometry(24,11), std(T.yard,12,5.5)); yard.rotation.x=-Math.PI/2; yard.position.set(0,-0.02,9.8); yard.userData={type:'floor'}; scene.add(yard); pickables.push(yard);
 const BLOCK={type:'block'};
-const stone = std(T.white, 1, 1, {color:0xa5a29a});
+const stone = new THREE.MeshStandardMaterial({map:T.granite,bumpMap:T.graniteBump,bumpScale:1.2,color:0xa8a6a1,roughness:.85,metalness:0});
 const trim = new THREE.MeshStandardMaterial({color:0xb4ad98,roughness:.88});
 const ridgeClay = new THREE.MeshStandardMaterial({color:0xa06148,roughness:.84});
 const timber = new THREE.MeshStandardMaterial({color:0x583f34,roughness:.8});
@@ -401,10 +422,12 @@ function widenHallDoor(g,z){ const D=HALL_DOOR, gone=[];
   box(2*D+.35,.17,.38,stone,0,2.71,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
 for(const {hall} of axialHalls) widenHallDoor(hall,entryWall);
 widenHallDoor(axialHalls[1].hall,-entryWall); widenHallDoor(gateHall,entryWall); widenHallDoor(gateHall,-entryWall);
-// Two-leaf board doors with a traditional sliding bar (門閂) on the inside.
+// Two-leaf board doors with a traditional sliding bar (門閂) on the inside. The leaves: dark cinnabar (暗硃砂) lacquer over
+// Taiwan cypress, the grain upright, half-matte like raw lacquer, worn along the edges.
+const DOOR_LEAF=new THREE.MeshStandardMaterial({map:T.doorRed,bumpMap:T.doorRedBump,bumpScale:.9,roughness:.4,metalness:0});
 const DOORS={};
 function buildDoors(g,key,hw=1){
-  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const pick={type:'door',key}, plank=DOOR_LEAF, iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*.985*hw,0,4.0); pv.scale.x=hw; g.add(pv);
     const leaf=box(.97,2.58,.055,plank,-side*.485,1.35,0,pv,pick);
@@ -432,7 +455,7 @@ function doorPose(d){ // k: 1 open, 0 shut; barK: 1 bar in, 0 bar stored
 const DOOR_BLOCKS=[];
 function addDoor(key,x,z,rot,half,h,wallT,inside){
   const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
-  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const pick={type:'door',key}, plank=DOOR_LEAF, iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const zi=-(wallT/2+.03), lw=half-.006, lh=h-.1, leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*half,0,zi); g.add(pv);
     box(lw,lh,.05,plank,-side*lw/2,lh/2+.05,0,pv,pick);
@@ -4522,9 +4545,9 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
    The beds stand with their heads against the long front and back walls, two pairs facing each other across the
    room, so the middle of the room and the door to the 明間 stay clear. Wooden single beds in the manner of the 1930s:
    panelled head and foot boards, turned posts, a cotton mattress, pillow and a folded quilt. */
-{ const frame=new THREE.MeshStandardMaterial({map:T.wood,color:0xd2a77c,roughness:.6}), dark=new THREE.MeshStandardMaterial({map:T.woodDark,color:0xb08a68,roughness:.55}),
+{ const frame=new THREE.MeshStandardMaterial({map:T.cypress,bumpMap:T.cypressBump,bumpScale:.8,roughness:.55}), dark=new THREE.MeshStandardMaterial({map:T.cypressDark,bumpMap:T.cypressBump,bumpScale:.8,roughness:.55}),
     cloth=new THREE.MeshStandardMaterial({color:0xefe8da,roughness:.95}), quilt=[0x6b7f95,0x8a5a4a,0x5f7a62,0x9a8460].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.9})),
-    brass=new THREE.MeshStandardMaterial({color:0xb08a3e,metalness:.7,roughness:.35});
+    brass=new THREE.MeshStandardMaterial({color:0xb5945b,metalness:.8,roughness:.32});
   const L=2.02, W=.98;
   // one bed in its own group: local −z is the foot, the head board at z=+L/2
   function bed(x,z,yaw,qi){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
@@ -4549,21 +4572,20 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
       box(w,h,.008,frame,0,cy,fz,g);
       box(w,.022,.016,dark,0,y1-.011,fz-.006,g); box(w,.022,.016,dark,0,y0+.011,fz-.006,g);
       box(.022,h,.016,dark,-w/2+.011,cy,fz-.006,g); box(.022,h,.016,dark,w/2-.011,cy,fz-.006,g);
-      const k=new THREE.Mesh(new THREE.SphereGeometry(.014,10,8),brass); k.position.set(0,h>.2?y1-.07:cy,fz-.02); g.add(k); }
+      const ky=h>.2?y1-.07:cy, rose=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.006,14),brass); rose.rotation.x=Math.PI/2; rose.position.set(0,ky,fz-.017); g.add(rose);
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.022,.004,8,20),brass); ring.position.set(0,ky-.022,fz-.022); g.add(ring); }
     // framed sides
     for(const sx of [-1,1]){ const xx=sx*(W2/2+.004); box(.012,H2-lg-.08,D2-.06,frame,xx,lg+(H2-lg)/2,0,g);
       for(const [yy,hh,dd] of [[H2-.05,.02,D2-.06],[lg+.05,.02,D2-.06]]) box(.016,hh,dd,dark,xx+sx*.004,yy,0,g);
       for(const zz of [-(D2/2-.04),D2/2-.04]) box(.016,H2-lg-.1,.02,dark,xx+sx*.004,lg+(H2-lg)/2,zz,g); }
     OB(x-.26,x+.26,z-.22,z+.22); }
-  // each bed in a corner of the room, its head against the front or back wall and its side along the end wall or the
-  // partition; a cabinet at each bed head on the room side. West wing (room 22): front face z≈15.6, back z≈23.6,
-  // north end x≈31.72, partition x≈36.48; the east wing (room 26) mirrors it about the axis.
-  let qi=0;
+  // against the front wall (the one with the window) and the back wall: one shared cabinet centred on the window's
+  // middle (x = 39.2 − 5.125), a bed close on each side of it, heads to the wall. Room 22 (west wing): front face
+  // z≈15.6, back z≈23.6, end wall x≈31.72, partition x≈36.48; room 26 mirrors it about the axis.
+  let qi=0; const XC=4*courtAxis-5.125, gap=.25+.04+W/2;
   for(const [front,back] of [[15.6,23.6],[4.0,-4.0]]){ const s=Math.sign(back-front);
     for(const [wallZ,toward] of [[front,s],[back,-s]]){ const zc=wallZ+toward*(L/2+.02), yaw=toward>0?Math.PI:0;
-      const xa=31.72+W/2+.02, xb=36.48-W/2-.02;
-      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++);
-      stand(xa+W/2+.3,wallZ+toward*.22,yaw); stand(xb-W/2-.3,wallZ+toward*.22,yaw); } } }
+      bed(XC-gap,zc,yaw,qi++); bed(XC+gap,zc,yaw,qi++); stand(XC,wallZ+toward*.22,yaw); } } }
 /* ================= 宅中人物（NPC）=================
    Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
    book on the west walk of the 第一進 and shows guests to the tea room; 阿春 keeps the tea station in the east 過水 and

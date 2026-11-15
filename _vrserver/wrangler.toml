@@ -1,0 +1,14 @@
+# 學鳩齋・線上書齋 多人伺服器（Cloudflare Worker + Durable Objects）
+# 發布：在這個資料夾執行  npx wrangler deploy
+# 發布後的網址是 https://hakkiuchay-vr.<你的帳號>.workers.dev ，填進 vr/config.js 的 ws 欄位（wss://…）
+name = "hakkiuchay-vr"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

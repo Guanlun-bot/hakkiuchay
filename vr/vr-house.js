@@ -3622,6 +3622,158 @@ function playRemoteVoiceChunks(chunks){
   }
 }
 
+// The 學鳩齋 multiplayer server on Cloudflare (see _vrserver/): the same idea as server.py — one server per room keeps everyone's
+// state and relays it, with the voice chunks — but over a WebSocket and reachable from anywhere. The voice capture and
+// playback are the same as localRoom's. One id for the whole page, so a reconnect is the same person, never a second copy.
+const MY_PID=(crypto.randomUUID?crypto.randomUUID():('p-'+Math.random().toString(36).slice(2,12)+Date.now().toString(36)));
+async function cfRoom(){
+  const me=MY_PID;
+  const peers=new Map();
+  let peersFn=null, cur=null, mpTimer=null, closed=false;
+  let micEnabled=false, micMuted=false, localSpeaking=false, localMicStream=null, voiceAudioCtx=null, voiceProc=null, voiceZero=null, voiceHoldUntil=0;
+  const outgoingVoiceChunks=[];
+  const voiceButton=$('#voice-toggle'), muteButton=$('#voice-mute'), voiceStatus=$('#voice-status'), voiceHud=$('#voice-hud');
+
+  function renderVoiceHud(){
+    if(!voiceHud) return;
+    const list=[];
+    if(micEnabled) list.push({id:me,name:myName+'（你）',speaking:localSpeaking&&!micMuted});
+    for(const [id,v] of peers) if(v.micActive) list.push({id,name:str(v.p?.n,12)||'訪客',speaking:!!v.speaking});
+    voiceHud.innerHTML=list.map(u=>`<div class="voice-pill${u.speaking?' speaking':''}">${MIC_SVG}<span>${esc(u.name)}</span></div>`).join('');
+  }
+  function voiceUI(){
+    voiceButton.disabled=closed;
+    voiceButton.textContent=micEnabled?'離開語音 (M)':'加入語音 (M)';
+    muteButton.hidden=!micEnabled;
+    muteButton.textContent=micMuted?'解除靜音':'靜音';
+    const vcCount=[...peers.values()].filter(v=>v.micActive).length;
+    voiceStatus.textContent=micEnabled?(micMuted?'麥克風已靜音':(vcCount?`語音已連線 · ${vcCount+1} 人`:'麥克風已開啟（等待同伴加入）')):'';
+    renderVoiceHud();
+  }
+  function disableVoiceMic(){
+    micEnabled=false; micMuted=false; localSpeaking=false; outgoingVoiceChunks.length=0;
+    if(voiceProc){ try{ voiceProc.disconnect(); }catch{} voiceProc.onaudioprocess=null; voiceProc=null; }
+    if(voiceZero){ try{ voiceZero.disconnect(); }catch{} voiceZero=null; }
+    if(voiceAudioCtx){ try{ voiceAudioCtx.close(); }catch{} voiceAudioCtx=null; }
+    if(localMicStream){ localMicStream.getTracks().forEach(t=>{ try{ t.stop(); }catch{} }); localMicStream=null; }
+    voiceUI();
+  }
+  async function enableVoiceMic(){
+    if(micEnabled||closed) return;
+    micEnabled=true; micMuted=false; localSpeaking=false;
+    ensureVoicePlayCtx();
+    voiceUI();
+    if(!navigator.mediaDevices?.getUserMedia){ voiceStatus.textContent='此瀏覽器不支援麥克風'; micEnabled=false; voiceUI(); return; }
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false});
+      if(!micEnabled||closed){ stream.getTracks().forEach(t=>t.stop()); return; }
+      localMicStream=stream;
+      for(const tr of stream.getAudioTracks()) tr.onended=()=>disableVoiceMic();
+      const AudioCtx=window.AudioContext||window.webkitAudioContext;
+      if(AudioCtx){
+        voiceAudioCtx=new AudioCtx();
+        if(voiceAudioCtx.state==='suspended') await voiceAudioCtx.resume().catch(()=>{});
+        const src=voiceAudioCtx.createMediaStreamSource(stream);
+        const hp=voiceAudioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=110; hp.Q.value=0.7;
+        const lp=voiceAudioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=5500; lp.Q.value=0.7;
+        const micComp=voiceAudioCtx.createDynamicsCompressor();
+        micComp.threshold.value=-24; micComp.knee.value=16; micComp.ratio.value=4; micComp.attack.value=0.005; micComp.release.value=0.15;
+        const proc=voiceAudioCtx.createScriptProcessor(2048,1,1), zero=voiceAudioCtx.createGain();
+        zero.gain.value=0; voiceProc=proc; voiceZero=zero;
+        const targetSr=16000, inSr=voiceAudioCtx.sampleRate||48000, ratio=Math.max(1,inSr/targetSr);
+        let noiseFloor=0.006, gateGain=0;
+        proc.onaudioprocess=ev=>{
+          if(!micEnabled||micMuted) return;
+          const input=ev.inputBuffer.getChannelData(0);
+          let sumSq=0; for(let i=0;i<input.length;i++) sumSq+=input[i]*input[i];
+          const rms=Math.sqrt(sumSq/input.length), now=performance.now();
+          const gateThresh=Math.max(0.012,noiseFloor*2.3);
+          if(rms>gateThresh) voiceHoldUntil=now+380;
+          else if(now>=voiceHoldUntil) noiseFloor=Math.max(0.003,Math.min(0.025,noiseFloor*0.95+rms*0.05));
+          const nextSp=now<voiceHoldUntil, wasSp=localSpeaking;
+          if(nextSp!==localSpeaking){ localSpeaking=nextSp; renderVoiceHud(); }
+          if(!nextSp&&!wasSp){ gateGain=0; return; }
+          const targetGain=nextSp?1.15:0;
+          const outLen=Math.max(1,Math.floor(input.length/ratio)), pcm=new Int16Array(outLen);
+          for(let i=0;i<outLen;i++){
+            gateGain+=(targetGain-gateGain)*(nextSp?0.08:0.04);
+            const center=i*ratio, idx=Math.floor(center), frac=center-idx;
+            const sA=input[Math.max(0,idx-1)]*0.2+input[idx]*0.6+input[Math.min(input.length-1,idx+1)]*0.2;
+            const idx2=Math.min(input.length-1,idx+1);
+            const sB=input[Math.max(0,idx2-1)]*0.2+input[idx2]*0.6+input[Math.min(input.length-1,idx2+1)]*0.2;
+            const sample=Math.max(-1,Math.min(1,(sA+(sB-sA)*frac)*gateGain));
+            pcm[i]=sample<0?sample*32768:sample*32767;
+          }
+          outgoingVoiceChunks.push({sr:targetSr,b64:encodeInt16ToBase64(pcm)});
+          if(outgoingVoiceChunks.length>12) outgoingVoiceChunks.splice(0,outgoingVoiceChunks.length-12);
+        };
+        src.connect(hp); hp.connect(lp); lp.connect(micComp); micComp.connect(proc); proc.connect(zero); zero.connect(voiceAudioCtx.destination);
+      }
+      voiceUI();
+    }catch{ micEnabled=false; voiceStatus.textContent='無法開啟麥克風，請檢查瀏覽器權限'; voiceUI(); }
+  }
+  function toggleVoiceMic(){ if(micEnabled) disableVoiceMic(); else enableVoiceMic(); }
+  voiceButton.onclick=toggleVoiceMic;
+  muteButton.onclick=()=>{ if(!micEnabled) return; micMuted=!micMuted; if(micMuted) localSpeaking=false;
+    localMicStream?.getAudioTracks().forEach(t=>t.enabled=!micMuted); voiceUI(); };
+  window.__toggleVoiceMic=toggleVoiceMic;
+
+  function emit(){ if(!peersFn) return; const list=[];
+    for(const [k,v] of peers) list.push({peer:k,kind:'viewer',sameTab:false,presence:v.p});
+    peersFn({peers:list}); renderVoiceHud(); }
+
+  function emitSoon(){ if(emitT) return; emitT=setTimeout(()=>{ emitT=null; emit(); },60); }
+  let emitT=null, ws=null, wsOpen=false, retry=0, retryT=null, lastKey='', lastSendAt=0, offlineT=null;
+  const base=String(window.VR_CONFIG.ws).replace(/\/+$/,'');
+  function onMsg(e){ let m; try{ m=JSON.parse(e.data); }catch{ return; } if(!m) return;
+    if(m.t==='all'){ peers.clear(); for(const q of (m.peers||[])) if(q&&q.id&&q.id!==me) peers.set(q.id,{p:q.p||{},micActive:!!q.mic,speaking:!!q.sp,fast:Date.now()}); emitSoon(); }
+    else if(m.t==='u'&&m.id&&m.id!==me){ const v=peers.get(m.id)||{p:{}}; if(m.p&&typeof m.p==='object') v.p=m.p; v.micActive=!!m.mic; v.speaking=!!m.sp; v.fast=Date.now(); peers.set(m.id,v);
+      if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
+    else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); } }
+  // ten times a second: what changed, plus any voice; when nothing changes, a heartbeat every 2.5 s
+  function tick(){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8);
+    const st={...cur,vc:micEnabled}, k=JSON.stringify(st), changed=k!==lastKey;
+    if(!changed&&!voice.length&&now-lastSendAt<2500) return;
+    const msg={t:'u',mic:micEnabled,sp:localSpeaking&&!micMuted}; if(changed||now-lastSendAt>=2500) msg.p=st; if(voice.length) msg.v=voice;
+    try{ ws.send(JSON.stringify(msg)); lastKey=k; lastSendAt=now; }catch{ NET.errs++; } }
+  function connect(first){ clearTimeout(retryT); if(closed) return Promise.resolve(false);
+    return new Promise(res=>{ let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
+      try{ ws=new WebSocket(base+'/room/'+encodeURIComponent(playRoom)+'?id='+encodeURIComponent(me)); }catch{ fin(false); if(!first) later(); return; }
+      // a busy page (the house just built, a slow phone) can hold the 'open' event back past the timer: an opened or still
+      // connecting socket gets more time instead of being given up
+      let waits=0; const sock=ws, check=()=>{ if(wsOpen||sock!==ws) return; if(sock.readyState===1||(sock.readyState===0&&waits++<2)){ to=setTimeout(check,6000); return; } try{ sock.close(); }catch{} fin(false); }; let to=setTimeout(check,first?9000:8000);
+      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); };
+      sock.onmessage=e=>{ if(sock===ws) onMsg(e); };
+      sock.onclose=ev=>{ if(sock!==ws) return; clearTimeout(to); const was=wsOpen; wsOpen=false; fin(false); if(closed||(first&&!was)) return;
+        NET.st='重新連線中'; NET.errs++; renderPeople(); later(); };
+      sock.onerror=()=>{}; }); }
+  function later(){ clearTimeout(retryT); retryT=setTimeout(()=>connect(false),Math.min(8000,700*2**retry++));
+    // still offline after a while: stop showing the others where they were
+    if(!offlineT) offlineT=setTimeout(()=>{ offlineT=null; if(!wsOpen){ peers.clear(); localVoiceState.ringBuffers.clear(); emit(); } },15000); }
+  if(!(await connect(true))){ closed=true; throw new Error('vr server unavailable'); }
+  NET.peers=peers; voiceUI();
+  mpTimer=setInterval(tick,100);
+  addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&!closed&&!wsOpen){ retry=0; connect(false); } });
+  addEventListener('online',()=>{ if(!closed&&!wsOpen){ retry=0; connect(false); } });
+
+  function disconnect(){
+    if(closed) return; closed=true;
+    if(mpTimer){ clearInterval(mpTimer); mpTimer=null; } clearTimeout(retryT); clearTimeout(offlineT); clearTimeout(emitT);
+    disableVoiceMic(); localVoiceState.ringBuffers.clear();
+    if(voiceHud) voiceHud.innerHTML='';
+    window.__toggleVoiceMic=null;
+    try{ ws&&ws.close(1000,'bye'); }catch{}
+    peers.clear();
+  }
+  addEventListener('pagehide',e=>{ if(!e.persisted) disconnect(); });
+  return {
+    presence(o){ cur=o; return Promise.resolve(); },
+    onPeers(fn){ peersFn=fn; emit(); },
+    mode(){ return wsOpen?(peers.size?'即時':''):'離線'; },
+    disconnect
+  };
+}
+
 async function localRoom(){
   const me=(crypto.randomUUID?crypto.randomUUID():('p-'+Math.random().toString(36).slice(2,10)));
   const peers=new Map();
@@ -3792,7 +3944,8 @@ async function connectRoom(){
 async function connectRoomOnce(){
   await configReady;
   try{ if(window.claude&&typeof window.claude.use==='function') room=await window.claude.use('room'); }catch{ room=null; }
-  if(!room&&window.VR_CONFIG?.url&&window.VR_CONFIG?.key){ try{ room=await supabaseRoom(); window.__toggleVoiceMic=()=>document.getElementById('voice-toggle')?.click(); }catch{ room=null; NET.errs++; if(!NET.st) NET.st='連線失敗'; } }
+  if(!room&&window.VR_CONFIG?.ws){ try{ room=await cfRoom(); window.__roomKind='學鳩齋伺服器'; }catch{ room=null; NET.errs++; } }
+  if(!room&&window.VR_CONFIG?.url&&window.VR_CONFIG?.key){ try{ room=await supabaseRoom(); window.__roomKind='Supabase'; window.__toggleVoiceMic=()=>document.getElementById('voice-toggle')?.click(); }catch{ room=null; NET.errs++; if(!NET.st) NET.st='連線失敗'; } }
   if(!room){ try{ room=await localRoom(); }catch{ room=null; NET.errs++; NET.st=window.VR_CONFIG?.url?'連線失敗，稍後重試':'需透過 server.py 啟動'; } }
   if(!room) { renderPeople(); retryRoom(4000); return; }
   room.onPeers(ch=>{ const seen=new Set(); for(const p of ch.peers){ if(p.sameTab||p.kind!=='viewer') continue; seen.add(p.peer); let o=others.get(p.peer); if(!o){ o={av:makeAvatar(0x888888),p:{}}; others.set(p.peer,o); } o.p=p.presence||{}; o.lastNet=performance.now(); }
@@ -3846,7 +3999,7 @@ function tickPeople(dt){ for(const [,o] of others){ const p=o.p||{};
     o.jyNow=jy; }
   if(chatUI.diag.style.display==='block'){ diagT+=dt; if(diagT>.5){ diagT=0; renderDiag(); } } }
 let diagT=0;
-function renderDiag(){ const now=Date.now(); const L=[`連線：${room?(window.claude&&typeof window.claude.use==='function'?'Claude 房間':'Supabase'):'離線'}  狀態：${NET.st||'-'}  ${room&&room.mode?room.mode():''}`,`我：${myName}  x ${ME.x.toFixed(1)}  z ${ME.z.toFixed(1)}  畫質 ${renderer.getPixelRatio().toFixed(2)}  ${FPS.v.toFixed(0)} fps`];
+function renderDiag(){ const now=Date.now(); const L=[`連線：${room?(window.claude&&typeof window.claude.use==='function'?'Claude 房間':(window.__roomKind||'本機')):'離線'}  狀態：${NET.st||'-'}  ${room&&room.mode?room.mode():''}`,`我：${myName}  x ${ME.x.toFixed(1)}  z ${ME.z.toFixed(1)}  畫質 ${renderer.getPixelRatio().toFixed(2)}  ${FPS.v.toFixed(0)} fps`];
   if(!others.size) L.push('（目前沒有收到其他人的資料）');
   for(const [k,o] of others){ const p=o.p||{}, v=NET.peers&&NET.peers.get(k); L.push(`${str(p.n,12)||'訪客'}  x ${num(p.x).toFixed(1)}  z ${num(p.z).toFixed(1)}  座位 ${num(p.s,-1)}`+(v?`  即時 ${v.fast?((now-v.fast)/1000).toFixed(1)+'s':'—'}  同步 ${v.slow?((now-v.slow)/1000).toFixed(1)+'s':'—'}`:'')); }
   chatUI.diag.textContent=L.join('\n'); }

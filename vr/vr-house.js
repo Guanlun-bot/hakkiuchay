@@ -3638,17 +3638,21 @@ class HkMic extends AudioWorkletProcessor{
     for(let i=0;i<n;i++){ const k=i-(n-1)/2, w=.54-.46*Math.cos(2*Math.PI*i/(n-1)), v=(k===0?2*c:Math.sin(2*Math.PI*c*k)/(Math.PI*k))*w; this.h[i]=v; sum+=v; }
     for(let i=0;i<n;i++) this.h[i]/=sum;
     this.n=n; this.x=new Float32Array(n); this.xi=0; this.ph=0; this.F=Math.round(this.osr*.02); this.f=new Float32Array(this.F); this.fi=0; this.prev=new Float32Array(this.F);
-    this.floor=.003; this.hold=0; this.g=0; this.sp=false; this.out=this.port; this.duck=false;
+    this.floor=.003; this.hold=0; this.g=0; this.sp=false; this.out=this.port; this.duck=false; this.mins=[]; this.cur=1; this.nf=0; this.open=0; this.frames=0;
     this.port.onmessage=e=>{ const m=e.data||{}; if(m.port) this.out=m.port; if('duck' in m) this.duck=!!m.duck; }; }
   process(inp){ const ch=inp[0]&&inp[0][0]; if(!ch) return true; const n=this.n, h=this.h, x=this.x;
     for(let i=0;i<ch.length;i++){ x[this.xi]=ch[i]; this.xi=this.xi+1===n?0:this.xi+1;
       if(++this.ph>=this.D){ this.ph=0; let a=0, j=this.xi; for(let k=0;k<n;k++){ a+=h[k]*x[j]; j=j+1===n?0:j+1; } this.f[this.fi++]=a; if(this.fi===this.F){ this.fi=0; this.frame(); } } }
     return true; }
   frame(){ const f=this.f, F=this.F; let s=0; for(let i=0;i<F;i++) s+=f[i]*f[i];
-    const rms=Math.sqrt(s/F), t=currentTime, th=this.duck?Math.max(.03,this.floor*5):Math.max(.006,this.floor*2.2);   // while others talk, only a clearly louder voice opens: their echo stays out
-    if(rms>th) this.hold=t+.5; else if(t>this.hold) this.floor=Math.min(.03,Math.max(.0015,this.floor*.96+rms*.04));
+    const rms=Math.sqrt(s/F), t=currentTime;
+    // noise floor: the quietest 20 ms in each 0.4 s, the lowest of the last five such blocks (about 2 s)
+    this.cur=Math.min(this.cur,rms); if(++this.nf>=20){ this.nf=0; this.mins.push(this.cur); this.cur=1; if(this.mins.length>5) this.mins.shift(); this.floor=Math.max(.0008,Math.min(...this.mins)); }
+    const th=Math.max(.006,this.floor*3.2)*(this.duck?1.6:1);   // about 10 dB over the room; a little more while others talk
+    if(rms>th) this.hold=t+.35;
     const want=t<this.hold, wasOpen=this.g>.0001;
     if(want!==this.sp){ this.sp=want; this.port.postMessage({sp:want}); }
+    this.frames++; if(want) this.open++; if(this.frames>=100){ this.port.postMessage({stat:{open:this.open/this.frames,floor:this.floor}}); this.frames=0; this.open=0; }
     if(!want&&!wasOpen){ this.prev.set(f); return; }
     if(want&&!wasOpen) this.send(this.prev,true);
     this.send(f,false,want?1:0); this.prev.set(f); }
@@ -3662,6 +3666,7 @@ class HkPlay extends AudioWorkletProcessor{
   push(m){ let s=this.s.get(m.id); const R=sampleRate;
     if(!s){ const n=R*3|0; s={b:new Float32Array(n),n,r:0,w:0,q:0,on:false,g:0,t:currentTime,jit:.03,tgt:.15,last:0,frac:0,ps:0}; this.s.set(m.id,s); }
     const pcm=new Int16Array(m.pcm), sr=m.sr||16000, L=pcm.length, now=currentTime, gap=now-s.t; s.t=now;
+    if(s.uAt&&now-s.uAt<.3) s.under=(s.under||0)+1; s.uAt=0;   // ran dry and more came right after: a real break in the middle of speech
     if(gap<1) s.jit=Math.max(s.jit*.97,s.jit*.9+Math.abs(gap-L/sr)*.1); s.tgt=Math.min(.6,Math.max(.08,.06+3*s.jit));
     const step=sr/R; let pos=s.frac, prev=s.ps;
     while(pos<L){ const i=Math.floor(pos), fr=pos-i, a=i===0?prev:pcm[i-1]/32768, b=pcm[i]/32768, v=a+(b-a)*fr;
@@ -3669,11 +3674,12 @@ class HkPlay extends AudioWorkletProcessor{
     s.frac=pos-L; s.ps=pcm[L-1]/32768;
     const keep=s.tgt*R|0; if(s.on&&s.q>keep+R*.4){ const drop=s.q-keep; s.r=(s.r+drop)%s.n; s.q-=drop; } }
   process(_,outs){ const o=outs[0]&&outs[0][0]; if(!o) return true; o.fill(0); const fade=1/(sampleRate*.006);
+    if(currentTime-(this.st||0)>2){ this.st=currentTime; const list=[]; for(const [id,s] of this.s) list.push([id,s.under||0,Math.round(s.tgt*1000),Math.round(s.q/sampleRate*1000)]); this.port.postMessage({stat:list}); }
     for(const [id,s] of this.s){
       if(!s.on){ if(s.q>=s.tgt*sampleRate) s.on=true; else { if(currentTime-s.t>60) this.s.delete(id); continue; } }
       for(let i=0;i<o.length;i++){
         if(s.q>0){ s.g=Math.min(1,s.g+fade); const v=s.b[s.r]; s.r=(s.r+1)%s.n; s.q--; s.last=v; o[i]+=v*s.g; }
-        else { s.g=Math.max(0,s.g-fade); s.last*=.995; o[i]+=s.last*s.g; if(s.g===0){ s.on=false; break; } } } }
+        else { s.g=Math.max(0,s.g-fade); s.last*=.995; o[i]+=s.last*s.g; if(s.g===0){ s.on=false; s.uAt=currentTime; break; } } } }
     for(let i=0;i<o.length;i++){ const v=o[i]; if(v>.8||v<-.8) o[i]=Math.tanh(v); }
     return true; } }
 registerProcessor('hk-play',HkPlay);
@@ -3694,7 +3700,7 @@ async function startMicPipeline(onFrame,onSpeak,net){
     await ctx.audioWorklet.addModule(voiceWorkletUrl());
     const src=ctx.createMediaStreamSource(stream), hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=90; hp.Q.value=.7;
     const mic=new AudioWorkletNode(ctx,'hk-mic',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]}), zero=ctx.createGain(); zero.gain.value=0;
-    mic.port.onmessage=e=>{ const m=e.data; if(m.pcm) onFrame(encodeInt16ToBase64(new Int16Array(m.pcm)),Math.round(m.sr)); if(m.sp!==undefined) onSpeak(!!m.sp); };
+    mic.port.onmessage=e=>{ const m=e.data; if(m.stat){ VOICE_STAT.mic=m.stat; return; } if(m.pcm) onFrame(encodeInt16ToBase64(new Int16Array(m.pcm)),Math.round(m.sr)); if(m.sp!==undefined) onSpeak(!!m.sp); };
     if(net){ const ch=new MessageChannel(); mic.port.postMessage({port:ch.port1},[ch.port1]); net.post({mic:ch.port2},[ch.port2]); }
     src.connect(hp); hp.connect(mic); mic.connect(zero); zero.connect(ctx.destination);
     VOICE_NS='瀏覽器內建';
@@ -3750,7 +3756,7 @@ async function aecOut(ctx,node){
   }catch{ node.connect(ctx.destination); return false; } }
 // audio may only start after a tap or a key: wake playback (and the echo-cancelling player) on the next one
 for(const ev of ['pointerdown','keydown','touchend']) addEventListener(ev,()=>{ const st=localVoiceState; if(st.playCtx&&st.playCtx.state==='suspended') st.playCtx.resume().catch(()=>{}); if(st.aec&&st.aec.el.paused) st.aec.el.play().catch(()=>{}); },{capture:true,passive:true});
-var VOICE_NS='';
+var VOICE_NS=''; const VOICE_STAT={mic:null,play:null};
 function b64ToBuffer(b64){ const bin=atob(b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; }
 const localVoiceState={playCtx:null,masterGain:null,comp:null,playerNode:null,ringBuffers:new Map()};
 function ensureVoicePlayCtx(){
@@ -3765,7 +3771,7 @@ function ensureVoicePlayCtx(){
     st.playLp=st.playCtx.createBiquadFilter(); st.playLp.type='lowpass'; st.playLp.frequency.value=5800; st.playLp.Q.value=0.7;
     st.playLp.connect(st.masterGain); st.masterGain.connect(st.comp); aecOut(st.playCtx,st.comp);
     st.wk=null; st.wkQueue=[]; st.wkFailed=!(canWorklet()&&st.playCtx.audioWorklet);
-    if(!st.wkFailed) st.playCtx.audioWorklet.addModule(voiceWorkletUrl()).then(()=>{ const node=new AudioWorkletNode(st.playCtx,'hk-play',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[1]}); node.connect(st.playLp); st.wk=node; for(const m of st.wkQueue) node.port.postMessage(m,[m.pcm]); st.wkQueue=[]; for(const fn of voicePlayWaiters.splice(0)) fn(node); }).catch(()=>{ st.wkFailed=true; st.wkQueue=[]; legacy(); });
+    if(!st.wkFailed) st.playCtx.audioWorklet.addModule(voiceWorkletUrl()).then(()=>{ const node=new AudioWorkletNode(st.playCtx,'hk-play',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[1]}); node.connect(st.playLp); st.wk=node; node.port.onmessage=e=>{ if(e.data&&e.data.stat) VOICE_STAT.play=e.data.stat; }; for(const m of st.wkQueue) node.port.postMessage(m,[m.pcm]); st.wkQueue=[]; for(const fn of voicePlayWaiters.splice(0)) fn(node); }).catch(()=>{ st.wkFailed=true; st.wkQueue=[]; legacy(); });
     const legacy=()=>{
     st.playerNode=st.playCtx.createScriptProcessor(2048,1,1);
     const playSr=st.playCtx.sampleRate||48000, startThreshold=Math.floor(playSr*0.16);
@@ -4215,6 +4221,8 @@ function tickPeople(dt){ for(const [,o] of others){ const p=o.p||{};
   if(chatUI.diag.style.display==='block'){ diagT+=dt; if(diagT>.5){ diagT=0; renderDiag(); } } }
 let diagT=0;
 function renderDiag(){ const now=Date.now(); const L=[`連線：${room?(window.claude&&typeof window.claude.use==='function'?'Claude 房間':(window.__roomKind||'本機')):'離線'}  狀態：${NET.st||'-'}  ${room&&room.mode?room.mode():''}`,`我：${myName}  x ${ME.x.toFixed(1)}  z ${ME.z.toFixed(1)}  畫質 ${renderer.getPixelRatio().toFixed(2)}  ${FPS.v.toFixed(0)} fps`];
+  { const m=VOICE_STAT.mic, pl=VOICE_STAT.play; if(m||pl){ const nm=id=>{ const o=others.get(id); return o?str(o.p.n,8)||'訪客':id.slice(0,4); };
+    L.push('語音　'+(m?`我：開口 ${Math.round(m.open*100)}%　環境 ${(20*Math.log10(m.floor+1e-9)).toFixed(0)} dB　`:'')+(pl&&pl.length?pl.map(([id,u,t,q])=>`${nm(id)}：斷 ${u} 次　緩衝 ${t}/${q} ms`).join('　'):'')); } }
   if(!others.size) L.push('（目前沒有收到其他人的資料）');
   for(const [k,o] of others){ const p=o.p||{}, v=NET.peers&&NET.peers.get(k); L.push(`${str(p.n,12)||'訪客'}  x ${num(p.x).toFixed(1)}  z ${num(p.z).toFixed(1)}  座位 ${num(p.s,-1)}`+(v?`  即時 ${v.fast?((now-v.fast)/1000).toFixed(1)+'s':'—'}  同步 ${v.slow?((now-v.slow)/1000).toFixed(1)+'s':'—'}`:'')); }
   chatUI.diag.textContent=L.join('\n'); }

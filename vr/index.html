@@ -229,7 +229,7 @@ body:has(#utility[open]) #aim{visibility:hidden}
   <div id="drink" class="hide"><span id="dname"></span><button id="dsip">喝一口</button><button id="dfin">不喝了</button></div>
   <div id="hint"></div>
   <div id="voice-hud" aria-live="polite"></div>
-  <details id="utility"><summary>選單</summary><div id="utility-body"><div id="people"><div class="h"><span>在齋</span><span id="pc"></span></div><div id="pl"></div><button class="btn" id="voice-toggle" disabled>加入語音 (M)</button><button class="btn" id="voice-mute" hidden>靜音</button><div id="voice-status" role="status"></div><div class="vctl"><label>語音音量：<span id="voice-vol-val">180%</span><input id="voice-volume" type="range" min="0" max="3" step="0.1" value="1.8"></label><label>音效設定<select id="audio-mode"><option value="on">開啟全部音效（含腳步聲）</option><option value="ambient">僅保留互動與提示（關閉腳步聲）</option><option value="off">全部靜音</option></select></label><label>鼠標模式<select id="ctrl-mode"><option value="fps">FPS 模式（鎖定視角）</option><option value="hand">手模式（自由鼠標拖曳）</option></select></label></div></div><div id="brand"><div class="n">學鳩齋</div><div class="t" id="today"></div><label id="lighting">燈光 <input id="lightLevel" type="range" min="0" max="100" value="45"><output id="lightValue" for="lightLevel">45%</output></label><label id="ctempRow">色溫 <input id="ctemp" type="range" min="2200" max="6500" step="100" value="3000"><output id="ctempValue" for="ctemp">3000K</output></label></div><div id="bar">
+  <details id="utility"><summary>選單</summary><div id="utility-body"><div id="people"><div class="h"><span>在齋</span><span id="pc"></span></div><div id="pl"></div><button class="btn" id="voice-toggle" disabled>加入語音 (M)</button><button class="btn" id="voice-mute" hidden>靜音</button><div id="voice-status" role="status"></div><div class="vctl"><label>語音音量：<span id="voice-vol-val">100%</span><input id="voice-volume" type="range" min="0" max="3" step="0.1" value="1.0"></label><label>音效設定<select id="audio-mode"><option value="on">開啟全部音效（含腳步聲）</option><option value="ambient">僅保留互動與提示（關閉腳步聲）</option><option value="off">全部靜音</option></select></label><label>鼠標模式<select id="ctrl-mode"><option value="fps">FPS 模式（鎖定視角）</option><option value="hand">手模式（自由鼠標拖曳）</option></select></label></div></div><div id="brand"><div class="n">學鳩齋</div><div class="t" id="today"></div><label id="lighting">燈光 <input id="lightLevel" type="range" min="0" max="100" value="45"><output id="lightValue" for="lightLevel">45%</output></label><label id="ctempRow">色溫 <input id="ctemp" type="range" min="2200" max="6500" step="100" value="3000"><output id="ctempValue" for="ctemp">3000K</output></label></div><div id="bar">
     <button id="bBooks">找書</button>
     <button id="bPosts">文章</button>
     <button id="bSeat">找位子</button>
@@ -273,6 +273,9 @@ window.__loadHouse=()=>{
   });
 };
 if(window.__wantEnter) window.__loadHouse();
+// 在大門等待取名時即於背景預載，進門時不需等待整理
+if('requestIdleCallback' in window) requestIdleCallback(()=>window.__loadHouse(),{timeout:2500});
+else setTimeout(()=>window.__loadHouse(),1200);
 </script>
 </body>
 </html>

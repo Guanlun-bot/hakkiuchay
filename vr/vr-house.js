@@ -3725,7 +3725,8 @@ async function cfRoom(){
   function emitSoon(){ if(emitT) return; emitT=setTimeout(()=>{ emitT=null; emit(); },60); }
   let emitT=null, ws=null, wsOpen=false, retry=0, retryT=null, lastKey='', lastSendAt=0, offlineT=null;
   const base=String(window.VR_CONFIG.ws).replace(/\/+$/,'');
-  function onMsg(e){ let m; try{ m=JSON.parse(e.data); }catch{ return; } if(!m) return;
+  let lastRx=Date.now();
+  function onMsg(e){ lastRx=Date.now(); let m; try{ m=JSON.parse(e.data); }catch{ return; } if(!m||m.t==='pong') return;
     if(m.t==='all'){ peers.clear(); for(const q of (m.peers||[])) if(q&&q.id&&q.id!==me) peers.set(q.id,{p:q.p||{},micActive:!!q.mic,speaking:!!q.sp,fast:Date.now()}); emitSoon(); }
     else if(m.t==='u'&&m.id&&m.id!==me){ const v=peers.get(m.id)||{p:{}}; if(m.p&&typeof m.p==='object') v.p=m.p; v.micActive=!!m.mic; v.speaking=!!m.sp; v.fast=Date.now(); peers.set(m.id,v);
       if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
@@ -3742,7 +3743,7 @@ async function cfRoom(){
       // a busy page (the house just built, a slow phone) can hold the 'open' event back past the timer: an opened or still
       // connecting socket gets more time instead of being given up
       let waits=0; const sock=ws, check=()=>{ if(wsOpen||sock!==ws) return; if(sock.readyState===1||(sock.readyState===0&&waits++<2)){ to=setTimeout(check,6000); return; } try{ sock.close(); }catch{} fin(false); }; let to=setTimeout(check,first?9000:8000);
-      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); };
+      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); };
       sock.onmessage=e=>{ if(sock===ws) onMsg(e); };
       sock.onclose=ev=>{ if(sock!==ws) return; clearTimeout(to); const was=wsOpen; wsOpen=false; fin(false); if(closed||(first&&!was)) return;
         NET.st='重新連線中'; NET.errs++; renderPeople(); later(); };
@@ -3753,12 +3754,16 @@ async function cfRoom(){
   if(!(await connect(true))){ closed=true; throw new Error('vr server unavailable'); }
   NET.peers=peers; voiceUI();
   mpTimer=setInterval(tick,100);
-  addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&!closed&&!wsOpen){ retry=0; connect(false); } });
+  // every 4 s a ping (the server answers at once); nothing heard for 10 s means the line is dead even if the browser
+  // hasn't noticed yet: drop it and open a new one
+  const keep=setInterval(()=>{ if(closed||!wsOpen) return; try{ ws.send('{"t":"ping"}'); }catch{} if(Date.now()-lastRx>10000) revive(); },4000);
+  function revive(){ const old=ws; wsOpen=false; ws=null; try{ old&&old.close(); }catch{} NET.st='重新連線中'; NET.errs++; retry=0; lastRx=Date.now(); connect(false); }
+  addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'||closed) return; if(!wsOpen){ retry=0; connect(false); } else if(Date.now()-lastRx>6000) revive(); });
   addEventListener('online',()=>{ if(!closed&&!wsOpen){ retry=0; connect(false); } });
 
   function disconnect(){
     if(closed) return; closed=true;
-    if(mpTimer){ clearInterval(mpTimer); mpTimer=null; } clearTimeout(retryT); clearTimeout(offlineT); clearTimeout(emitT);
+    if(mpTimer){ clearInterval(mpTimer); mpTimer=null; } clearInterval(keep); clearTimeout(retryT); clearTimeout(offlineT); clearTimeout(emitT);
     disableVoiceMic(); localVoiceState.ringBuffers.clear();
     if(voiceHud) voiceHud.innerHTML='';
     window.__toggleVoiceMic=null;

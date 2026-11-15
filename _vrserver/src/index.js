@@ -4,7 +4,8 @@
 // 而且放在 Cloudflare 上，任何地方都連得到。
 //
 // 連線：wss://<網址>/room/<房間代號>?id=<這個分頁的固定身分>
-// 用戶端送：{t:'u', p:{…狀態}, mic:bool, sp:bool, v:[{sr,b64},…]}（p、v 都可省略；什麼都沒變時每 2.5 秒送一次當心跳）
+// 用戶端送：{t:'ping'}（伺服器自動回 {t:'pong'}，用來發現斷掉的連線）
+//         {t:'u', p:{…狀態}, mic:bool, sp:bool, v:[{sr,b64},…]}（p、v 都可省略；什麼都沒變時每 2.5 秒送一次當心跳）
 // 伺服器送：{t:'all', peers:[{id,p,mic,sp}]}  剛連上時的全員名單
 //           {t:'u', id, p?, mic, sp, v?}       某人的更新（含語音片段）
 //           {t:'bye', id}                      某人離開
@@ -28,6 +29,8 @@ export default {
 export class Room {
   constructor(ctx, env) {
     this.ctx = ctx;
+    // keep-alive: answered by Cloudflare itself, without waking the room, so clients can tell a dead connection quickly
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
     this.peers = new Map();   // id -> {ws, p, mic, sp, seen}
     // after a hibernation wake-up, sockets are still open: rebuild who is who (their states come back with the next heartbeat)
     for (const ws of ctx.getWebSockets()) { const a = ws.deserializeAttachment(); if (a && a.id) this.peers.set(a.id, { ws, p: null, mic: false, sp: false, seen: Date.now() }); }
@@ -81,7 +84,7 @@ export class Room {
     if (Math.random() < 0.05) this.sweep(now);
   }
 
-  async webSocketClose(ws) { this.drop(ws); }
+  async webSocketClose(ws, code) { this.drop(ws); try { ws.close(code === 1005 || code === 1006 ? 1000 : code, 'bye'); } catch {} }
   async webSocketError(ws) { this.drop(ws); }
   drop(ws) {
     const id = this.idOf(ws); if (!id) return;

@@ -507,7 +507,7 @@ function cutDoor(g,wx,wz,width=1.3,height=2.55){ g.updateMatrixWorld(true); cons
   brick=brick||mBrick(4,.9); white=white||mWhite(2,1.7); const x=side*8.15, a=L.z-width/2, b=L.z+width/2;
   for(const [z0,z1] of [[-4.3,a],[b,4.3]]) if(z1-z0>.01){ box(.3,.9,z1-z0,brick,x,.45,(z0+z1)/2,g,BLOCK); box(.3,2.78,z1-z0,white,x,2.29,(z0+z1)/2,g,BLOCK); }
   box(.3,3.68-height,width,white,x,(height+3.68)/2,L.z,g,BLOCK);
-  for(const z of [a,b]) box(.36,height,.12,stone,x,height/2,z,g); box(.36,.12,width+.14,stone,x,height,L.z,g); box(.34,.16,width,M.woodDark,x,.08,L.z,g); }   // stone frame, a wooden threshold (門檻)
+  for(const z of [a,b]) box(.36,height,.1,M.woodDark,x,height/2,z,g); box(.36,.1,width+.1,M.woodDark,x,height,L.z,g); box(.34,.16,width,M.woodDark,x,.08,L.z,g); }   // wooden frame and threshold (門檻)
 const SIDE_ROOMS=[];
 function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2, W=x1-x0, D=z1-z0;
   const fl=new THREE.Mesh(new THREE.PlaneGeometry(W,D),std(T.tile,W*1.25,D*1.25)); fl.rotation.x=-Math.PI/2; fl.position.set(cx,.002,cz); fl.userData={type:'floor'}; scene.add(fl); pickables.push(fl);
@@ -812,13 +812,7 @@ function redLantern(x,y,z,lit,cord=.45){ const piv=new THREE.Group(); piv.positi
 const LAMP_BRONZE=new THREE.MeshStandardMaterial({color:0x5b4a34,metalness:.65,roughness:.42}),
   LAMP_GLASS=new THREE.MeshStandardMaterial({color:0xe9dcc0,transparent:true,opacity:.45,roughness:.08,metalness:.1,emissive:0xffb05a,emissiveIntensity:0,side:THREE.DoubleSide,depthWrite:false}),
   LAMP_FLAME=new THREE.MeshStandardMaterial({color:0xd8a060,emissive:0xffa040,emissiveIntensity:0,roughness:.5});
-// every lamp lights the ground as brightly as those at 學鳩齋; to stay light on phones and in VR a small pool of
-// lights follows the visitor, sitting in the lamps nearest to them (the glass of every lamp glows the same)
-const WALL_LAMPS=[], LAMP_POOL=[]; for(let i=0;i<6;i++){ const P=new THREE.PointLight(0xffb066,0,6,2); scene.add(P); LAMP_POOL.push(P); LANTERN_LIGHTS.push(P); }
-let lampPoolAt=0;
-function lampPoolStep(){ const now=performance.now(); if(now<lampPoolAt) return; lampPoolAt=now+400;
-  const near=WALL_LAMPS.map(p=>[p,(p.x-ME.x)**2+(p.z-ME.z)**2]).sort((a,b)=>a[1]-b[1]);
-  LAMP_POOL.forEach((P,i)=>{ const q=near[i]; if(q) P.position.copy(q[0]); }); }
+// every lamp has the same light as those at 學鳩齋; the house's light pool (see optimizeScene) lights the nearest few
 function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=Math.atan2(nx,nz); scene.add(g); LANTERNS.push(g);
   const B=LAMP_BRONZE, lathe=(pts,m,seg=24)=>{ const k=new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r,h])=>new THREE.Vector2(r,h)),seg),m); k.castShadow=true; g.add(k); return k; };
   // back plate with a shell top, and the scrolled arm reaching out and up to the lamp
@@ -836,7 +830,7 @@ function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,
   for(let i=0;i<12;i++){ const a=i*Math.PI/6, sc=new THREE.Mesh(new THREE.SphereGeometry(.02,8,6,0,Math.PI*2,0,Math.PI/2),B); sc.rotation.x=Math.PI; sc.position.set(Math.sin(a)*.13,.275,Math.cos(a)*.13); L.add(sc); }
   put(lathe([[0,.37],[.055,.37],[.06,.39],[.04,.42],[.025,.43],[0,.43]],B,16));
   const fin=new THREE.Mesh(new THREE.ConeGeometry(.015,.06,10),B); fin.position.y=.47; L.add(fin); const kn=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),B); kn.position.y=.44; L.add(kn);
-  g.updateMatrixWorld(true); WALL_LAMPS.push(L.localToWorld(new THREE.Vector3(0,.14,.05)));
+  const P=new THREE.PointLight(0xffb066,0,6,2); P.position.set(0,.14,.05); L.add(P); LANTERN_LIGHTS.push(P);
   return g; }
 // for one building: a lamp over each of the two windows beside the door, on the face at local z = sg·4.30
 function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
@@ -850,7 +844,7 @@ function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
   doorLamps(axialHalls[0].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,-1,false);
   doorLamps(gateHall,hc,1,false); doorLamps(gateHall,hc,-1,false); }
 function lanternStep(dt,t){ const k=SKY_DAY<.35?1:SKY_DAY<.6?(.6-SKY_DAY)/.25:0;
-  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k; if(k>0) lampPoolStep();
+  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
   const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
   for(const l of LANTERN_SIM){ const v=windAt(t,l.ph), th=Math.min(.5,.009*v*v), g=9.8/l.len, wob=1+.25*Math.sin(t*2.6+l.ph*2);
     // the angle the wind would hold it at, about each axis: wind toward +x swings it about −z, toward +z about +x
@@ -1788,7 +1782,7 @@ function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1
       // wooden frame and a simple bagua lattice: an inner octagon tied to the frame by eight spokes
       const ring=(ro,ri,dep,mat)=>{ const s2=new THREE.Shape(); oct(ro).forEach(([a,b],k)=>k?s2.lineTo(a,b):s2.moveTo(a,b)); s2.closePath(); const hh=new THREE.Path(); oct(ri).forEach(([a,b],k)=>k?hh.lineTo(a,b):hh.moveTo(a,b)); hh.closePath(); s2.holes.push(hh);
         const g=new THREE.ExtrudeGeometry(s2,{depth:dep,bevelEnabled:false}); g.translate(0,0,-dep/2); const r=new THREE.Mesh(g,mat); r.rotation.y=-Math.PI/2; r.position.set(x,0,19.6); PP.add(r); };
-      ring(W.r+.07,W.r-.03,TW+.06,stone);
+      ring(W.r+.07,W.r-.03,TW+.06,darkWood);
       const lat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.6}); ring(.17,.14,.04,lat);
       for(let k=0;k<8;k++){ const a=k*Math.PI/4, r0=.155, r1=W.r-.02, L2=r1-r0, mz=(r0+r1)/2;
         const b=box(.035,.025,L2,lat,x,W.y+Math.sin(a)*mz,W.z+Math.cos(a)*mz,PP); b.rotation.x=-a; } }
@@ -1796,8 +1790,8 @@ function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1
   const s=new THREE.Shape(); s.moveTo(-4.15,D.h); for(let i=0;i<=24;i++){ const z=-4.15+8.3*i/24; s.lineTo(z,roofUnder(z)); } s.lineTo(4.15,D.h); s.closePath();
   const m=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:TW,bevelEnabled:false}),new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92}));
   m.rotation.y=-Math.PI/2; m.position.set(x+TW/2,0,19.6); PP.add(m);
-  for(const z of [D.z0,D.z1]) box(TW+.08,D.h,.1,stone,x,D.h/2,z,PP);
-  box(TW+.08,.12,D.z1-D.z0+.2,stone,x,D.h+.03,(D.z0+D.z1)/2,PP); box(TW+.06,.16,D.z1-D.z0,M.woodDark,x,.08,(D.z0+D.z1)/2,PP); }   // stone frame, a wooden threshold
+  for(const z of [D.z0,D.z1]) box(TW+.06,D.h,.08,darkWood,x,D.h/2,z,PP);
+  box(TW+.06,.1,D.z1-D.z0+.16,darkWood,x,D.h+.02,(D.z0+D.z1)/2,PP); box(TW+.06,.16,D.z1-D.z0,darkWood,x,.08,(D.z0+D.z1)/2,PP); }   // wooden frame and threshold
 partition(ZR.wallX); partition(-ZR.wallX);
 // 第二進、第一進 four wings, divided the same way as 知了間 (north room / 明間 / south room). Each is built in a group
 // laid over the 知了間 frame: the west wings are 知了間 shifted south; the east wings are turned half round so they face
@@ -4564,7 +4558,7 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
     box(W-.06,.6,.035,frame,0,.66,L/2-.03,g); box(W-.2,.42,.012,dark,0,.68,L/2-.05,g);   // head board with a sunk panel
     box(W-.06,.26,.035,frame,0,.47,-(L/2-.03),g);                              // foot board
     box(W-.12,.14,L-.14,cloth,0,.46,0,g);                                       // mattress
-    for(const px of [-W/4+.02,W/4-.02]) box(.58,.1,.34,cloth,px,.58,L/2-.28,g);     // two pillows
+    box(.62,.1,.34,cloth,0,.58,L/2-.28,g);     // pillow
     box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
     OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
   // a bedside cabinet with framed panels: top with a moulded edge, a drawer and a door each in a raised frame, brass pulls, short tapered legs

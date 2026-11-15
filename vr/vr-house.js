@@ -3172,7 +3172,7 @@ canvas.addEventListener('pointercancel',()=>{ drag=null; isRightMouseDown=false;
 const ray=new THREE.Raycaster(); const ndc=new THREE.Vector2();
 function pickAt(cx,cy){ ndc.set(cx/innerWidth*2-1,-(cy/innerHeight)*2+1); ray.setFromCamera(ndc,camera); ray.far=40; const h=ray.intersectObjects(pickables,false)[0]; return h||null; }
 const aimAction=document.getElementById('aim-action');
-const aimLabels={seat:'入座',door:'操作門扇',shoji:'開關障子',shelf:'看書',case:'看書',post:'閱讀文章',irori:'使用囲炉裏',gongfu:'泡工夫茶',modern:'使用茶席',coffee:'點咖啡',record:'操作唱片機',vivlamp:'調整雨林燈管亮度'};
+const aimLabels={npc:'交談',seat:'入座',door:'操作門扇',shoji:'開關障子',shelf:'看書',case:'看書',post:'閱讀文章',irori:'使用囲炉裏',gongfu:'泡工夫茶',modern:'使用茶席',coffee:'點咖啡',record:'操作唱片機',vivlamp:'調整雨林燈管亮度'};
 let nextAimCheck=0;
 function updateAimHint(){
   if(!locked()||VIEW.mode!=='walk'||renderer.xr.isPresenting||utility.open||panel.classList.contains('open')||!document.getElementById('reader').classList.contains('hide')){
@@ -3200,9 +3200,10 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab']);
+const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
+  case 'npc': npcTalk(u.id); break;
   case 'shelf': { const o=caseObjs[u.ci]; const px=h.uv.x*o.info.W, py=(1-h.uv.y)*o.info.H; let best=null; for(const [i,r] of o.info.layout){ if(px>=r.x0&&px<=r.x1&&py>=r.y0-6&&py<=r.y1+4){best=i;break;} } if(best!=null){ highlight(best); showBook(best); } else showCase(u.ci); break; }
   case 'case': showCase(u.ci); break;
   case 'post': openReader(u.pi); break;
@@ -4374,6 +4375,402 @@ function canonical(m){ const live=[lampPaper,lanternSilk,...ZL_LIVE,...LAMPS.map
   let uv=null; if(t){ if(t.matrixAutoUpdate) t.updateMatrix(); const e=t.matrix.elements; if(!(e[0]===1&&e[4]===1&&e[6]===0&&e[7]===0&&e[1]===0&&e[3]===0)) uv=t.matrix.clone(); }
   let c=canonMats.get(sig); if(!c){ c=m; if(uv){ c=m.clone(); c.map=t.clone(); c.map.repeat.set(1,1); c.map.offset.set(0,0); c.map.rotation=0; c.map.updateMatrix(); } canonMats.set(sig,c); }
   return {m:c,uv}; }
+/* ================= 宅中人物（NPC）=================
+   Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
+   book on the west walk of the 第一進 and shows guests to the tea room; 阿春 keeps the tea station in the east 過水 and
+   serves in the tea room (知了間北間); 水生叔 tends the 含笑 bed on the west side of the 第二進; 火師 cooks in the kitchen
+   (第一進東廂南間); 阿財 carries wood and water between the woodpile, the well and the kitchen.
+   Three chains of work run by themselves and are saved in this browser (each visitor has their own household):
+   the 甜粿 (waiting for wood → wood in → steaming → out of the steamer → carried to the tea room → served), the tea that
+   arrives at the gate and goes to the store, and the loose stretch of bamboo fence by the flower bed.
+   Every line can be changed in the back office (_data/vr.yml › npc); these are the defaults. */
+const NPC_DYN=[];
+const NPC_TXT={
+  'who.yu':['林玉','玉姨'],'who.xu':['許文欽','許總管'],'who.chun':['陳春','阿春'],'who.shui':['吳水生','水生叔'],'who.huo':['黃金火','火師'],'who.cai':['蔡進財','阿財'],
+  'yu.first':['您是來吃茶的？前頭廊下那位是許總管。慢一步，門檻有點高。','頭一回來吧？先到前廊找許總管。門檻高，腳抬一下。'],
+  'yu.again':['您又來啦。裡頭請。','我才把門埕掃好。來，這邊走。'],
+  'yu.sweep':['等我把這撮葉子掃到邊上，您再過。','一早風大，掃兩遍還有葉子。'],
+  'yu.rain':['傘可以擱在甕裡，走時記得拿。','簷下站一下吧。門邊這塊石頭溼了。'],
+  'yu.tea':['方才送來兩包茶，我擱在凳旁，等阿財來搬。','茶送到了，我已請人去叫阿財。'],
+  'yu.bye':['慢走，過門檻留神。','改日再來吃茶。'],
+  'xu.first':['您是來吃茶的？若不熟路，我領您去。','我姓許。宅裡要找人、找地方，先問我就好。'],
+  'xu.lead':['這邊請。前頭轉角，我等您。','沿廊走就到了，您跟我來。'],
+  'xu.wait':['我在轉角這兒，您慢慢來。','我在廊柱旁等您。'],
+  'xu.arrive':['茶室到了，您請進。','就是這間。若阿春在裡頭，您可以請她奉茶。'],
+  'xu.find':['{稱呼}這會兒在{工作區}，沿{方向提示}過去就見得著。','要找{稱呼}的話，先到{工作區}看看。'],
+  'xu.today':['火師蒸了一籠甜粿，阿春已端去茶室。','今日茶席添了甜粿，您進茶室就看得見。'],
+  'chun.ask':['您喝濃些，還是我沖淡一點？','水剛熱。您平時喝哪一種？'],
+  'chun.served':['頭一杯還燙，您慢慢喝。','茶給您擱這兒，杯子還熱。'],
+  'chun.tray':['讓我先把盤子放下，兩手都占著呢。','借一借，我把這盞送到裡頭。'],
+  'chun.steaming':['火師還在顧籠，得等一會兒。','您先吃茶。灶腳那邊還沒喊我。'],
+  'chun.cake':['甜粿來了，切時還有些黏。','這碟剛端來，您趁溫的吃。'],
+  'chun.writing':['我在練記帳。方才用掉幾盞茶，正好拿來練。','許總管教我把數目寫齊，我收完茶盤再寫一遍。'],
+  'shui.water':['等我把這株澆完。您看，水要沿根下。','這畦乾得快，我清早就得走一趟。'],
+  'shui.bud':['這株搬過兩回，今年才又長花苞。','您看葉子底下，那粒白的快開了。'],
+  'shui.bloom':['花開了，您靠近些聞。','今早開了兩朵，香在這邊。'],
+  'shui.prune':['我先找枯枝。這截還有嫩芽，留著。','昨夜折了一枝，我剪平就好。'],
+  'shui.fenceLoose':['後園那段竹籬鬆了，阿財經過時我得喊他一聲。','這根竹子晃得厲害。請阿財來扶一下就成。'],
+  'shui.fenceFixed':['阿財把籬笆綁緊了，您走那側也無妨。','那段已補好。我待會把花盆搬回去。'],
+  'huo.noWood':['米漿備好了，等阿財送柴來。','灶火弱了些。得等乾柴到了，才好上籠。'],
+  'huo.wood':['乾柴放灶門邊就好。小心那截木頭有刺。','放在右手邊，我挑兩根細的起火。'],
+  'huo.steaming':['正蒸著。蒸籠得蓋嚴，再等一會兒。','您聽，那水才滾上來，還早呢。'],
+  'huo.handoff':['阿春，拿布墊著。這一碟先送茶室。','粿好了，盤底還燙，端穩些。'],
+  'huo.sent':['阿春端去茶室了。您在茶桌那邊找她。','這一籠已上席，想嚐就往茶室去。'],
+  'huo.rest':['鍋洗完我就歇一會兒，飯還溫著。','我替阿財留了飯，他一忙就忘了吃。'],
+  'cai.stopped':['借過一下，這擔是往灶腳去的。','我先把柴擱下。您要找哪位？'],
+  'cai.tea':['玉姨說門邊還有兩包茶，我這就搬去庫裡。','茶我來扛，您替我留一點走路的地方就好。'],
+  'cai.wood':['火師，兩捆都乾的。我放灶門右邊。','柴送到了。細的在上頭，伸手就拿得著。'],
+  'cai.water':['桶裝太滿，走兩步就灑，我留一指寬。','您先過。我提著水，轉身慢些。'],
+  'cai.fenceTask':['水生叔說竹籬鬆了。我送完柴就去看看。','竹繩在後院，我帶一把過去綁。'],
+  'cai.fenceDone':['鬆的是底下那道繩，我換了一條新的。','籬笆好了，水生叔可以把盆搬回去了。'],
+  // what the steward says when asked about the day before the cake is served, when nobody can be found, when let be
+  'xu.todayWait':['今日火師要蒸一籠甜粿，柴一到就上籠。','灶腳正忙著甜粿，等出了籠，阿春會端去茶室。'],
+  'xu.findNone':['我也在找他，等等再問我。','我也在找他，等等再問我。'],
+  'xu.self':['您慢慢走走，有事再喊我。','好，您自在些。我在前廊。'],
+  'xu.cancel':['那我先回前廊，有事再喊我。','好，我不跟了。要去茶室，沿廊往裡就是。'],
+  // the choices, and the places people can be found (name｜how to get there)
+  'ui.hint':['按 E 或點一下，與{稱呼}交談',''],
+  'ui.lead':['帶我去茶室',''],'ui.find':['我想找人',''],'ui.today':['今日宅裡有什麼事',''],'ui.self':['我自己走走',''],'ui.stop':['不用帶了',''],
+  'ui.tea':['問茶',''],'ui.cake':['茶點好了嗎',''],'ui.write':['在寫什麼',''],'ui.hanxiao':['含笑開了嗎',''],'ui.prune':['在修什麼',''],'ui.book':['人物簿',''],
+  'zone.gate':['門埕','中軸往南，大門裡頭'],'zone.porch':['前廊','第一進的埕往西邊廊下'],'zone.kitchen':['灶腳','第一進東廂，從明間進去往南間'],
+  'zone.well':['井邊','第一進的埕東南角'],'zone.garden':['花圃','第二進的埕西側'],'zone.prep':['備茶處','南廳東邊的過水'],
+  'zone.tearoom':['茶室','第三進西廂知了間，進明間往北間'],'zone.store':['庫房','南廳西邊的過水'],
+};
+for(const e of (Array.isArray(VRD.npc)?VRD.npc:[])) if(e&&e.key&&NPC_TXT[e.key]){ const d=NPC_TXT[e.key]; NPC_TXT[e.key]=[String(e.a||'').trim()||d[0],String(e.b||'').trim()||d[1]]; }
+const NT=(k,i=0)=>(NPC_TXT[k]||['',''])[i]||'';
+const NPC_LS='hk-npc';
+const NS=(()=>{ let s=null; try{ s=JSON.parse(localStorage.getItem(NPC_LS)||'null'); }catch{} const today=new Date().toLocaleDateString('sv',{timeZone:'Asia/Taipei'});
+  if(!s||s.v!==1) s={v:1,visits:0,first:false,cake:{st:0,t:0},tea:{st:'none',day:''},fence:{st:'loose',day:'',ack:false},alt:{},talked:{}};
+  if(s.tea.day!==today) s.tea={st:'none',day:today}; if(s.fence.day!==today) s.fence={st:'loose',day:today,ack:false};
+  s.visits++; return s; })();
+const NPC_FIRST_VISIT=!NS.first;
+function npcSave(){ try{ localStorage.setItem(NPC_LS,JSON.stringify(NS)); }catch{} }
+npcSave();
+// A and B take turns for each person and situation, carried over between visits
+function npcLine(key,fill){ const i=NS.alt[key]?1:0; NS.alt[key]=!NS.alt[key]; npcSave(); let t=NT(key,i)||NT(key,0);
+  if(fill) t=t.replace(/\{(.+?)\}/g,(m,k)=>fill[k]!=null?fill[k]:m); return t; }
+
+// ---- places (world: north −x, south +x, east −z, west +z)
+const NP={
+  gate:{x:51.9,z:12.6}, gateSweep:[{x:51.4,z:12.9},{x:50.2,z:14.2},{x:49.2,z:12.6},{x:50.6,z:6.8},{x:51.8,z:7.4}], stool:{x:52.5,z:13.3}, jar:{x:52.6,z:7.6},
+  porch:[{x:36.2,z:14.25},{x:43.6,z:14.25}], teaDoor:{x:-1.5,z:19.9}, tea:{x:-6.3,z:20.7},
+  prep:{x:10.4,z:-2.7}, garden:{x:16.6,z:12.85}, gardenB:{x:15.2,z:12.85}, fenceSpot:{x:17.6,z:12.9},
+  stove:{x:44.3,z:-2.55}, woodDrop:{x:45.3,z:-2.6}, kitchenIn:{x:43.0,z:-1.2}, woodpile:{x:45.9,z:5.6}, well:{x:44.4,z:6.0},
+  store:{x:10.6,z:22.0},
+};
+const NZONES=[['gate',46.84,53.3,-4.3,23.9],['kitchen',41.85,46.84,-4.3,4.3],['well',41.5,46.84,4.3,8.6],['porch',33.7,46.84,12.4,15.3],
+  ['garden',14.1,19.2,11.6,15.3],['prep',7.64,11.96,-4.3,4.49],['store',7.64,11.96,15.11,23.9],['tearoom',-7.64,-2.65,15.3,23.9]];
+const npcZone=p=>{ for(const [k,x0,x1,z0,z1] of NZONES) if(p.x>x0&&p.x<x1&&p.z>z0&&p.z<z1) return k; return null; };
+
+// ---- props: kitchen stove and steamer, the woodpile and well, the flower bed and fence, the gatekeeper's things
+const NPCP={};
+{ const wood=new THREE.MeshStandardMaterial({map:T.wood,color:0xd8b48a,roughness:.8}), bamboo=new THREE.MeshStandardMaterial({color:0xb59a5e,roughness:.75}),
+    brickM=mBrick(1.4,.7), plaster=new THREE.MeshStandardMaterial({color:0xd8cfbf,roughness:.95}), clay=new THREE.MeshStandardMaterial({color:0x7a4a32,roughness:.7}),
+    stoneM=new THREE.MeshStandardMaterial({color:0x8d8a83,roughness:.95}), soil=new THREE.MeshStandardMaterial({color:0x4d3a2a,roughness:1}),
+    leaf=new THREE.MeshStandardMaterial({color:0x3f6b3a,roughness:.85}), white=new THREE.MeshStandardMaterial({color:0xf6f1e2,roughness:.6,emissive:0x221f18}),
+    iron=new THREE.MeshStandardMaterial({color:0x2c2a28,metalness:.5,roughness:.5}), paper=new THREE.MeshStandardMaterial({color:0xc9b48a,roughness:.9}),
+    cakeM=new THREE.MeshStandardMaterial({color:0x8a4a22,roughness:.45}), plateM=new THREE.MeshStandardMaterial({color:0xece6d8,roughness:.35});
+  const cyl=(r1,r2,h,m,x,y,z,p=scene,seg=16)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m); o.position.set(x,y,z); o.castShadow=true; p.add(o); return o; };
+  // 灶: brick stove against the back (east) wall of the kitchen, two fire mouths, a big pot with a bamboo steamer
+  { const S=NP.stove; box(1.9,.82,.78,brickM,S.x,.41,-3.72); box(1.96,.06,.84,plaster,S.x,.85,-3.72);
+    for(const dx of [-.5,.45]){ const m=new THREE.Mesh(new THREE.CircleGeometry(.13,16),new THREE.MeshBasicMaterial({color:0x140c08})); m.position.set(S.x+dx,.26,-3.32); scene.add(m); }
+    cyl(.34,.26,.16,iron,S.x-.45,.94,-3.72); cyl(.3,.3,.18,bamboo,S.x-.45,1.08,-3.72); cyl(.3,.3,.18,bamboo,S.x-.45,1.27,-3.72);
+    const lid=new THREE.Group(); lid.position.set(S.x-.45,1.37,-3.72); scene.add(lid); cyl(.31,.31,.05,bamboo,0,.025,0,lid); cyl(.04,.04,.05,wood,0,.07,0,lid); NPCP.lid=lid; NPC_DYN.push(lid);
+    cyl(.28,.24,.2,iron,S.x+.5,.95,-3.72);  // the second mouth: a kettle pot
+    cyl(.26,.22,.62,clay,S.x+1.55,.31,-3.75);   // water jar 水缸
+    box(.5,.05,.32,wood,S.x+.5,.9,-3.4);   // chopping board
+    // fire glow and steam
+    const fire=new THREE.PointLight(0xff8a3a,0,3,2); fire.position.set(S.x-.45,.35,-3.2); scene.add(fire); NPCP.fire=fire;
+    const st=[]; const sm=new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false});
+    for(let i=0;i<6;i++){ const s=new THREE.Sprite(sm.clone()); s.scale.set(.35,.35,1); s.position.set(S.x-.45,1.45,-3.72); scene.add(s); st.push(s); NPC_DYN.push(s); } NPCP.steam=st;
+    // firewood put down by the stove door, and the cake on a plate before it is carried off
+    const wd=new THREE.Group(); wd.position.set(NP.woodDrop.x+.2,0,-3.25); scene.add(wd); for(let i=0;i<5;i++){ const l=cyl(.05,.05,.7,wood,(i%3)*.11-.11,.05+Math.floor(i/3)*.09,0,wd,8); l.rotation.x=Math.PI/2; } wd.visible=false; NPCP.woodAtStove=wd; NPC_DYN.push(wd);
+    const cake=new THREE.Group(); cyl(.17,.15,.025,plateM,0,.012,0,cake); cyl(.13,.13,.05,cakeM,0,.05,0,cake); NPCP.cake=cake; scene.add(cake); NPC_DYN.push(cake); }
+  // the woodpile against the east wing front, the well
+  { const W=NP.woodpile; for(let r=0;r<3;r++) for(let i=0;i<6-r;i++){ const l=cyl(.07,.07,.95,wood,W.x-.45+i*.16+r*.08,.07+r*.13,4.82,scene,8); l.rotation.x=Math.PI/2; }
+    const L=NP.well; cyl(.55,.6,.72,stoneM,L.x-.95,.36,L.z+.6,scene,20); const water=new THREE.Mesh(new THREE.CircleGeometry(.47,20),new THREE.MeshStandardMaterial({color:0x22313a,roughness:.15,metalness:.2})); water.rotation.x=-Math.PI/2; water.position.set(L.x-.95,.55,L.z+.6); scene.add(water);
+    for(const dz of [-.55,.55]) box(.08,1.4,.08,wood,L.x-.95,1.0,L.z+.6+dz); box(.06,.06,1.25,wood,L.x-.95,1.66,L.z+.6); cyl(.12,.1,.2,wood,L.x-.6,.1,L.z+.95);
+    OB(L.x-1.6,L.x-.3,L.z-.05,L.z+1.25); OB(W.x-.6,W.x+.55,4.6,5.05); }
+  // the 含笑 bed and its bamboo fence on the west side of the 第二進
+  { const B={x0:14.8,x1:18.4,z0:13.45,z1:14.95}; box(B.x1-B.x0,.12,B.z1-B.z0,soil,(B.x0+B.x1)/2,.06,(B.z0+B.z1)/2);
+    const bush=new THREE.Group(); bush.position.set(16.0,0,14.2); scene.add(bush); cyl(.04,.06,.6,wood,0,.3,0,bush,6);
+    for(const [x,y,z,r] of [[0,.8,0,.38],[.25,.65,.12,.28],[-.25,.68,-.1,.3],[.05,1.05,-.05,.27]]){ const s=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),leaf); s.position.set(x,y,z); s.castShadow=true; bush.add(s); }
+    const fl=[]; for(let i=0;i<7;i++){ const a=i*2.1, s=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),white); s.position.set(Math.cos(a)*.33,.62+((i*37)%5)*.09,Math.sin(a)*.3); bush.add(s); fl.push(s); } NPCP.flowers=fl; NPC_DYN.push(...fl);
+    for(const x of [15.2,17.4]){ const pot=cyl(.16,.12,.26,clay,x,.13,14.7); pot.userData={type:'floor'}; cyl(.17,.17,.02,soil,x,.25,14.7); }
+    // fence: posts and two rails along the court side; one post at the far end leans until it is mended
+    const f=new THREE.Group(); scene.add(f);
+    for(let x=B.x0;x<=B.x1-.6+.01;x+=.45){ cyl(.025,.03,.75,bamboo,x,.375,B.z0-.12,f,6); }
+    for(const y of [.25,.55]){ const r=cyl(.018,.018,B.x1-.6-B.x0,bamboo,(B.x0+B.x1-.6)/2,y,B.z0-.12,f,6); r.rotation.z=Math.PI/2; }
+    const loose=new THREE.Group(); loose.position.set(B.x1-.6+.45,0,B.z0-.12); scene.add(loose); cyl(.025,.03,.75,bamboo,0,.375,0,loose,6); const lr=cyl(.018,.018,.45,bamboo,-.22,.4,0,loose,6); lr.rotation.z=Math.PI/2;
+    NPCP.loose=loose; NPC_DYN.push(loose);
+    OB(B.x0,B.x1-.6,B.z0-.2,B.z1); }
+  // the gatekeeper's stool, broom stand and umbrella jar; the two packets of tea, by the stool and later in the store
+  { const S=NP.stool; box(.36,.04,.24,wood,S.x,.3,S.z); for(const dx of [-.14,.14]) for(const dz of [-.08,.08]) box(.035,.3,.035,wood,S.x+dx,.15,S.z+dz);
+    cyl(.17,.2,.5,clay,NP.jar.x,.25,NP.jar.z,scene,18); for(const a of [.3,-.2]){ const u=cyl(.012,.012,.9,iron,NP.jar.x+Math.sin(a)*.05,.75,NP.jar.z,scene,6); u.rotation.z=a; }
+    const bags=new THREE.Group(); for(const dx of [0,.22]){ const b=box(.18,.22,.14,paper,dx,.11,0,bags); } bags.position.set(S.x-.05,0,S.z+.32); scene.add(bags); NPCP.teaGate=bags; NPC_DYN.push(bags);
+    const bags2=bags.clone(); bags2.position.set(NP.store.x+.8,.82,NP.store.z+1.4); scene.add(bags2); NPCP.teaStore=bags2; NPC_DYN.push(bags2);
+    box(.9,.8,.4,wood,NP.store.x+.8,.4,NP.store.z+1.4); }   // a low chest in the store to set them on
+  // the tea station in the east 過水: a narrow table with a tray and the ledger
+  { const P=NP.prep; box(1.1,.05,.45,wood,P.x+.2,.78,-3.85); for(const dx of [-.45,.45]) for(const dz of [-.17,.17]) box(.04,.78,.04,wood,P.x+.2+dx,.39,-3.85+dz);
+    box(.32,.02,.22,paper,P.x+.45,.81,-3.82); cyl(.07,.06,.12,clay,P.x-.1,.87,-3.85); }
+}
+// ---- the people: built from simple shapes like the visitors, with jointed arms and legs so they can walk and work
+const NPC_SKIN=new THREE.MeshStandardMaterial({color:0xc99a78,roughness:.7}), NPC_SKIN_D=new THREE.MeshStandardMaterial({color:0xa8724f,roughness:.7});
+function npcFigure(o){ const g=new THREE.Group(), F=new THREE.Group(); g.add(F); const H=o.h||1;
+  const m=c=>new THREE.MeshStandardMaterial({color:c,roughness:.88}), top=m(o.top), low=m(o.low), hair=m(o.hair||0x1d1a17), shoe=m(0x2a2420), skin=o.dark?NPC_SKIN_D:NPC_SKIN;
+  const C=(r1,r2,h,mt,x,y,z,p=F,s=12)=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,s),mt); k.position.set(x,y,z); k.castShadow=true; p.add(k); return k; };
+  const S=(r,mt,x,y,z,p=F)=>{ const k=new THREE.Mesh(new THREE.SphereGeometry(r,12,9),mt); k.position.set(x,y,z); k.castShadow=true; p.add(k); return k; };
+  const B=(w,h,d,mt,x,y,z,p=F)=>{ const k=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mt); k.position.set(x,y,z); k.castShadow=true; p.add(k); return k; };
+  const sh=(o.wide?.22:o.fem?.16:.18), waist=o.fem?.15:.17;
+  // legs (hip pivots) and trousers
+  const legs=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); p.position.set(sx*.08,.88,0); F.add(p); C(.07,.062,.84,low,0,-.42,0,p); B(.085,.05,.17,shoe,0,-.86,-.03,p); legs.push(p); }
+  // the long top 衫 with the side-fastening front 大襟, a darker hem band
+  const body=C(sh,waist+.02,.62,top,0,1.1,0); C(waist+.025,waist+.03,.06,m(new THREE.Color(o.top).multiplyScalar(.75)),0,.81,0);
+  const lap=B(.02,.3,.01,m(new THREE.Color(o.top).multiplyScalar(.6)),.045,1.27,-(sh-.01)); lap.rotation.z=.55;
+  if(o.apron) B(.3,.62,.02,m(o.apron),0,.86,-(waist+.035));
+  if(o.waistcloth) C(waist+.03,waist+.035,.09,m(o.waistcloth),0,.92,0);
+  // head, neck, hair
+  C(.042,.046,.08,skin,0,1.43,0); const head=new THREE.Group(); head.position.set(0,1.56,0); F.add(head); S(.102,skin,0,0,0,head);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.108,14,8,0,Math.PI*2,0,Math.PI/2.1),hair); cap.position.set(0,.02,.015); cap.rotation.x=-.3; head.add(cap);
+  if(o.bun==='high') S(.06,hair,0,.07,.09,head); if(o.bun==='low') S(.065,hair,0,-.06,.1,head);
+  if(o.temples){ const gm=m(0x9a978f); for(const sx of [-1,1]) B(.02,.06,.05,gm,sx*.1,-.01,0,head); }
+  for(const sx of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.011,6,5),hair); e.scale.set(1,.7,.5); e.position.set(sx*.037,.01,-.096); head.add(e); }
+  if(o.hat){ C(.24,.24,.012,m(0xc8b27a),0,.11,0,head,20); C(.11,.115,.08,m(0xc8b27a),0,.15,0,head,16); }
+  // arms (shoulder pivots), sleeves to the wrist
+  const arms=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); p.position.set(sx*(sh+.035),1.37,0); F.add(p); C(.046,.05,.48,top,0,-.24,0,p); S(.036,skin,0,-.5,0,p); arms.push(p); }
+  F.scale.set(o.thin?.92:o.wide?1.08:1,H,o.thin?.92:1);
+  g.userData.parts={F,legs,arms,head,body}; return g; }
+// tools held in the hands (on the arm pivots) and on the shoulder
+function npcTool(kind){ const g=new THREE.Group(), wd=new THREE.MeshStandardMaterial({map:T.wood,color:0x8a6a48,roughness:.8}), bam=new THREE.MeshStandardMaterial({color:0xb59a5e,roughness:.75});
+  const C=(r1,r2,h,mt,x,y,z,s=10)=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,s),mt); k.position.set(x,y,z); g.add(k); return k; };
+  if(kind==='book'){ box(.15,.2,.02,new THREE.MeshStandardMaterial({color:0x5a4632,roughness:.8}),0,0,0,g); box(.14,.19,.012,new THREE.MeshStandardMaterial({color:0xe9e0cc}),0,0,-.012,g); }
+  if(kind==='broom'){ C(.014,.014,1.15,wd,0,0,0,6); const b=new THREE.Mesh(new THREE.ConeGeometry(.12,.38,10,1,true),bam); b.position.y=-.72; b.material.side=THREE.DoubleSide; g.add(b); }
+  if(kind==='tray'){ box(.42,.025,.28,wd,0,0,0,g); }
+  if(kind==='can'){ C(.08,.09,.2,new THREE.MeshStandardMaterial({color:0x6a7173,metalness:.4,roughness:.5}),0,0,0); const sp=C(.012,.018,.28,new THREE.MeshStandardMaterial({color:0x6a7173,metalness:.4}),0,.04,-.16,6); sp.rotation.x=1.0; }
+  if(kind==='shears'){ for(const a of [-.2,.2]){ const s=box(.01,.16,.02,new THREE.MeshStandardMaterial({color:0x9a9fa0,metalness:.6,roughness:.4}),0,-.06,0,g); s.rotation.z=a; } }
+  if(kind==='pole'){ const p=C(.022,.022,1.6,bam,0,0,0,6); p.rotation.z=Math.PI/2; g.userData.loads=[]; for(const sx of [-1,1]){ const L=new THREE.Group(); L.position.set(sx*.74,-.05,0); g.add(L); g.userData.loads.push(L); } }
+  return g; }
+function npcLoad(pole,what){ for(const L of pole.userData.loads){ L.clear(); if(what==='wood'){ for(let i=0;i<5;i++){ const l=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.55,7),new THREE.MeshStandardMaterial({map:T.wood,color:0x8a6a48})); l.position.set(((i%3)-1)*.09,-.42+Math.floor(i/3)*.08,0); L.add(l); } }
+  if(what==='water'){ const b=new THREE.Mesh(new THREE.CylinderGeometry(.14,.12,.3,12),new THREE.MeshStandardMaterial({map:T.wood,color:0x7b5b3e})); b.position.y=-.45; L.add(b); }
+  if(what==='tea'){ for(const dz of [-.05,.12]){ const b=new THREE.Mesh(new THREE.BoxGeometry(.18,.22,.14),new THREE.MeshStandardMaterial({color:0xc9b48a})); b.position.set(0,-.4,dz); L.add(b); } } } }
+
+const NPCS=[
+  {id:'yu', look:{fem:1,top:0x6f6458,low:0x2f2b28,hair:0x3b3936,bun:'low',h:.97}, home:NP.gate, tool:'broom'},
+  {id:'xu', look:{top:0x2f3f5e,low:0x6e6e6c,hair:0x252321,temples:1,thin:1,h:1.05}, home:NP.porch[0], tool:'book'},
+  {id:'chun', look:{fem:1,top:0xa8999a,low:0x3a3533,bun:'high',h:.96}, home:NP.prep, tool:'tray'},
+  {id:'shui', look:{top:0x75857f,low:0x4d4a44,dark:1,hat:1}, home:NP.garden, tool:'can'},
+  {id:'huo', look:{top:0xcfc6b2,low:0x3c3732,apron:0x4a3424,wide:1}, home:NP.stove, tool:null},
+  {id:'cai', look:{top:0x857a68,low:0x5a5246,waistcloth:0x6b5a44,dark:1}, home:NP.woodpile, tool:'pole'},
+];
+const NPC={};
+for(const d of NPCS){ const g=npcFigure(d.look); scene.add(g); NPC_DYN.push(g);
+  const n={...d,g,x:d.home.x,z:d.home.z,yaw:0,path:[],speed:1.05,act:'idle',t:0,walkPh:Math.random()*6,talk:0,said:{},near:false,task:null,wait:0};
+  g.traverse(o=>{ if(o.isMesh) o.userData={type:'npc',id:d.id}; });
+  // a generous invisible body to click on
+  const hit=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,1.75,8),new THREE.MeshBasicMaterial({visible:false})); hit.position.y=.88; hit.userData={type:'npc',id:d.id}; g.add(hit); pickables.push(hit);
+  const P=g.userData.parts;
+  if(d.tool==='broom'){ n.toolG=npcTool('broom'); n.toolG.position.set(.0,-.55,-.06); n.toolG.rotation.x=.35; P.arms[1].add(n.toolG); }
+  if(d.tool==='book'){ n.toolG=npcTool('book'); n.toolG.position.set(.02,-.5,-.08); n.toolG.rotation.x=-1.2; P.arms[0].add(n.toolG); }
+  if(d.tool==='tray'){ n.toolG=npcTool('tray'); P.F.add(n.toolG); n.toolG.position.set(0,1.02,-.36); n.toolG.visible=false; }
+  if(d.tool==='can'){ n.toolG=npcTool('can'); n.toolG.position.set(0,-.55,-.04); P.arms[1].add(n.toolG); n.shears=npcTool('shears'); n.shears.position.set(0,-.55,-.03); P.arms[0].add(n.shears); }
+  if(d.tool==='pole'){ n.toolG=npcTool('pole'); n.toolG.position.set(.0,1.45,.0); n.toolG.rotation.y=Math.PI/2; P.F.add(n.toolG); n.toolG.visible=false; }
+  NPC[d.id]=n; }
+const npcName=id=>NT('who.'+id,1), npcFull=id=>NT('who.'+id,0);
+function npcPlace(n,p,yaw){ n.x=p.x; n.z=p.z; if(yaw!=null) n.yaw=yaw; n.path=[]; }
+function npcFace(n,p){ n.yaw=Math.atan2(-(p.x-n.x),-(p.z-n.z)); }
+// walking: along the house's own route finder; if the way is shut (a closed door) try again, and in the end go round
+function npcGo(n,p,then){ n.goal={x:p.x,z:p.z}; n.then=then||null; n.stuck=0; const r=route({x:n.x,z:n.z},p); n.path=(r&&r.length?r.map(q=>({x:q.x,z:q.z})):[{x:p.x,z:p.z}]); n.act='walk'; }
+function npcArrived(n){ n.path=[]; n.act='idle'; const f=n.then; n.then=null; if(f) f(n); }
+
+// ---- subtitles: one speaker at a time, queued
+const npcSub=document.createElement('div'); npcSub.id='npcsub';
+npcSub.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);max-width:min(640px,86vw);padding:8px 14px;background:#211b16e6;color:#f3ead8;font:16px/1.6 "Noto Serif TC",serif;border-radius:3px;display:none;z-index:30;pointer-events:none;text-align:left';
+document.body.append(npcSub);
+const subQ=[]; let subUntil=0;
+function npcSay(id,text){ if(!text) return; subQ.push({id,text}); if(subQ.length>4) subQ.splice(0,subQ.length-4); }
+function tickSub(){ const now=performance.now(); if(now<subUntil) return; if(!subQ.length){ npcSub.style.display='none'; return; }
+  const {id,text}=subQ.shift(); npcSub.innerHTML=`<b style="color:#e3c58c;margin-right:.5em">${esc(npcName(id))}</b>${esc(text)}`; npcSub.style.display='block'; subUntil=now+2600+text.length*140;
+  const n=NPC[id]; if(n){ n.talk=Math.max(n.talk,performance.now()+3500); n.mouth=performance.now()+1500+text.length*90; } }
+
+// ---- the talk box: choices for the steward and a few questions for the others; keys 1–4 work while looking around
+const npcBox=document.createElement('div'); npcBox.id='npcbox';
+npcBox.style.cssText='position:fixed;left:50%;bottom:150px;transform:translateX(-50%);display:none;gap:6px;flex-wrap:wrap;justify-content:center;z-index:31';
+document.body.append(npcBox);
+let boxFor=null;
+function npcChoices(id,list){ boxFor=list.length?id:null; npcBox.innerHTML=''; list.forEach(([label,fn],i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=`${i+1}　${label}`;
+    b.style.cssText='font:14px "Noto Serif TC",serif;padding:6px 12px;background:#f3ead8;color:#2a211a;border:1px solid #8a6a48;border-radius:2px;cursor:pointer';
+    b.onclick=e=>{ e.stopPropagation(); closeChoices(); fn(); }; npcBox.append(b); }); npcBox.style.display=list.length?'flex':'none'; npcBox._list=list; }
+function closeChoices(){ npcBox.style.display='none'; boxFor=null; npcBox._list=null; }
+addEventListener('keydown',e=>{ if(!npcBox._list||e.target.tagName==='INPUT') return; const k=Number(e.key); if(k>=1&&k<=npcBox._list.length){ e.preventDefault(); e.stopImmediatePropagation(); const f=npcBox._list[k-1][1]; closeChoices(); f(); } else if(e.key==='Escape') closeChoices(); },true);
+function npcBookList(){ closeChoices(); openPanel(NT('ui.book'),'<table style="border-collapse:collapse;line-height:2">'+NPCS.map(d=>`<tr><td style="padding-right:1.2em">${esc(npcName(d.id))}</td><td style="padding-right:1.2em">${esc(npcFull(d.id))}</td><td class="meta">${esc(NT('zone.'+({yu:'gate',xu:'porch',chun:'prep',shui:'garden',huo:'kitchen',cai:'well'})[d.id]))}</td></tr>`).join('')+'</table>'); }
+
+// ---- where someone is, for the steward
+function whereIs(id){ const n=NPC[id]; const z=npcZone(n); if(!z) return null; return {稱呼:npcName(id),工作區:NT('zone.'+z,0),方向提示:NT('zone.'+z,1)}; }
+
+/* ---- the chains of work ---- */
+const CAKE_STEAM=90, CAKE_AGAIN=20*60;   // seconds in the steamer; a new batch twenty minutes after one is served
+function cakeSet(st){ NS.cake={st,t:Date.now()}; npcSave(); }
+function teaSet(st){ NS.tea.st=st; npcSave(); }
+// on loading, make the things in the house agree with the saved progress
+function npcRestore(){ const c=NS.cake;
+  if(c.st===2&&Date.now()-c.t>CAKE_STEAM*1000) cakeSet(3);
+  if(c.st===4) cakeSet(3);                     // she was on her way with it: it is back on the stove ledge
+  if(c.st===5&&Date.now()-c.t>CAKE_AGAIN*1000) cakeSet(0);
+  if(NS.tea.st==='carrying') teaSet('arrived');
+  if(NS.fence.st==='fixing') { NS.fence.st='loose'; npcSave(); } }
+npcRestore();
+function propsSync(){ const c=NS.cake.st;
+  NPCP.woodAtStove.visible=c>=1&&c<=3;
+  NPCP.fire.intensity=c===1||c===2?1.6:c===3?.6:0;
+  NPCP.cake.visible=c===3||c===5; if(c===3) NPCP.cake.position.set(NP.stove.x+.55,.88,-3.45); if(c===5) NPCP.cake.position.set(ZP.modern.cx-.85,ZP.modern.h+.01,ZP.modern.cz-.18);
+  NPCP.teaGate.visible=NS.tea.st==='arrived'; NPCP.teaStore.visible=NS.tea.st==='stored';
+  const fixed=NS.fence.st==='fixed'; NPCP.loose.rotation.z=fixed?0:.38; NPCP.loose.rotation.x=fixed?0:-.12;
+  const bloom=hanxiaoBloom(); for(const f of NPCP.flowers){ f.scale.setScalar(bloom?1:.45); } }
+let bloomAt=0, bloomV=false; const hanxiaoBloom=()=>{ if(performance.now()<bloomAt) return bloomV; bloomAt=performance.now()+30000; const h=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Taipei',hour:'numeric',hour12:false})); return bloomV=h>=7&&h<18; };
+const raining=()=>(typeof WX!=='undefined')&&WX.rain>.05;
+
+// what each person does when nothing is asked of them, and the chains
+function npcPlan(n){
+  const c=NS.cake.st, now=Date.now();
+  if(n.id==='cai'){
+    if(c===0) return caiWood(n);
+    if(NS.tea.st==='arrived') return caiTea(n);
+    if(NS.fence.st==='loose'&&NS.fence.called) return caiFence(n);
+    return caiWater(n); }
+  if(n.id==='huo'){ npcPlace(n,NP.stove,0); n.act=c===2?'steam':c===1?'fire':'cook'; n.busyUntil=now+4000; return; }
+  if(n.id==='chun'){ if(c===3) return chunFetch(n); n.act=n.writeUntil>now?'write':'prep'; npcGo(n,NP.prep,m=>{ npcFace(m,{x:m.x,z:-4.5}); m.act=m.writeUntil>Date.now()?'write':'prep'; m.busyUntil=Date.now()+8000; }); return; }
+  if(n.id==='shui'){ const water=(n.round=(n.round||0)+1)%2===1; npcGo(n,water?NP.garden:NP.gardenB,m=>{ npcFace(m,{x:m.x,z:14.4}); m.act=water?'water':'prune'; m.busyUntil=Date.now()+14000; }); return; }
+  if(n.id==='yu'){ const spots=NP.gateSweep; n.si=((n.si||0)+1)%(spots.length+1);
+    if(n.si===spots.length) return npcGo(n,{x:NP.stool.x-.1,z:NP.stool.z-.45},m=>{ npcFace(m,{x:47,z:m.z}); m.act='sit'; m.busyUntil=Date.now()+12000; });
+    npcGo(n,spots[n.si],m=>{ m.act='sweep'; m.busyUntil=Date.now()+9000; }); return; }
+  if(n.id==='xu'){ if(n.lead) return; n.pi=((n.pi||0)+1)%2; npcGo(n,NP.porch[n.pi],m=>{ npcFace(m,{x:m.x,z:9.8}); m.act='book'; m.busyUntil=Date.now()+10000; }); return; } }
+function caiWood(n){ npcGo(n,NP.woodpile,m=>{ m.act='load'; m.busyUntil=Date.now()+2500; m.next=()=>{ m.carry='wood'; npcGo(m,NP.woodDrop,k=>{ npcFace(k,{x:k.x,z:-4.5});
+  if(near(k,9)){ npcSay('cai',npcLine('cai.wood')); npcSay('huo',npcLine('huo.wood')); }
+  k.carry=null; cakeSet(1); k.act='unload'; k.busyUntil=Date.now()+2000; NPC.huo.busyUntil=0;
+  setTimeout(()=>{ if(NS.cake.st===1){ cakeSet(2); } },8000); }); }; }); }
+function caiTea(n){ npcGo(n,{x:NP.stool.x-.3,z:NP.stool.z-.2},m=>{ if(near(m,8)) npcSay('cai',npcLine('cai.tea')); teaSet('carrying'); m.carry='tea'; npcGo(m,NP.store,k=>{ k.carry=null; teaSet('stored'); k.act='unload'; k.busyUntil=Date.now()+2000; }); }); }
+function caiFence(n){ if(near(n,8)) npcSay('cai',npcLine('cai.fenceTask')); npcGo(n,NP.fenceSpot,m=>{ NS.fence.st='fixing'; npcSave(); npcFace(m,{x:m.x,z:14}); m.act='tie'; m.busyUntil=Date.now()+9000;
+  m.next=()=>{ NS.fence.st='fixed'; NS.fence.ack=false; NS.fence.doneAt=Date.now(); npcSave(); if(near(m,9)){ npcSay('cai',npcLine('cai.fenceDone')); npcSay('shui',npcLine('shui.fenceFixed')); NS.fence.ack=true; npcSave(); } }; }); }
+function caiWater(n){ npcGo(n,NP.well,m=>{ npcFace(m,{x:43.4,z:6.6}); m.act='draw'; m.busyUntil=Date.now()+5000; m.next=()=>{ m.carry='water'; npcGo(m,{x:45.6,z:-3.0},k=>{ k.carry=null; k.act='unload'; k.busyUntil=Date.now()+2500; }); }; }); }
+function chunFetch(n){ npcGo(n,{x:NP.stove.x+.6,z:-2.6},m=>{ npcFace(m,{x:m.x,z:-4}); if(near(m,9)) npcSay('huo',npcLine('huo.handoff'));
+  cakeSet(4); m.carry='cake'; NPC.huo.busyUntil=0;
+  npcGo(m,NP.tea,k=>{ npcFace(k,{x:ZP.modern.cx,z:ZP.modern.cz}); k.carry=null; cakeSet(5); if(near(k,7)) npcSay('chun',npcLine('chun.cake')); k.act='prep'; k.busyUntil=Date.now()+6000;
+    k.next=()=>{ k.writeUntil=Date.now()+90000; }; }); }); }
+const near=(n,r)=>Math.hypot(ME.x-n.x,ME.z-n.z)<r;
+// the gardener notices the loose fence and calls 阿財 the first time he walks past it (or after a while)
+function fenceWatch(){ if(NS.fence.st!=='loose'||NS.fence.called) return; const cai=NPC.cai, sh=NPC.shui;
+  if(NS.cake.st>=2&&(NS.tea.st!=='arrived')){ NS.fence.called=true; npcSave(); if(near(sh,9)) npcSay('shui',npcLine('shui.fenceLoose')); } }
+// tea comes to the gate some time after one arrives
+let teaArriveAt=performance.now()+45000;
+
+/* ---- talking ---- */
+function npcTalk(id){ const n=NPC[id]; if(!n) return; n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
+  const c=NS.cake.st, say=k=>npcSay(id,npcLine(k)), VRm=renderer.xr.isPresenting;
+  if(id==='yu'){ if(NS.tea.st==='arrived') return say('yu.tea'); if(raining()) return say('yu.rain'); if(n.act==='sweep') return say('yu.sweep'); if(!NS.first){ NS.first=true; npcSave(); return say('yu.first'); } return say('yu.again'); }
+  if(id==='xu'){ if(!NS.talked.xu){ NS.talked.xu=true; npcSave(); say('xu.first'); }
+    if(n.lead){ return npcChoices(id,[[NT('ui.stop'),()=>leadEnd(true)]]); }
+    if(VRm) return leadStart();
+    return npcChoices(id,[[NT('ui.lead'),leadStart],[NT('ui.find'),findMenu],[NT('ui.today'),()=>say(c===5?'xu.today':'xu.todayWait')],[NT('ui.self'),()=>{ say('xu.self'); }],[NT('ui.book'),npcBookList]]); }
+  if(id==='chun'){ if(n.carry==='cake') return say('chun.tray');
+    const opts=[[NT('ui.tea'),()=>say(myMD&&Date.now()-(myMD.at||0)>8000?'chun.served':'chun.ask')],[NT('ui.cake'),()=>say(c===5?'chun.cake':'chun.steaming')]];
+    if(n.act==='write') opts.push([NT('ui.write'),()=>say('chun.writing')]);
+    say(n.act==='write'||n.act==='prep'?(myMD?'chun.served':'chun.ask'):'chun.ask'); if(!VRm) npcChoices(id,opts); return; }
+  if(id==='shui'){ if(NS.fence.st==='fixed'&&!NS.fence.ack){ NS.fence.ack=true; npcSave(); say('shui.fenceFixed'); }
+    else if(NS.fence.st==='loose'){ say('shui.fenceLoose'); if(!NS.fence.called){ NS.fence.called=true; npcSave(); } }
+    else say(n.act==='prune'?'shui.prune':'shui.water');
+    if(!VRm) npcChoices(id,[[NT('ui.hanxiao'),()=>say(hanxiaoBloom()?'shui.bloom':'shui.bud')],[NT('ui.prune'),()=>say('shui.prune')]]); return; }
+  if(id==='huo'){ if(c===0) return say('huo.noWood'); if(c===1||c===2) return say('huo.steaming'); if(c===3) return say('huo.handoff'); if(c===4) return say('huo.sent');
+    return say(Date.now()-NS.cake.t<8*60000?'huo.sent':'huo.rest'); }
+  if(id==='cai'){ if(n.carry==='wood') return say('cai.stopped'); if(n.carry==='tea'||NS.tea.st==='arrived') return say('cai.tea'); if(n.carry==='water'||n.act==='draw') return say('cai.water');
+    if(NS.fence.st==='loose'&&NS.fence.called) return say('cai.fenceTask'); if(NS.fence.st==='fixed'&&Date.now()-(NS.fence.doneAt||0)<10*60000) return say('cai.fenceDone'); return say('cai.stopped'); } }
+function findMenu(){ npcChoices('xu',NPCS.filter(d=>d.id!=='xu').map(d=>[npcName(d.id),()=>{ const w=whereIs(d.id); npcSay('xu',w?npcLine('xu.find',w):npcLine('xu.findNone')); }])); }
+// the steward shows the way to the tea room: he waits at each turn if the guest falls behind, and gives up if they go off
+function leadStart(){ const n=NPC.xu; n.lead={t0:performance.now(),lost:0,waitSaid:0}; npcSay('xu',npcLine('xu.lead'));
+  const r=route({x:n.x,z:n.z},NP.teaDoor)||[]; const pts=r.length?r:[NP.teaDoor];
+  // keep the corners only, so he walks a little and turns
+  const corners=[]; for(let i=0;i<pts.length;i++){ const a=pts[i-1]||{x:n.x,z:n.z}, b=pts[i], c2=pts[i+1]; if(!c2){ corners.push(b); break; } const d1=Math.atan2(b.z-a.z,b.x-a.x), d2=Math.atan2(c2.z-b.z,c2.x-b.x); if(Math.abs(Math.atan2(Math.sin(d1-d2),Math.cos(d1-d2)))>.5||Math.hypot(b.x-a.x,b.z-a.z)>9) corners.push(b); }
+  n.lead.corners=corners; n.lead.ci=0; leadNext(n); }
+function leadNext(n){ const L=n.lead; if(!L) return; if(L.ci>=L.corners.length){ npcFace(n,{x:-4,z:20}); npcSay('xu',npcLine('xu.arrive')); n.lead=null; setTimeout(()=>{ n.busyUntil=0; n.act='idle'; },6000); n.busyUntil=Date.now()+6000; return; }
+  const p=L.corners[L.ci++]; npcGo(n,p,m=>{ m.act='waitGuest'; }); }
+function leadEnd(said){ const n=NPC.xu; if(!n.lead) return; n.lead=null; if(said) npcSay('xu',npcLine('xu.cancel')); n.path=[]; n.act='idle'; n.busyUntil=0; }
+let autoMute=0;
+
+/* ---- each frame ---- */
+const npcHint=document.createElement('div'); npcHint.style.cssText='position:fixed;left:50%;bottom:58px;transform:translateX(-50%);padding:3px 10px;background:#29231ee8;color:#f3ead8;font:14px system-ui;border-radius:3px;display:none;z-index:29;pointer-events:none';
+document.body.append(npcHint);
+let hintFor=null;
+addEventListener('keydown',e=>{ if(e.key.toLowerCase()!=='e'||e.repeat||!hintFor||e.target.tagName==='INPUT'||panel.classList.contains('open')) return; e.preventDefault(); e.stopImmediatePropagation(); npcTalk(hintFor); },true);
+function npcProximity(n,dist,now){
+  // proximity lines: once on entering range, again only after leaving it and thirty seconds
+  const inR=dist<(n.id==='yu'?4.2:2.2); if(!inR){ n.near=false; return; } if(n.near) return; n.near=true;
+  if(now<autoMute||now<(n.lastAuto||0)+30000||now<n.talk) return; let k=null;
+  if(n.id==='yu'){ if(!NS.first){ NS.first=true; npcSave(); k='yu.first'; } else if(!n.greeted){ k='yu.again'; } else if(raining()&&!n.rainSaid){ n.rainSaid=true; k='yu.rain'; } else if(NS.tea.st==='arrived') k='yu.tea'; else if(n.act==='sweep') k='yu.sweep'; else if(n.wentIn) { k='yu.bye'; n.wentIn=false; } n.greeted=true; }
+  if(n.id==='xu'&&!NS.talked.xu){ NS.talked.xu=true; npcSave(); k='xu.first'; }
+  if(n.id==='chun'&&n.carry==='cake') k='chun.tray';
+  if(n.id==='shui'&&n.act==='water') k='shui.water';
+  if(n.id==='huo'&&n.act==='steam') k='huo.steaming';
+  if(n.id==='cai'&&n.carry==='wood'){ k='cai.stopped'; n.wait=Math.max(n.wait,now+1800); } else if(n.id==='cai'&&n.carry==='water') k='cai.water';
+  if(k){ n.lastAuto=now; npcSay(n.id,npcLine(k)); } }
+function tickNPC(dt){ if(!window.__entered) return; const now=performance.now(), nowMs=Date.now();
+  tickSub();
+  if(NS.cake.st===2&&nowMs-NS.cake.t>CAKE_STEAM*1000) cakeSet(3);
+  if(NS.cake.st===5&&nowMs-NS.cake.t>CAKE_AGAIN*1000) cakeSet(0);
+  if(NS.tea.st==='none'&&now>teaArriveAt){ teaSet('arrived'); }
+  fenceWatch(); propsSync();
+  // steam and the steamer lid
+  const steaming=NS.cake.st===2; NPCP.steam.forEach((s,i)=>{ const ph=((now/1000)*.5+i/6)%1; s.position.set(NP.stove.x-.45+Math.sin(i*3+now/900)*.08,1.45+ph*.9,-3.72+Math.cos(i*2)*.06); s.material.opacity=steaming?(1-ph)*.35:0; s.scale.setScalar(.25+ph*.45); });
+  NPCP.lid.position.y=1.37+(NPC.huo.act==='lift'?.12:0);
+  // the guest has been inside: the gatekeeper will see them off when they come back to the gate
+  if(ME.x<44) NPC.yu.wentIn=true;
+  let best=null, bestD=1e9; const fx=-Math.sin(ME.yaw), fz=-Math.cos(ME.yaw);
+  for(const id in NPC){ const n=NPC[id], P=n.g.userData.parts; const dist=Math.hypot(ME.x-n.x,ME.z-n.z);
+    // the steward leading: wait at a corner for the guest, give up if they wander far off
+    if(n.lead){ const L=n.lead; if(n.act==='waitGuest'){ if(dist<3.5) leadNext(n); else if(now-L.waitSaid>12000&&dist<18){ L.waitSaid=now; npcSay('xu',npcLine('xu.wait')); } }
+      if(dist>25){ L.lost+=dt; if(L.lost>10) leadEnd(false); } else L.lost=0; }
+    // talking stops the work; afterwards it carries on
+    const talking=now<n.talk;
+    if(talking){ const want=Math.atan2(-(ME.x-n.x),-(ME.z-n.z)); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*4); }
+    else if(n.act==='walk'&&n.path.length&&now>n.wait){ const t=n.path[0], dx=t.x-n.x, dz=t.z-n.z, d=Math.hypot(dx,dz);
+      // someone in the way, close and ahead: stop and let them by
+      const ahead=dist<.9&&((ME.x-n.x)*dx+(ME.z-n.z)*dz)>0;
+      if(ahead&&(n.blockT=(n.blockT||0)+.7)<2.2){ n.wait=now+700; }
+      else { if(!ahead) n.blockT=0; const sp=n.speed*(n.carry?.85:1)*dt; const want=Math.atan2(-dx,-dz); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*6);
+        if(d<=sp){ n.x=t.x; n.z=t.z; n.path.shift(); if(!n.path.length) npcArrived(n); }
+        else { const nx=n.x+dx/d*sp, nz=n.z+dz/d*sp; if(walkable(nx,nz)||!walkable(n.x,n.z)){ n.x=nx; n.z=nz; n.stuck=0; } else { n.stuck=(n.stuck||0)+dt; if(n.stuck>3){ n.stuck=0; const g=n.goal; if(g) npcGo(n,g,n.then); } } } } }
+    else if(n.act!=='walk'&&!n.lead&&nowMs>(n.busyUntil||0)){ const f=n.next; n.next=null; if(f) f(); else npcPlan(n); }
+    // animate: walking legs and arms, work motions, a breath when still
+    n.g.position.set(n.x,0,n.z); n.g.rotation.y=n.yaw;
+    const moving=n.act==='walk'&&!talking&&now>n.wait; n.walkPh+=dt*(moving?7:1.2); const s=Math.sin(n.walkPh);
+    P.legs[0].rotation.x=moving?s*.45:0; P.legs[1].rotation.x=moving?-s*.45:0; P.F.position.y=moving?Math.abs(Math.cos(n.walkPh))*.025:Math.sin(n.walkPh)*.004;
+    let aL=moving?-s*.3:0, aR=moving?s*.3:0, zL=0, zR=0, headX=0;
+    const w=now/1000;
+    if(!moving&&!talking){ switch(n.act){
+      case 'sweep': aL=.75; aR=.55+Math.sin(w*3)*.25; zR=Math.sin(w*3)*.25; n.toolG&&(n.toolG.rotation.z=Math.sin(w*3)*.4); break;
+      case 'book': aL=1.25; aR=.95+Math.sin(w*.7)*.08; headX=.35; break;
+      case 'write': aL=.9; aR=.95+Math.sin(w*6)*.05; headX=.5; break;
+      case 'prep': aL=.6+Math.sin(w*1.3)*.15; aR=.7; headX=.3; break;
+      case 'water': aR=1.0+Math.sin(w*1.4)*.12; aL=.2; headX=.4; break;
+      case 'prune': aL=.95; aR=.95+Math.sin(w*5)*.1; headX=.35; break;
+      case 'steam': case 'cook': aR=Math.sin(w*.8)>.6?1.6:.6; aL=.5; if(Math.sin(w*.8)>.6) n.act='steam'; headX=.2; break;
+      case 'fire': aL=.9; aR=.9; P.F.position.y=-.25; headX=.5; break;
+      case 'load': case 'unload': case 'draw': aL=1.1+Math.sin(w*3)*.2; aR=1.1+Math.sin(w*3)*.2; P.F.position.y=-.12; headX=.4; break;
+      case 'tie': aL=.9+Math.sin(w*4)*.15; aR=.9-Math.sin(w*4)*.15; P.F.position.y=-.3; headX=.5; break;
+      case 'sit': P.F.position.y=-.32; P.legs[0].rotation.x=P.legs[1].rotation.x=1.3; aL=aR=.5; break; } }
+    if(n.id==='huo'){ n.act=n.act==='steam'&&NS.cake.st!==2?'cook':n.act; NPCP.lid.position.y=1.37+(NS.cake.st===2&&aR>1.4?.12:0); }
+    // carrying: the tray, the pole with wood, water or tea
+    if(n.id==='chun'){ const tray=n.toolG; tray.visible=n.carry==='cake'; if(tray.visible){ aL=aR=1.25; if(!tray.userData.cake){ const c=NPCP.cake.clone(); c.position.set(0,.02,0); c.visible=true; tray.add(c); tray.userData.cake=c; } } }
+    if(n.id==='cai'){ const pole=n.toolG; pole.visible=!!n.carry; if(n.carry&&pole.userData.what!==n.carry){ pole.userData.what=n.carry; npcLoad(pole,n.carry); } if(n.carry){ aR=2.6; aL=moving?-s*.3:.2; P.F.position.y-=.02; } }
+    P.arms[0].rotation.x+=((aL)-P.arms[0].rotation.x)*Math.min(1,dt*8); P.arms[1].rotation.x+=((aR)-P.arms[1].rotation.x)*Math.min(1,dt*8);
+    P.arms[0].rotation.z=zL; P.arms[1].rotation.z=zR; P.head.rotation.x+=(headX*(talking?0:1)-P.head.rotation.x)*Math.min(1,dt*5);
+    // the guest is close and looking at this person: offer to talk
+    if(dist<2.6&&renderer.xr&&!renderer.xr.isPresenting){ const dot=((n.x-ME.x)*fx+(n.z-ME.z)*fz)/Math.max(.01,dist); if(dot>.8&&dist<bestD){ best=id; bestD=dist; } }
+    npcProximity(n,dist,now); }
+  hintFor=best; if(best&&!panel.classList.contains('open')){ const t=NT('ui.hint').replace('{稱呼}',npcName(best)); if(npcHint.textContent!==t) npcHint.textContent=t; npcHint.style.display='block'; } else npcHint.style.display='none';
+  if(boxFor&&Math.hypot(ME.x-NPC[boxFor].x,ME.z-NPC[boxFor].z)>5) closeChoices(); }
+// first plans, and where everyone stands at the start
+for(const id in NPC){ const n=NPC[id]; npcFace(n,{x:n.x-1,z:9.8}); n.busyUntil=Date.now()+1500+Math.random()*2000; }
+if(NS.cake.st===4||NS.cake.st===5){ npcPlace(NPC.chun,NP.prep); }
+
 function optimizeScene(){
   try{
   scene.updateMatrixWorld(true);
@@ -4381,7 +4778,7 @@ function optimizeScene(){
   const dyn=new Set();
   const keep=o=>{ if(o) o.traverse(c=>dyn.add(c)); };
   for(const k in DOORS){ for(const l of DOORS[k].leaves) keep(l.pv); keep(DOORS[k].bar); }
-  [platter,cuckoo.g,PINE,myCup,mySnackMesh,hl,hlGlow,marker,floorShade,...LANTERNS,...GF_CUPS,...IRORI_CUPS,...PINZI,...ZL_DYN,...LEAVES.map(l=>l.m)].forEach(keep);
+  [platter,cuckoo.g,PINE,myCup,mySnackMesh,hl,hlGlow,marker,floorShade,...LANTERNS,...GF_CUPS,...IRORI_CUPS,...PINZI,...ZL_DYN,...LEAVES.map(l=>l.m),...NPC_DYN].forEach(keep);
   const groups=new Map(), victims=[], pickId=new Map();
   scene.traverse(o=>{ if(!o.isMesh||o.isInstancedMesh||dyn.has(o)||!o.visible) return; let p=o.parent; while(p&&p!==scene){ if(!p.visible) return; p=p.parent; }
     if(Array.isArray(o.material)) return; const m=o.material, u=o.userData&&o.userData.type?o.userData:null;
@@ -4417,7 +4814,7 @@ function tickLights(dt){ if(!LIGHT_POOL.length) return; lightT+=dt;
     const v=u.src; if(!v){ p.intensity=0; return; } p.position.copy(v.userData.wp); p.color.copy(v.color); p.intensity=v.intensity*u.k; p.distance=v.distance; p.decay=v.decay; }); }
 window.__enterHouse=enterHouse; window.__houseReady=true; { const b=document.getElementById('genter'); if(b&&!window.__wantEnter){ b.disabled=false; } } if(window.__wantEnter) enterHouse();
 if(VRT.gate&&String(VRT.gate.body||'').trim()){ const s=document.getElementById('gsub'); if(s) s.textContent=String(VRT.gate.body).trim(); }
-renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); updateAimHint(); tickPeople(dt); tickSips(); tickFPS(dt); renderer.render(scene,camera); });
+renderer.setAnimationLoop(()=>{ const dt=Math.min(0.05,clock.getDelta()); step(dt); updateAimHint(); tickPeople(dt); tickNPC(dt); tickSips(); tickFPS(dt); renderer.render(scene,camera); });
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; baseFov=fovFor(camera.aspect); if(!isRightMouseDown) targetFov=baseFov; camera.fov=targetFov; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
 /* ---------------- boot ---------------- */

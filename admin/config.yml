@@ -170,6 +170,15 @@ collections:
               - { name: title, label: 曲名, widget: string }
               - { name: artist, label: 演出者, widget: string, required: false }
               - { name: file, label: 音檔（mp3）, widget: file }
+          - name: npc
+            label: 宅中人物的台詞（同一情境甲、乙兩句輪流說；留空就用原本的句子）
+            widget: list
+            summary: "{{fields.when}}"
+            fields:
+              - { name: key, label: 代號（程式用，請不要改）, widget: string }
+              - { name: when, label: 情境（說明用）, widget: string, required: false }
+              - { name: a, label: 甲句, widget: text, required: false }
+              - { name: b, label: 乙句, widget: text, required: false }
       - name: text
         label: 網站文字
         file: _data/text.yml

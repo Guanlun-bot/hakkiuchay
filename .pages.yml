@@ -238,6 +238,15 @@ content:
           - name: file
             label: 音檔（上傳 mp3；舊的幾首是 vr/music 裡的檔名）
             type: file
+      - name: npc
+        label: 宅中人物的台詞（同一情境甲、乙兩句輪流說；留空就用原本的句子）
+        type: object
+        list: true
+        fields:
+          - { name: key, label: 代號（程式用，請不要改）, type: string }
+          - { name: when, label: 情境（說明用）, type: string }
+          - { name: a, label: 甲句, type: text }
+          - { name: b, label: 乙句, type: text }
 
   - name: text
     label: 網站文字

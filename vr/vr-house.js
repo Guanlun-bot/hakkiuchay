@@ -298,14 +298,10 @@ for(const side of [-1,1]){
   const [outerLeft,outerRight]=side<0?[-8.3,-bayEdge]:[bayEdge,8.3];
   const [innerLeft,innerRight]=side<0?[-bayEdge,-1]:[1,bayEdge];
   windowBay(innerLeft,innerRight,side*2.02,1.50,entryWall,1.0,2.33);
-  facadePanel(outerLeft,outerRight,3.26,facadeTop,entryWall,mWhite(3,.3));
-  for(const y of [3.31,3.54,3.65]){
-    box(outerRight-outerLeft,.055,.105,trim,(outerLeft+outerRight)/2,y,4.32,mainHall);
-  }
+  facadePanel(outerLeft,outerRight,3.26,facadeTop,entryWall,mBrick((outerRight-outerLeft)*.78,.45));   // brick right up to the eaves
 }
-facadePanel(-bayEdge,bayEdge,3.26,facadeTop,entryWall,mWhite(4,.3));
+facadePanel(-bayEdge,bayEdge,3.26,facadeTop,entryWall,mBrick(bayEdge*2*.78,.45));
 facadePanel(-1,1,2.56,3.26,entryWall,mBrick(1.56,.73));
-box(6.36,.23,.34,M.woodDark,0,3.52,4.29,mainHall);
 for(const x of [-1.08,1.08]) box(.19,2.59,.37,stone,x,1.295,entryWall,mainHall);
 box(2.35,.17,.38,stone,0,2.61,entryWall,mainHall);
 box(2.05,.3,.26,M.woodDark,0,.15,entryWall,mainHall);
@@ -376,9 +372,8 @@ function facadeAt(g,sg){ const z=sg*entryWall, gone=[];
   for(const m of gone){ g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
   for(const side of [-1,1]){ const [oL,oR]=side<0?[-8.3,-bayEdge]:[bayEdge,8.3], [iL,iR]=side<0?[-bayEdge,-1]:[1,bayEdge];
     windowBay(iL,iR,side*2.02,1.50,z,1.0,2.33,g); windowBay(oL,oR,side*(6.35+8.12)/2,8.12-6.35,z,1.04,2.37,g);
-    facadePanel(oL,oR,3.26,facadeTop,z,mWhite(3,.3),g); for(const y of [3.31,3.54,3.65]) box(oR-oL,.055,.105,trim,(oL+oR)/2,y,sg*4.32,g); }
-  facadePanel(-bayEdge,bayEdge,3.26,facadeTop,z,mWhite(4,.3),g); facadePanel(-1,1,2.56,3.26,z,mBrick(1.56,.73),g);
-  box(6.36,.23,.34,M.woodDark,0,3.52,sg*4.29,g);
+    facadePanel(oL,oR,3.26,facadeTop,z,mBrick((oR-oL)*.78,.45),g); }
+  facadePanel(-bayEdge,bayEdge,3.26,facadeTop,z,mBrick(bayEdge*2*.78,.45),g); facadePanel(-1,1,2.56,3.26,z,mBrick(1.56,.73),g);
   for(const x of [-1.08,1.08]) box(.19,2.59,.37,stone,x,1.295,z,g);
   box(2.35,.17,.38,stone,0,2.61,z,g); box(2.05,.3,.26,M.woodDark,0,.15,z,g);
   const pl=new THREE.Group(); pl.position.set(0,2.98,sg*4.36); if(sg<0) pl.rotation.y=Math.PI; g.add(pl);
@@ -492,7 +487,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
   // walls: [axis, at, from, to, exterior?]  exterior walls get a barred window like the other outer walls
   for(const [ax,at,a,b,ext] of walls){ const len=b-a, mid=(a+b)/2, g=new THREE.Group(); scene.add(g);
     if(ax==='x'){ g.position.set(at,0,mid); g.rotation.y=Math.PI/2; } else g.position.set(mid,0,at);
-    if(ext&&len>3.2){ windowBay(-len/2,len/2,0,Math.min(1.6,len-1.6),0,1.04,2.37,g); box(len,.43,.3,mWhite(len/2,.3),0,3.475,0,g,BLOCK); }
+    if(ext&&len>3.2){ windowBay(-len/2,len/2,0,Math.min(1.6,len-1.6),0,1.04,2.37,g); box(len,.43,.3,mBrick(len*.78,.45),0,3.475,0,g,BLOCK); }
     else { box(len,.9,.3,mBrick(len,.9),0,.45,0,g,BLOCK); box(len,2.78,.3,mWhite(len/2,1.7),0,2.29,0,g,BLOCK); }
   }
   // roof: ridge along the long side, eaves flush with the walls so nothing pokes into the neighbours

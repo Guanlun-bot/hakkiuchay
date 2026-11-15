@@ -429,8 +429,55 @@ buildDoors(mainHall,'S'); buildDoors(oppositeWing,'N');
 for(const side of [-1,1]) buildDoors(axialHalls[side<0?0:1].hall,side<0?'W':'E',HALL_DOOR);
 DOORS.N.fold=Math.PI-.16;   // 知了間: the leaves fold back flat against the front wall, so the entrance view stays open
 function doorPose(d){ // k: 1 open, 0 shut; barK: 1 bar in, 0 bar stored
+  if(d.pose) return d.pose(d);
   for(const {pv,side} of d.leaves) pv.rotation.y=-side*(d.fold||Math.PI/2-.12)*d.k;
   const b=d.bar, t=d.barK, r=d.rest; b.position.set(r.x*(1-t), r.y+(1.25-r.y)*t, r.z+(3.89-r.z)*t); }
+// Every other opening gets the same two-leaf board door with a bar (門閂) on its inner side (numbers as in the
+// room-and-door plan): the hall and wing doors, the doors between rooms, and the gate in the low front wall.
+// Each door stands in its own group: the wall at local z=0, the inside toward -z; it is shut (and blocks the way)
+// only by someone inside. All start open.
+const DOOR_BLOCKS=[];
+function addDoor(key,x,z,rot,half,h,wallT,inside){
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
+  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const zi=-(wallT/2+.03), lw=half-.006, lh=h-.1, leaves=[];
+  for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*half,0,zi); g.add(pv);
+    box(lw,lh,.05,plank,-side*lw/2,lh/2+.05,0,pv,pick);
+    for(const f of [.2,.5,.8]) box(lw-.08,.08,.03,M.woodDark,-side*lw/2,.05+lh*f,-.04,pv);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.04,.007,8,18),iron); ring.position.set(-side*(lw-.1),.05+lh*.5,.035); pv.add(ring);
+    leaves.push({pv,side}); }
+  const by=Math.min(1.2,.05+lh*.5), bl=2*half*.8, inZ=zi-.09;
+  const bar=box(bl,.07,.07,new THREE.MeshStandardMaterial({map:T.wood,color:0x7a5236,roughness:.7}),0,by,inZ,g,pick);
+  const rest={x:half+.12+bl/2,y:.04,z:zi-.3};
+  DOORS[key]={leaves,bar,open:true,k:1,barK:0,inside,pose(d){ for(const {pv,side} of d.leaves) pv.rotation.y=-side*(Math.PI/2-.12)*d.k;
+    const t=d.barK; d.bar.position.set(rest.x*(1-t),rest.y+(by-rest.y)*t,rest.z+(inZ-rest.z)*t); }};
+  const alongZ=Math.abs(Math.sin(rot))>.5;
+  DOOR_BLOCKS.push(alongZ?{key,x0:x-.15,x1:x+.15,z0:z-half,z1:z+half}:{key,x0:x-half,x1:x+half,z0:z-.15,z1:z+.15}); }
+{ const A=courtAxis, P=Math.PI, inHall=(x0,x1)=>p=>p.x>x0&&p.x<x1&&Math.abs(p.z-A)<5.3;
+  // hall doors (1.84 m)
+  addDoor('d11',13.95,A,P/2,.92,2.52,.3,inHall(5.65,13.95));
+  addDoor('d20',25.25,A,-P/2,.92,2.52,.3,inHall(25.25,33.55));
+  addDoor('d23',33.55,A,P/2,.92,2.52,.3,inHall(25.25,33.55));
+  // wing doors of the 第二進 and 第一進 (the 明間 behind each)
+  for(const [cx,w,e] of [[2*A,'d14','d17'],[4*A,'d26','d29']]){
+    addDoor(w,cx,2*A-4.15,P,.92,2.52,.3,p=>p.z>2*A-4.15&&Math.abs(p.x-cx)<2.65);
+    addDoor(e,cx,4.15,0,.92,2.52,.3,p=>p.z<4.15&&Math.abs(p.x-cx)<2.65); }
+  // doors in the end walls (1.3 m): the bar is on the side room's side
+  const west=(x0,x1)=>p=>p.z>2*A-4.49&&p.x>x0&&p.x<x1, east=(x0,x1)=>p=>p.z<4.49&&p.x>x0&&p.x<x1;
+  for(const [kw,ke,x,x0,x1] of [['d1','d2',-10.87,-14.1,-7.64],['d9','d10',9.8,7.64,11.96],['d21','d22',29.4,27.24,31.56]]){
+    addDoor(kw,x,2*A-4.584,P,.65,2.45,.2,west(x0,x1)); addDoor(ke,x,4.584,0,.65,2.45,.2,east(x0,x1)); }
+  for(const [kw,ke,x] of [['d12','d13',12.1],['d24','d25',31.7]]){
+    addDoor(kw,x,19.5,-P/2,.65,2.45,.28,p=>p.x>x&&p.x<x+4.85&&p.z>2*A-4.3);
+    addDoor(ke,x,.1,-P/2,.65,2.45,.28,p=>p.x>x&&p.x<x+4.85&&p.z<4.3); }
+  // doors in the partitions (1.6 m): the bar is in the side room
+  for(const [cx,keys,both] of [[0,['d5','d6'],false],[2*A,['d15','d16','d18','d19'],true],[4*A,['d27','d28','d30','d31'],true]]){
+    const sides=both?[[2*A-.3+.6,p=>p.z>2*A-4.3],[-.3,p=>p.z<4.3]]:[[19.9,p=>p.z>2*A-4.3]]; let k=0;
+    for(const [dz,inWing] of sides){
+      addDoor(keys[k++],cx-2.65,dz,P/2,.8,2.2,.14,p=>inWing(p)&&p.x<cx-2.65&&p.x>cx-7.64);
+      addDoor(keys[k++],cx+2.65,dz,-P/2,.8,2.2,.14,p=>inWing(p)&&p.x>cx+2.65&&p.x<cx+7.64); } }
+  // the gate in the low front wall
+  addDoor('d32',FIRST.fx1-.15,A,P/2,1.3,1.4,.3,p=>p.x>FIRST.fx0&&p.x<FIRST.fx1);
+}
 for(const k in DOORS) doorPose(DOORS[k]);
 // Low stone edging and a grass surface that stays walkable.
 const lawnTexture=ctex(512,512,(g,w,h)=>{
@@ -1425,7 +1472,7 @@ function doorState(key){ let best=myDoors[key]?{o:myDoors[key][0],at:myDoors[key
   return best?best.o:true; }
 function toggleDoor(key){ const d=DOORS[key]; if(!d) return; const open=!d.open;
   // don't shut someone out of sight: you can bar the door only from the inside
-  if(!open && zoneOf(ME)!==key){ toast('門閂在門內，要從屋裡才能關門上閂。'); return; }
+  if(!open && !(d.inside?d.inside(ME):zoneOf(ME)===key)){ toast('門閂在門內，要從屋裡才能關門上閂。'); return; }
   myDoors={...myDoors,[key]:[open?1:0,Date.now()]}; pushPresence(); d.open=open; knock(); toast(open?'拔起門閂，開門。':'關上門，插上門閂。'); }
 function knock(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const t=actx.currentTime; for(const [f,dt] of [[140,0],[95,.35]]){ const o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(.0001,t+dt); g.gain.exponentialRampToValueAtTime(.25,t+dt+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dt+.25); o.connect(g).connect(actx.destination); o.start(t+dt); o.stop(t+dt+.3); } }catch{} }
 function cuckooCall(n){ try{ if(!actx) return; for(let i=0;i<n;i++){ for(const [f,dt] of [[698.5,0],[587.3,.32]]){ const o=actx.createOscillator(), gn=actx.createGain(), t=actx.currentTime+i*1.0+dt; o.type='triangle'; o.frequency.value=f; gn.gain.setValueAtTime(.0001,t); gn.gain.exponentialRampToValueAtTime(.09,t+.03); gn.gain.exponentialRampToValueAtTime(.0001,t+.26); o.connect(gn).connect(actx.destination); o.start(t); o.stop(t+.3); } } }catch{} }
@@ -3061,6 +3108,7 @@ function walkable(x,z){
   if(!(inRoom||inYard||inDoor||inMatchingRoom||inFirst||inBackDoor||inFirstWing||inFirstDoor||inSide||inSideDoor||inGateHall||inGateDoor||inFore)) return false;
   if(zlBlocked(x,z)) return false;
   for(const o of OBST) if(x>o.x0-0.22&&x<o.x1+0.22&&z>o.z0-0.22&&z<o.z1+0.22) return false;
+  for(const b of DOOR_BLOCKS){ const d=DOORS[b.key]; if(d&&!d.open&&x>b.x0-.12&&x<b.x1+.12&&z>b.z0-.12&&z<b.z1+.12) return false; }
   return true; }
 function segHitsRect(a,b,o,m=0.3){ for(let t=0;t<=1;t+=0.04){ const x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t; if(x>o.x0-m&&x<o.x1+m&&z>o.z0-m&&z<o.z1+m) return true;} return false; }
 const ZONE_DIR={S:[0,-1],N:[0,1],W:[-1,0],E:[1,0]};
@@ -3572,6 +3620,92 @@ let voiceOutputGain=Math.max(0,Math.min(3,Number(LS.get('hk-voice-vol')??1.8)));
     vs.addEventListener('input',e=>{ voiceOutputGain=Math.max(0,Math.min(3,Number(e.target.value)||0)); LS.set('hk-voice-vol',String(voiceOutputGain));
       if(vl) vl.textContent=Math.round(voiceOutputGain*100)+'%';
       if(localVoiceState.masterGain&&localVoiceState.playCtx) localVoiceState.masterGain.gain.setTargetAtTime(voiceOutputGain,localVoiceState.playCtx.currentTime,0.02); }); } }
+
+// ---- voice on the audio thread. The old capture and playback (ScriptProcessor) ran on the page's main thread, which
+// the 3D house keeps busy, so voice broke up whenever the picture was working hard. These two AudioWorklet processors
+// run on the browser's audio thread instead:
+//  hk-mic  — after RNNoise, filters and downsamples to 16 kHz, cuts 20 ms frames, and a soft speech gate (adaptive noise
+//            floor, 0.5 s hold, a pre-roll frame and gentle fades so the first and last syllables are not clipped);
+//  hk-play — one jitter buffer per speaker that sizes itself to how unevenly packets arrive (60–320 ms), fades over
+//            gaps instead of clicking, and catches up when it falls behind.
+const VOICE_WORKLETS=`
+class HkMic extends AudioWorkletProcessor{
+  constructor(){ super(); this.D=Math.max(1,Math.round(sampleRate/16000)); this.osr=sampleRate/this.D;
+    const n=31, c=Math.min(.45,7000/sampleRate); this.h=new Float32Array(n); let sum=0;
+    for(let i=0;i<n;i++){ const k=i-(n-1)/2, w=.54-.46*Math.cos(2*Math.PI*i/(n-1)), v=(k===0?2*c:Math.sin(2*Math.PI*c*k)/(Math.PI*k))*w; this.h[i]=v; sum+=v; }
+    for(let i=0;i<n;i++) this.h[i]/=sum;
+    this.n=n; this.x=new Float32Array(n); this.xi=0; this.ph=0; this.F=Math.round(this.osr*.02); this.f=new Float32Array(this.F); this.fi=0; this.prev=new Float32Array(this.F);
+    this.floor=.003; this.hold=0; this.g=0; this.sp=false; }
+  process(inp){ const ch=inp[0]&&inp[0][0]; if(!ch) return true; const n=this.n, h=this.h, x=this.x;
+    for(let i=0;i<ch.length;i++){ x[this.xi]=ch[i]; this.xi=this.xi+1===n?0:this.xi+1;
+      if(++this.ph>=this.D){ this.ph=0; let a=0, j=this.xi; for(let k=0;k<n;k++){ a+=h[k]*x[j]; j=j+1===n?0:j+1; } this.f[this.fi++]=a; if(this.fi===this.F){ this.fi=0; this.frame(); } } }
+    return true; }
+  frame(){ const f=this.f, F=this.F; let s=0; for(let i=0;i<F;i++) s+=f[i]*f[i];
+    const rms=Math.sqrt(s/F), t=currentTime, th=Math.max(.006,this.floor*2.2);
+    if(rms>th) this.hold=t+.5; else if(t>this.hold) this.floor=Math.min(.03,Math.max(.0015,this.floor*.96+rms*.04));
+    const want=t<this.hold, wasOpen=this.g>.0001;
+    if(want!==this.sp){ this.sp=want; this.port.postMessage({sp:want}); }
+    if(!want&&!wasOpen){ this.prev.set(f); return; }
+    if(want&&!wasOpen) this.send(this.prev,true);
+    this.send(f,false,want?1:0); this.prev.set(f); }
+  send(src,pre,target){ const F=this.F, out=new Int16Array(F), up=1/(this.osr*.004), down=1/(this.osr*.15); let g=this.g;
+    for(let i=0;i<F;i++){ if(pre) g=i/F; else if(g<target) g=Math.min(target,g+up); else if(g>target) g=Math.max(target,g-down);
+      const v=Math.max(-1,Math.min(1,src[i]*g)); out[i]=v<0?v*32768:v*32767; }
+    this.g=pre?1:g; this.port.postMessage({pcm:out.buffer,sr:this.osr},[out.buffer]); } }
+registerProcessor('hk-mic',HkMic);
+class HkPlay extends AudioWorkletProcessor{
+  constructor(){ super(); this.s=new Map(); this.port.onmessage=e=>{ const m=e.data; if(m.drop){ this.s.delete(m.drop); return; } this.push(m); }; }
+  push(m){ let s=this.s.get(m.id); const R=sampleRate;
+    if(!s){ const n=R*3|0; s={b:new Float32Array(n),n,r:0,w:0,q:0,on:false,g:0,t:currentTime,jit:.02,tgt:.1,last:0,frac:0,ps:0}; this.s.set(m.id,s); }
+    const pcm=new Int16Array(m.pcm), sr=m.sr||16000, L=pcm.length, now=currentTime, gap=now-s.t; s.t=now;
+    if(gap<1) s.jit=s.jit*.92+Math.abs(gap-L/sr)*.08; s.tgt=Math.min(.32,Math.max(.06,.04+2.5*s.jit));
+    const step=sr/R; let pos=s.frac, prev=s.ps;
+    while(pos<L){ const i=Math.floor(pos), fr=pos-i, a=i===0?prev:pcm[i-1]/32768, b=pcm[i]/32768, v=a+(b-a)*fr;
+      s.b[s.w]=v; s.w=(s.w+1)%s.n; if(s.q<s.n) s.q++; else s.r=(s.r+1)%s.n; pos+=step; }
+    s.frac=pos-L; s.ps=pcm[L-1]/32768;
+    const keep=s.tgt*R|0; if(s.on&&s.q>keep+R*.3){ const drop=s.q-keep; s.r=(s.r+drop)%s.n; s.q-=drop; } }
+  process(_,outs){ const o=outs[0]&&outs[0][0]; if(!o) return true; o.fill(0); const fade=1/(sampleRate*.006);
+    for(const [id,s] of this.s){
+      if(!s.on){ if(s.q>=s.tgt*sampleRate) s.on=true; else { if(currentTime-s.t>60) this.s.delete(id); continue; } }
+      for(let i=0;i<o.length;i++){
+        if(s.q>0){ s.g=Math.min(1,s.g+fade); const v=s.b[s.r]; s.r=(s.r+1)%s.n; s.q--; s.last=v; o[i]+=v*s.g; }
+        else { s.g=Math.max(0,s.g-fade); s.last*=.995; o[i]+=s.last*s.g; if(s.g===0){ s.on=false; break; } } } }
+    for(let i=0;i<o.length;i++){ const v=o[i]; if(v>.8||v<-.8) o[i]=Math.tanh(v); }
+    return true; } }
+registerProcessor('hk-play',HkPlay);
+`;
+let voiceWorkletURL=null;
+const voiceWorkletUrl=()=>voiceWorkletURL||(voiceWorkletURL=URL.createObjectURL(new Blob([VOICE_WORKLETS],{type:'application/javascript'})));
+const canWorklet=()=>!!(window.AudioWorkletNode&&(window.AudioContext||window.webkitAudioContext));
+// Microphone: echo cancellation and auto gain from the browser, then RNNoise (vendor/rnnoise, the noise suppressor Jitsi
+// also uses) to take out fans, air-con, keyboards and street noise, a gentle compressor, and hk-mic. Without RNNoise
+// (not 48 kHz, or it failed to load) the browser's own noise suppression is switched back on. Returns null where
+// AudioWorklet is missing, and the caller falls back to the old capture.
+async function startMicPipeline(onFrame,onSpeak){
+  if(!canWorklet()) return null;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:true,channelCount:1},video:false});
+  let ctx; try{ ctx=new AC({sampleRate:48000}); }catch{ ctx=new AC(); }
+  try{
+    if(ctx.state==='suspended') await ctx.resume().catch(()=>{});
+    await ctx.audioWorklet.addModule(voiceWorkletUrl());
+    let ns=null;
+    if(Math.round(ctx.sampleRate)===48000){ try{ const base=new URL('./vendor/rnnoise/',import.meta.url);
+      await ctx.audioWorklet.addModule(new URL('workletProcessor.js',base).href);
+      const simd=WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,10,1,8,0,65,0,253,15,253,98,11]));
+      const wasm=await (await fetch(new URL(simd?'rnnoise_simd.wasm':'rnnoise.wasm',base).href)).arrayBuffer();
+      ns=new AudioWorkletNode(ctx,'@sapphi-red/web-noise-suppressor/rnnoise',{processorOptions:{maxChannels:1,wasmBinary:wasm}}); }catch{ ns=null; } }
+    if(!ns) for(const t of stream.getAudioTracks()) t.applyConstraints&&t.applyConstraints({echoCancellation:true,noiseSuppression:true,autoGainControl:true}).catch(()=>{});
+    const src=ctx.createMediaStreamSource(stream), hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=90; hp.Q.value=.7;
+    const comp=ctx.createDynamicsCompressor(); comp.threshold.value=-26; comp.knee.value=12; comp.ratio.value=3; comp.attack.value=.005; comp.release.value=.2;
+    const mic=new AudioWorkletNode(ctx,'hk-mic',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]}), zero=ctx.createGain(); zero.gain.value=0;
+    mic.port.onmessage=e=>{ const m=e.data; if(m.pcm) onFrame(encodeInt16ToBase64(new Int16Array(m.pcm)),Math.round(m.sr)); if(m.sp!==undefined) onSpeak(!!m.sp); };
+    let node=src; node.connect(hp); node=hp; if(ns){ node.connect(ns); node=ns; } node.connect(comp); comp.connect(mic); mic.connect(zero); zero.connect(ctx.destination);
+    VOICE_NS=ns?'RNNoise':'瀏覽器內建';
+    return { stream, stop(){ try{ ns&&ns.port.postMessage('destroy'); }catch{} try{ mic.port.onmessage=null; }catch{} stream.getTracks().forEach(t=>{ try{ t.stop(); }catch{} }); try{ ctx.close(); }catch{} } };
+  }catch(e){ try{ ctx.close(); }catch{} stream.getTracks().forEach(t=>{ try{ t.stop(); }catch{} }); throw e; } }
+var VOICE_NS='';
+function b64ToBuffer(b64){ const bin=atob(b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; }
 const localVoiceState={playCtx:null,masterGain:null,comp:null,playerNode:null,ringBuffers:new Map()};
 function ensureVoicePlayCtx(){
   const AudioCtx=window.AudioContext||window.webkitAudioContext;
@@ -3584,6 +3718,9 @@ function ensureVoicePlayCtx(){
     st.comp.threshold.value=-18; st.comp.knee.value=12; st.comp.ratio.value=4; st.comp.attack.value=0.003; st.comp.release.value=0.15;
     st.playLp=st.playCtx.createBiquadFilter(); st.playLp.type='lowpass'; st.playLp.frequency.value=5800; st.playLp.Q.value=0.7;
     st.playLp.connect(st.masterGain); st.masterGain.connect(st.comp); st.comp.connect(st.playCtx.destination);
+    st.wk=null; st.wkQueue=[]; st.wkFailed=!(canWorklet()&&st.playCtx.audioWorklet);
+    if(!st.wkFailed) st.playCtx.audioWorklet.addModule(voiceWorkletUrl()).then(()=>{ const node=new AudioWorkletNode(st.playCtx,'hk-play',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[1]}); node.connect(st.playLp); st.wk=node; for(const m of st.wkQueue) node.port.postMessage(m,[m.pcm]); st.wkQueue=[]; }).catch(()=>{ st.wkFailed=true; st.wkQueue=[]; legacy(); });
+    const legacy=()=>{
     st.playerNode=st.playCtx.createScriptProcessor(2048,1,1);
     const playSr=st.playCtx.sampleRate||48000, startThreshold=Math.floor(playSr*0.16);
     st.playerNode.onaudioprocess=ev=>{
@@ -3597,7 +3734,8 @@ function ensureVoicePlayCtx(){
       }
       for(let i=0;i<out.length;i++){ if(out[i]>1) out[i]=1; else if(out[i]<-1) out[i]=-1; }
     };
-    st.playerNode.connect(st.playLp);
+    st.playerNode.connect(st.playLp); };
+    if(st.wkFailed) legacy(); else st.wkLegacy=legacy;
   }
   if(st.playCtx.state==='suspended') st.playCtx.resume().catch(()=>{});
   return st.playCtx;
@@ -3617,6 +3755,9 @@ function decodeBase64ToFloat32(b64){
 function playRemoteVoiceChunks(chunks){
   if(!Array.isArray(chunks)||!chunks.length) return;
   const ctx=ensureVoicePlayCtx(); if(!ctx) return;
+  const st=localVoiceState;
+  if(!st.wkFailed){ for(const ch of chunks){ if(!ch||!ch.b64||!ch.from) continue; let m; try{ m={id:ch.from,pcm:b64ToBuffer(ch.b64),sr:Number(ch.sr)||16000}; }catch{ continue; }
+      if(st.wk) st.wk.port.postMessage(m,[m.pcm]); else if(st.wkQueue.length<60) st.wkQueue.push(m); } return; }
   const playSr=ctx.sampleRate||48000, maxLag=Math.floor(playSr*0.65), targetLag=Math.floor(playSr*0.20);
   for(const ch of chunks){
     if(!ch||!ch.b64||!ch.from) continue;
@@ -3644,7 +3785,7 @@ async function cfRoom(){
   const me=MY_PID;
   const peers=new Map();
   let peersFn=null, cur=null, mpTimer=null, closed=false;
-  let micEnabled=false, micMuted=false, localSpeaking=false, localMicStream=null, voiceAudioCtx=null, voiceProc=null, voiceZero=null, voiceHoldUntil=0;
+  let voicePipe=null, micEnabled=false, micMuted=false, localSpeaking=false, localMicStream=null, voiceAudioCtx=null, voiceProc=null, voiceZero=null, voiceHoldUntil=0;
   const outgoingVoiceChunks=[];
   const voiceButton=$('#voice-toggle'), muteButton=$('#voice-mute'), voiceStatus=$('#voice-status'), voiceHud=$('#voice-hud');
 
@@ -3666,6 +3807,7 @@ async function cfRoom(){
   }
   function disableVoiceMic(){
     micEnabled=false; micMuted=false; localSpeaking=false; outgoingVoiceChunks.length=0;
+    if(voicePipe){ voicePipe.stop(); voicePipe=null; localMicStream=null; }
     if(voiceProc){ try{ voiceProc.disconnect(); }catch{} voiceProc.onaudioprocess=null; voiceProc=null; }
     if(voiceZero){ try{ voiceZero.disconnect(); }catch{} voiceZero=null; }
     if(voiceAudioCtx){ try{ voiceAudioCtx.close(); }catch{} voiceAudioCtx=null; }
@@ -3678,6 +3820,11 @@ async function cfRoom(){
     ensureVoicePlayCtx();
     voiceUI();
     if(!navigator.mediaDevices?.getUserMedia){ voiceStatus.textContent='此瀏覽器不支援麥克風'; micEnabled=false; voiceUI(); return; }
+    try{
+      const pipe=await startMicPipeline((b64,sr)=>{ outgoingVoiceChunks.push({sr,b64}); if(outgoingVoiceChunks.length>30) outgoingVoiceChunks.splice(0,outgoingVoiceChunks.length-30); },
+        sp=>{ if(sp!==localSpeaking){ localSpeaking=sp; renderVoiceHud(); } });
+      if(pipe){ if(!micEnabled||closed){ pipe.stop(); return; } voicePipe=pipe; localMicStream=pipe.stream; for(const tr of pipe.stream.getAudioTracks()) tr.onended=()=>disableVoiceMic(); voiceUI(); return; }
+    }catch(e){ if(e&&(e.name==='NotAllowedError'||e.name==='NotFoundError')){ micEnabled=false; voiceStatus.textContent='無法開啟麥克風，請檢查瀏覽器權限'; voiceUI(); return; } }
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false});
       if(!micEnabled||closed){ stream.getTracks().forEach(t=>t.stop()); return; }
@@ -3746,11 +3893,12 @@ async function cfRoom(){
       if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
     else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); } }
   // ten times a second: what changed, plus any voice; when nothing changes, a heartbeat every 2.5 s
+  let lastPAt=0;
   function tick(){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8);
-    const st={...cur,vc:micEnabled}, k=JSON.stringify(st), changed=k!==lastKey;
-    if(!changed&&!voice.length&&now-lastSendAt<2500) return;
-    const msg={t:'u',mic:micEnabled,sp:localSpeaking&&!micMuted}; if(changed||now-lastSendAt>=2500) msg.p=st; if(voice.length) msg.v=voice;
-    try{ ws.send(JSON.stringify(msg)); lastKey=k; lastSendAt=now; }catch{ NET.errs++; } }
+    const st={...cur,vc:micEnabled}, k=JSON.stringify(st), pDue=(k!==lastKey&&now-lastPAt>=100)||now-lastSendAt>=2500;
+    if(!pDue&&!voice.length) return;
+    const msg={t:'u',mic:micEnabled,sp:localSpeaking&&!micMuted}; if(pDue){ msg.p=st; lastKey=k; lastPAt=now; } if(voice.length) msg.v=voice;
+    try{ ws.send(JSON.stringify(msg)); lastSendAt=now; }catch{ NET.errs++; } }
   function connect(first){ clearTimeout(retryT); if(closed) return Promise.resolve(false);
     return new Promise(res=>{ let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
       try{ ws=new WebSocket(base+'/room/'+encodeURIComponent(playRoom)+'?id='+encodeURIComponent(me)); }catch{ fin(false); if(!first) later(); return; }
@@ -3767,7 +3915,7 @@ async function cfRoom(){
     if(!offlineT) offlineT=setTimeout(()=>{ offlineT=null; if(!wsOpen){ peers.clear(); localVoiceState.ringBuffers.clear(); emit(); } },15000); }
   if(!(await connect(true))){ closed=true; throw new Error('vr server unavailable'); }
   NET.peers=peers; voiceUI();
-  mpTimer=setInterval(tick,100);
+  mpTimer=setInterval(tick,60);
   // every 4 s a ping (the server answers at once); nothing heard for 10 s means the line is dead even if the browser
   // hasn't noticed yet: drop it and open a new one
   const keep=setInterval(()=>{ if(closed||!wsOpen) return; try{ ws.send('{"t":"ping"}'); }catch{} if(Date.now()-lastRx>10000) revive(); },4000);

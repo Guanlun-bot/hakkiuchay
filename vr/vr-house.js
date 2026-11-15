@@ -90,11 +90,11 @@ T.wood = ctex(256,512,(g,w,h)=>{ g.fillStyle='#5a3825'; g.fillRect(0,0,w,h); con
 T.woodDark = ctex(256,512,(g,w,h)=>{ g.fillStyle='#3a2418'; g.fillRect(0,0,w,h); const R=rnd(23);
   for(let i=0;i<80;i++){ g.strokeStyle=`rgba(${R()<.5?'12,6,3':'90,60,40'},${.12+R()*.2})`; g.lineWidth=1+R()*2; g.beginPath(); let x=R()*w; g.moveTo(x,0); for(let y=0;y<=h;y+=32){ x+=(R()-.5)*3; g.lineTo(x,y);} g.stroke(); } });
 T.doorWood = ctex(512,1024,(g,w,h)=>{ const R=rnd(57), P=4, pw=w/P;
-  for(let p=0;p<P;p++){ g.fillStyle=shade('#9b7452',(R()-.5)*.1); g.fillRect(p*pw,0,pw,h);
-    for(let i=0;i<34;i++){ g.strokeStyle=`rgba(${R()<.55?'70,42,22':'190,150,110'},${.12+R()*.22})`; g.lineWidth=.8+R()*1.8; g.beginPath(); let x=p*pw+R()*pw; g.moveTo(x,0); for(let y=0;y<=h;y+=24){ x+=(R()-.5)*2.4; x=Math.max(p*pw+2,Math.min((p+1)*pw-2,x)); g.lineTo(x,y);} g.stroke(); }
-    for(let k=0;k<2;k++){ const kx=p*pw+pw*(.25+R()*.5), ky=R()*h; for(let r=3;r<16;r+=3){ g.strokeStyle=`rgba(80,48,26,${.35-r*.015})`; g.lineWidth=1.2; g.beginPath(); g.ellipse(kx,ky,r*.55,r*1.6,0,0,Math.PI*2); g.stroke(); } }
+  for(let p=0;p<P;p++){ g.fillStyle=shade('#6c4a30',(R()-.5)*.1); g.fillRect(p*pw,0,pw,h);
+    for(let i=0;i<34;i++){ g.strokeStyle=`rgba(${R()<.55?'40,22,10':'150,110,75'},${.14+R()*.24})`; g.lineWidth=.8+R()*1.8; g.beginPath(); let x=p*pw+R()*pw; g.moveTo(x,0); for(let y=0;y<=h;y+=24){ x+=(R()-.5)*2.4; x=Math.max(p*pw+2,Math.min((p+1)*pw-2,x)); g.lineTo(x,y);} g.stroke(); }
+    for(let k=0;k<2;k++){ const kx=p*pw+pw*(.25+R()*.5), ky=R()*h; for(let r=3;r<16;r+=3){ g.strokeStyle=`rgba(45,26,12,${.4-r*.015})`; g.lineWidth=1.2; g.beginPath(); g.ellipse(kx,ky,r*.55,r*1.6,0,0,Math.PI*2); g.stroke(); } }
     g.fillStyle='rgba(45,26,14,.75)'; g.fillRect(p*pw,0,2,h); }
-  speck(g,w,h,900,['#5a3a22','#c2a07a'],.18); });
+  speck(g,w,h,900,['#3a2414','#9a7a58'],.18); });
 T.boards = ctex(512,512,(g,w,h)=>{ const R=rnd(31); for(let i=0;i<8;i++){ g.fillStyle=shade('#4a2f1f',(R()-.5)*.08); g.fillRect(0,i*64,w,62); g.fillStyle='#24160d'; g.fillRect(0,i*64+62,w,2);} speck(g,w,h,1200,['#1b0f08','#6e4a33'],.3); });
 T.roof = ctex(512,512,(g,w,h)=>{
   const random=rnd(41);
@@ -524,7 +524,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
   for(const s of [-1,1]){ const pz=courtAxis+s*(gw+.3); box(.6,1.55,.6,mBrick(.5,1.2),x1-.15,.775,pz,scene,BLOCK); box(.7,.1,.7,stone,x1-.15,1.6,pz); box(.5,.12,.5,cap,x1-.15,1.71,pz); }
   EARLY_OBST.push({x0:x1-.5,x1:x1+.2,z0:courtAxis-gw-.65,z1:courtAxis-gw+.05},{x0:x1-.5,x1:x1+.2,z0:courtAxis+gw-.05,z1:courtAxis+gw+.65}); }
 
-const TREE={x:1.0,z:12.3};
+const TREE={x:3.0,z:12.6};   // the court's south-west corner, by 知了間 and the 南廳, as close as the eaves allow
 {
   const size=1.65, edge=.10;
   const {x,z}=TREE;
@@ -4491,7 +4491,7 @@ function bambooWindow(wx,wz,nx,w,y0,y1){ const g=new THREE.Group(); g.position.s
       if(k){ const n=new THREE.Mesh(new THREE.TorusGeometry(.056,.012,6,14),M.woodDark); n.rotation.x=Math.PI/2; n.position.y=k*sl; bar.add(n); } }
     box(.005,.005,.005,M.woodDark,0,0,0,bar); }
   return g; }
-for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w=1.3, y0=1.05, y1=2.35;
+for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w=1.3, y0=1.25, y1=2.55;
   const p=cutWindow(wing,FRONT.cx+7.5,zc,w,y0,y1); if(p) bambooWindow(p.x,p.z,Math.sign(p.x-FRONT.cx),w,y0,y1); }
 
 /* ================= 22、26 號房（第一進兩廂北間）：各四張木床，兩兩相對，每對中間一個床頭櫃 =================

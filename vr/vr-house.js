@@ -3227,7 +3227,8 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-function act(h){ const u=h.object.userData; if(VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
+const ACTION_TYPES=new Set(['seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab']);
+function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'shelf': { const o=caseObjs[u.ci]; const px=h.uv.x*o.info.W, py=(1-h.uv.y)*o.info.H; let best=null; for(const [i,r] of o.info.layout){ if(px>=r.x0&&px<=r.x1&&py>=r.y0-6&&py<=r.y1+4){best=i;break;} } if(best!=null){ highlight(best); showBook(best); } else showCase(u.ci); break; }
   case 'case': showCase(u.ci); break;
@@ -3628,6 +3629,8 @@ let voiceOutputGain=Math.max(0,Math.min(3,Number(LS.get('hk-voice-vol')??1.8)));
 //            floor, 0.5 s hold, a pre-roll frame and gentle fades so the first and last syllables are not clipped);
 //  hk-play — one jitter buffer per speaker that sizes itself to how unevenly packets arrive (60–320 ms), fades over
 //            gaps instead of clicking, and catches up when it falls behind.
+//  Both talk straight to a Worker that holds the voice connection (VOICE_NET), so the whole voice path stays off the
+//  main thread; while someone else is talking, hk-mic opens only for a clearly louder voice, keeping their echo out.
 const VOICE_WORKLETS=`
 class HkMic extends AudioWorkletProcessor{
   constructor(){ super(); this.D=Math.max(1,Math.round(sampleRate/16000)); this.osr=sampleRate/this.D;
@@ -3635,13 +3638,14 @@ class HkMic extends AudioWorkletProcessor{
     for(let i=0;i<n;i++){ const k=i-(n-1)/2, w=.54-.46*Math.cos(2*Math.PI*i/(n-1)), v=(k===0?2*c:Math.sin(2*Math.PI*c*k)/(Math.PI*k))*w; this.h[i]=v; sum+=v; }
     for(let i=0;i<n;i++) this.h[i]/=sum;
     this.n=n; this.x=new Float32Array(n); this.xi=0; this.ph=0; this.F=Math.round(this.osr*.02); this.f=new Float32Array(this.F); this.fi=0; this.prev=new Float32Array(this.F);
-    this.floor=.003; this.hold=0; this.g=0; this.sp=false; }
+    this.floor=.003; this.hold=0; this.g=0; this.sp=false; this.out=this.port; this.duck=false;
+    this.port.onmessage=e=>{ const m=e.data||{}; if(m.port) this.out=m.port; if('duck' in m) this.duck=!!m.duck; }; }
   process(inp){ const ch=inp[0]&&inp[0][0]; if(!ch) return true; const n=this.n, h=this.h, x=this.x;
     for(let i=0;i<ch.length;i++){ x[this.xi]=ch[i]; this.xi=this.xi+1===n?0:this.xi+1;
       if(++this.ph>=this.D){ this.ph=0; let a=0, j=this.xi; for(let k=0;k<n;k++){ a+=h[k]*x[j]; j=j+1===n?0:j+1; } this.f[this.fi++]=a; if(this.fi===this.F){ this.fi=0; this.frame(); } } }
     return true; }
   frame(){ const f=this.f, F=this.F; let s=0; for(let i=0;i<F;i++) s+=f[i]*f[i];
-    const rms=Math.sqrt(s/F), t=currentTime, th=Math.max(.006,this.floor*2.2);
+    const rms=Math.sqrt(s/F), t=currentTime, th=this.duck?Math.max(.03,this.floor*5):Math.max(.006,this.floor*2.2);   // while others talk, only a clearly louder voice opens: their echo stays out
     if(rms>th) this.hold=t+.5; else if(t>this.hold) this.floor=Math.min(.03,Math.max(.0015,this.floor*.96+rms*.04));
     const want=t<this.hold, wasOpen=this.g>.0001;
     if(want!==this.sp){ this.sp=want; this.port.postMessage({sp:want}); }
@@ -3651,19 +3655,19 @@ class HkMic extends AudioWorkletProcessor{
   send(src,pre,target){ const F=this.F, out=new Int16Array(F), up=1/(this.osr*.004), down=1/(this.osr*.15); let g=this.g;
     for(let i=0;i<F;i++){ if(pre) g=i/F; else if(g<target) g=Math.min(target,g+up); else if(g>target) g=Math.max(target,g-down);
       const v=Math.max(-1,Math.min(1,src[i]*g)); out[i]=v<0?v*32768:v*32767; }
-    this.g=pre?1:g; this.port.postMessage({pcm:out.buffer,sr:this.osr},[out.buffer]); } }
+    this.g=pre?1:g; this.out.postMessage({pcm:out.buffer,sr:this.osr},[out.buffer]); } }
 registerProcessor('hk-mic',HkMic);
 class HkPlay extends AudioWorkletProcessor{
-  constructor(){ super(); this.s=new Map(); this.port.onmessage=e=>{ const m=e.data; if(m.drop){ this.s.delete(m.drop); return; } this.push(m); }; }
+  constructor(){ super(); this.s=new Map(); this.port.onmessage=e=>{ const m=e.data; if(m.port){ m.port.onmessage=ev=>this.push(ev.data); return; } if(m.drop){ this.s.delete(m.drop); return; } this.push(m); }; }
   push(m){ let s=this.s.get(m.id); const R=sampleRate;
-    if(!s){ const n=R*3|0; s={b:new Float32Array(n),n,r:0,w:0,q:0,on:false,g:0,t:currentTime,jit:.02,tgt:.1,last:0,frac:0,ps:0}; this.s.set(m.id,s); }
+    if(!s){ const n=R*3|0; s={b:new Float32Array(n),n,r:0,w:0,q:0,on:false,g:0,t:currentTime,jit:.03,tgt:.15,last:0,frac:0,ps:0}; this.s.set(m.id,s); }
     const pcm=new Int16Array(m.pcm), sr=m.sr||16000, L=pcm.length, now=currentTime, gap=now-s.t; s.t=now;
-    if(gap<1) s.jit=s.jit*.92+Math.abs(gap-L/sr)*.08; s.tgt=Math.min(.32,Math.max(.06,.04+2.5*s.jit));
+    if(gap<1) s.jit=Math.max(s.jit*.97,s.jit*.9+Math.abs(gap-L/sr)*.1); s.tgt=Math.min(.6,Math.max(.08,.06+3*s.jit));
     const step=sr/R; let pos=s.frac, prev=s.ps;
     while(pos<L){ const i=Math.floor(pos), fr=pos-i, a=i===0?prev:pcm[i-1]/32768, b=pcm[i]/32768, v=a+(b-a)*fr;
       s.b[s.w]=v; s.w=(s.w+1)%s.n; if(s.q<s.n) s.q++; else s.r=(s.r+1)%s.n; pos+=step; }
     s.frac=pos-L; s.ps=pcm[L-1]/32768;
-    const keep=s.tgt*R|0; if(s.on&&s.q>keep+R*.3){ const drop=s.q-keep; s.r=(s.r+drop)%s.n; s.q-=drop; } }
+    const keep=s.tgt*R|0; if(s.on&&s.q>keep+R*.4){ const drop=s.q-keep; s.r=(s.r+drop)%s.n; s.q-=drop; } }
   process(_,outs){ const o=outs[0]&&outs[0][0]; if(!o) return true; o.fill(0); const fade=1/(sampleRate*.006);
     for(const [id,s] of this.s){
       if(!s.on){ if(s.q>=s.tgt*sampleRate) s.on=true; else { if(currentTime-s.t>60) this.s.delete(id); continue; } }
@@ -3677,33 +3681,75 @@ registerProcessor('hk-play',HkPlay);
 let voiceWorkletURL=null;
 const voiceWorkletUrl=()=>voiceWorkletURL||(voiceWorkletURL=URL.createObjectURL(new Blob([VOICE_WORKLETS],{type:'application/javascript'})));
 const canWorklet=()=>!!(window.AudioWorkletNode&&(window.AudioContext||window.webkitAudioContext));
-// Microphone: echo cancellation and auto gain from the browser, then RNNoise (vendor/rnnoise, the noise suppressor Jitsi
-// also uses) to take out fans, air-con, keyboards and street noise, a gentle compressor, and hk-mic. Without RNNoise
-// (not 48 kHz, or it failed to load) the browser's own noise suppression is switched back on. Returns null where
+// Microphone: the browser's own echo cancellation, noise suppression and auto gain, a high-pass for rumble, then hk-mic.
+// Frames go to the voice worker when there is one (net), otherwise back to the page (onFrame). Returns null where
 // AudioWorklet is missing, and the caller falls back to the old capture.
-async function startMicPipeline(onFrame,onSpeak){
+async function startMicPipeline(onFrame,onSpeak,net){
   if(!canWorklet()) return null;
   const AC=window.AudioContext||window.webkitAudioContext;
-  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:true,channelCount:1},video:false});
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false});
   let ctx; try{ ctx=new AC({sampleRate:48000}); }catch{ ctx=new AC(); }
   try{
     if(ctx.state==='suspended') await ctx.resume().catch(()=>{});
     await ctx.audioWorklet.addModule(voiceWorkletUrl());
-    let ns=null;
-    if(Math.round(ctx.sampleRate)===48000){ try{ const base=new URL('./vendor/rnnoise/',import.meta.url);
-      await ctx.audioWorklet.addModule(new URL('workletProcessor.js',base).href);
-      const simd=WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,10,1,8,0,65,0,253,15,253,98,11]));
-      const wasm=await (await fetch(new URL(simd?'rnnoise_simd.wasm':'rnnoise.wasm',base).href)).arrayBuffer();
-      ns=new AudioWorkletNode(ctx,'@sapphi-red/web-noise-suppressor/rnnoise',{processorOptions:{maxChannels:1,wasmBinary:wasm}}); }catch{ ns=null; } }
-    if(!ns) for(const t of stream.getAudioTracks()) t.applyConstraints&&t.applyConstraints({echoCancellation:true,noiseSuppression:true,autoGainControl:true}).catch(()=>{});
     const src=ctx.createMediaStreamSource(stream), hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=90; hp.Q.value=.7;
-    const comp=ctx.createDynamicsCompressor(); comp.threshold.value=-26; comp.knee.value=12; comp.ratio.value=3; comp.attack.value=.005; comp.release.value=.2;
     const mic=new AudioWorkletNode(ctx,'hk-mic',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]}), zero=ctx.createGain(); zero.gain.value=0;
     mic.port.onmessage=e=>{ const m=e.data; if(m.pcm) onFrame(encodeInt16ToBase64(new Int16Array(m.pcm)),Math.round(m.sr)); if(m.sp!==undefined) onSpeak(!!m.sp); };
-    let node=src; node.connect(hp); node=hp; if(ns){ node.connect(ns); node=ns; } node.connect(comp); comp.connect(mic); mic.connect(zero); zero.connect(ctx.destination);
-    VOICE_NS=ns?'RNNoise':'瀏覽器內建';
-    return { stream, stop(){ try{ ns&&ns.port.postMessage('destroy'); }catch{} try{ mic.port.onmessage=null; }catch{} stream.getTracks().forEach(t=>{ try{ t.stop(); }catch{} }); try{ ctx.close(); }catch{} } };
+    if(net){ const ch=new MessageChannel(); mic.port.postMessage({port:ch.port1},[ch.port1]); net.post({mic:ch.port2},[ch.port2]); }
+    src.connect(hp); hp.connect(mic); mic.connect(zero); zero.connect(ctx.destination);
+    VOICE_NS='瀏覽器內建';
+    return { stream, duck(on){ try{ mic.port.postMessage({duck:!!on}); }catch{} }, stop(){ try{ mic.port.onmessage=null; }catch{} if(net) net.post({micOff:1}); stream.getTracks().forEach(t=>{ try{ t.stop(); }catch{} }); try{ ctx.close(); }catch{} } };
   }catch(e){ try{ ctx.close(); }catch{} stream.getTracks().forEach(t=>{ try{ t.stop(); }catch{} }); throw e; } }
+// The voice connection lives in a Worker: frames from hk-mic go out every 40 ms, and voice from the others goes
+// straight into hk-play, so a busy page can no longer hold the voice up. Its own keep-alive and reconnect.
+const VOICE_NET=`
+let url='', ws=null, open=false, retry=0, rx=0, q=[], play=null, closed=false;
+const b64=u=>{ let s=''; for(let i=0;i<u.length;i+=32768) s+=String.fromCharCode.apply(null,u.subarray(i,i+32768)); return btoa(s); };
+const unb64=s=>{ const b=atob(s), u=new Uint8Array(b.length); for(let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u.buffer; };
+function later(){ if(!closed) setTimeout(connect,Math.min(8000,700*2**retry++)); }
+function connect(){ if(closed) return; let s; try{ s=ws=new WebSocket(url); }catch{ later(); return; }
+  s.onopen=()=>{ if(s!==ws) return; open=true; retry=0; rx=Date.now(); postMessage({st:'open'}); };
+  s.onmessage=e=>{ if(s!==ws) return; rx=Date.now(); let m; try{ m=JSON.parse(e.data); }catch{ return; }
+    if(m&&m.t==='v'&&play&&Array.isArray(m.v)) for(const c of m.v){ try{ const buf=unb64(c.b64); play.postMessage({id:m.id,pcm:buf,sr:c.sr},[buf]); }catch{} } };
+  s.onclose=()=>{ if(s!==ws) return; open=false; postMessage({st:'closed'}); later(); }; s.onerror=()=>{}; }
+setInterval(()=>{ if(!open||!q.length) return; try{ ws.send(JSON.stringify({t:'v',v:q.splice(0,8)})); }catch{} },40);
+setInterval(()=>{ if(closed||!open) return; try{ ws.send('{"t":"ping"}'); }catch{} if(Date.now()-rx>12000){ const o=ws; ws=null; open=false; try{ o.close(); }catch{} retry=0; connect(); } },4000);
+onmessage=e=>{ const m=e.data||{};
+  if(m.url){ url=m.url; connect(); }
+  if(m.mic) m.mic.onmessage=ev=>{ const d=ev.data; if(d&&d.pcm){ q.push({sr:Math.round(d.sr),b64:b64(new Uint8Array(d.pcm))}); if(q.length>40) q.splice(0,q.length-40); } };
+  if(m.micOff) q.length=0;
+  if(m.play) play=m.play;
+  if(m.close){ closed=true; try{ ws&&ws.close(1000); }catch{} close(); } };
+`;
+function startVoiceNet(url){
+  if(!canWorklet()||!window.Worker||!window.MessageChannel) return null;
+  let w; try{ w=new Worker(URL.createObjectURL(new Blob([VOICE_NET],{type:'application/javascript'}))); }catch{ return null; }
+  const net={ open:false, post(m,t){ try{ w.postMessage(m,t||[]); }catch{} }, close(){ net.post({close:1}); } };
+  w.onmessage=e=>{ if(e.data&&e.data.st) net.open=e.data.st==='open'; };
+  net.post({url});
+  // voice from the others: straight into hk-play once the playback side is up
+  whenVoicePlay(node=>{ const ch=new MessageChannel(); node.port.postMessage({port:ch.port1},[ch.port1]); net.post({play:ch.port2},[ch.port2]); });
+  return net; }
+const voicePlayWaiters=[];
+function whenVoicePlay(fn){ const st=localVoiceState; ensureVoicePlayCtx(); if(st.wk) fn(st.wk); else voicePlayWaiters.push(fn); }
+// Chrome cancels echo only for sound it plays out through WebRTC, not for sound played straight from Web Audio. So the
+// mixed voices go through a WebRTC connection to itself and are played from an <audio> element: the microphone's echo
+// cancellation can then hear them and take them out. Where that is not possible, they play directly.
+async function aecOut(ctx,node){
+  try{ if(!window.RTCPeerConnection||!ctx.createMediaStreamDestination) throw 0;
+    const dest=ctx.createMediaStreamDestination(), a=new RTCPeerConnection(), b=new RTCPeerConnection();
+    a.onicecandidate=e=>{ if(e.candidate) b.addIceCandidate(e.candidate).catch(()=>{}); }; b.onicecandidate=e=>{ if(e.candidate) a.addIceCandidate(e.candidate).catch(()=>{}); };
+    const el=new Audio(); el.autoplay=true; el.setAttribute('playsinline','');
+    const got=new Promise(r=>{ b.ontrack=e=>{ el.srcObject=new MediaStream([e.track]); el.play().catch(()=>{}); r(); }; });
+    for(const t of dest.stream.getAudioTracks()) a.addTrack(t,dest.stream);
+    const hi=d=>{ d.sdp=d.sdp.replace(/a=fmtp:(\d+) minptime=10;useinbandfec=1/g,'a=fmtp:$1 minptime=10;useinbandfec=1;maxaveragebitrate=96000'); return d; };
+    const off=hi(await a.createOffer()); await a.setLocalDescription(off); await b.setRemoteDescription(off);
+    const ans=hi(await b.createAnswer()); await b.setLocalDescription(ans); await a.setRemoteDescription(ans);
+    await Promise.race([got,new Promise((_,j)=>setTimeout(()=>j(0),5000))]);
+    node.connect(dest); localVoiceState.aec={a,b,el}; return true;
+  }catch{ node.connect(ctx.destination); return false; } }
+// audio may only start after a tap or a key: wake playback (and the echo-cancelling player) on the next one
+for(const ev of ['pointerdown','keydown','touchend']) addEventListener(ev,()=>{ const st=localVoiceState; if(st.playCtx&&st.playCtx.state==='suspended') st.playCtx.resume().catch(()=>{}); if(st.aec&&st.aec.el.paused) st.aec.el.play().catch(()=>{}); },{capture:true,passive:true});
 var VOICE_NS='';
 function b64ToBuffer(b64){ const bin=atob(b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; }
 const localVoiceState={playCtx:null,masterGain:null,comp:null,playerNode:null,ringBuffers:new Map()};
@@ -3717,9 +3763,9 @@ function ensureVoicePlayCtx(){
     st.comp=st.playCtx.createDynamicsCompressor();
     st.comp.threshold.value=-18; st.comp.knee.value=12; st.comp.ratio.value=4; st.comp.attack.value=0.003; st.comp.release.value=0.15;
     st.playLp=st.playCtx.createBiquadFilter(); st.playLp.type='lowpass'; st.playLp.frequency.value=5800; st.playLp.Q.value=0.7;
-    st.playLp.connect(st.masterGain); st.masterGain.connect(st.comp); st.comp.connect(st.playCtx.destination);
+    st.playLp.connect(st.masterGain); st.masterGain.connect(st.comp); aecOut(st.playCtx,st.comp);
     st.wk=null; st.wkQueue=[]; st.wkFailed=!(canWorklet()&&st.playCtx.audioWorklet);
-    if(!st.wkFailed) st.playCtx.audioWorklet.addModule(voiceWorkletUrl()).then(()=>{ const node=new AudioWorkletNode(st.playCtx,'hk-play',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[1]}); node.connect(st.playLp); st.wk=node; for(const m of st.wkQueue) node.port.postMessage(m,[m.pcm]); st.wkQueue=[]; }).catch(()=>{ st.wkFailed=true; st.wkQueue=[]; legacy(); });
+    if(!st.wkFailed) st.playCtx.audioWorklet.addModule(voiceWorkletUrl()).then(()=>{ const node=new AudioWorkletNode(st.playCtx,'hk-play',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[1]}); node.connect(st.playLp); st.wk=node; for(const m of st.wkQueue) node.port.postMessage(m,[m.pcm]); st.wkQueue=[]; for(const fn of voicePlayWaiters.splice(0)) fn(node); }).catch(()=>{ st.wkFailed=true; st.wkQueue=[]; legacy(); });
     const legacy=()=>{
     st.playerNode=st.playCtx.createScriptProcessor(2048,1,1);
     const playSr=st.playCtx.sampleRate||48000, startThreshold=Math.floor(playSr*0.16);
@@ -3821,8 +3867,8 @@ async function cfRoom(){
     voiceUI();
     if(!navigator.mediaDevices?.getUserMedia){ voiceStatus.textContent='此瀏覽器不支援麥克風'; micEnabled=false; voiceUI(); return; }
     try{
-      const pipe=await startMicPipeline((b64,sr)=>{ outgoingVoiceChunks.push({sr,b64}); if(outgoingVoiceChunks.length>30) outgoingVoiceChunks.splice(0,outgoingVoiceChunks.length-30); },
-        sp=>{ if(sp!==localSpeaking){ localSpeaking=sp; renderVoiceHud(); } });
+      const pipe=await startMicPipeline((b64,sr)=>{ if(voiceNet) return; outgoingVoiceChunks.push({sr,b64}); if(outgoingVoiceChunks.length>30) outgoingVoiceChunks.splice(0,outgoingVoiceChunks.length-30); },
+        sp=>{ if(sp!==localSpeaking){ localSpeaking=sp; renderVoiceHud(); tick(true); } }, voiceNet);
       if(pipe){ if(!micEnabled||closed){ pipe.stop(); return; } voicePipe=pipe; localMicStream=pipe.stream; for(const tr of pipe.stream.getAudioTracks()) tr.onended=()=>disableVoiceMic(); voiceUI(); return; }
     }catch(e){ if(e&&(e.name==='NotAllowedError'||e.name==='NotFoundError')){ micEnabled=false; voiceStatus.textContent='無法開啟麥克風，請檢查瀏覽器權限'; voiceUI(); return; } }
     try{
@@ -3890,13 +3936,14 @@ async function cfRoom(){
   function onMsg(e){ lastRx=Date.now(); let m; try{ m=JSON.parse(e.data); }catch{ return; } if(!m||m.t==='pong') return;
     if(m.t==='all'){ peers.clear(); for(const q of (m.peers||[])) if(q&&q.id&&q.id!==me) peers.set(q.id,{p:q.p||{},micActive:!!q.mic,speaking:!!q.sp,fast:Date.now()}); emitSoon(); }
     else if(m.t==='u'&&m.id&&m.id!==me){ const v=peers.get(m.id)||{p:{}}; if(m.p&&typeof m.p==='object') v.p=m.p; v.micActive=!!m.mic; v.speaking=!!m.sp; v.fast=Date.now(); peers.set(m.id,v);
+      if(voicePipe&&voicePipe.duck){ const any=[...peers.values()].some(x=>x.speaking); if(any!==duckOn){ duckOn=any; voicePipe.duck(any); } }
       if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
     else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); } }
   // ten times a second: what changed, plus any voice; when nothing changes, a heartbeat every 2.5 s
-  let lastPAt=0;
-  function tick(){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8);
+  let lastPAt=0, lastSp=false;
+  function tick(force){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8), sp=localSpeaking&&!micMuted;
     const st={...cur,vc:micEnabled}, k=JSON.stringify(st), pDue=(k!==lastKey&&now-lastPAt>=100)||now-lastSendAt>=2500;
-    if(!pDue&&!voice.length) return;
+    if(!pDue&&!voice.length&&sp===lastSp&&!force) return; lastSp=sp;
     const msg={t:'u',mic:micEnabled,sp:localSpeaking&&!micMuted}; if(pDue){ msg.p=st; lastKey=k; lastPAt=now; } if(voice.length) msg.v=voice;
     try{ ws.send(JSON.stringify(msg)); lastSendAt=now; }catch{ NET.errs++; } }
   function connect(first){ clearTimeout(retryT); if(closed) return Promise.resolve(false);
@@ -3914,6 +3961,7 @@ async function cfRoom(){
     // still offline after a while: stop showing the others where they were
     if(!offlineT) offlineT=setTimeout(()=>{ offlineT=null; if(!wsOpen){ peers.clear(); localVoiceState.ringBuffers.clear(); emit(); } },15000); }
   if(!(await connect(true))){ closed=true; throw new Error('vr server unavailable'); }
+  let duckOn=false; const voiceNet=startVoiceNet(base+'/room/'+encodeURIComponent(playRoom)+'?id='+encodeURIComponent(me)+'&voice=1');
   NET.peers=peers; voiceUI();
   mpTimer=setInterval(tick,60);
   // every 4 s a ping (the server answers at once); nothing heard for 10 s means the line is dead even if the browser
@@ -3929,7 +3977,7 @@ async function cfRoom(){
     disableVoiceMic(); localVoiceState.ringBuffers.clear();
     if(voiceHud) voiceHud.innerHTML='';
     window.__toggleVoiceMic=null;
-    try{ ws&&ws.close(1000,'bye'); }catch{}
+    try{ ws&&ws.close(1000,'bye'); }catch{} if(voiceNet) voiceNet.close();
     peers.clear();
   }
   addEventListener('pagehide',e=>{ if(!e.persisted) disconnect(); });

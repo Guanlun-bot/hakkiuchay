@@ -811,6 +811,13 @@ function redLantern(x,y,z,lit,cord=.45){ const piv=new THREE.Group(); piv.positi
 const LAMP_BRONZE=new THREE.MeshStandardMaterial({color:0x5b4a34,metalness:.65,roughness:.42}),
   LAMP_GLASS=new THREE.MeshStandardMaterial({color:0xe9dcc0,transparent:true,opacity:.45,roughness:.08,metalness:.1,emissive:0xffb05a,emissiveIntensity:0,side:THREE.DoubleSide,depthWrite:false}),
   LAMP_FLAME=new THREE.MeshStandardMaterial({color:0xd8a060,emissive:0xffa040,emissiveIntensity:0,roughness:.5});
+// every lamp lights the ground as brightly as those at 學鳩齋; to stay light on phones and in VR a small pool of
+// lights follows the visitor, sitting in the lamps nearest to them (the glass of every lamp glows the same)
+const WALL_LAMPS=[], LAMP_POOL=[]; for(let i=0;i<6;i++){ const P=new THREE.PointLight(0xffb066,0,6,2); scene.add(P); LAMP_POOL.push(P); LANTERN_LIGHTS.push(P); }
+let lampPoolAt=0;
+function lampPoolStep(){ const now=performance.now(); if(now<lampPoolAt) return; lampPoolAt=now+400;
+  const near=WALL_LAMPS.map(p=>[p,(p.x-ME.x)**2+(p.z-ME.z)**2]).sort((a,b)=>a[1]-b[1]);
+  LAMP_POOL.forEach((P,i)=>{ const q=near[i]; if(q) P.position.copy(q[0]); }); }
 function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=Math.atan2(nx,nz); scene.add(g); LANTERNS.push(g);
   const B=LAMP_BRONZE, lathe=(pts,m,seg=24)=>{ const k=new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r,h])=>new THREE.Vector2(r,h)),seg),m); k.castShadow=true; g.add(k); return k; };
   // back plate with a shell top, and the scrolled arm reaching out and up to the lamp
@@ -828,7 +835,7 @@ function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,
   for(let i=0;i<12;i++){ const a=i*Math.PI/6, sc=new THREE.Mesh(new THREE.SphereGeometry(.02,8,6,0,Math.PI*2,0,Math.PI/2),B); sc.rotation.x=Math.PI; sc.position.set(Math.sin(a)*.13,.275,Math.cos(a)*.13); L.add(sc); }
   put(lathe([[0,.37],[.055,.37],[.06,.39],[.04,.42],[.025,.43],[0,.43]],B,16));
   const fin=new THREE.Mesh(new THREE.ConeGeometry(.015,.06,10),B); fin.position.y=.47; L.add(fin); const kn=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),B); kn.position.y=.44; L.add(kn);
-  if(lit){ const P=new THREE.PointLight(0xffb066,0,6,2); P.position.set(0,.14,.05); L.add(P); LANTERN_LIGHTS.push(P); }
+  g.updateMatrixWorld(true); WALL_LAMPS.push(L.localToWorld(new THREE.Vector3(0,.14,.05)));
   return g; }
 // for one building: a lamp over each of the two windows beside the door, on the face at local z = sg·4.30
 function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
@@ -842,7 +849,7 @@ function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
   doorLamps(axialHalls[0].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,-1,false);
   doorLamps(gateHall,hc,1,false); doorLamps(gateHall,hc,-1,false); }
 function lanternStep(dt,t){ const k=SKY_DAY<.35?1:SKY_DAY<.6?(.6-SKY_DAY)/.25:0;
-  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
+  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k; if(k>0) lampPoolStep();
   const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
   for(const l of LANTERN_SIM){ const v=windAt(t,l.ph), th=Math.min(.5,.009*v*v), g=9.8/l.len, wob=1+.25*Math.sin(t*2.6+l.ph*2);
     // the angle the wind would hold it at, about each axis: wind toward +x swings it about −z, toward +z about +x
@@ -4560,32 +4567,33 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
     box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
     OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
   // a bedside cabinet with framed panels: top with a moulded edge, a drawer and a door each in a raised frame, brass pulls, short tapered legs
-  function stand(x,z,yaw){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
-    const W2=.46, D2=.38, H2=.58, lg=.1;
-    for(const sx of [-1,1]) for(const sz of [-1,1]) cylinder(.016,.024,lg,dark,sx*(W2/2-.035),lg/2,sz*(D2/2-.035),g);
+  function stand(x,z,yaw,W2=.46){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
+    const D2=.38, H2=.58, lg=.1, bays=Math.max(1,Math.round(W2/.5)), bw=W2/bays;
+    for(const sx of (bays>1?[-1,-.33,.33,1]:[-1,1])) for(const sz of [-1,1]) cylinder(.016,.024,lg,dark,sx*(W2/2-.035),lg/2,sz*(D2/2-.035),g);
     box(W2,H2-lg,D2,frame,0,lg+(H2-lg)/2,0,g);                                   // carcass
     box(W2+.04,.025,D2+.04,dark,0,H2+.012,0,g); box(W2+.02,.018,D2+.02,frame,0,H2-.009,0,g);   // top and its moulding
     box(W2+.012,.03,D2+.012,dark,0,lg+.015,0,g);                                  // plinth band
     const fz=-D2/2-.004;
     // front: drawer above, door below, each a frame of four rails round a sunk panel
-    for(const [y0,y1] of [[H2-.17,H2-.03],[lg+.05,H2-.2]]){ const cy=(y0+y1)/2, h=y1-y0, w=W2-.06;
-      box(w,h,.008,frame,0,cy,fz,g);
-      box(w,.022,.016,dark,0,y1-.011,fz-.006,g); box(w,.022,.016,dark,0,y0+.011,fz-.006,g);
-      box(.022,h,.016,dark,-w/2+.011,cy,fz-.006,g); box(.022,h,.016,dark,w/2-.011,cy,fz-.006,g);
-      const ky=h>.2?y1-.07:cy, rose=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.006,14),brass); rose.rotation.x=Math.PI/2; rose.position.set(0,ky,fz-.017); g.add(rose);
-      const ring=new THREE.Mesh(new THREE.TorusGeometry(.022,.004,8,20),brass); ring.position.set(0,ky-.022,fz-.022); g.add(ring); }
+    for(let b=0;b<bays;b++){ const bx=-W2/2+bw*(b+.5);
+    for(const [y0,y1] of [[H2-.17,H2-.03],[lg+.05,H2-.2]]){ const cy=(y0+y1)/2, h=y1-y0, w=bw-.06;
+      box(w,h,.008,frame,bx,cy,fz,g);
+      box(w,.022,.016,dark,bx,y1-.011,fz-.006,g); box(w,.022,.016,dark,bx,y0+.011,fz-.006,g);
+      box(.022,h,.016,dark,bx-w/2+.011,cy,fz-.006,g); box(.022,h,.016,dark,bx+w/2-.011,cy,fz-.006,g);
+      const ky=h>.2?y1-.07:cy, rose=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.006,14),brass); rose.rotation.x=Math.PI/2; rose.position.set(bx,ky,fz-.017); g.add(rose);
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.022,.004,8,20),brass); ring.position.set(bx,ky-.022,fz-.022); g.add(ring); } }
     // framed sides
     for(const sx of [-1,1]){ const xx=sx*(W2/2+.004); box(.012,H2-lg-.08,D2-.06,frame,xx,lg+(H2-lg)/2,0,g);
       for(const [yy,hh,dd] of [[H2-.05,.02,D2-.06],[lg+.05,.02,D2-.06]]) box(.016,hh,dd,dark,xx+sx*.004,yy,0,g);
       for(const zz of [-(D2/2-.04),D2/2-.04]) box(.016,H2-lg-.1,.02,dark,xx+sx*.004,lg+(H2-lg)/2,zz,g); }
-    OB(x-.26,x+.26,z-.22,z+.22); }
-  // against the front wall (the one with the window) and the back wall: one shared cabinet centred on the window's
-  // middle (x = 39.2 − 5.125), a bed close on each side of it, heads to the wall. Room 22 (west wing): front face
-  // z≈15.6, back z≈23.6, end wall x≈31.72, partition x≈36.48; room 26 mirrors it about the axis.
-  let qi=0; const XC=4*courtAxis-5.125, gap=.25+.04+W/2;
+    const hw=Math.abs(Math.sin(yaw))>.5?.22:W2/2+.03, hd=Math.abs(Math.sin(yaw))>.5?W2/2+.03:.22; OB(x-hw,x+hw,z-hd,z+hd); }
+  // against the front wall (the one with the window) and the back wall: a bed along each side wall (the end wall and
+  // the partition), heads to the wall, and between them one long cabinet that both beds can reach. Room 22 (west
+  // wing): front face z≈15.6, back z≈23.6, end wall x≈31.72, partition x≈36.48; room 26 mirrors it about the axis.
+  let qi=0; const xa=31.72+W/2+.02, xb=36.48-W/2-.02, cab=(xb-xa)-W-.12;
   for(const [front,back] of [[15.6,23.6],[4.0,-4.0]]){ const s=Math.sign(back-front);
     for(const [wallZ,toward] of [[front,s],[back,-s]]){ const zc=wallZ+toward*(L/2+.02), yaw=toward>0?Math.PI:0;
-      bed(XC-gap,zc,yaw,qi++); bed(XC+gap,zc,yaw,qi++); stand(XC,wallZ+toward*.22,yaw); } } }
+      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++); stand((xa+xb)/2,wallZ+toward*.22,yaw,cab); } } }
 /* ================= 宅中人物（NPC）=================
    Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
    book on the west walk of the 第一進 and shows guests to the tea room; 阿春 keeps the tea station in the east 過水 and

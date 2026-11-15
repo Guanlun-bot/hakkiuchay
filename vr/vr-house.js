@@ -3396,7 +3396,7 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
   // Two paths carry the same state: broadcast (fast, for walking) and presence (slower, but it also reaches anyone who joins later).
   // Whichever copy is newer wins, so the room works even if one path is blocked.
   const peers=new Map();   // key -> {p, t, heard, skews[], fast}
-  let peersFn=null, cur=null, sentAt=0, sentKey='', timer=null, emitT=null, ready=false, tracked='', trackAt=0, trackT=null;
+  let peersFn=null, lostFn=null, cur=null, sentAt=0, sentKey='', timer=null, emitT=null, ready=false, tracked='', trackAt=0, trackT=null, dead=false, heartbeat=null, sweep=null, wd=null;
   const shift=(p,d)=>{ if(!p) return {}; const o={...p}; const at=v=>typeof v==='number'&&v>0?v+d:v;
     if(o.rec) o.rec={...o.rec,at:at(o.rec.at)}; if(o.gf) o.gf={...o.gf,at:at(o.gf.at)}; if(o.ir) o.ir={...o.ir,at:at(o.ir.at)}; o.e=at(o.e);
     if(o.dr&&typeof o.dr==='object'){ const dr={}; for(const key in o.dr){ const r=o.dr[key]; dr[key]=Array.isArray(r)?[r[0],at(r[1])]:r; } o.dr=dr; } return o; };
@@ -3515,14 +3515,23 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
     if(!trackT) trackT=setTimeout(track,Math.max(0,1500-(Date.now()-trackAt))); }
   NET.st='連線中';
   try { await new Promise((res,rej)=>{ const to=setTimeout(()=>{ NET.st='連線逾時'; rej(new Error('timeout')); },15000);
-    ch.subscribe(st=>{ NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); } else { ready=false; stopVoice(); NET.errs++; renderPeople(); } }); }); } catch(error){ await sb.removeChannel(ch); sb.realtime.disconnect(); throw error; }
+    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); }
+      else { ready=false; stopVoice(); NET.errs++; renderPeople(); if(heartbeat) lose(); } }); }); } catch(error){ dead=true; try{ await sb.removeChannel(ch); }catch{} sb.realtime.disconnect(); throw error; }
+  // A channel that drops (phone asleep, wifi switch, server restart) is not always rejoined by the library, and someone stuck on
+  // a dead channel sees nobody and is seen by nobody. So on any drop, or if nothing has been heard from the server for a while,
+  // close this one completely and hand back to connectRoom, which opens a fresh channel.
+  function close(){ if(dead) return; dead=true; ready=false; clearInterval(heartbeat); clearInterval(sweep); clearInterval(wd); clearTimeout(timer); clearTimeout(trackT); stopVoice(); try{ sb.removeChannel(ch); }catch{} try{ sb.realtime.disconnect(); }catch{} }
+  function lose(){ if(dead) return; close(); NET.st='重新連線中'; peers.clear(); emit(); const f=lostFn; lostFn=null; f&&f(); }
   NET.peers=peers; bindVoice();
-  const heartbeat=setInterval(()=>send(true),2500);
-  const sweep=setInterval(soon,3000);
-  addEventListener('pagehide',event=>{ stopVoice(); if(event.persisted){pushPresence(true);return;} clearInterval(heartbeat); clearInterval(sweep); try{ sb.removeChannel(ch); }catch{} });
-  return { presence(o){ const prev=cur; cur=o; if(timer) return Promise.resolve();
+  heartbeat=setInterval(()=>send(true),2500);
+  sweep=setInterval(soon,3000);
+  wd=setInterval(()=>{ if(!dead&&(!ready||!sb.realtime.isConnected())) lose(); },8000);
+  addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&!dead){ if(!sb.realtime.isConnected()) lose(); else send(true,true); } });
+  addEventListener('pagehide',event=>{ stopVoice(); if(event.persisted){pushPresence(true);return;} close(); });
+  return { disconnect(){ lostFn=null; close(); peers.clear(); },
+    presence(o){ const prev=cur; cur=o; if(timer) return Promise.resolve();
       const gap=moving(prev,o)?140:0, wait=Math.max(0,gap-(Date.now()-sentAt)); timer=setTimeout(()=>send(false),wait); return Promise.resolve(); },
-    onPeers(fn){ peersFn=fn; emit(); },
+    onPeers(fn,lost){ peersFn=fn; lostFn=lost||null; emit(); },
     mode(){ let fast=0, n=0; for(const v of peers.values()){ n++; if(v.fast&&Date.now()-v.fast<6000) fast++; } return n?(fast?'即時':'慢速'):''; } }; }
 let audioMode=LS.get('hk-audio-mode')||'on';
 const audioSel=$('#audio-mode');
@@ -3763,7 +3772,10 @@ async function localRoom(){
   };
 }
 
+let connecting=false, retryT=null;
+function retryRoom(ms){ clearTimeout(retryT); retryT=setTimeout(connectRoom,ms); }
 async function connectRoom(){
+  if(connecting) return; clearTimeout(retryT);
   if(playMode==='solo'){
     room?.disconnect?.(); room=null;
     for(const [,o] of others) scene.remove(o.av.g);
@@ -3775,13 +3787,15 @@ async function connectRoom(){
     if(vh) vh.innerHTML='';
     renderPeople(); return;
   }
+  connecting=true; try{ await connectRoomOnce(); } finally{ connecting=false; } }
+async function connectRoomOnce(){
   await configReady;
   try{ if(window.claude&&typeof window.claude.use==='function') room=await window.claude.use('room'); }catch{ room=null; }
   if(!room&&window.VR_CONFIG?.url&&window.VR_CONFIG?.key){ try{ room=await supabaseRoom(); window.__toggleVoiceMic=()=>document.getElementById('voice-toggle')?.click(); }catch{ room=null; NET.errs++; if(!NET.st) NET.st='連線失敗'; } }
   if(!room){ try{ room=await localRoom(); }catch{ room=null; NET.errs++; NET.st=window.VR_CONFIG?.url?'連線失敗，稍後重試':'需透過 server.py 啟動'; } }
-  if(!room) { renderPeople(); setTimeout(connectRoom,5000); return; }
+  if(!room) { renderPeople(); retryRoom(4000); return; }
   room.onPeers(ch=>{ const seen=new Set(); for(const p of ch.peers){ if(p.sameTab||p.kind!=='viewer') continue; seen.add(p.peer); let o=others.get(p.peer); if(!o){ o={av:makeAvatar(0x888888),p:{}}; others.set(p.peer,o); } o.p=p.presence||{}; o.lastNet=performance.now(); }
-    for(const [k,o] of others) if(!seen.has(k)){ scene.remove(o.av.g); others.delete(k); } renderPeople(); }, ()=>{ room=null; renderPeople(); });
+    for(const [k,o] of others) if(!seen.has(k)){ scene.remove(o.av.g); others.delete(k); } renderPeople(); }, ()=>{ room=null; renderPeople(); if(playMode!=='solo') retryRoom(1500); });
   lastSent=''; pushPresence(); renderPeople(); }
 
 /* ---------------- people: chat, run / jump / crouch, a network check panel, adaptive resolution ---------------- */

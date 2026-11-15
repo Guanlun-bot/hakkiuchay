@@ -315,20 +315,17 @@ porch.position.set(0,.018,4.54);
 porch.userData={type:'floor'};
 mainHall.add(porch); pickables.push(porch);
 // Close the wall heads with an opaque ceiling fitted inside the eaves.
-tiledRoof(mainHall,18.02,5.62,3.70,RISE,.65);
+tiledRoof(mainHall,18.02,5.62,3.50,RISE,.65);
 // Open roof (徹上明造): purlins follow the tile curve, tie beams and struts carry them.
-{ const under=v=>3.70+RISE*(1-v)**1.26-.11;
+{ const under=v=>3.50+RISE*(1-v)**1.26-.11;
   for(let k=0;k<=8;k++){ const v=k/11; for(const side of (k?[-1,1]:[1])){
     const p=new THREE.Mesh(new THREE.CylinderGeometry(k?.07:.11,k?.07:.11,16.3,12),M.woodDark);
     p.rotation.z=Math.PI/2; p.position.set(0,under(v)-(k?.075:.1),side*v*5.62); mainHall.add(p); } }
-  // close the strip between the wall heads and the eaves
-  box(16.6,.24,.3,mWhite(8,.2),0,3.80,-4.15,mainHall,BLOCK);
-  box(16.6,.24,.3,mWhite(8,.2),0,3.80,4.15,mainHall,BLOCK);
   for(const x of [-6.2,-2.1,2.1,6.2]){
-    box(.17,.25,8.6,M.woodDark,x,3.59,0,mainHall);              // 大通
-    box(.15,.17,4.4,M.woodDark,x,3.70+.44*RK,0,mainHall);              // 二通
-    for(const z of [-1.9,1.9]) box(.14,.34*RK,.14,M.woodDark,x,3.70+.18*RK,z,mainHall);   // 瓜筒
-    box(.12,.56*RK,.12,M.woodDark,x,3.70+.80*RK,0,mainHall);              // 脊下短柱
+    box(.17,.25,8.0,M.woodDark,x,3.48,0,mainHall);              // 大通
+    box(.15,.17,4.4,M.woodDark,x,3.50+.44*RK,0,mainHall);              // 二通
+    for(const z of [-1.9,1.9]) box(.14,.34*RK,.14,M.woodDark,x,3.50+.18*RK,z,mainHall);   // 瓜筒
+    box(.12,.56*RK,.12,M.woodDark,x,3.50+.80*RK,0,mainHall);              // 脊下短柱
   } }
 /* Identical ranges rotated about the centre of the court. */
 const courtAxis=9.8;
@@ -403,11 +400,6 @@ function widenHallDoor(g,z){ const D=HALL_DOOR, gone=[];
   box(2*D+.35,.17,.38,stone,0,2.61,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
 for(const {hall} of axialHalls) widenHallDoor(hall,entryWall);
 widenHallDoor(axialHalls[1].hall,-entryWall); widenHallDoor(gateHall,entryWall); widenHallDoor(gateHall,-entryWall);
-// Columns along the outer edge of the eaves on all four sides, joined by a beam.
-{ const E=4.1, H=3.5, cols=[];
-  for(const a of [-E,E]) for(const b of [-E,E]) cols.push([a,b]);
-  for(const [x,dz] of cols){ column(x,courtAxis+dz,H); EARLY_OBST.push({x0:x-.2,x1:x+.2,z0:courtAxis+dz-.2,z1:courtAxis+dz+.2}); }
-  for(const sz of [-1,1]){ box(2*E+.2,.16,.14,timber,0,H+.02,courtAxis+sz*E); box(.14,.16,2*E+.2,timber,sz*E,H+.02,courtAxis); } }
 // Two-leaf board doors with a traditional sliding bar (門閂) on the inside.
 const DOORS={};
 function buildDoors(g,key,hw=1){
@@ -462,19 +454,6 @@ function addDoor(key,x,z,rot,half,h,wallT,inside){
   for(const [cx,w,e] of [[2*A,'d14','d17'],[4*A,'d26','d29']]){
     addDoor(w,cx,2*A-4.15,P,.92,2.52,.3,p=>p.z>2*A-4.15&&Math.abs(p.x-cx)<2.65);
     addDoor(e,cx,4.15,0,.92,2.52,.3,p=>p.z<4.15&&Math.abs(p.x-cx)<2.65); }
-  // doors in the end walls (1.3 m): the bar is on the side room's side
-  const west=(x0,x1)=>p=>p.z>2*A-4.49&&p.x>x0&&p.x<x1, east=(x0,x1)=>p=>p.z<4.49&&p.x>x0&&p.x<x1;
-  for(const [kw,ke,x,x0,x1] of [['d1','d2',-10.87,-14.1,-7.64],['d9','d10',9.8,7.64,11.96],['d21','d22',29.4,27.24,31.56]]){
-    addDoor(kw,x,2*A-4.584,P,.65,2.45,.2,west(x0,x1)); addDoor(ke,x,4.584,0,.65,2.45,.2,east(x0,x1)); }
-  for(const [kw,ke,x] of [['d12','d13',12.1],['d24','d25',31.7]]){
-    addDoor(kw,x,19.5,-P/2,.65,2.45,.28,p=>p.x>x&&p.x<x+4.85&&p.z>2*A-4.3);
-    addDoor(ke,x,.1,-P/2,.65,2.45,.28,p=>p.x>x&&p.x<x+4.85&&p.z<4.3); }
-  // doors in the partitions (1.6 m): the bar is in the side room
-  for(const [cx,keys,both] of [[0,['d5','d6'],false],[2*A,['d15','d16','d18','d19'],true],[4*A,['d27','d28','d30','d31'],true]]){
-    const sides=both?[[2*A-.3+.6,p=>p.z>2*A-4.3],[-.3,p=>p.z<4.3]]:[[19.9,p=>p.z>2*A-4.3]]; let k=0;
-    for(const [dz,inWing] of sides){
-      addDoor(keys[k++],cx-2.65,dz,P/2,.8,2.2,.14,p=>inWing(p)&&p.x<cx-2.65&&p.x>cx-7.64);
-      addDoor(keys[k++],cx+2.65,dz,-P/2,.8,2.2,.14,p=>inWing(p)&&p.x>cx+2.65&&p.x<cx+7.64); } }
   // the gate in the low front wall
   addDoor('d32',FIRST.fx1-.15,A,P/2,1.3,1.4,.3,p=>p.x>FIRST.fx0&&p.x<FIRST.fx1);
 }
@@ -515,13 +494,13 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
     if(ax==='x'){ g.position.set(at,0,mid); g.rotation.y=Math.PI/2; } else g.position.set(mid,0,at);
     if(ext&&len>3.2){ windowBay(-len/2,len/2,0,Math.min(1.6,len-1.6),0,1.04,2.37,g); box(len,.43,.3,mWhite(len/2,.3),0,3.475,0,g,BLOCK); }
     else { box(len,.9,.3,mBrick(len,.9),0,.45,0,g,BLOCK); box(len,2.78,.3,mWhite(len/2,1.7),0,2.29,0,g,BLOCK); }
-    box(len,.24,.3,mWhite(len/2,.2),0,3.8,0,g,BLOCK); }
+  }
   // roof: ridge along the long side, eaves flush with the walls so nothing pokes into the neighbours
   const rg=new THREE.Group(); rg.position.set(cx,0,cz); if(D>W) rg.rotation.y=Math.PI/2; scene.add(rg);
-  tiledRoof(rg,Math.max(W,D),Math.min(W,D)/2,3.70,rise,.2);
-  { const half=Math.min(W,D)/2, gable=new THREE.Shape(); gable.moveTo(-half,3.62); for(let k=0;k<=20;k++){ const u=-half+2*half*k/20; gable.lineTo(u,3.69+rise*(1-Math.abs(u)/half)**1.26); } gable.lineTo(half,3.62); gable.closePath();
+  tiledRoof(rg,Math.max(W,D),Math.min(W,D)/2,3.50,rise,.2);
+  { const half=Math.min(W,D)/2, gable=new THREE.Shape(); gable.moveTo(-half,3.45); for(let k=0;k<=20;k++){ const u=-half+2*half*k/20; gable.lineTo(u,3.50+rise*(1-Math.abs(u)/half)**1.26); } gable.lineTo(half,3.45); gable.closePath();
     for(const e of [-1,1]){ const f=new THREE.Mesh(new THREE.ShapeGeometry(gable),mWhite(1,1)); f.material.side=THREE.DoubleSide; if(D>W){ f.position.set(cx,0,cz+e*D/2); } else { f.position.set(cx+e*W/2,0,cz); f.rotation.y=Math.PI/2; } scene.add(f); } }
-  for(const x of (D>W?[cx]:[x0+W/3,x1-W/3])) for(const z of (D>W?[z0+D/3,z1-D/3]:[cz])) box(.15,.2,.15,M.woodDark,x,3.62,z);
+  for(const x of (D>W?[cx]:[x0+W/3,x1-W/3])) for(const z of (D>W?[z0+D/3,z1-D/3]:[cz])) box(.15,.2,.15,M.woodDark,x,3.48,z);
   SIDE_ROOMS.push({name,x0,x1,z0,z1}); }
 { const WZ=4.488, mirror=z=>2*courtAxis-z, hallE=axialHalls[1].hall, hallW=axialHalls[0].hall;
   for(const s of [1,-1]){ const Z=z=>s>0?z:mirror(z), lo=(a,b)=>s>0?[a,b]:[mirror(b),mirror(a)];
@@ -546,7 +525,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
   for(const s of [-1,1]){ const pz=courtAxis+s*(gw+.3); box(.6,1.55,.6,mBrick(.5,1.2),x1-.15,.775,pz,scene,BLOCK); box(.7,.1,.7,stone,x1-.15,1.6,pz); box(.5,.12,.5,cap,x1-.15,1.71,pz); }
   EARLY_OBST.push({x0:x1-.5,x1:x1+.2,z0:courtAxis-gw-.65,z1:courtAxis-gw+.05},{x0:x1-.5,x1:x1+.2,z0:courtAxis+gw-.05,z1:courtAxis+gw+.65}); }
 
-const TREE={x:3.62,z:12.22};
+const TREE={x:1.0,z:11.3};
 {
   const size=1.65, edge=.10;
   const {x,z}=TREE;
@@ -610,16 +589,15 @@ const TREE={x:3.62,z:12.22};
     }
   });
   pine.add(foliage); pine.userData.foliage=foliage;
-  // 3D physics collision-resolution solver for courtyard pine against veranda eaves, beams, columns, and stone bench
-  { const cols=[[-4.1,5.7],[4.1,5.7],[-4.1,13.9],[4.1,13.9]], eaveBoxes=[
+  // 3D physics collision-resolution solver for courtyard pine against veranda eaves, beams, and stone bench
+  { const eaveBoxes=[
       {x0:3.7,x1:9,y0:3.25,y1:6,z0:4,z1:15.6},{x0:-9,x1:-3.7,y0:3.25,y1:6,z0:4,z1:15.6},
       {x0:-9,x1:9,y0:3.25,y1:6,z0:13.45,z1:16},{x0:-9,x1:9,y0:3.25,y1:6,z0:3.5,z1:6.15},
-      {x0:TREE.x-.9,x1:TREE.x+.9,y0:0,y1:.6,z0:13.45,z1:14.15}
+      {x0:TREE.x-.9,x1:TREE.x+.9,y0:0,y1:.6,z0:TREE.z+1.4-.35,z1:TREE.z+1.4+.35}
     ];
     for(let it=0;it<6;it++){
-      for(const [cx,cz] of cols){ const dx=pine.position.x-cx, dz=pine.position.z-cz, d=Math.hypot(dx,dz), minD=.85; if(d<minD&&d>1e-4){ const p=minD-d; pine.position.x+=dx/d*p; pine.position.z+=dz/d*p; } }
-      if(pine.position.x>3.15) pine.position.x-=(pine.position.x-3.15)*.6;
-      if(pine.position.z>12.55) pine.position.z-=(pine.position.z-12.55)*.6;
+      if(pine.position.x>3.0) pine.position.x-=(pine.position.x-3.0)*.6;
+      if(pine.position.z>12.5) pine.position.z-=(pine.position.z-12.5)*.6;
     }
     const m4=new THREE.Matrix4(), pos=new THREE.Vector3(), quat=new THREE.Quaternion(), scl=new THREE.Vector3();
     for(let i=0;i<132;i++){ foliage.getMatrixAt(i,m4); m4.decompose(pos,quat,scl); const r=Math.max(scl.x,scl.y,scl.z)*.9;
@@ -1489,7 +1467,7 @@ function showBeans(after){ const body=openPanel('選豆子',`<p class="meta">磨
 const DRINKS=[['濃縮','Espresso','單份濃縮，30 毫升'],['美式','Americano','濃縮加熱水'],['拿鐵','Latte','濃縮加大量蒸奶'],['卡布奇諾','Cappuccino','濃縮、蒸奶、奶泡各三分之一'],['瑪奇朵','Macchiato','濃縮點上一匙奶泡'],['摩卡','Mocha','濃縮、巧克力、蒸奶'],['馥列白','Flat White','雙份濃縮配薄奶泡'],['阿法奇朵','Affogato','濃縮淋在香草冰淇淋上']];
 
 /* ---------------- 院子: stone bench under the pine ---------------- */
-{ const bz=13.8, bx=TREE.x; const stoneM=new THREE.MeshStandardMaterial({color:0x8d877d,roughness:.95});
+{ const bz=TREE.z+1.4, bx=TREE.x; const stoneM=new THREE.MeshStandardMaterial({color:0x8d877d,roughness:.95});
   const sis=[-.38,.38].map(o=>addSeat(bx+o,bz,0,'yard'));
   box(1.45,.09,.44,stoneM,bx,.42,bz,scene,{type:'seat',si:sis[0]}); for(const o of [-.5,.5]) box(.22,.38,.36,stoneM,bx+o,.19,bz);
   const h2=box(.7,.09,.44,stoneM,bx+.38,.425,bz,scene,{type:'seat',si:sis[1]}); h2.visible=false;

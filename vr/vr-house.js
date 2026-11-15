@@ -89,6 +89,12 @@ T.wood = ctex(256,512,(g,w,h)=>{ g.fillStyle='#5a3825'; g.fillRect(0,0,w,h); con
   for(let i=0;i<90;i++){ g.strokeStyle=`rgba(${R()<.5?'30,16,8':'120,80,50'},${.1+R()*.2})`; g.lineWidth=1+R()*2; g.beginPath(); let x=R()*w; g.moveTo(x,0); for(let y=0;y<=h;y+=32){ x+=(R()-.5)*3; g.lineTo(x,y);} g.stroke(); } });
 T.woodDark = ctex(256,512,(g,w,h)=>{ g.fillStyle='#3a2418'; g.fillRect(0,0,w,h); const R=rnd(23);
   for(let i=0;i<80;i++){ g.strokeStyle=`rgba(${R()<.5?'12,6,3':'90,60,40'},${.12+R()*.2})`; g.lineWidth=1+R()*2; g.beginPath(); let x=R()*w; g.moveTo(x,0); for(let y=0;y<=h;y+=32){ x+=(R()-.5)*3; g.lineTo(x,y);} g.stroke(); } });
+T.doorWood = ctex(512,1024,(g,w,h)=>{ const R=rnd(57), P=4, pw=w/P;
+  for(let p=0;p<P;p++){ g.fillStyle=shade('#9b7452',(R()-.5)*.1); g.fillRect(p*pw,0,pw,h);
+    for(let i=0;i<34;i++){ g.strokeStyle=`rgba(${R()<.55?'70,42,22':'190,150,110'},${.12+R()*.22})`; g.lineWidth=.8+R()*1.8; g.beginPath(); let x=p*pw+R()*pw; g.moveTo(x,0); for(let y=0;y<=h;y+=24){ x+=(R()-.5)*2.4; x=Math.max(p*pw+2,Math.min((p+1)*pw-2,x)); g.lineTo(x,y);} g.stroke(); }
+    for(let k=0;k<2;k++){ const kx=p*pw+pw*(.25+R()*.5), ky=R()*h; for(let r=3;r<16;r+=3){ g.strokeStyle=`rgba(80,48,26,${.35-r*.015})`; g.lineWidth=1.2; g.beginPath(); g.ellipse(kx,ky,r*.55,r*1.6,0,0,Math.PI*2); g.stroke(); } }
+    g.fillStyle='rgba(45,26,14,.75)'; g.fillRect(p*pw,0,2,h); }
+  speck(g,w,h,900,['#5a3a22','#c2a07a'],.18); });
 T.boards = ctex(512,512,(g,w,h)=>{ const R=rnd(31); for(let i=0;i<8;i++){ g.fillStyle=shade('#4a2f1f',(R()-.5)*.08); g.fillRect(0,i*64,w,62); g.fillStyle='#24160d'; g.fillRect(0,i*64+62,w,2);} speck(g,w,h,1200,['#1b0f08','#6e4a33'],.3); });
 T.roof = ctex(512,512,(g,w,h)=>{
   const random=rnd(41);
@@ -301,9 +307,9 @@ for(const side of [-1,1]){
   facadePanel(outerLeft,outerRight,3.26,facadeTop,entryWall,mBrick((outerRight-outerLeft)*.78,.45));   // brick right up to the eaves
 }
 facadePanel(-bayEdge,bayEdge,3.26,facadeTop,entryWall,mBrick(bayEdge*2*.78,.45));
-facadePanel(-1,1,2.56,3.26,entryWall,mBrick(1.56,.73));
-for(const x of [-1.08,1.08]) box(.19,2.59,.37,stone,x,1.295,entryWall,mainHall);
-box(2.35,.17,.38,stone,0,2.61,entryWall,mainHall);
+facadePanel(-1,1,2.66,3.26,entryWall,mBrick(1.56,.6));
+for(const x of [-1.08,1.08]) box(.19,2.69,.37,stone,x,1.345,entryWall,mainHall);
+box(2.35,.17,.38,stone,0,2.71,entryWall,mainHall);
 box(2.05,.3,.26,M.woodDark,0,.15,entryWall,mainHall);
 const porch=new THREE.Mesh(new THREE.PlaneGeometry(6.32,1.12),std(stonePaving,3,1));
 porch.rotation.x=-Math.PI/2;
@@ -373,10 +379,10 @@ function facadeAt(g,sg){ const z=sg*entryWall, gone=[];
   for(const side of [-1,1]){ const [oL,oR]=side<0?[-8.3,-bayEdge]:[bayEdge,8.3], [iL,iR]=side<0?[-bayEdge,-1]:[1,bayEdge];
     windowBay(iL,iR,side*2.02,1.50,z,1.0,2.33,g); windowBay(oL,oR,side*(6.35+8.12)/2,8.12-6.35,z,1.04,2.37,g);
     facadePanel(oL,oR,3.26,facadeTop,z,mBrick((oR-oL)*.78,.45),g); }
-  facadePanel(-bayEdge,bayEdge,3.26,facadeTop,z,mBrick(bayEdge*2*.78,.45),g); facadePanel(-1,1,2.56,3.26,z,mBrick(1.56,.73),g);
-  for(const x of [-1.08,1.08]) box(.19,2.59,.37,stone,x,1.295,z,g);
-  box(2.35,.17,.38,stone,0,2.61,z,g); box(2.05,.3,.26,M.woodDark,0,.15,z,g);
-  const pl=new THREE.Group(); pl.position.set(0,2.98,sg*4.36); if(sg<0) pl.rotation.y=Math.PI; g.add(pl);
+  facadePanel(-bayEdge,bayEdge,3.26,facadeTop,z,mBrick(bayEdge*2*.78,.45),g); facadePanel(-1,1,2.66,3.26,z,mBrick(1.56,.6),g);
+  for(const x of [-1.08,1.08]) box(.19,2.69,.37,stone,x,1.345,z,g);
+  box(2.35,.17,.38,stone,0,2.71,z,g); box(2.05,.3,.26,M.woodDark,0,.15,z,g);
+  const pl=new THREE.Group(); pl.position.set(0,3.06,sg*4.36); if(sg<0) pl.rotation.y=Math.PI; g.add(pl);
   box(1.5,.52,.05,M.woodDark,0,0,0,pl); box(1.36,.38,.02,new THREE.MeshStandardMaterial({color:0x2a201a,roughness:.6}),0,0,.03,pl);
   const porch=new THREE.Mesh(new THREE.PlaneGeometry(6.32,1.12),std(stonePaving,3,1)); porch.rotation.x=-Math.PI/2; porch.position.set(0,.018,sg*4.54); porch.userData={type:'floor'}; g.add(porch); pickables.push(porch); }
 facadeAt(axialHalls[1].hall,-1);   // 南廳, toward the 第二進
@@ -390,18 +396,18 @@ function widenHallDoor(g,z){ const D=HALL_DOOR, gone=[];
   for(const m of gone){ g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
   const w=1.2, c=(D+bayEdge)/2+.02;
   for(const side of [-1,1]) windowBay(side<0?-bayEdge:D,side<0?-D:bayEdge,side*c,w,z,1.0,2.33,g);
-  facadePanel(-D,D,2.56,3.26,z,mBrick(2*D*.78,.73),g);
-  for(const x of [-D-.08,D+.08]) box(.19,2.59,.37,stone,x,1.295,z,g);
-  box(2*D+.35,.17,.38,stone,0,2.61,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
+  facadePanel(-D,D,2.66,3.26,z,mBrick(2*D*.78,.6),g);
+  for(const x of [-D-.08,D+.08]) box(.19,2.69,.37,stone,x,1.345,z,g);
+  box(2*D+.35,.17,.38,stone,0,2.71,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
 for(const {hall} of axialHalls) widenHallDoor(hall,entryWall);
 widenHallDoor(axialHalls[1].hall,-entryWall); widenHallDoor(gateHall,entryWall); widenHallDoor(gateHall,-entryWall);
 // Two-leaf board doors with a traditional sliding bar (門閂) on the inside.
 const DOORS={};
 function buildDoors(g,key,hw=1){
-  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.doorWood,roughness:.72}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*.985*hw,0,4.0); pv.scale.x=hw; g.add(pv);
-    const leaf=box(.97,2.48,.055,plank,-side*.485,1.3,0,pv,pick);
+    const leaf=box(.97,2.58,.055,plank,-side*.485,1.35,0,pv,pick);
     for(const y of [.55,1.3,2.05]) box(.9,.09,.03,M.woodDark,-side*.485,y,-.04,pv);               // battens inside
     for(const y of [1.17,1.33]) box(.06,.07,.06,M.woodDark,-side*.12,y-.08+.08,-.06,pv);          // bar brackets
     const ring=new THREE.Mesh(new THREE.TorusGeometry(.045,.008,8,20),iron); ring.position.set(-side*.86,1.25,.04); pv.add(ring);
@@ -426,7 +432,7 @@ function doorPose(d){ // k: 1 open, 0 shut; barK: 1 bar in, 0 bar stored
 const DOOR_BLOCKS=[];
 function addDoor(key,x,z,rot,half,h,wallT,inside){
   const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
-  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.doorWood,roughness:.72}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const zi=-(wallT/2+.03), lw=half-.006, lh=h-.1, leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*half,0,zi); g.add(pv);
     box(lw,lh,.05,plank,-side*lw/2,lh/2+.05,0,pv,pick);
@@ -442,15 +448,13 @@ function addDoor(key,x,z,rot,half,h,wallT,inside){
   DOOR_BLOCKS.push(alongZ?{key,x0:x-.15,x1:x+.15,z0:z-half,z1:z+half}:{key,x0:x-half,x1:x+half,z0:z-.15,z1:z+.15}); }
 { const A=courtAxis, P=Math.PI, inHall=(x0,x1)=>p=>p.x>x0&&p.x<x1&&Math.abs(p.z-A)<5.3;
   // hall doors (1.84 m)
-  addDoor('d11',13.95,A,P/2,.92,2.52,.3,inHall(5.65,13.95));
-  addDoor('d20',25.25,A,-P/2,.92,2.52,.3,inHall(25.25,33.55));
-  addDoor('d23',33.55,A,P/2,.92,2.52,.3,inHall(25.25,33.55));
+  addDoor('d11',13.95,A,P/2,.92,2.62,.3,inHall(5.65,13.95));
+  addDoor('d20',25.25,A,-P/2,.92,2.62,.3,inHall(25.25,33.55));
+  addDoor('d23',33.55,A,P/2,.92,2.62,.3,inHall(25.25,33.55));
   // wing doors of the 第二進 and 第一進 (the 明間 behind each)
   for(const [cx,w,e] of [[2*A,'d14','d17'],[4*A,'d26','d29']]){
-    addDoor(w,cx,2*A-4.15,P,.92,2.52,.3,p=>p.z>2*A-4.15&&Math.abs(p.x-cx)<2.65);
-    addDoor(e,cx,4.15,0,.92,2.52,.3,p=>p.z<4.15&&Math.abs(p.x-cx)<2.65); }
-  // the gate in the low front wall
-  addDoor('d32',FIRST.fx1-.15,A,P/2,1.3,1.4,.3,p=>p.x>FIRST.fx0&&p.x<FIRST.fx1);
+    addDoor(w,cx,2*A-4.15,P,.92,2.62,.3,p=>p.z>2*A-4.15&&Math.abs(p.x-cx)<2.65);
+    addDoor(e,cx,4.15,0,.92,2.62,.3,p=>p.z<4.15&&Math.abs(p.x-cx)<2.65); }
 }
 for(const k in DOORS) doorPose(DOORS[k]);
 // Low stone edging and a grass surface that stays walkable.
@@ -474,7 +478,7 @@ const lawnTexture=ctex(512,512,(g,w,h)=>{
 // ---- 閩南合院 fill: 東大房、西大房 flank the 正廳 so the 正身 is one full row; 東、西過水間 flank the 南廳 between
 //      the two 進. With them the whole compound is one clean rectangle in plan. Left empty for now, with doors.
 // cut a doorway into one end wall of a cloned range; (wx,wz) is a point on that wall, in world space
-function cutDoor(g,wx,wz,width=1.3,height=2.45){ g.updateMatrixWorld(true); const L=g.worldToLocal(new THREE.Vector3(wx,0,wz)), side=Math.sign(L.x), mats=[];
+function cutDoor(g,wx,wz,width=1.3,height=2.55){ g.updateMatrixWorld(true); const L=g.worldToLocal(new THREE.Vector3(wx,0,wz)), side=Math.sign(L.x), mats=[];
   const gone=[]; g.children.forEach(m=>{ const p=m.geometry&&m.geometry.parameters; if(m.isMesh&&p&&Math.abs(p.depth-8.6)<.01&&Math.abs(p.width-.3)<.01&&Math.abs(m.position.x-side*8.15)<.05) gone.push(m); });
   let brick=null, white=null; for(const m of gone){ if(m.geometry.parameters.height<1) brick=m.material; else white=m.material; g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
   brick=brick||mBrick(4,.9); white=white||mWhite(2,1.7); const x=side*8.15, a=L.z-width/2, b=L.z+width/2;
@@ -509,7 +513,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
     // close the slits where a long range's end wall stops short of the side hall's end wall
     for(const x of [-7.5,7.5,12.1,27.1,31.7]) box(.28,3.92,.2,mWhite(.2,2),x,1.96,Z(4.394),scene,BLOCK);
     // doors: 正廳 to 大房, 南廳 to 過水, 過水 to the 第二進 wing; 過廳 to 前過水, 前過水 to the 第一進 wing
-    cutDoor(hallW,-10.87,Z(4.584)); cutDoor(hallE,9.8,Z(4.584)); cutDoor(firstWings[s>0?0:1],11.964,Z(.1)); cutDoor(gateHall,29.4,Z(4.584)); cutDoor(frontWings[s>0?0:1],31.564,Z(.1)); } }
+    cutDoor(hallW,-10.87,Z(4.584)); cutDoor(hallE,9.8,Z(4.584)); cutDoor(firstWings[s>0?0:1],11.964,Z(.1)); cutDoor(gateHall,29.4,Z(4.584)); } }
 // 前庭 in front of the 第一進, closed by a low brick wall (矮牆) with an opening and two square posts, as in front of a 大厝
 { const x0=FIRST.fx0, x1=FIRST.fx1, z0=-4.3, z1=2*courtAxis+4.3, W=x1-x0, D=z1-z0, H=1.15, gw=1.3;
   const pave=new THREE.Mesh(new THREE.PlaneGeometry(W,D),std(stonePaving,W/2.4,D/2.4,{color:0xc9c2b6})); pave.rotation.x=-Math.PI/2; pave.position.set((x0+x1)/2,-.008,courtAxis); pave.userData={type:'floor'}; scene.add(pave); pickables.push(pave); FIRST.pave=pave;
@@ -520,7 +524,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
   for(const s of [-1,1]){ const pz=courtAxis+s*(gw+.3); box(.6,1.55,.6,mBrick(.5,1.2),x1-.15,.775,pz,scene,BLOCK); box(.7,.1,.7,stone,x1-.15,1.6,pz); box(.5,.12,.5,cap,x1-.15,1.71,pz); }
   EARLY_OBST.push({x0:x1-.5,x1:x1+.2,z0:courtAxis-gw-.65,z1:courtAxis-gw+.05},{x0:x1-.5,x1:x1+.2,z0:courtAxis+gw-.05,z1:courtAxis+gw+.65}); }
 
-const TREE={x:1.0,z:11.3};
+const TREE={x:1.0,z:12.3};
 {
   const size=1.65, edge=.10;
   const {x,z}=TREE;
@@ -584,15 +588,19 @@ const TREE={x:1.0,z:11.3};
     }
   });
   pine.add(foliage); pine.userData.foliage=foliage;
+  // crown: everything above the first fork hangs from a pivot there, so it can sway on its own
+  { const crown=new THREE.Group(); crown.position.set(.12,1.4,.03); pine.add(crown);
+    for(const c of [...pine.children]) if(c!==crown&&(c===foliage||c.position.y>1.55)){ pine.remove(c); c.position.sub(crown.position); crown.add(c); }
+    foliage.position.sub(new THREE.Vector3()); pine.userData.crown=crown; }
   // 3D physics collision-resolution solver for courtyard pine against veranda eaves, beams, and stone bench
   { const eaveBoxes=[
       {x0:3.7,x1:9,y0:3.25,y1:6,z0:4,z1:15.6},{x0:-9,x1:-3.7,y0:3.25,y1:6,z0:4,z1:15.6},
       {x0:-9,x1:9,y0:3.25,y1:6,z0:13.45,z1:16},{x0:-9,x1:9,y0:3.25,y1:6,z0:3.5,z1:6.15},
-      {x0:TREE.x-.9,x1:TREE.x+.9,y0:0,y1:.6,z0:TREE.z+1.4-.35,z1:TREE.z+1.4+.35}
+      {x0:TREE.x-.9,x1:TREE.x+.9,y0:0,y1:.6,z0:TREE.z-1.3-.35,z1:TREE.z-1.3+.35}
     ];
     for(let it=0;it<6;it++){
       if(pine.position.x>3.0) pine.position.x-=(pine.position.x-3.0)*.6;
-      if(pine.position.z>12.5) pine.position.z-=(pine.position.z-12.5)*.6;
+      if(pine.position.z>12.6) pine.position.z-=(pine.position.z-12.6)*.6;
     }
     const m4=new THREE.Matrix4(), pos=new THREE.Vector3(), quat=new THREE.Quaternion(), scl=new THREE.Vector3();
     for(let i=0;i<132;i++){ foliage.getMatrixAt(i,m4); m4.decompose(pos,quat,scl); const r=Math.max(scl.x,scl.y,scl.z)*.9;
@@ -684,12 +692,32 @@ moon.scale.set(9,9,1); moon.position.set(courtAxis+60,52,courtAxis-30); scene.ad
 // ---- weather: what the sky over Taipei is doing right now (Open-Meteo, no key). rain 0–1, cloud 0–1.
 var PLAN_FOG=false;   /* no haze over the plan view */
 var WX={rain:0,cloud:0,thunder:false,label:'',temp:null,target:0,targetCloud:0};
+// wind in m/s (Taipei, from the weather service; a gentle default until the first reading) and the direction it blows toward
+var NTX=null;   // the back-office text lookup, once the people's block has read it
+var WIND={speed:2,gust:4,dir:.6,live:false,ls:2,lg:4,force:null}, SKY_DAY=1;
+// the visitor can set the weather and wind by hand (kept in this browser); null = follow Taipei
+var WX_FORCE=null; try{ const v=JSON.parse(localStorage.getItem('hk-wx')||'null'); if(v){ WX_FORCE=v.wx||null; WIND.force=v.wind||null; } }catch{}
+const WIND_PRESET={calm:[0,.3],breeze:[2.5,5],strong:[9,15]};
+function applyWind(){ const p=WIND.force&&WIND_PRESET[WIND.force]; WIND.speed=p?p[0]:WIND.ls; WIND.gust=p?p[1]:WIND.lg; }
+// gusty wind force at a point and time: a steady part, slow surges and quick flutter, up to the gust speed
+function windAt(t,ph=0){ const s=WIND.speed, g=Math.max(s,WIND.gust), surge=.5+.5*Math.sin(t*.37+ph)*Math.sin(t*.13+ph*1.7), flick=Math.sin(t*2.3+ph*3)*.5+Math.sin(t*3.7+ph)*.3;
+  const v=s+(g-s)*surge*surge+flick*Math.min(1.5,g*.08); return Math.max(0,v); }
+// the pine: two damped springs (the trunk from the root, the crown from the fork), each pushed by the wind's pressure (∝ v²)
+const TREE_SPR={a:{x:0,z:0,vx:0,vz:0,k:22,c:2.2,f:.00055},b:{x:0,z:0,vx:0,vz:0,k:9,c:1.1,f:.0016}};
+function treeStep(dt,t){ const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
+  for(const [key,sp,ph] of [['a',TREE_SPR.a,0],['b',TREE_SPR.b,1.3]]){ const v=windAt(t,ph), F=v*v*sp.f*(1+.15*Math.sin(t*1.9+ph));
+    // wind toward +x tips the tree about −z (rotation.z negative), toward +z about +x
+    const tx=dz*F, tz=-dx*F;
+    for(let i=0;i<3;i++){ const h=dt/3; sp.vx+=(-sp.k*sp.x-sp.c*sp.vx+sp.k*tx)*h; sp.vz+=(-sp.k*sp.z-sp.c*sp.vz+sp.k*tz)*h; sp.x+=sp.vx*h; sp.z+=sp.vz*h; } }
+  const cap=v=>Math.max(-.12,Math.min(.12,v));
+  PINE.rotation.x=cap(TREE_SPR.a.x); PINE.rotation.z=cap(TREE_SPR.a.z);
+  const cr=PINE.userData.crown; if(cr){ cr.rotation.x=cap(TREE_SPR.b.x*1.4); cr.rotation.z=cap(TREE_SPR.b.z*1.4); } }
 function updateSky(){
   const [hour,minute]=taipeiClock.format(new Date()).split(':').map(Number);
   const time=location.hash==='#night'?0:location.hash==='#day'?12:hour+minute/60;
   const angle=(time-6)*Math.PI/12;
   const altitude=Math.sin(angle);
-  const day=THREE.MathUtils.smoothstep(altitude,-.15,.23);
+  const day=THREE.MathUtils.smoothstep(altitude,-.15,.23); SKY_DAY=day;
   const warm=day*(1-THREE.MathUtils.smoothstep(altitude,.08,.44));
   skyTop.set('#0b1428').lerp(new THREE.Color('#227fc4'),day);
   skyHorizon.set('#27334d').lerp(new THREE.Color('#b8dcf1'),day).lerp(new THREE.Color('#f6aa74'),warm);
@@ -734,9 +762,46 @@ function hangingLantern(parent,x,y,z,power){
   frame.add(light);
   fixtures.push({light,power});
 }
-for(const range of [mainHall,oppositeWing,...axialHalls.map(item=>item.hall)]){
-  for(const x of [-2.45,2.45]) hangingLantern(range,x,2.52,4.48,(range===mainHall||range===oppositeWing)?2.7:0);
-}
+/* Red lanterns (燈籠) in pairs at every door that opens onto a court or the street: round, ribbed silk between black
+   caps, a red cord with a ring above, a short red skirt and a tassel below. Each hangs from its cord as a pendulum the
+   wind pushes about (pressure ∝ v², against gravity, with damping). They glow only after dark; the pairs at 學鳩齋
+   and 知了間 and the gate also light the ground. */
+const LANTERN_RED=new THREE.MeshStandardMaterial({color:0xd02a20,emissive:0xff4a20,emissiveIntensity:0,roughness:.55}),
+  LANTERN_RIB=new THREE.MeshStandardMaterial({color:0x8a1a14,emissive:0x7a1408,emissiveIntensity:0,roughness:.6}),
+  LANTERN_BLK=new THREE.MeshStandardMaterial({color:0x151313,roughness:.45,metalness:.2}), LANTERN_LIGHTS=[], LANTERN_SIM=[];
+function redLantern(x,y,z,lit,cord=.45){ const piv=new THREE.Group(); piv.position.set(x,y,z); scene.add(piv); LANTERNS.push(piv);
+  const C=(r1,r2,h,m,yy,seg=16)=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m); k.position.y=yy; k.castShadow=true; piv.add(k); return k; };
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.04,.009,8,18),LANTERN_RED); ring.position.y=-.1; piv.add(ring);
+  C(.006,.006,.08,LANTERN_RED,-.04,6); C(.006,.006,cord-.14,LANTERN_RED,-.14-(cord-.14)/2,6);
+  const top=-cord; C(.012,.012,.03,LANTERN_BLK,top+.015,10); C(.085,.085,.05,LANTERN_BLK,top-.025);
+  const R=.22, cy=top-.05-R*.88;
+  const body=new THREE.Mesh(new THREE.SphereGeometry(R,28,18),LANTERN_RED); body.scale.set(1,.88,1); body.position.y=cy; piv.add(body);
+  for(let i=0;i<10;i++){ const rib=new THREE.Mesh(new THREE.TorusGeometry(R+.002,.0035,4,36,Math.PI),LANTERN_RIB); rib.scale.set(1,.88,1); rib.rotation.set(0,i*Math.PI/10,Math.PI/2); rib.position.y=cy; piv.add(rib); }
+  const bot=cy-R*.88; C(.085,.085,.05,LANTERN_BLK,bot-.02); C(.062,.062,.07,LANTERN_RED,bot-.08); C(.012,.012,.04,LANTERN_RED,bot-.135,8);
+  const tas=C(.006,.022,.17,LANTERN_RED,bot-.24,10); const knot=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),LANTERN_RED); knot.position.y=bot-.15; piv.add(knot);
+  if(lit){ const L=new THREE.PointLight(0xff9a5a,0,6,2); L.position.y=cy; piv.add(L); LANTERN_LIGHTS.push(L); }
+  LANTERN_SIM.push({piv,ax:0,az:0,vx:0,vz:0,ph:Math.random()*6,len:cord+R}); return piv; }
+// a pair at a door: (x,z) the middle of the door at the wall face, (nx,nz) pointing out of the building, half the spacing
+function doorLanterns(x,z,nx,nz,half,lit,y=3.12,out=.42){ const ax=-nz, az=nx;
+  for(const s of [-1,1]) redLantern(x+nx*out+ax*s*half,y,z+nz*out+az*s*half,lit); }
+{ const A=courtAxis;
+  // wing doors (學鳩齋, 知了間, the 第二進 and 第一進 wings)
+  doorLanterns(0,4.3,0,1,1.42,true); doorLanterns(0,2*A-4.3,0,-1,1.42,true);
+  for(const cx of [2*A,4*A]){ doorLanterns(cx,4.3,0,1,1.42,false); doorLanterns(cx,2*A-4.3,0,-1,1.42,false); }
+  // hall doors: 正廳, 南廳 both faces, 過廳 both faces
+  doorLanterns(-5.5,A,1,0,1.36,false); doorLanterns(5.5,A,-1,0,1.36,false); doorLanterns(14.1,A,1,0,1.36,false); doorLanterns(25.1,A,-1,0,1.36,false); doorLanterns(33.7,A,1,0,1.36,false);
+  // the gate in the front wall: a wooden lantern pole on each post, its arm reaching in over the 前庭
+  { const px=FIRST.fx1-.15, pw=new THREE.MeshStandardMaterial({map:T.woodDark,roughness:.7});
+    for(const sz of [-1,1]){ const pz=A+sz*1.6; box(.07,1.0,.07,pw,px,2.27,pz); box(.62,.06,.06,pw,px-.28,2.74,pz); box(.05,.2,.05,pw,px-.03,2.6,pz).rotation.z=-.7;
+      redLantern(px-.55,2.72,pz,true,.32); } } }
+function lanternStep(dt,t){ const k=SKY_DAY<.35?1:SKY_DAY<.6?(.6-SKY_DAY)/.25:0;
+  LANTERN_RED.emissiveIntensity=1.25*k; LANTERN_RIB.emissiveIntensity=.8*k; for(const L of LANTERN_LIGHTS) L.intensity=2.4*k;
+  const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
+  for(const l of LANTERN_SIM){ const v=windAt(t,l.ph), th=Math.min(.5,.009*v*v), g=9.8/l.len, wob=1+.25*Math.sin(t*2.6+l.ph*2);
+    // the angle the wind would hold it at, about each axis: wind toward +x swings it about −z, toward +z about +x
+    const ex=dz*th*wob, ez=-dx*th*wob;
+    for(let i=0;i<3;i++){ const h=dt/3; l.vx+=(g*(ex-l.ax)-1.6*l.vx)*h; l.vz+=(g*(ez-l.az)-1.6*l.vz)*h; l.ax+=l.vx*h; l.az+=l.vz*h; }
+    l.piv.rotation.x=l.ax; l.piv.rotation.z=l.az; } }
 const bronze=new THREE.MeshStandardMaterial({color:0x745434,metalness:.44,roughness:.38});
 function softLight(x,y,z,power,distance){
   const light=new THREE.PointLight(0xffe2bc,0,distance,1.65);
@@ -1461,8 +1526,8 @@ function showBeans(after){ const body=openPanel('選豆子',`<p class="meta">磨
   body.querySelector('.list').onclick=e=>{ const li=e.target.closest('li[data-b2]'); if(!li) return; myBean=+li.dataset.b2; LS.set('hk-bean',myBean); toast(`換成${BEANS[myBean][0]}。`); if(after) after(); else showBeans(); }; }
 const DRINKS=[['濃縮','Espresso','單份濃縮，30 毫升'],['美式','Americano','濃縮加熱水'],['拿鐵','Latte','濃縮加大量蒸奶'],['卡布奇諾','Cappuccino','濃縮、蒸奶、奶泡各三分之一'],['瑪奇朵','Macchiato','濃縮點上一匙奶泡'],['摩卡','Mocha','濃縮、巧克力、蒸奶'],['馥列白','Flat White','雙份濃縮配薄奶泡'],['阿法奇朵','Affogato','濃縮淋在香草冰淇淋上']];
 
-/* ---------------- 院子: stone bench under the pine ---------------- */
-{ const bz=TREE.z+1.4, bx=TREE.x; const stoneM=new THREE.MeshStandardMaterial({color:0x8d877d,roughness:.95});
+/* ---------------- 院子: stone bench under the pine, on its 學鳩齋 side, facing 學鳩齋 ---------------- */
+{ const bz=TREE.z-1.3, bx=TREE.x; const stoneM=new THREE.MeshStandardMaterial({color:0x8d877d,roughness:.95});
   const sis=[-.38,.38].map(o=>addSeat(bx+o,bz,0,'yard'));
   box(1.45,.09,.44,stoneM,bx,.42,bz,scene,{type:'seat',si:sis[0]}); for(const o of [-.5,.5]) box(.22,.38,.36,stoneM,bx+o,.19,bz);
   const h2=box(.7,.09,.44,stoneM,bx+.38,.425,bz,scene,{type:'seat',si:sis[1]}); h2.visible=false;
@@ -1654,7 +1719,7 @@ function ruochen(parent,x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z)
 const ZL_ANIM=[];   // per-frame updates of small living things (frogs in the tank)
 // the roof underside of the hall, so partitions close against it
 const roofUnder=zl=>3.70+RISE*Math.pow(1-Math.min(1,Math.abs(zl)/5.62),1.26)-.16;
-const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.2}, win:{z:21.95,y:1.55,r:.5} };
+const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.3}, win:{z:21.95,y:1.55,r:.5} };
 // PP: the parent to build into (a wing group for the other halls); PB: records a wall as an obstacle
 let PP=scene, PB=(x0,x1,z0,z1)=>OB(x0,x1,z0,z1);
 function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1,ZP.back]];
@@ -2411,15 +2476,30 @@ ZL_ANIM.push(()=>{ const want=vivLevel(); if(VIV.lights.length&&want!==VIV.level
   const todayBase=$('#today').textContent;
   function setWeather(code,cloud,temp,precip){ const e=WX_CODE[code]||['',0]; let r=e[1]; if(!r&&precip>.1) r=.25;
     WX.target=r; WX.targetCloud=Math.max(r>0?.88:0,Math.min(1,(cloud||0)/100)*(code>=3?1:.75)); WX.thunder=code>=95; WX.label=e[0]||(r?'雨':''); WX.temp=temp; if(!WX.init){ WX.init=true; WX.rain=WX.target; WX.cloud=WX.targetCloud; updateSky(); }   /* the first reading applies at once; later changes drift in */
-    $('#today').textContent=todayBase+(WX.label?'・臺北'+WX.label+(Number.isFinite(temp)?' '+Math.round(temp)+'°':''):''); }
-  async function fetchWeather(){ const h=location.hash;
-    if(h.includes('storm')) return setWeather(95,100,NaN,5); if(h.includes('rain')) return setWeather(63,100,NaN,2); if(h.includes('clear')) return setWeather(0,0,NaN,0);
+    WX.code=code; showToday(); }
+  // the date line: Taipei's weather, temperature and wind (a hand-set weather shows as such)
+  function showToday(){ const lab=WX_FORCE?((NTX&&NTX('wx.'+WX_FORCE))||WX.label):WX.label, temp=WX_FORCE?(live&&live.t):WX.temp;
+    const w=(NTX?NTX('wx.windShow'):'風 {風速} m/s').replace('{風速}',WIND.speed<.5?'0':WIND.speed.toFixed(1));
+    $('#today').textContent=todayBase+(lab?'・臺北'+lab+(Number.isFinite(temp)?' '+Math.round(temp)+'°':''):'')+'・'+w; }
+  WX.show=showToday;
+  let live=null;
+  async function fetchWeather(){ const h=location.hash, f=WX_FORCE||(h.includes('storm')?'storm':h.includes('rain')?'rain':h.includes('clear')?'clear':h.includes('cloudy')?'cloudy':null);
+    if(f&&live===null) live=false;
+    applyWind();
+    if(f==='storm') setWeather(95,100,NaN,5); else if(f==='rain') setWeather(63,100,NaN,2); else if(f==='clear') setWeather(0,0,NaN,0); else if(f==='cloudy') setWeather(3,100,NaN,0);
+    else if(live) setWeather(live.c,live.cl,live.t,live.p);
+    applyWind();
     try{ const c=new AbortController(), t=setTimeout(()=>c.abort(),8000);
-      const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0375&longitude=121.5637&current=temperature_2m,precipitation,weather_code,cloud_cover&timezone=Asia%2FTaipei',{signal:c.signal}); clearTimeout(t);
-      if(!r.ok) return; const j=await r.json(), k=j&&j.current; if(!k) return; setWeather(+k.weather_code,+k.cloud_cover,+k.temperature_2m,+k.precipitation||0); }catch{} }
+      const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0375&longitude=121.5637&current=temperature_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Asia%2FTaipei',{signal:c.signal}); clearTimeout(t);
+      if(!r.ok) return; const j=await r.json(), k=j&&j.current; if(!k) return;
+      live={c:+k.weather_code,cl:+k.cloud_cover,t:+k.temperature_2m,p:+k.precipitation||0};
+      // wind: the service gives where it blows FROM (0 = north); the world has north at −x and east at −z
+      if(Number.isFinite(+k.wind_speed_10m)){ WIND.ls=+k.wind_speed_10m; WIND.lg=Math.max(WIND.ls,+k.wind_gusts_10m||WIND.ls*1.6); const to=((+k.wind_direction_10m||0)+180)*Math.PI/180; WIND.dir=Math.atan2(-Math.sin(to),-Math.cos(to)); WIND.live=true; }
+      applyWind(); if(!f) setWeather(live.c,live.cl,live.t,live.p); else showToday(); }catch{} }
+  WX.refresh=fetchWeather;
   fetchWeather(); setInterval(fetchWeather,600000); addEventListener('hashchange',fetchWeather);
   // streaks
-  const N=2400, RECTS=[[-5.05,5.05,courtAxis-5.05,courtAxis+5.05],[14.2,24.8,4.7,14.9],[33.9,46.7,4.7,14.9],[47.0,53.1,-4.1,23.7]], TOP=11, LEN=.42, WIND=.12, ri=new Uint8Array(N), pickRect=r=>{ const q=r(); return q<.4?0:q<.78?1:2; };
+  const N=2400, RECTS=[[-5.05,5.05,courtAxis-5.05,courtAxis+5.05],[14.2,24.8,4.7,14.9],[33.9,46.7,4.7,14.9],[47.0,53.1,-4.1,23.7]], TOP=11, LEN=.42, ri=new Uint8Array(N), pickRect=r=>{ const q=r(); return q<.4?0:q<.78?1:2; };
   const pos=new Float32Array(N*6), sp=new Float32Array(N), R=rnd(777);
   const reset=(i,any)=>{ const q=ri[i]=pickRect(R), [X0,X1,Z0,Z1]=RECTS[q], x=X0+R()*(X1-X0), z=Z0+R()*(Z1-Z0), y=any?R()*TOP:TOP+R()*2; pos[i*6]=x; pos[i*6+1]=y; pos[i*6+2]=z; sp[i]=8.5+R()*3.5; };
   for(let i=0;i<N;i++) reset(i,true);
@@ -2449,7 +2529,8 @@ ZL_ANIM.push(()=>{ const want=vivLevel(); if(VIV.lights.length&&want!==VIV.level
     const r=WX.rain, show=r>.01&&VIEW.mode!=='plan'; rain.visible=splash.visible=show;
     const wet=Math.min(1,r*1.6); for(const w of wetMats){ w.m.color.copy(w.c).multiplyScalar(1-.38*wet); w.m.roughness=w.r-(w.r-.22)*wet; }
     if(show){ const n=Math.floor(N*Math.min(1,.25+r*.85)); rg.setDrawRange(0,n*2); rainM.opacity=.2+.2*r;
-      for(let i=0;i<n;i++){ const k=i*6, v=sp[i]*dt; pos[k+1]-=v; pos[k]+=WIND*v; if(pos[k+1]<0||pos[k]>RECTS[ri[i]][1]) reset(i,false); pos[k+3]=pos[k]-WIND*LEN; pos[k+4]=pos[k+1]+LEN; pos[k+5]=pos[k+2]; }
+      const sl=Math.min(.7,.03+windAt(performance.now()/1000)*.045), sx=Math.cos(WIND.dir)*sl, sz=Math.sin(WIND.dir)*sl;
+      for(let i=0;i<n;i++){ const k=i*6, v=sp[i]*dt, Rc=RECTS[ri[i]]; pos[k+1]-=v; pos[k]+=sx*v; pos[k+2]+=sz*v; if(pos[k+1]<0||pos[k]<Rc[0]||pos[k]>Rc[1]||pos[k+2]<Rc[2]||pos[k+2]>Rc[3]) reset(i,false); pos[k+3]=pos[k]-sx*LEN; pos[k+4]=pos[k+1]+LEN; pos[k+5]=pos[k+2]-sz*LEN; }
       rg.attributes.position.needsUpdate=true;
       const m=Math.floor(SN*Math.min(1,.3+r)); sg.setDrawRange(0,m); for(let j=0;j<12;j++){ splashAt(Math.floor(Math.random()*m),Math.random); } sg.attributes.position.needsUpdate=true; }
     if(r>.01) rainSound();
@@ -3014,10 +3095,11 @@ function tickExtras(dt){
     doorPose(d); }
   // breeze
   { const t=performance.now()/1000, gust=.5+.5*Math.sin(t*.23)*Math.sin(t*.61);
-    if(PINE){ PINE.rotation.z=Math.sin(t*.9)*.008*(1+gust); PINE.rotation.x=Math.sin(t*.7+1)*.006*(1+gust); }
-    LANTERNS.forEach((l,i)=>{ l.rotation.z=Math.sin(t*1.3+i)*.05*(.4+gust); l.rotation.x=Math.sin(t*1.1+i*2)*.03*(.4+gust); });
-    for(const lf of LEAVES){ lf.t+=dt*(.05+gust*.05); if(lf.t>1) { lf.t=0; lf.x0=-5+Math.random()*10; lf.z0=courtAxis-5+Math.random()*10; }
-      lf.m.position.set(lf.x0+lf.t*6*Math.cos(lf.dir)+Math.sin(t*2+lf.ph)*.3, 4.2*(1-lf.t)+.05, lf.z0+lf.t*6*Math.sin(lf.dir)); lf.m.rotation.set(t*2+lf.ph,t*1.5,t+lf.ph); } }
+    if(PINE) treeStep(dt,t);
+    lanternStep(dt,t);
+    const wv=windAt(t,2), drift=1.5+wv*1.6;
+    for(const lf of LEAVES){ lf.t+=dt*(.05+gust*.03+wv*.012); if(lf.t>1) { lf.t=0; lf.x0=-5+Math.random()*10-Math.cos(WIND.dir)*drift*.5; lf.z0=courtAxis-5+Math.random()*10-Math.sin(WIND.dir)*drift*.5; lf.dir=WIND.dir+(Math.random()-.5)*.6; }
+      lf.m.position.set(lf.x0+lf.t*drift*Math.cos(lf.dir)+Math.sin(t*2+lf.ph)*.3, 4.2*(1-lf.t)+.05, lf.z0+lf.t*drift*Math.sin(lf.dir)); lf.m.rotation.set(t*2+lf.ph,t*1.5,t+lf.ph); } }
   tickZhiliao(dt);
   // cuckoo clock (Taipei time)
   { const [h,m]=taipeiClock.format(new Date()).split(':').map(Number), sec=new Date().getSeconds();
@@ -3077,7 +3159,7 @@ function walkable(x,z){
   const inFirstDoor=Math.abs(fx)<.8&&((z>=3.6&&z<=4.9)||(z>=2*courtAxis-4.9&&z<=2*courtAxis-3.6));
   let inSide=false; for(const r of SIDE_ROOMS) if(x>r.x0+.32&&x<r.x1-.32&&z>r.z0+.32&&z<r.z1-.32){ inSide=true; break; }
   const zz=z<courtAxis?z:2*courtAxis-z;   /* fold the west half onto the east: the rooms and doors are mirrored */
-  const inSideDoor=(Math.abs(x+10.87)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-9.8)<.5&&zz>3.9&&zz<5.4)||(Math.abs(zz-.1)<.5&&x>11.5&&x<13.1)||(Math.abs(x-29.4)<.5&&zz>3.9&&zz<5.4)||(Math.abs(zz-.1)<.5&&x>31.1&&x<32.7);
+  const inSideDoor=(Math.abs(x+10.87)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-9.8)<.5&&zz>3.9&&zz<5.4)||(Math.abs(zz-.1)<.5&&x>11.5&&x<13.1)||(Math.abs(x-29.4)<.5&&zz>3.9&&zz<5.4);
   if(!(inRoom||inYard||inDoor||inMatchingRoom||inFirst||inBackDoor||inFirstWing||inFirstDoor||inSide||inSideDoor||inGateHall||inGateDoor||inFore)) return false;
   if(zlBlocked(x,z)) return false;
   for(const o of OBST) if(x>o.x0-0.22&&x<o.x1+0.22&&z>o.z0-0.22&&z<o.z1+0.22) return false;
@@ -4375,14 +4457,80 @@ function canonical(m){ const live=[lampPaper,lanternSilk,...ZL_LIVE,...LAMPS.map
   let uv=null; if(t){ if(t.matrixAutoUpdate) t.updateMatrix(); const e=t.matrix.elements; if(!(e[0]===1&&e[4]===1&&e[6]===0&&e[7]===0&&e[1]===0&&e[3]===0)) uv=t.matrix.clone(); }
   let c=canonMats.get(sig); if(!c){ c=m; if(uv){ c=m.clone(); c.map=t.clone(); c.map.repeat.set(1,1); c.map.offset.set(0,0); c.map.rotation=0; c.map.updateMatrix(); } canonMats.set(sig,c); }
   return {m:c,uv}; }
+/* ================= 24、28 號房南牆：石框竹節窗 =================
+   On the south end walls of the 第一進 wings, facing the 前庭: a stone window frame with scrolled head and sill and
+   capped side posts, five bars turned like bamboo, in the same stone and dark wood as the other windows. The opening
+   is the width of an end-wall door (1.3 m) and square. */
+function cutWindow(g,wx,wz,width,y0,y1){ g.updateMatrixWorld(true); const L=g.worldToLocal(new THREE.Vector3(wx,0,wz)), side=Math.sign(L.x);
+  const gone=[]; g.children.forEach(m=>{ const p=m.geometry&&m.geometry.parameters; if(m.isMesh&&p&&Math.abs(p.depth-8.6)<.01&&Math.abs(p.width-.3)<.01&&Math.abs(m.position.x-side*8.15)<.05) gone.push(m); });
+  let brick=null, white=null; for(const m of gone){ if(m.geometry.parameters.height<1) brick=m.material; else white=m.material; g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
+  if(!gone.length) return null;
+  brick=brick||mBrick(4,.9); white=white||mWhite(2,1.7); const x=side*8.15, a=L.z-width/2, b=L.z+width/2;
+  for(const [z0,z1] of [[-4.3,a],[b,4.3]]) if(z1-z0>.01){ box(.3,.9,z1-z0,brick,x,.45,(z0+z1)/2,g,BLOCK); box(.3,2.78,z1-z0,white,x,2.29,(z0+z1)/2,g,BLOCK); }
+  box(.3,.9,width,brick,x,.45,L.z,g,BLOCK); box(.3,y0-.9,width,white,x,(y0+.9)/2,L.z,g,BLOCK); box(.3,3.68-y1,width,white,x,(y1+3.68)/2,L.z,g,BLOCK);
+  return g.localToWorld(new THREE.Vector3(x,0,L.z)); }
+function bambooWindow(wx,wz,nx,w,y0,y1){ const g=new THREE.Group(); g.position.set(wx,0,wz); g.rotation.y=Math.atan2(nx,0)||0; scene.add(g);
+  const h=y1-y0, D=.38, sd=stone;
+  // scrolled band: a flat bar with a raised middle panel and ends that roll over, extruded through the wall
+  function band(yBase,up){ const s=new THREE.Shape(), hw=w/2+.32, t=.16, pw=w*.34, ph=.1, sg=up?1:-1;
+    const P=(x,y)=>[x,yBase+sg*y];
+    s.moveTo(...P(-hw,0)); s.lineTo(...P(-pw-.06,0)); s.lineTo(...P(-pw-.06,0)); s.lineTo(...P(pw+.06,0)); s.lineTo(...P(hw,0));
+    s.quadraticCurveTo(...P(hw+.1,t*.5),...P(hw-.02,t+.03)); s.quadraticCurveTo(...P(hw-.12,t+.05),...P(hw-.16,t));
+    s.quadraticCurveTo(...P(pw+.2,t-.02),...P(pw+.06,t)); s.lineTo(...P(pw,t+ph)); s.quadraticCurveTo(...P(0,t+ph+.04),...P(-pw,t+ph)); s.lineTo(...P(-pw-.06,t));
+    s.quadraticCurveTo(...P(-pw-.2,t-.02),...P(-hw+.16,t)); s.quadraticCurveTo(...P(-hw+.12,t+.05),...P(-hw+.02,t+.03)); s.quadraticCurveTo(...P(-hw-.1,t*.5),...P(-hw,0));
+    const geo=new THREE.ExtrudeGeometry(s,{depth:D,bevelEnabled:true,bevelThickness:.012,bevelSize:.012,bevelSegments:2,curveSegments:10}); geo.translate(0,0,-D/2);
+    const m=new THREE.Mesh(geo,sd); m.castShadow=true; g.add(m); }
+  band(y1,true); band(y0,false);
+  // side posts with little bottle caps on top
+  for(const sx of [-1,1]){ box(.2,h+.42,D,sd,sx*(w/2+.12),y0-.06+(h+.42)/2-.15,0,g);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.045,.07,.12,12),sd); cap.position.set(sx*(w/2+.12),y1+.22,0); g.add(cap);
+    const knob=new THREE.Mesh(new THREE.SphereGeometry(.05,12,8),sd); knob.position.set(sx*(w/2+.12),y1+.31,0); g.add(knob); }
+  // five bamboo bars: joints every so often, a slight swelling at each node
+  for(let i=1;i<=5;i++){ const bx=-w/2+i*w/6, bar=new THREE.Group(); bar.position.set(bx,y0,0); g.add(bar);
+    const segs=4, sl=h/segs; for(let k=0;k<segs;k++){ const c=new THREE.Mesh(new THREE.CylinderGeometry(.052,.056,sl-.02,12),M.woodDark); c.position.y=k*sl+sl/2; bar.add(c);
+      if(k){ const n=new THREE.Mesh(new THREE.TorusGeometry(.056,.012,6,14),M.woodDark); n.rotation.x=Math.PI/2; n.position.y=k*sl; bar.add(n); } }
+    box(.005,.005,.005,M.woodDark,0,0,0,bar); }
+  return g; }
+for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w=1.3, y0=1.05, y1=2.35;
+  const p=cutWindow(wing,FRONT.cx+7.5,zc,w,y0,y1); if(p) bambooWindow(p.x,p.z,Math.sign(p.x-FRONT.cx),w,y0,y1); }
+
+/* ================= 22、26 號房（第一進兩廂北間）：各四張木床，兩兩相對，每對中間一個床頭櫃 =================
+   The beds stand with their heads against the long front and back walls, two pairs facing each other across the
+   room, so the middle of the room and the door to the 明間 stay clear. Wooden single beds in the manner of the 1930s:
+   panelled head and foot boards, turned posts, a cotton mattress, pillow and a folded quilt. */
+{ const frame=new THREE.MeshStandardMaterial({map:T.wood,color:0xd2a77c,roughness:.6}), dark=new THREE.MeshStandardMaterial({map:T.woodDark,color:0xb08a68,roughness:.55}),
+    cloth=new THREE.MeshStandardMaterial({color:0xefe8da,roughness:.95}), quilt=[0x6b7f95,0x8a5a4a,0x5f7a62,0x9a8460].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.9})),
+    brass=new THREE.MeshStandardMaterial({color:0xb08a3e,metalness:.7,roughness:.35});
+  const L=2.02, W=.98;
+  // one bed in its own group: local −z is the foot, the head board at z=+L/2
+  function bed(x,z,yaw,qi){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
+    for(const sx of [-1,1]) for(const sz of [-1,1]){ const h=sz>0?1.02:.62; cylinder(.032,.032,h,dark,sx*(W/2-.03),h/2,sz*(L/2-.03),g); const k=new THREE.Mesh(new THREE.SphereGeometry(.042,12,8),dark); k.position.set(sx*(W/2-.03),h+.02,sz*(L/2-.03)); g.add(k); }
+    box(W-.06,.12,L-.06,frame,0,.33,0,g);                                       // rails
+    box(W-.06,.6,.035,frame,0,.66,L/2-.03,g); box(W-.2,.42,.012,dark,0,.68,L/2-.05,g);   // head board with a sunk panel
+    box(W-.06,.26,.035,frame,0,.47,-(L/2-.03),g);                              // foot board
+    box(W-.12,.14,L-.14,cloth,0,.46,0,g);                                       // mattress
+    const pw=box(.62,.1,.34,cloth,0,.58,L/2-.28,g); pw.scale.set(1,1,1);         // pillow
+    box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
+    OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
+  function stand(x,z,yaw){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
+    box(.46,.56,.4,frame,0,.31,0,g); box(.5,.03,.44,dark,0,.605,0,g); box(.4,.18,.01,dark,0,.44,-.205,g);   // body, top, drawer front
+    const knob=new THREE.Mesh(new THREE.SphereGeometry(.018,10,8),brass); knob.position.set(0,.44,-.215); g.add(knob);
+    for(const sx of [-1,1]) for(const sz of [-1,1]) box(.04,.03,.04,dark,sx*.2,.015,sz*.17,g);
+    OB(x-.25,x+.25,z-.22,z+.22); }
+  // west wing (room 22): front wall inside face z≈15.6, back wall z≈23.6; east wing (room 26) mirrors about the axis
+  let qi=0;
+  for(const [front,back] of [[15.6,23.6],[4.0,-4.0]]){ const s=Math.sign(back-front);
+    for(const [wallZ,toward] of [[front,s],[back,-s]]){ const zc=wallZ+toward*(L/2+.02), yaw=toward>0?Math.PI:0;
+      bed(32.55,zc,yaw,qi++); bed(34.55,zc,yaw,qi++); stand(33.55,wallZ+toward*.24,yaw); } } }
+
 /* ================= 宅中人物（NPC）=================
    Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
    book on the west walk of the 第一進 and shows guests to the tea room; 阿春 keeps the tea station in the east 過水 and
    serves in the tea room (知了間北間); 水生叔 tends the 含笑 bed on the west side of the 第二進; 火師 cooks in the kitchen
    (第一進東廂南間); 阿財 carries wood and water between the woodpile, the well and the kitchen.
-   Three chains of work run by themselves and are saved in this browser (each visitor has their own household):
+   Two chains of work run by themselves and are saved in this browser (each visitor has their own household):
    the 甜粿 (waiting for wood → wood in → steaming → out of the steamer → carried to the tea room → served), the tea that
-   arrives at the gate and goes to the store, and the loose stretch of bamboo fence by the flower bed.
+   arrives at the gate and goes to the store.
    Every line can be changed in the back office (_data/vr.yml › npc); these are the defaults. */
 const NPC_DYN=[];
 const NPC_TXT={
@@ -4390,7 +4538,7 @@ const NPC_TXT={
   'yu.first':['您是來吃茶的？前頭廊下那位是許總管。慢一步，門檻有點高。','頭一回來吧？先到前廊找許總管。門檻高，腳抬一下。'],
   'yu.again':['您又來啦。裡頭請。','我才把門埕掃好。來，這邊走。'],
   'yu.sweep':['等我把這撮葉子掃到邊上，您再過。','一早風大，掃兩遍還有葉子。'],
-  'yu.rain':['傘可以擱在甕裡，走時記得拿。','簷下站一下吧。門邊這塊石頭溼了。'],
+  'yu.rain':['下雨了，進門慢些，石頭溼滑。','簷下站一下吧。門邊這塊石頭溼了。'],
   'yu.tea':['方才送來兩包茶，我擱在凳旁，等阿財來搬。','茶送到了，我已請人去叫阿財。'],
   'yu.bye':['慢走，過門檻留神。','改日再來吃茶。'],
   'xu.first':['您是來吃茶的？若不熟路，我領您去。','我姓許。宅裡要找人、找地方，先問我就好。'],
@@ -4409,8 +4557,6 @@ const NPC_TXT={
   'shui.bud':['這株搬過兩回，今年才又長花苞。','您看葉子底下，那粒白的快開了。'],
   'shui.bloom':['花開了，您靠近些聞。','今早開了兩朵，香在這邊。'],
   'shui.prune':['我先找枯枝。這截還有嫩芽，留著。','昨夜折了一枝，我剪平就好。'],
-  'shui.fenceLoose':['後園那段竹籬鬆了，阿財經過時我得喊他一聲。','這根竹子晃得厲害。請阿財來扶一下就成。'],
-  'shui.fenceFixed':['阿財把籬笆綁緊了，您走那側也無妨。','那段已補好。我待會把花盆搬回去。'],
   'huo.noWood':['米漿備好了，等阿財送柴來。','灶火弱了些。得等乾柴到了，才好上籠。'],
   'huo.wood':['乾柴放灶門邊就好。小心那截木頭有刺。','放在右手邊，我挑兩根細的起火。'],
   'huo.steaming':['正蒸著。蒸籠得蓋嚴，再等一會兒。','您聽，那水才滾上來，還早呢。'],
@@ -4421,14 +4567,14 @@ const NPC_TXT={
   'cai.tea':['玉姨說門邊還有兩包茶，我這就搬去庫裡。','茶我來扛，您替我留一點走路的地方就好。'],
   'cai.wood':['火師，兩捆都乾的。我放灶門右邊。','柴送到了。細的在上頭，伸手就拿得著。'],
   'cai.water':['桶裝太滿，走兩步就灑，我留一指寬。','您先過。我提著水，轉身慢些。'],
-  'cai.fenceTask':['水生叔說竹籬鬆了。我送完柴就去看看。','竹繩在後院，我帶一把過去綁。'],
-  'cai.fenceDone':['鬆的是底下那道繩，我換了一條新的。','籬笆好了，水生叔可以把盆搬回去了。'],
   // what the steward says when asked about the day before the cake is served, when nobody can be found, when let be
   'xu.todayWait':['今日火師要蒸一籠甜粿，柴一到就上籠。','灶腳正忙著甜粿，等出了籠，阿春會端去茶室。'],
   'xu.findNone':['我也在找他，等等再問我。','我也在找他，等等再問我。'],
   'xu.self':['您慢慢走走，有事再喊我。','好，您自在些。我在前廊。'],
   'xu.cancel':['那我先回前廊，有事再喊我。','好，我不跟了。要去茶室，沿廊往裡就是。'],
   // the choices, and the places people can be found (name｜how to get there)
+  'wx.label':['天氣',''],'wx.auto':['臺北即時',''],'wx.clear':['晴',''],'wx.cloudy':['陰',''],'wx.rain':['雨',''],'wx.storm':['雷雨',''],
+  'wind.label':['風',''],'wind.auto':['臺北即時',''],'wind.calm':['無風',''],'wind.breeze':['微風',''],'wind.strong':['強風',''],'wx.windShow':['風 {風速} m/s',''],
   'ui.hint':['按 E 或點一下，與{稱呼}交談',''],
   'ui.lead':['帶我去茶室',''],'ui.find':['我想找人',''],'ui.today':['今日宅裡有什麼事',''],'ui.self':['我自己走走',''],'ui.stop':['不用帶了',''],
   'ui.tea':['問茶',''],'ui.cake':['茶點好了嗎',''],'ui.write':['在寫什麼',''],'ui.hanxiao':['含笑開了嗎',''],'ui.prune':['在修什麼',''],'ui.book':['人物簿',''],
@@ -4437,11 +4583,20 @@ const NPC_TXT={
   'zone.tearoom':['茶室','第三進西廂知了間，進明間往北間'],'zone.store':['庫房','南廳西邊的過水'],
 };
 for(const e of (Array.isArray(VRD.npc)?VRD.npc:[])) if(e&&e.key&&NPC_TXT[e.key]){ const d=NPC_TXT[e.key]; NPC_TXT[e.key]=[String(e.a||'').trim()||d[0],String(e.b||'').trim()||d[1]]; }
-const NT=(k,i=0)=>(NPC_TXT[k]||['',''])[i]||'';
+const NT=(k,i=0)=>(NPC_TXT[k]||['',''])[i]||''; NTX=NT;
+// weather and wind by hand, in the menu under the lights: follow Taipei, or set it yourself (kept in this browser)
+{ const row=document.createElement('div'); row.id='wxRow'; row.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;margin-top:7px;pointer-events:auto;flex-wrap:wrap';
+  const sel=(id,label,opts,val)=>{ const l=document.createElement('label'); l.textContent=label+' '; const s=document.createElement('select'); s.id=id; s.style.cssText='font-size:12px';
+    for(const [v,t] of opts){ const o=document.createElement('option'); o.value=v; o.textContent=t; s.append(o); } s.value=val||''; l.append(s); row.append(l); return s; };
+  const a=sel('wxSel',NT('wx.label'),['','clear','cloudy','rain','storm'].map(v=>[v,NT('wx.'+(v||'auto'))]),WX_FORCE);
+  const b=sel('windSel',NT('wind.label'),['','calm','breeze','strong'].map(v=>[v,NT('wind.'+(v||'auto'))]),WIND.force);
+  const save=()=>{ WX_FORCE=a.value||null; WIND.force=b.value||null; try{ localStorage.setItem('hk-wx',JSON.stringify({wx:WX_FORCE,wind:WIND.force})); }catch{} if(WX.refresh) WX.refresh(); };
+  a.onchange=save; b.onchange=save;
+  const after=$('#ctempRow'); if(after) after.after(row); if(WX.show) WX.show(); }
 const NPC_LS='hk-npc';
 const NS=(()=>{ let s=null; try{ s=JSON.parse(localStorage.getItem(NPC_LS)||'null'); }catch{} const today=new Date().toLocaleDateString('sv',{timeZone:'Asia/Taipei'});
-  if(!s||s.v!==1) s={v:1,visits:0,first:false,cake:{st:0,t:0},tea:{st:'none',day:''},fence:{st:'loose',day:'',ack:false},alt:{},talked:{}};
-  if(s.tea.day!==today) s.tea={st:'none',day:today}; if(s.fence.day!==today) s.fence={st:'loose',day:today,ack:false};
+  if(!s||s.v!==1) s={v:1,visits:0,first:false,cake:{st:0,t:0},tea:{st:'none',day:''},alt:{},talked:{}};
+  if(s.tea.day!==today) s.tea={st:'none',day:today};
   s.visits++; return s; })();
 const NPC_FIRST_VISIT=!NS.first;
 function npcSave(){ try{ localStorage.setItem(NPC_LS,JSON.stringify(NS)); }catch{} }
@@ -4454,15 +4609,15 @@ function npcLine(key,fill){ const i=NS.alt[key]?1:0; NS.alt[key]=!NS.alt[key]; n
 const NP={
   gate:{x:51.9,z:12.6}, gateSweep:[{x:51.4,z:12.9},{x:50.2,z:14.2},{x:49.2,z:12.6},{x:50.6,z:6.8},{x:51.8,z:7.4}], stool:{x:52.5,z:13.3}, jar:{x:52.6,z:7.6},
   porch:[{x:36.2,z:14.25},{x:43.6,z:14.25}], teaDoor:{x:-1.5,z:19.9}, tea:{x:-6.3,z:20.7},
-  prep:{x:10.4,z:-2.7}, garden:{x:16.6,z:12.85}, gardenB:{x:15.2,z:12.85}, fenceSpot:{x:17.6,z:12.9},
-  stove:{x:44.3,z:-2.55}, woodDrop:{x:45.3,z:-2.6}, kitchenIn:{x:43.0,z:-1.2}, woodpile:{x:45.9,z:5.6}, well:{x:44.4,z:6.0},
+  prep:{x:10.4,z:-2.7}, garden:{x:16.6,z:12.85}, gardenB:{x:15.2,z:12.85},
+  stove:{x:44.3,z:-2.55}, woodDrop:{x:45.3,z:-2.6}, kitchenIn:{x:43.0,z:-1.2}, woodpile:{x:45.9,z:5.6}, outGate:{x:52.6,z:9.8},
   store:{x:10.6,z:22.0},
 };
 const NZONES=[['gate',46.84,53.3,-4.3,23.9],['kitchen',41.85,46.84,-4.3,4.3],['well',41.5,46.84,4.3,8.6],['porch',33.7,46.84,12.4,15.3],
   ['garden',14.1,19.2,11.6,15.3],['prep',7.64,11.96,-4.3,4.49],['store',7.64,11.96,15.11,23.9],['tearoom',-7.64,-2.65,15.3,23.9]];
 const npcZone=p=>{ for(const [k,x0,x1,z0,z1] of NZONES) if(p.x>x0&&p.x<x1&&p.z>z0&&p.z<z1) return k; return null; };
 
-// ---- props: kitchen stove and steamer, the woodpile and well, the flower bed and fence, the gatekeeper's things
+// ---- props: kitchen stove and steamer, the woodpile, the flower bed, the gatekeeper's things
 const NPCP={};
 { const wood=new THREE.MeshStandardMaterial({map:T.wood,color:0xd8b48a,roughness:.8}), bamboo=new THREE.MeshStandardMaterial({color:0xb59a5e,roughness:.75}),
     brickM=mBrick(1.4,.7), plaster=new THREE.MeshStandardMaterial({color:0xd8cfbf,roughness:.95}), clay=new THREE.MeshStandardMaterial({color:0x7a4a32,roughness:.7}),
@@ -4477,7 +4632,6 @@ const NPCP={};
     cyl(.34,.26,.16,iron,S.x-.45,.94,-3.72); cyl(.3,.3,.18,bamboo,S.x-.45,1.08,-3.72); cyl(.3,.3,.18,bamboo,S.x-.45,1.27,-3.72);
     const lid=new THREE.Group(); lid.position.set(S.x-.45,1.37,-3.72); scene.add(lid); cyl(.31,.31,.05,bamboo,0,.025,0,lid); cyl(.04,.04,.05,wood,0,.07,0,lid); NPCP.lid=lid; NPC_DYN.push(lid);
     cyl(.28,.24,.2,iron,S.x+.5,.95,-3.72);  // the second mouth: a kettle pot
-    cyl(.26,.22,.62,clay,S.x+1.55,.31,-3.75);   // water jar 水缸
     box(.5,.05,.32,wood,S.x+.5,.9,-3.4);   // chopping board
     // fire glow and steam
     const fire=new THREE.PointLight(0xff8a3a,0,3,2); fire.position.set(S.x-.45,.35,-3.2); scene.add(fire); NPCP.fire=fire;
@@ -4486,27 +4640,18 @@ const NPCP={};
     // firewood put down by the stove door, and the cake on a plate before it is carried off
     const wd=new THREE.Group(); wd.position.set(NP.woodDrop.x+.2,0,-3.25); scene.add(wd); for(let i=0;i<5;i++){ const l=cyl(.05,.05,.7,wood,(i%3)*.11-.11,.05+Math.floor(i/3)*.09,0,wd,8); l.rotation.x=Math.PI/2; } wd.visible=false; NPCP.woodAtStove=wd; NPC_DYN.push(wd);
     const cake=new THREE.Group(); cyl(.17,.15,.025,plateM,0,.012,0,cake); cyl(.13,.13,.05,cakeM,0,.05,0,cake); NPCP.cake=cake; scene.add(cake); NPC_DYN.push(cake); }
-  // the woodpile against the east wing front, the well
+  // the woodpile against the east wing front
   { const W=NP.woodpile; for(let r=0;r<3;r++) for(let i=0;i<6-r;i++){ const l=cyl(.07,.07,.95,wood,W.x-.45+i*.16+r*.08,.07+r*.13,4.82,scene,8); l.rotation.x=Math.PI/2; }
-    const L=NP.well; cyl(.55,.6,.72,stoneM,L.x-.95,.36,L.z+.6,scene,20); const water=new THREE.Mesh(new THREE.CircleGeometry(.47,20),new THREE.MeshStandardMaterial({color:0x22313a,roughness:.15,metalness:.2})); water.rotation.x=-Math.PI/2; water.position.set(L.x-.95,.55,L.z+.6); scene.add(water);
-    for(const dz of [-.55,.55]) box(.08,1.4,.08,wood,L.x-.95,1.0,L.z+.6+dz); box(.06,.06,1.25,wood,L.x-.95,1.66,L.z+.6); cyl(.12,.1,.2,wood,L.x-.6,.1,L.z+.95);
-    OB(L.x-1.6,L.x-.3,L.z-.05,L.z+1.25); OB(W.x-.6,W.x+.55,4.6,5.05); }
-  // the 含笑 bed and its bamboo fence on the west side of the 第二進
+    OB(W.x-.6,W.x+.55,4.6,5.05); }
+  // the 含笑 bed on the west side of the 第二進
   { const B={x0:14.8,x1:18.4,z0:13.45,z1:14.95}; box(B.x1-B.x0,.12,B.z1-B.z0,soil,(B.x0+B.x1)/2,.06,(B.z0+B.z1)/2);
     const bush=new THREE.Group(); bush.position.set(16.0,0,14.2); scene.add(bush); cyl(.04,.06,.6,wood,0,.3,0,bush,6);
     for(const [x,y,z,r] of [[0,.8,0,.38],[.25,.65,.12,.28],[-.25,.68,-.1,.3],[.05,1.05,-.05,.27]]){ const s=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),leaf); s.position.set(x,y,z); s.castShadow=true; bush.add(s); }
     const fl=[]; for(let i=0;i<7;i++){ const a=i*2.1, s=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),white); s.position.set(Math.cos(a)*.33,.62+((i*37)%5)*.09,Math.sin(a)*.3); bush.add(s); fl.push(s); } NPCP.flowers=fl; NPC_DYN.push(...fl);
     for(const x of [15.2,17.4]){ const pot=cyl(.16,.12,.26,clay,x,.13,14.7); pot.userData={type:'floor'}; cyl(.17,.17,.02,soil,x,.25,14.7); }
-    // fence: posts and two rails along the court side; one post at the far end leans until it is mended
-    const f=new THREE.Group(); scene.add(f);
-    for(let x=B.x0;x<=B.x1-.6+.01;x+=.45){ cyl(.025,.03,.75,bamboo,x,.375,B.z0-.12,f,6); }
-    for(const y of [.25,.55]){ const r=cyl(.018,.018,B.x1-.6-B.x0,bamboo,(B.x0+B.x1-.6)/2,y,B.z0-.12,f,6); r.rotation.z=Math.PI/2; }
-    const loose=new THREE.Group(); loose.position.set(B.x1-.6+.45,0,B.z0-.12); scene.add(loose); cyl(.025,.03,.75,bamboo,0,.375,0,loose,6); const lr=cyl(.018,.018,.45,bamboo,-.22,.4,0,loose,6); lr.rotation.z=Math.PI/2;
-    NPCP.loose=loose; NPC_DYN.push(loose);
-    OB(B.x0,B.x1-.6,B.z0-.2,B.z1); }
-  // the gatekeeper's stool, broom stand and umbrella jar; the two packets of tea, by the stool and later in the store
+    OB(B.x0,B.x1,B.z0,B.z1); }
+  // the gatekeeper's stool; the two packets of tea, by the stool and later in the store
   { const S=NP.stool; box(.36,.04,.24,wood,S.x,.3,S.z); for(const dx of [-.14,.14]) for(const dz of [-.08,.08]) box(.035,.3,.035,wood,S.x+dx,.15,S.z+dz);
-    cyl(.17,.2,.5,clay,NP.jar.x,.25,NP.jar.z,scene,18); for(const a of [.3,-.2]){ const u=cyl(.012,.012,.9,iron,NP.jar.x+Math.sin(a)*.05,.75,NP.jar.z,scene,6); u.rotation.z=a; }
     const bags=new THREE.Group(); for(const dx of [0,.22]){ const b=box(.18,.22,.14,paper,dx,.11,0,bags); } bags.position.set(S.x-.05,0,S.z+.32); scene.add(bags); NPCP.teaGate=bags; NPC_DYN.push(bags);
     const bags2=bags.clone(); bags2.position.set(NP.store.x+.8,.82,NP.store.z+1.4); scene.add(bags2); NPCP.teaStore=bags2; NPC_DYN.push(bags2);
     box(.9,.8,.4,wood,NP.store.x+.8,.4,NP.store.z+1.4); }   // a low chest in the store to set them on
@@ -4617,14 +4762,13 @@ function npcRestore(){ const c=NS.cake;
   if(c.st===4) cakeSet(3);                     // she was on her way with it: it is back on the stove ledge
   if(c.st===5&&Date.now()-c.t>CAKE_AGAIN*1000) cakeSet(0);
   if(NS.tea.st==='carrying') teaSet('arrived');
-  if(NS.fence.st==='fixing') { NS.fence.st='loose'; npcSave(); } }
+ }
 npcRestore();
 function propsSync(){ const c=NS.cake.st;
   NPCP.woodAtStove.visible=c>=1&&c<=3;
   NPCP.fire.intensity=c===1||c===2?1.6:c===3?.6:0;
   NPCP.cake.visible=c===3||c===5; if(c===3) NPCP.cake.position.set(NP.stove.x+.55,.88,-3.45); if(c===5) NPCP.cake.position.set(ZP.modern.cx-.85,ZP.modern.h+.01,ZP.modern.cz-.18);
   NPCP.teaGate.visible=NS.tea.st==='arrived'; NPCP.teaStore.visible=NS.tea.st==='stored';
-  const fixed=NS.fence.st==='fixed'; NPCP.loose.rotation.z=fixed?0:.38; NPCP.loose.rotation.x=fixed?0:-.12;
   const bloom=hanxiaoBloom(); for(const f of NPCP.flowers){ f.scale.setScalar(bloom?1:.45); } }
 let bloomAt=0, bloomV=false; const hanxiaoBloom=()=>{ if(performance.now()<bloomAt) return bloomV; bloomAt=performance.now()+30000; const h=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Taipei',hour:'numeric',hour12:false})); return bloomV=h>=7&&h<18; };
 const raining=()=>(typeof WX!=='undefined')&&WX.rain>.05;
@@ -4635,7 +4779,6 @@ function npcPlan(n){
   if(n.id==='cai'){
     if(c===0) return caiWood(n);
     if(NS.tea.st==='arrived') return caiTea(n);
-    if(NS.fence.st==='loose'&&NS.fence.called) return caiFence(n);
     return caiWater(n); }
   if(n.id==='huo'){ npcPlace(n,NP.stove,0); n.act=c===2?'steam':c===1?'fire':'cook'; n.busyUntil=now+4000; return; }
   if(n.id==='chun'){ if(c===3) return chunFetch(n); n.act=n.writeUntil>now?'write':'prep'; npcGo(n,NP.prep,m=>{ npcFace(m,{x:m.x,z:-4.5}); m.act=m.writeUntil>Date.now()?'write':'prep'; m.busyUntil=Date.now()+8000; }); return; }
@@ -4649,22 +4792,17 @@ function caiWood(n){ npcGo(n,NP.woodpile,m=>{ m.act='load'; m.busyUntil=Date.now
   k.carry=null; cakeSet(1); k.act='unload'; k.busyUntil=Date.now()+2000; NPC.huo.busyUntil=0;
   setTimeout(()=>{ if(NS.cake.st===1){ cakeSet(2); } },8000); }); }; }); }
 function caiTea(n){ npcGo(n,{x:NP.stool.x-.3,z:NP.stool.z-.2},m=>{ if(near(m,8)) npcSay('cai',npcLine('cai.tea')); teaSet('carrying'); m.carry='tea'; npcGo(m,NP.store,k=>{ k.carry=null; teaSet('stored'); k.act='unload'; k.busyUntil=Date.now()+2000; }); }); }
-function caiFence(n){ if(near(n,8)) npcSay('cai',npcLine('cai.fenceTask')); npcGo(n,NP.fenceSpot,m=>{ NS.fence.st='fixing'; npcSave(); npcFace(m,{x:m.x,z:14}); m.act='tie'; m.busyUntil=Date.now()+9000;
-  m.next=()=>{ NS.fence.st='fixed'; NS.fence.ack=false; NS.fence.doneAt=Date.now(); npcSave(); if(near(m,9)){ npcSay('cai',npcLine('cai.fenceDone')); npcSay('shui',npcLine('shui.fenceFixed')); NS.fence.ack=true; npcSave(); } }; }); }
-function caiWater(n){ npcGo(n,NP.well,m=>{ npcFace(m,{x:43.4,z:6.6}); m.act='draw'; m.busyUntil=Date.now()+5000; m.next=()=>{ m.carry='water'; npcGo(m,{x:45.6,z:-3.0},k=>{ k.carry=null; k.act='unload'; k.busyUntil=Date.now()+2500; }); }; }); }
+function caiWater(n){ npcGo(n,NP.outGate,m=>{ m.g.visible=false; m.act='away'; m.busyUntil=Date.now()+25000; m.next=()=>{ m.g.visible=true; m.carry='water'; npcGo(m,{x:45.6,z:-3.0},k=>{ k.carry=null; k.act='unload'; k.busyUntil=Date.now()+2500; }); }; }); }
 function chunFetch(n){ npcGo(n,{x:NP.stove.x+.6,z:-2.6},m=>{ npcFace(m,{x:m.x,z:-4}); if(near(m,9)) npcSay('huo',npcLine('huo.handoff'));
   cakeSet(4); m.carry='cake'; NPC.huo.busyUntil=0;
   npcGo(m,NP.tea,k=>{ npcFace(k,{x:ZP.modern.cx,z:ZP.modern.cz}); k.carry=null; cakeSet(5); if(near(k,7)) npcSay('chun',npcLine('chun.cake')); k.act='prep'; k.busyUntil=Date.now()+6000;
     k.next=()=>{ k.writeUntil=Date.now()+90000; }; }); }); }
 const near=(n,r)=>Math.hypot(ME.x-n.x,ME.z-n.z)<r;
-// the gardener notices the loose fence and calls 阿財 the first time he walks past it (or after a while)
-function fenceWatch(){ if(NS.fence.st!=='loose'||NS.fence.called) return; const cai=NPC.cai, sh=NPC.shui;
-  if(NS.cake.st>=2&&(NS.tea.st!=='arrived')){ NS.fence.called=true; npcSave(); if(near(sh,9)) npcSay('shui',npcLine('shui.fenceLoose')); } }
 // tea comes to the gate some time after one arrives
 let teaArriveAt=performance.now()+45000;
 
 /* ---- talking ---- */
-function npcTalk(id){ const n=NPC[id]; if(!n) return; n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
+function npcTalk(id){ const n=NPC[id]; if(!n||!n.g.visible) return; n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
   const c=NS.cake.st, say=k=>npcSay(id,npcLine(k)), VRm=renderer.xr.isPresenting;
   if(id==='yu'){ if(NS.tea.st==='arrived') return say('yu.tea'); if(raining()) return say('yu.rain'); if(n.act==='sweep') return say('yu.sweep'); if(!NS.first){ NS.first=true; npcSave(); return say('yu.first'); } return say('yu.again'); }
   if(id==='xu'){ if(!NS.talked.xu){ NS.talked.xu=true; npcSave(); say('xu.first'); }
@@ -4675,14 +4813,11 @@ function npcTalk(id){ const n=NPC[id]; if(!n) return; n.talk=performance.now()+9
     const opts=[[NT('ui.tea'),()=>say(myMD&&Date.now()-(myMD.at||0)>8000?'chun.served':'chun.ask')],[NT('ui.cake'),()=>say(c===5?'chun.cake':'chun.steaming')]];
     if(n.act==='write') opts.push([NT('ui.write'),()=>say('chun.writing')]);
     say(n.act==='write'||n.act==='prep'?(myMD?'chun.served':'chun.ask'):'chun.ask'); if(!VRm) npcChoices(id,opts); return; }
-  if(id==='shui'){ if(NS.fence.st==='fixed'&&!NS.fence.ack){ NS.fence.ack=true; npcSave(); say('shui.fenceFixed'); }
-    else if(NS.fence.st==='loose'){ say('shui.fenceLoose'); if(!NS.fence.called){ NS.fence.called=true; npcSave(); } }
-    else say(n.act==='prune'?'shui.prune':'shui.water');
+  if(id==='shui'){ say(n.act==='prune'?'shui.prune':'shui.water');
     if(!VRm) npcChoices(id,[[NT('ui.hanxiao'),()=>say(hanxiaoBloom()?'shui.bloom':'shui.bud')],[NT('ui.prune'),()=>say('shui.prune')]]); return; }
   if(id==='huo'){ if(c===0) return say('huo.noWood'); if(c===1||c===2) return say('huo.steaming'); if(c===3) return say('huo.handoff'); if(c===4) return say('huo.sent');
     return say(Date.now()-NS.cake.t<8*60000?'huo.sent':'huo.rest'); }
-  if(id==='cai'){ if(n.carry==='wood') return say('cai.stopped'); if(n.carry==='tea'||NS.tea.st==='arrived') return say('cai.tea'); if(n.carry==='water'||n.act==='draw') return say('cai.water');
-    if(NS.fence.st==='loose'&&NS.fence.called) return say('cai.fenceTask'); if(NS.fence.st==='fixed'&&Date.now()-(NS.fence.doneAt||0)<10*60000) return say('cai.fenceDone'); return say('cai.stopped'); } }
+  if(id==='cai'){ if(n.carry==='wood') return say('cai.stopped'); if(n.carry==='tea'||NS.tea.st==='arrived') return say('cai.tea'); if(n.carry==='water'||n.act==='draw') return say('cai.water'); return say('cai.stopped'); } }
 function findMenu(){ npcChoices('xu',NPCS.filter(d=>d.id!=='xu').map(d=>[npcName(d.id),()=>{ const w=whereIs(d.id); npcSay('xu',w?npcLine('xu.find',w):npcLine('xu.findNone')); }])); }
 // the steward shows the way to the tea room: he waits at each turn if the guest falls behind, and gives up if they go off
 function leadStart(){ const n=NPC.xu; n.lead={t0:performance.now(),lost:0,waitSaid:0}; npcSay('xu',npcLine('xu.lead'));
@@ -4716,7 +4851,7 @@ function tickNPC(dt){ if(!window.__entered) return; const now=performance.now(),
   if(NS.cake.st===2&&nowMs-NS.cake.t>CAKE_STEAM*1000) cakeSet(3);
   if(NS.cake.st===5&&nowMs-NS.cake.t>CAKE_AGAIN*1000) cakeSet(0);
   if(NS.tea.st==='none'&&now>teaArriveAt){ teaSet('arrived'); }
-  fenceWatch(); propsSync();
+  propsSync();
   // steam and the steamer lid
   const steaming=NS.cake.st===2; NPCP.steam.forEach((s,i)=>{ const ph=((now/1000)*.5+i/6)%1; s.position.set(NP.stove.x-.45+Math.sin(i*3+now/900)*.08,1.45+ph*.9,-3.72+Math.cos(i*2)*.06); s.material.opacity=steaming?(1-ph)*.35:0; s.scale.setScalar(.25+ph*.45); });
   NPCP.lid.position.y=1.37+(NPC.huo.act==='lift'?.12:0);
@@ -4763,7 +4898,7 @@ function tickNPC(dt){ if(!window.__entered) return; const now=performance.now(),
     P.arms[0].rotation.x+=((aL)-P.arms[0].rotation.x)*Math.min(1,dt*8); P.arms[1].rotation.x+=((aR)-P.arms[1].rotation.x)*Math.min(1,dt*8);
     P.arms[0].rotation.z=zL; P.arms[1].rotation.z=zR; P.head.rotation.x+=(headX*(talking?0:1)-P.head.rotation.x)*Math.min(1,dt*5);
     // the guest is close and looking at this person: offer to talk
-    if(dist<2.6&&renderer.xr&&!renderer.xr.isPresenting){ const dot=((n.x-ME.x)*fx+(n.z-ME.z)*fz)/Math.max(.01,dist); if(dot>.8&&dist<bestD){ best=id; bestD=dist; } }
+    if(n.g.visible&&dist<2.6&&renderer.xr&&!renderer.xr.isPresenting){ const dot=((n.x-ME.x)*fx+(n.z-ME.z)*fz)/Math.max(.01,dist); if(dot>.8&&dist<bestD){ best=id; bestD=dist; } }
     npcProximity(n,dist,now); }
   hintFor=best; if(best&&!panel.classList.contains('open')){ const t=NT('ui.hint').replace('{稱呼}',npcName(best)); if(npcHint.textContent!==t) npcHint.textContent=t; npcHint.style.display='block'; } else npcHint.style.display='none';
   if(boxFor&&Math.hypot(ME.x-NPC[boxFor].x,ME.z-NPC[boxFor].z)>5) closeChoices(); }

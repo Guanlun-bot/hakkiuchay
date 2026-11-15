@@ -239,7 +239,7 @@ content:
             label: 音檔（上傳 mp3；舊的幾首是 vr/music 裡的檔名）
             type: file
       - name: npc
-        label: 宅中人物的台詞（同一情境甲、乙兩句輪流說；留空就用原本的句子）
+        label: 宅中人物的台詞與天氣選單文字（人物同一情境甲、乙兩句輪流說；留空就用原本的句子）
         type: object
         list: true
         fields:

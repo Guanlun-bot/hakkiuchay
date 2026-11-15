@@ -507,7 +507,7 @@ function cutDoor(g,wx,wz,width=1.3,height=2.55){ g.updateMatrixWorld(true); cons
   brick=brick||mBrick(4,.9); white=white||mWhite(2,1.7); const x=side*8.15, a=L.z-width/2, b=L.z+width/2;
   for(const [z0,z1] of [[-4.3,a],[b,4.3]]) if(z1-z0>.01){ box(.3,.9,z1-z0,brick,x,.45,(z0+z1)/2,g,BLOCK); box(.3,2.78,z1-z0,white,x,2.29,(z0+z1)/2,g,BLOCK); }
   box(.3,3.68-height,width,white,x,(height+3.68)/2,L.z,g,BLOCK);
-  for(const z of [a,b]) box(.36,height,.1,M.woodDark,x,height/2,z,g); box(.36,.1,width+.1,M.woodDark,x,height,L.z,g); box(.36,.05,width,M.woodDark,x,.025,L.z,g); }
+  for(const z of [a,b]) box(.36,height,.12,stone,x,height/2,z,g); box(.36,.12,width+.14,stone,x,height,L.z,g); box(.34,.16,width,M.woodDark,x,.08,L.z,g); }   // stone frame, a wooden threshold (門檻)
 const SIDE_ROOMS=[];
 function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2, W=x1-x0, D=z1-z0;
   const fl=new THREE.Mesh(new THREE.PlaneGeometry(W,D),std(T.tile,W*1.25,D*1.25)); fl.rotation.x=-Math.PI/2; fl.position.set(cx,.002,cz); fl.userData={type:'floor'}; scene.add(fl); pickables.push(fl);
@@ -545,6 +545,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
     else { box(len,H,.3,mBrick(len*.78,H*1.05),m,H/2,at,scene,BLOCK); box(len,.08,.4,stone,m,H+.04,at); box(len,.1,.26,cap,m,H+.13,at); } };
   run('x',x1-.15,z0,courtAxis-gw-.3); run('x',x1-.15,courtAxis+gw+.3,z1); run('z',z0+.15,x0,x1-.3); run('z',z1-.15,x0,x1-.3);
   for(const s of [-1,1]){ const pz=courtAxis+s*(gw+.3); box(.6,1.55,.6,mBrick(.5,1.2),x1-.15,.775,pz,scene,BLOCK); box(.7,.1,.7,stone,x1-.15,1.6,pz); box(.5,.12,.5,cap,x1-.15,1.71,pz); }
+  box(.42,.12,2*gw+.1,stone,x1-.15,.06,courtAxis);   // a granite threshold across the gate
   EARLY_OBST.push({x0:x1-.5,x1:x1+.2,z0:courtAxis-gw-.65,z1:courtAxis-gw+.05},{x0:x1-.5,x1:x1+.2,z0:courtAxis+gw-.05,z1:courtAxis+gw+.65}); }
 
 const TREE={x:3.0,z:12.6};   // the court's south-west corner, by 知了間 and the 南廳, as close as the eaves allow
@@ -1787,7 +1788,7 @@ function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1
       // wooden frame and a simple bagua lattice: an inner octagon tied to the frame by eight spokes
       const ring=(ro,ri,dep,mat)=>{ const s2=new THREE.Shape(); oct(ro).forEach(([a,b],k)=>k?s2.lineTo(a,b):s2.moveTo(a,b)); s2.closePath(); const hh=new THREE.Path(); oct(ri).forEach(([a,b],k)=>k?hh.lineTo(a,b):hh.moveTo(a,b)); hh.closePath(); s2.holes.push(hh);
         const g=new THREE.ExtrudeGeometry(s2,{depth:dep,bevelEnabled:false}); g.translate(0,0,-dep/2); const r=new THREE.Mesh(g,mat); r.rotation.y=-Math.PI/2; r.position.set(x,0,19.6); PP.add(r); };
-      ring(W.r+.07,W.r-.03,TW+.06,darkWood);
+      ring(W.r+.07,W.r-.03,TW+.06,stone);
       const lat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.6}); ring(.17,.14,.04,lat);
       for(let k=0;k<8;k++){ const a=k*Math.PI/4, r0=.155, r1=W.r-.02, L2=r1-r0, mz=(r0+r1)/2;
         const b=box(.035,.025,L2,lat,x,W.y+Math.sin(a)*mz,W.z+Math.cos(a)*mz,PP); b.rotation.x=-a; } }
@@ -1795,8 +1796,8 @@ function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1
   const s=new THREE.Shape(); s.moveTo(-4.15,D.h); for(let i=0;i<=24;i++){ const z=-4.15+8.3*i/24; s.lineTo(z,roofUnder(z)); } s.lineTo(4.15,D.h); s.closePath();
   const m=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:TW,bevelEnabled:false}),new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92}));
   m.rotation.y=-Math.PI/2; m.position.set(x+TW/2,0,19.6); PP.add(m);
-  for(const z of [D.z0,D.z1]) box(TW+.06,D.h,.08,darkWood,x,D.h/2,z,PP);
-  box(TW+.06,.1,D.z1-D.z0+.16,darkWood,x,D.h+.02,(D.z0+D.z1)/2,PP); box(TW+.04,.05,D.z1-D.z0,darkWood,x,.025,(D.z0+D.z1)/2,PP); }
+  for(const z of [D.z0,D.z1]) box(TW+.08,D.h,.1,stone,x,D.h/2,z,PP);
+  box(TW+.08,.12,D.z1-D.z0+.2,stone,x,D.h+.03,(D.z0+D.z1)/2,PP); box(TW+.06,.16,D.z1-D.z0,M.woodDark,x,.08,(D.z0+D.z1)/2,PP); }   // stone frame, a wooden threshold
 partition(ZR.wallX); partition(-ZR.wallX);
 // 第二進、第一進 four wings, divided the same way as 知了間 (north room / 明間 / south room). Each is built in a group
 // laid over the 知了間 frame: the west wings are 知了間 shifted south; the east wings are turned half round so they face
@@ -4555,7 +4556,7 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
 { const frame=new THREE.MeshStandardMaterial({map:T.cypress,bumpMap:T.cypressBump,bumpScale:.8,roughness:.55}), dark=new THREE.MeshStandardMaterial({map:T.cypressDark,bumpMap:T.cypressBump,bumpScale:.8,roughness:.55}),
     cloth=new THREE.MeshStandardMaterial({color:0xefe8da,roughness:.95}), quilt=[0x6b7f95,0x8a5a4a,0x5f7a62,0x9a8460].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.9})),
     brass=new THREE.MeshStandardMaterial({color:0xb5945b,metalness:.8,roughness:.32});
-  const L=2.02, W=.98;
+  const L=2.02, W=1.52;   // double beds
   // one bed in its own group: local −z is the foot, the head board at z=+L/2
   function bed(x,z,yaw,qi){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
     for(const sx of [-1,1]) for(const sz of [-1,1]){ const h=sz>0?1.02:.62; cylinder(.032,.032,h,dark,sx*(W/2-.03),h/2,sz*(L/2-.03),g); const k=new THREE.Mesh(new THREE.SphereGeometry(.042,12,8),dark); k.position.set(sx*(W/2-.03),h+.02,sz*(L/2-.03)); g.add(k); }
@@ -4563,7 +4564,7 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
     box(W-.06,.6,.035,frame,0,.66,L/2-.03,g); box(W-.2,.42,.012,dark,0,.68,L/2-.05,g);   // head board with a sunk panel
     box(W-.06,.26,.035,frame,0,.47,-(L/2-.03),g);                              // foot board
     box(W-.12,.14,L-.14,cloth,0,.46,0,g);                                       // mattress
-    const pw=box(.62,.1,.34,cloth,0,.58,L/2-.28,g); pw.scale.set(1,1,1);         // pillow
+    for(const px of [-W/4+.02,W/4-.02]) box(.58,.1,.34,cloth,px,.58,L/2-.28,g);     // two pillows
     box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
     OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
   // a bedside cabinet with framed panels: top with a moulded edge, a drawer and a door each in a raised frame, brass pulls, short tapered legs

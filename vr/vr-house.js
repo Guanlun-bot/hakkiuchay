@@ -404,7 +404,7 @@ widenHallDoor(axialHalls[1].hall,-entryWall); widenHallDoor(gateHall,entryWall);
 // Two-leaf board doors with a traditional sliding bar (門閂) on the inside.
 const DOORS={};
 function buildDoors(g,key,hw=1){
-  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.doorWood,roughness:.72}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*.985*hw,0,4.0); pv.scale.x=hw; g.add(pv);
     const leaf=box(.97,2.58,.055,plank,-side*.485,1.35,0,pv,pick);
@@ -432,7 +432,7 @@ function doorPose(d){ // k: 1 open, 0 shut; barK: 1 bar in, 0 bar stored
 const DOOR_BLOCKS=[];
 function addDoor(key,x,z,rot,half,h,wallT,inside){
   const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
-  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.doorWood,roughness:.72}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
+  const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const zi=-(wallT/2+.03), lw=half-.006, lh=h-.1, leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*half,0,zi); g.add(pv);
     box(lw,lh,.05,plank,-side*lw/2,lh/2+.05,0,pv,pick);
@@ -782,16 +782,44 @@ function redLantern(x,y,z,lit,cord=.45){ const piv=new THREE.Group(); piv.positi
   if(lit){ const L=new THREE.PointLight(0xff5038,0,6,2); L.position.y=cy; piv.add(L); LANTERN_LIGHTS.push(L); }
   LANTERN_SIM.push({piv,ax:0,az:0,vx:0,vz:0,ph:Math.random()*6,len:cord+R}); return piv; }
 // a pair at a door: (x,z) the middle of the door at the wall face, (nx,nz) pointing out of the building, half the spacing
-function doorLanterns(x,z,nx,nz,half,lit,y=3.12,out=.42){ const ax=-nz, az=nx;
-  for(const s of [-1,1]) redLantern(x+nx*out+ax*s*half,y,z+nz*out+az*s*half,lit); }
-{ const A=courtAxis;
-  // wing doors (學鳩齋, 知了間, the 第二進 and 第一進 wings)
-  doorLanterns(0,4.3,0,1,1.42,true); doorLanterns(0,2*A-4.3,0,-1,1.42,true);
-  for(const cx of [2*A,4*A]){ doorLanterns(cx,4.3,0,1,1.42,false); doorLanterns(cx,2*A-4.3,0,-1,1.42,false); }
-  // hall doors: 正廳, 南廳 both faces, 過廳 both faces
-  doorLanterns(-5.5,A,1,0,1.36,false); doorLanterns(5.5,A,-1,0,1.36,false); doorLanterns(14.1,A,1,0,1.36,false); doorLanterns(25.1,A,-1,0,1.36,false); doorLanterns(33.7,A,1,0,1.36,false); }
+/* Wall lamps (壁燈) instead of lanterns: an antique-bronze lantern on a scrolled arm, a pair at every door that opens
+   onto a court, one centred over each of the two windows beside the door, so they sit symmetric about it. The glass
+   glows only after dark; the pairs at 學鳩齋 and 知了間 also light the ground. */
+const LAMP_BRONZE=new THREE.MeshStandardMaterial({color:0x5b4a34,metalness:.65,roughness:.42}),
+  LAMP_GLASS=new THREE.MeshStandardMaterial({color:0xe9dcc0,transparent:true,opacity:.45,roughness:.08,metalness:.1,emissive:0xffb05a,emissiveIntensity:0,side:THREE.DoubleSide,depthWrite:false}),
+  LAMP_FLAME=new THREE.MeshStandardMaterial({color:0xd8a060,emissive:0xffa040,emissiveIntensity:0,roughness:.5});
+function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=Math.atan2(nx,nz); scene.add(g); LANTERNS.push(g);
+  const B=LAMP_BRONZE, lathe=(pts,m,seg=24)=>{ const k=new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r,h])=>new THREE.Vector2(r,h)),seg),m); k.castShadow=true; g.add(k); return k; };
+  // back plate with a shell top, and the scrolled arm reaching out and up to the lamp
+  box(.11,.3,.025,B,0,-.06,.012,g); const shell=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.025,16,1,false,-Math.PI/2,Math.PI),B); shell.rotation.x=Math.PI/2; shell.position.set(0,.09,.012); g.add(shell);
+  const arm=new THREE.CatmullRomCurve3([[0,-.14,.025],[0,-.2,.09],[0,-.17,.17],[0,-.1,.2],[0,-.06,.17],[0,-.08,.13]].map(p=>new THREE.Vector3(...p)));
+  const a=new THREE.Mesh(new THREE.TubeGeometry(arm,24,.012,6,false),B); g.add(a);
+  const arm2=new THREE.CatmullRomCurve3([[0,-.17,.17],[0,-.17,.24],[0,-.13,.26]].map(p=>new THREE.Vector3(...p))); g.add(new THREE.Mesh(new THREE.TubeGeometry(arm2,12,.013,6,false),B));
+  const L=new THREE.Group(); L.position.set(0,-.13,.26); g.add(L); const put=m=>{ g.remove(m); L.add(m); return m; };
+  // the lamp: a cup, the tulip glass between bronze ribs, a scalloped roof in two tiers and a finial
+  put(lathe([[0,0],[.035,0],[.05,.02],[.065,.05],[.07,.06],[0,.06]],B));
+  put(lathe([[.06,.06],[.072,.12],[.088,.2],[.1,.25],[.104,.27]],LAMP_GLASS,20));
+  for(let i=0;i<6;i++){ const a=i*Math.PI/3, rib=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.21,5),B); rib.position.set(Math.sin(a)*.085,.165,Math.cos(a)*.085); rib.rotation.set(Math.cos(a)*.17,0,-Math.sin(a)*.17); L.add(rib); }
+  const fl=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.06,10),LAMP_FLAME); fl.position.y=.1; L.add(fl); const tip=new THREE.Mesh(new THREE.SphereGeometry(.022,10,8),LAMP_FLAME); tip.scale.y=1.5; tip.position.y=.15; L.add(tip);
+  put(lathe([[.0,.27],[.135,.27],[.14,.285],[.12,.3],[.1,.33],[.06,.355],[.05,.37],[0,.37]],B,24));
+  for(let i=0;i<12;i++){ const a=i*Math.PI/6, sc=new THREE.Mesh(new THREE.SphereGeometry(.02,8,6,0,Math.PI*2,0,Math.PI/2),B); sc.rotation.x=Math.PI; sc.position.set(Math.sin(a)*.13,.275,Math.cos(a)*.13); L.add(sc); }
+  put(lathe([[0,.37],[.055,.37],[.06,.39],[.04,.42],[.025,.43],[0,.43]],B,16));
+  const fin=new THREE.Mesh(new THREE.ConeGeometry(.015,.06,10),B); fin.position.y=.47; L.add(fin); const kn=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),B); kn.position.y=.44; L.add(kn);
+  if(lit){ const P=new THREE.PointLight(0xffb066,0,6,2); P.position.set(0,.14,.05); L.add(P); LANTERN_LIGHTS.push(P); }
+  return g; }
+// for one building: a lamp over each of the two windows beside the door, on the face at local z = sg·4.30
+function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
+  for(const s of [-1,1]){ const p=g.localToWorld(new THREE.Vector3(s*cx,0,sg*4.3)), q=g.localToWorld(new THREE.Vector3(s*cx,0,sg*5.3)); const n=q.sub(p).normalize();
+    wallLamp(p.x+n.x*.012,y,p.z+n.z*.012,n.x,n.z,lit); } }
+{ const hc=(HALL_DOOR+bayEdge)/2+.02;
+  // wing doors: 學鳩齋 and 知了間 (lit), the 第二進 and 第一進 wings
+  doorLamps(mainHall,2.02,1,true); doorLamps(oppositeWing,2.02,1,true);
+  for(const w of [...firstWings,...frontWings]) doorLamps(w,2.02,1,false);
+  // hall doors: 正廳 to the court, 南廳 and 過廳 on both faces
+  doorLamps(axialHalls[0].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,-1,false);
+  doorLamps(gateHall,hc,1,false); doorLamps(gateHall,hc,-1,false); }
 function lanternStep(dt,t){ const k=SKY_DAY<.35?1:SKY_DAY<.6?(.6-SKY_DAY)/.25:0;
-  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
+  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
   const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
   for(const l of LANTERN_SIM){ const v=windAt(t,l.ph), th=Math.min(.5,.009*v*v), g=9.8/l.len, wob=1+.25*Math.sin(t*2.6+l.ph*2);
     // the angle the wind would hold it at, about each axis: wind toward +x swings it about −z, toward +z about +x
@@ -4487,7 +4515,7 @@ function bambooWindow(wx,wz,nx,w,y0,y1){ const g=new THREE.Group(); g.position.s
       if(k){ const n=new THREE.Mesh(new THREE.TorusGeometry(.056,.012,6,14),M.woodDark); n.rotation.x=Math.PI/2; n.position.y=k*sl; bar.add(n); } }
     box(.005,.005,.005,M.woodDark,0,0,0,bar); }
   return g; }
-for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w=1.3, y0=1.25, y1=2.55;
+for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w=1.3, y0=1.5, y1=2.8;
   const p=cutWindow(wing,FRONT.cx+7.5,zc,w,y0,y1); if(p) bambooWindow(p.x,p.z,Math.sign(p.x-FRONT.cx),w,y0,y1); }
 
 /* ================= 22、26 號房（第一進兩廂北間）：各四張木床，兩兩相對，每對中間一個床頭櫃 =================
@@ -4508,17 +4536,34 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
     const pw=box(.62,.1,.34,cloth,0,.58,L/2-.28,g); pw.scale.set(1,1,1);         // pillow
     box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
     OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
+  // a bedside cabinet with framed panels: top with a moulded edge, a drawer and a door each in a raised frame, brass pulls, short tapered legs
   function stand(x,z,yaw){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
-    box(.46,.56,.4,frame,0,.31,0,g); box(.5,.03,.44,dark,0,.605,0,g); box(.4,.18,.01,dark,0,.44,-.205,g);   // body, top, drawer front
-    const knob=new THREE.Mesh(new THREE.SphereGeometry(.018,10,8),brass); knob.position.set(0,.44,-.215); g.add(knob);
-    for(const sx of [-1,1]) for(const sz of [-1,1]) box(.04,.03,.04,dark,sx*.2,.015,sz*.17,g);
-    OB(x-.25,x+.25,z-.22,z+.22); }
-  // west wing (room 22): front wall inside face z≈15.6, back wall z≈23.6; east wing (room 26) mirrors about the axis
+    const W2=.46, D2=.38, H2=.58, lg=.1;
+    for(const sx of [-1,1]) for(const sz of [-1,1]) cylinder(.016,.024,lg,dark,sx*(W2/2-.035),lg/2,sz*(D2/2-.035),g);
+    box(W2,H2-lg,D2,frame,0,lg+(H2-lg)/2,0,g);                                   // carcass
+    box(W2+.04,.025,D2+.04,dark,0,H2+.012,0,g); box(W2+.02,.018,D2+.02,frame,0,H2-.009,0,g);   // top and its moulding
+    box(W2+.012,.03,D2+.012,dark,0,lg+.015,0,g);                                  // plinth band
+    const fz=-D2/2-.004;
+    // front: drawer above, door below, each a frame of four rails round a sunk panel
+    for(const [y0,y1] of [[H2-.17,H2-.03],[lg+.05,H2-.2]]){ const cy=(y0+y1)/2, h=y1-y0, w=W2-.06;
+      box(w,h,.008,frame,0,cy,fz,g);
+      box(w,.022,.016,dark,0,y1-.011,fz-.006,g); box(w,.022,.016,dark,0,y0+.011,fz-.006,g);
+      box(.022,h,.016,dark,-w/2+.011,cy,fz-.006,g); box(.022,h,.016,dark,w/2-.011,cy,fz-.006,g);
+      const k=new THREE.Mesh(new THREE.SphereGeometry(.014,10,8),brass); k.position.set(0,h>.2?y1-.07:cy,fz-.02); g.add(k); }
+    // framed sides
+    for(const sx of [-1,1]){ const xx=sx*(W2/2+.004); box(.012,H2-lg-.08,D2-.06,frame,xx,lg+(H2-lg)/2,0,g);
+      for(const [yy,hh,dd] of [[H2-.05,.02,D2-.06],[lg+.05,.02,D2-.06]]) box(.016,hh,dd,dark,xx+sx*.004,yy,0,g);
+      for(const zz of [-(D2/2-.04),D2/2-.04]) box(.016,H2-lg-.1,.02,dark,xx+sx*.004,lg+(H2-lg)/2,zz,g); }
+    OB(x-.26,x+.26,z-.22,z+.22); }
+  // each bed in a corner of the room, its head against the front or back wall and its side along the end wall or the
+  // partition; a cabinet at each bed head on the room side. West wing (room 22): front face z≈15.6, back z≈23.6,
+  // north end x≈31.72, partition x≈36.48; the east wing (room 26) mirrors it about the axis.
   let qi=0;
   for(const [front,back] of [[15.6,23.6],[4.0,-4.0]]){ const s=Math.sign(back-front);
     for(const [wallZ,toward] of [[front,s],[back,-s]]){ const zc=wallZ+toward*(L/2+.02), yaw=toward>0?Math.PI:0;
-      bed(32.55,zc,yaw,qi++); bed(34.55,zc,yaw,qi++); stand(33.55,wallZ+toward*.24,yaw); } } }
-
+      const xa=31.72+W/2+.02, xb=36.48-W/2-.02;
+      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++);
+      stand(xa+W/2+.3,wallZ+toward*.22,yaw); stand(xb-W/2-.3,wallZ+toward*.22,yaw); } } }
 /* ================= 宅中人物（NPC）=================
    Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
    book on the west walk of the 第一進 and shows guests to the tea room; 阿春 keeps the tea station in the east 過水 and

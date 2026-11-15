@@ -2,7 +2,11 @@
 
 一個書齋房間 = 一個 Cloudflare Durable Object，作用和 `server.py` 相同：記住房間裡每個人的位置與狀態，並把位置、狀態、語音片段轉給同房的其他人。用 WebSocket 連線，任何地方都連得到。
 
-## 發布（第一次或修改後）
+## 發布
+
+已設定好：這台伺服器在 khoguanlun@gmail.com 的 Cloudflare 帳號，專案 hakkiuchay-vr 連著 GitHub，`_vrserver/` 推上 main 後會自動重新發布（Cloudflare 後台 › Workers 和 Pages › hakkiuchay-vr › 部署 可看紀錄）。網址：`wss://hakkiuchay-vr.hakkiuchay.workers.dev`（已填在 `vr/config.js`）。
+
+## 手動發布（備用）
 
 在有 Node.js 的電腦上：
 

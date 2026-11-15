@@ -5,5 +5,5 @@ window.VR_CONFIG = {
   key: "sb_publishable_YX-CKztqTTIZJszfxoPXVg_q-YUTAez",
   channel: "hakkiuchay-vr",
   // 學鳩齋自己的多人伺服器（_vrserver/，Cloudflare）。發布後填 wss://… 網址；空白時用上面的 Supabase
-  ws: ""
+  ws: "wss://hakkiuchay-vr.hakkiuchay.workers.dev"
 };

@@ -3390,6 +3390,7 @@ function renderPeople(){ const list=[{n:myName+'（你）',c:myColor,st:statusOf
 // On hakkiuchay.space there is no Claude room: share presence through a Supabase Realtime channel instead.
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>{clearTimeout(timeout);res();}; s.onerror=()=>{clearTimeout(timeout);s.remove();rej(new Error('載入失敗'));}; const timeout=setTimeout(()=>{s.remove();rej(new Error('載入逾時'));},10000); document.head.appendChild(s); }); }
 async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){ NET.st='設定缺漏'; return null; }
+  if(!window.supabase){ const pre=document.querySelector('script[src*="supabase-js"]'); if(pre) await new Promise(r=>{ const t=setTimeout(r,8000); pre.addEventListener('load',()=>{clearTimeout(t);r();}); pre.addEventListener('error',()=>{clearTimeout(t);r();}); }); }
   if(!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
   const sb=window.supabase.createClient(C.url,C.key,{auth:{persistSession:false,autoRefreshToken:false}});
   const me=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)), ch=sb.channel((C.channel||'hakkiuchay-vr')+(playRoom&&playRoom!=='HAKKIUCHAY-01'?':'+playRoom:''),{config:{presence:{key:me},broadcast:{self:false,ack:false}}});

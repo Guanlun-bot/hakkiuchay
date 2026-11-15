@@ -389,6 +389,20 @@ function facadeAt(g,sg){ const z=sg*entryWall, gone=[];
   const porch=new THREE.Mesh(new THREE.PlaneGeometry(6.32,1.12),std(stonePaving,3,1)); porch.rotation.x=-Math.PI/2; porch.position.set(0,.018,sg*4.54); porch.userData={type:'floor'}; g.add(porch); pickables.push(porch); }
 facadeAt(axialHalls[1].hall,-1);   // 南廳, toward the 第二進
 facadeAt(gateHall,-1);             // 過廳 (once the 門廳), toward the 第一進
+// The three halls on the axis (正廳, 南廳, 過廳) are the side-wing build squeezed to 0.64 of its length, which also squeezed
+// their doors to 1.28 m. Rebuild each hall door at the 1.84 m of the wing doors: take out the door bay (inner windows,
+// door frame, lintel, sill) and build it again with a wider opening; the inner windows narrow a little to fit beside it.
+const HALL_DOOR=1.84/2/SIDE_SCALE;   // half the opening, in the hall's own (squeezed) units
+function widenHallDoor(g,z){ const D=HALL_DOOR, gone=[];
+  g.children.forEach(m=>{ if(m.isMesh&&Math.abs(m.position.z-z)<.1&&m.position.y<3.26&&Math.abs(m.position.x)<bayEdge-.01) gone.push(m); });
+  for(const m of gone){ g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
+  const w=1.2, c=(D+bayEdge)/2+.02;
+  for(const side of [-1,1]) windowBay(side<0?-bayEdge:D,side<0?-D:bayEdge,side*c,w,z,1.0,2.33,g);
+  facadePanel(-D,D,2.56,3.26,z,mBrick(2*D*.78,.73),g);
+  for(const x of [-D-.08,D+.08]) box(.19,2.59,.37,stone,x,1.295,z,g);
+  box(2*D+.35,.17,.38,stone,0,2.61,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
+for(const {hall} of axialHalls) widenHallDoor(hall,entryWall);
+widenHallDoor(axialHalls[1].hall,-entryWall); widenHallDoor(gateHall,entryWall); widenHallDoor(gateHall,-entryWall);
 // Columns along the outer edge of the eaves on all four sides, joined by a beam.
 { const E=4.1, H=3.5, cols=[];
   for(const a of [-E,E]) for(const b of [-E,E]) cols.push([a,b]);
@@ -396,10 +410,10 @@ facadeAt(gateHall,-1);             // 過廳 (once the 門廳), toward the 第�
   for(const sz of [-1,1]){ box(2*E+.2,.16,.14,timber,0,H+.02,courtAxis+sz*E); box(.14,.16,2*E+.2,timber,sz*E,H+.02,courtAxis); } }
 // Two-leaf board doors with a traditional sliding bar (門閂) on the inside.
 const DOORS={};
-function buildDoors(g,key){
+function buildDoors(g,key,hw=1){
   const pick={type:'door',key}, plank=new THREE.MeshStandardMaterial({map:T.wood,roughness:.7,color:0xc08a60}), iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const leaves=[];
-  for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*.985,0,4.0); g.add(pv);
+  for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*.985*hw,0,4.0); pv.scale.x=hw; g.add(pv);
     const leaf=box(.97,2.48,.055,plank,-side*.485,1.3,0,pv,pick);
     for(const y of [.55,1.3,2.05]) box(.9,.09,.03,M.woodDark,-side*.485,y,-.04,pv);               // battens inside
     for(const y of [1.17,1.33]) box(.06,.07,.06,M.woodDark,-side*.12,y-.08+.08,-.06,pv);          // bar brackets
@@ -408,11 +422,11 @@ function buildDoors(g,key){
     for(let r=0;r<3;r++) for(let c=0;c<3;c++){ const n=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),iron); n.position.set(-side*(.25+c*.25),.5+r*.85,.032); pv.add(n); }   // door studs
     leaves.push({pv,side}); }
   // the bar: across both leaves when shut, leaning against the wall when open
-  const bar=box(1.5,.075,.075,new THREE.MeshStandardMaterial({map:T.wood,color:0x7a5236,roughness:.7}),0,1.25,3.89,g,pick);
+  const bar=box(1.5*hw,.075,.075,new THREE.MeshStandardMaterial({map:T.wood,color:0x7a5236,roughness:.7}),0,1.25,3.89,g,pick);
   DOORS[key]={leaves,bar,open:true,k:1,barK:0,rest:key==='S'?{x:1.95,y:.82,z:3.78}:{x:1.9,y:.04,z:3.7}};
 }
 buildDoors(mainHall,'S'); buildDoors(oppositeWing,'N');
-for(const side of [-1,1]) buildDoors(axialHalls[side<0?0:1].hall,side<0?'W':'E');
+for(const side of [-1,1]) buildDoors(axialHalls[side<0?0:1].hall,side<0?'W':'E',HALL_DOOR);
 DOORS.N.fold=Math.PI-.16;   // 知了間: the leaves fold back flat against the front wall, so the entrance view stays open
 function doorPose(d){ // k: 1 open, 0 shut; barK: 1 bar in, 0 bar stored
   for(const {pv,side} of d.leaves) pv.rotation.y=-side*(d.fold||Math.PI/2-.12)*d.k;
@@ -3031,14 +3045,14 @@ function walkable(x,z){
   const sideHall = Math.abs(x)>Math.abs(axisZ);
   const sc = sideHall ? SIDE_SCALE : roomWidthScale;
   const dkey = sideHall ? (x<0?'W':'E') : (axisZ<0?'S':'N');
-  const inDoor = along<.9*sc && towardRange>=5.12 && towardRange<=6.5 && (!DOORS[dkey]||DOORS[dkey].open);
+  const inDoor = along<(sideHall?1.3:.9)*sc && towardRange>=5.12 && towardRange<=6.5 && (!DOORS[dkey]||DOORS[dkey].open);
   const inOtherRange = axisZ>=0 || Math.abs(x)>Math.abs(axisZ);
   const inMatchingRoom = inOtherRange && along<7.2*sc &&
     towardRange>5.89 && towardRange<13.05;
   const fx=Math.abs(x-FIRST.cx)<Math.abs(x-FRONT.cx)?x-FIRST.cx:x-FRONT.cx, inFirst=(x>14.3&&x<FIRST.gate-.4||x>33.9&&x<FIRST.fx0+.5)&&z>FIRST.z0+.5&&z<FIRST.z1-.5;
-  const inGateHall=x>25.45&&x<33.35&&Math.abs(axisZ)<4.55, inGateDoor=Math.abs(axisZ)<.8&&((x>24.4&&x<25.9)||(x>32.9&&x<34.3));
+  const inGateHall=x>25.45&&x<33.35&&Math.abs(axisZ)<4.55, inGateDoor=Math.abs(axisZ)<.83&&((x>24.4&&x<25.9)||(x>32.9&&x<34.3));
   const inFore=x>FIRST.fx0+.3&&x<FIRST.fx1-.45&&z>-3.75&&z<2*courtAxis+3.75;
-  const inBackDoor=x>12.9&&x<14.7&&Math.abs(axisZ)<.6;
+  const inBackDoor=x>12.9&&x<14.7&&Math.abs(axisZ)<.83;
   const inFirstWing=Math.abs(fx)<7.25*roomWidthScale&&((z>-3.25&&z<3.94)||(z>2*courtAxis-3.94&&z<2*courtAxis+3.25));
   const inFirstDoor=Math.abs(fx)<.8&&((z>=3.6&&z<=4.9)||(z>=2*courtAxis-4.9&&z<=2*courtAxis-3.6));
   let inSide=false; for(const r of SIDE_ROOMS) if(x>r.x0+.32&&x<r.x1-.32&&z>r.z0+.32&&z<r.z1-.32){ inSide=true; break; }

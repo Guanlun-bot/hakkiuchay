@@ -764,10 +764,10 @@ function hangingLantern(parent,x,y,z,power){
 }
 /* Red lanterns (燈籠) in pairs at every door that opens onto a court or the street: round, ribbed silk between black
    caps, a red cord with a ring above, a short red skirt and a tassel below. Each hangs from its cord as a pendulum the
-   wind pushes about (pressure ∝ v², against gravity, with damping). They glow only after dark; the pairs at 學鳩齋
-   and 知了間 and the gate also light the ground. */
-const LANTERN_RED=new THREE.MeshStandardMaterial({color:0xd02a20,emissive:0xff4a20,emissiveIntensity:0,roughness:.55}),
-  LANTERN_RIB=new THREE.MeshStandardMaterial({color:0x8a1a14,emissive:0x7a1408,emissiveIntensity:0,roughness:.6}),
+   wind pushes about (pressure ∝ v², against gravity, with damping). They glow red only after dark; the pairs at
+   學鳩齋 and 知了間 also light the ground. */
+const LANTERN_RED=new THREE.MeshStandardMaterial({color:0xd02a20,emissive:0xe01810,emissiveIntensity:0,roughness:.55}),
+  LANTERN_RIB=new THREE.MeshStandardMaterial({color:0x8a1a14,emissive:0x6a0a06,emissiveIntensity:0,roughness:.6}),
   LANTERN_BLK=new THREE.MeshStandardMaterial({color:0x151313,roughness:.45,metalness:.2}), LANTERN_LIGHTS=[], LANTERN_SIM=[];
 function redLantern(x,y,z,lit,cord=.45){ const piv=new THREE.Group(); piv.position.set(x,y,z); scene.add(piv); LANTERNS.push(piv);
   const C=(r1,r2,h,m,yy,seg=16)=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m); k.position.y=yy; k.castShadow=true; piv.add(k); return k; };
@@ -779,7 +779,7 @@ function redLantern(x,y,z,lit,cord=.45){ const piv=new THREE.Group(); piv.positi
   for(let i=0;i<10;i++){ const rib=new THREE.Mesh(new THREE.TorusGeometry(R+.002,.0035,4,36,Math.PI),LANTERN_RIB); rib.scale.set(1,.88,1); rib.rotation.set(0,i*Math.PI/10,Math.PI/2); rib.position.y=cy; piv.add(rib); }
   const bot=cy-R*.88; C(.085,.085,.05,LANTERN_BLK,bot-.02); C(.062,.062,.07,LANTERN_RED,bot-.08); C(.012,.012,.04,LANTERN_RED,bot-.135,8);
   const tas=C(.006,.022,.17,LANTERN_RED,bot-.24,10); const knot=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),LANTERN_RED); knot.position.y=bot-.15; piv.add(knot);
-  if(lit){ const L=new THREE.PointLight(0xff9a5a,0,6,2); L.position.y=cy; piv.add(L); LANTERN_LIGHTS.push(L); }
+  if(lit){ const L=new THREE.PointLight(0xff5038,0,6,2); L.position.y=cy; piv.add(L); LANTERN_LIGHTS.push(L); }
   LANTERN_SIM.push({piv,ax:0,az:0,vx:0,vz:0,ph:Math.random()*6,len:cord+R}); return piv; }
 // a pair at a door: (x,z) the middle of the door at the wall face, (nx,nz) pointing out of the building, half the spacing
 function doorLanterns(x,z,nx,nz,half,lit,y=3.12,out=.42){ const ax=-nz, az=nx;
@@ -789,13 +789,9 @@ function doorLanterns(x,z,nx,nz,half,lit,y=3.12,out=.42){ const ax=-nz, az=nx;
   doorLanterns(0,4.3,0,1,1.42,true); doorLanterns(0,2*A-4.3,0,-1,1.42,true);
   for(const cx of [2*A,4*A]){ doorLanterns(cx,4.3,0,1,1.42,false); doorLanterns(cx,2*A-4.3,0,-1,1.42,false); }
   // hall doors: 正廳, 南廳 both faces, 過廳 both faces
-  doorLanterns(-5.5,A,1,0,1.36,false); doorLanterns(5.5,A,-1,0,1.36,false); doorLanterns(14.1,A,1,0,1.36,false); doorLanterns(25.1,A,-1,0,1.36,false); doorLanterns(33.7,A,1,0,1.36,false);
-  // the gate in the front wall: a wooden lantern pole on each post, its arm reaching in over the 前庭
-  { const px=FIRST.fx1-.15, pw=new THREE.MeshStandardMaterial({map:T.woodDark,roughness:.7});
-    for(const sz of [-1,1]){ const pz=A+sz*1.6; box(.07,1.0,.07,pw,px,2.27,pz); box(.62,.06,.06,pw,px-.28,2.74,pz); box(.05,.2,.05,pw,px-.03,2.6,pz).rotation.z=-.7;
-      redLantern(px-.55,2.72,pz,true,.32); } } }
+  doorLanterns(-5.5,A,1,0,1.36,false); doorLanterns(5.5,A,-1,0,1.36,false); doorLanterns(14.1,A,1,0,1.36,false); doorLanterns(25.1,A,-1,0,1.36,false); doorLanterns(33.7,A,1,0,1.36,false); }
 function lanternStep(dt,t){ const k=SKY_DAY<.35?1:SKY_DAY<.6?(.6-SKY_DAY)/.25:0;
-  LANTERN_RED.emissiveIntensity=1.25*k; LANTERN_RIB.emissiveIntensity=.8*k; for(const L of LANTERN_LIGHTS) L.intensity=2.4*k;
+  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
   const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
   for(const l of LANTERN_SIM){ const v=windAt(t,l.ph), th=Math.min(.5,.009*v*v), g=9.8/l.len, wob=1+.25*Math.sin(t*2.6+l.ph*2);
     // the angle the wind would hold it at, about each axis: wind toward +x swings it about −z, toward +z about +x

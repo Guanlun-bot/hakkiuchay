@@ -5922,7 +5922,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
 
   // a four-leaf folding screen in the west 明間, centred on the line between the two front octagonal windows: 趙孟頫《雙松平遠圖》 (Met open access),
   // cropped to the pines and the far hills and spread across the leaves; dark wood frames, a wooden lower panel, plain silk behind
-  { const tag={type:'dscreen'}, N=4, PW=.62, PH=2.02, th=.22, z0=(ZR.door.z0+ZR.door.z1-ZR.win.z)-.067,   /* the front octagonal windows' line (z 17.85), less half the zigzag */ span=N*PW*Math.cos(th), x0=39.2-span/2, py0=.58, py1=1.86, inner=PW-.08;
+  { const tag={type:'dscreen'}, N=4, PW=.62, PH=2.02, th=.22, z0=(ZR.door.z0+ZR.door.z1-ZR.win.z)-.067+.15,   /* 15 cm behind the front octagonal windows' line (z 17.85), less half the zigzag */ span=N*PW*Math.cos(th), x0=39.2-span/2, py0=.58, py1=1.86, inner=PW-.08;
     const tex=new THREE.TextureLoader().load('screen-zhaomengfu-twinpines.jpg'); tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=MAXANI;
     const frameM=mat(0x3a2418,.45), silk=mat(0xd9cfb8,.9), back=mat(0xe6dcc8,.92), panelM=mat(0xffffff,.55,{map:T.cypressDark||T.cypress,color:0x8a6648});
     const ar=(N*inner)/(py1-py0), iar=1600/695, ry=Math.min(1,ar/iar);

@@ -38,7 +38,7 @@ $('#today').textContent = `${cnNum(now.getMonth()+1)}月${cnNum(now.getDate())}�
 
 /* ---------------- renderer / scene ---------------- */
 const canvas = $('#c');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true}); renderer.localClippingEnabled=true;   // seated figures are cut at the hip
 renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch?1.25:1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1403,6 +1403,10 @@ const SEAT_KIND={
 function deskNo(i){ let n=0; for(let k=0;k<=i;k++) if(SEATS[k].kind==='desk'&&!SEATS[k].name) n++; return n; }
 function seatLabel(i){ const s=SEATS[i]; if(s.name) return s.name; return s.kind==='desk'?'第'+cnNum(deskNo(i))+'席':({lounge:'閱讀角',bench:'講堂長凳',zen:'禪堂蒲團',tea:'知了間',yard:'大樹跤石椅',irori:'囲炉裏',gongfu:'茶席',qin:'琴凳',modern:'當代茶席',luohan:'羅漢床',taishi:'太師椅'})[s.kind]; }
 // stand up / sit down on the side you can reach: behind a desk chair, in front of a sofa or cushion
+// where a seated figure goes: its seat, moved forward 12 cm (6 on low seats) along the way it faces, and lifted 3 cm
+function seatPlace(s){ const k=SEAT_KIND[s.kind]||{}, low=(k.sink??-.42)<=-.6, f=k.fz??(low?.06:.12); return {x:s.x-Math.sin(s.yaw)*f, z:s.z-Math.cos(s.yaw)*f, y:(k.sink??-.42)+(k.lift??(low?.02:.03)), yaw:s.yaw, low, sink:(k.sink??-.42)+(k.lift??(low?.02:.03))}; }
+function poseSeated(av,st){ const f=av&&av.fig; if(!f||!f.userData.sit) return; const key=st?st.kind+(st.x.toFixed(2)):''; if(av.sitKey===key) { if(st) f.userData.sitCut(); return; } av.sitKey=key;
+  if(st){ const P=seatPlace(st); f.userData.sit(true,P.sink,P.low); f.userData.sitCut(); } else f.userData.sit(false); }
 function seatApproach(s){ if(s.ap) return s.ap; const k=SEAT_KIND[s.kind], d=k.front?-.62:.7; return {x:s.x+Math.sin(s.yaw)*d, z:s.z+Math.cos(s.yaw)*d}; }
 function addSeat(x,z,yaw,kind,name=null){ SEATS.push({x,z,yaw,kind,name}); return SEATS.length-1; }
 
@@ -2903,6 +2907,7 @@ function buildFigure(look,color){ const L=cleanLook(look), F=new THREE.Group(), 
     if(['suit','tails','frock','tweed','trench','vest','zhongshan'].includes(O)) cyl(.042,.042,.03,AVM.shirt,0,-.505,0,p);
     sph(.038,AVM.skin,0,-.53,0,p); arms.push(p); }
   const [aL,aR]=arms;
+  F.userData.arms=arms;
   if(behind){ for(const [a,sx] of [[aL,-1],[aR,1]]){ a.rotation.x=-.42; a.rotation.z=sx*.32; } }
   else if(casual){ aL.rotation.x=.1; aL.rotation.z=.03; aR.rotation.x=-.08; aR.rotation.z=-.03; F.rotation.z=.02; F.rotation.y=.08; }
   else if(up){ for(const a of arms) a.rotation.x=-.05; F.scale.set(1,1.02,1); }
@@ -2977,6 +2982,36 @@ function buildFigure(look,color){ const L=cleanLook(look), F=new THREE.Group(), 
   if(A==='watch'){ const ch=tor(.09,.0025,AVM.gold,0,1.08,-(sh*.8)-.008,F,Math.PI); ch.rotation.z=Math.PI; sph(.02,AVM.gold,.09,1.08,-(sh*.8)-.015).scale.z=.4; }
   if(A==='pipe'){ const p=cyl(.005,.005,.09,AVM.wood,.03,1.5,-.15); p.rotation.set(Math.PI/2.3,0,.3); cyl(.016,.014,.035,AVM.wood,.055,1.48,-.19); }
   if(A==='gourd'){ const g1=sph(.045,M(0xc9963e,.6),-(sh+.04),.95,.0); const g2=sph(.032,M(0xc9963e,.6),-(sh+.04),1.02,.0); bx(.01,.03,.01,AVM.red,-(sh+.04),1.06,0); }
+  /* sitting: everything below the hip is hidden or cut away, and a seated lower body takes its place: thighs forward
+     and shins down to the floor on a chair, or crossed on a cushion; long robes and skirts drape over the lap instead.
+     `sink` is where the figure's feet would be (the seat kind's height offset); the floor is then at local y −sink. */
+  const HIP=.86, longWear=['robe','qipao','magua','rushan','lanshan','daopao','cloak','gown','aoqun','beizi','victorian','edwardian','blouse'].includes(O)||(fem&&O==='suit');
+  const armSet=new Set(); for(const a of arms) a.traverse(o=>armSet.add(o));
+  let seated=null; const cut=new THREE.Plane(new THREE.Vector3(0,-1,0),0), saved=[];
+  F.userData.sit=(on,sink=-.42,low=false)=>{
+    if(seated){ F.remove(seated); seated=null; for(const [m,vis,mat] of saved){ m.visible=vis; m.material=mat; } saved.length=0; }
+    if(!on) return;
+    let legMat=null;
+    F.traverse(m=>{ if(!m.isMesh||armSet.has(m)) return; const g=m.geometry; if(!g.boundingBox) g.computeBoundingBox(); const bb=g.boundingBox, sy=m.scale.y;
+      const lo=m.position.y+bb.min.y*sy, hi=m.position.y+bb.max.y*sy; if(m.parent!==F) return;
+      if(hi<HIP+.02){ saved.push([m,m.visible,m.material]); if(!legMat&&m.material!==AVM.shoe&&m.material!==AVM.clothShoe&&m.material!==AVM.sneaker) legMat=m.material; m.visible=false; }
+      else if(lo<HIP){ saved.push([m,m.visible,m.material]); const mm=m.material.clone(); mm.clippingPlanes=[cut]; m.material=mm; if(!legMat) legMat=m.material; } });
+    seated=new THREE.Group(); F.add(seated); const lm=(legMat||cloth).clone(); lm.clippingPlanes=null; const floor=-sink;
+    const C=(r1,r2,h,m,x,y,z,rx=0,rz=0)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,12),m); o.position.set(x,y,z); o.rotation.set(rx,0,rz); o.castShadow=true; seated.add(o); return o; };
+    const B=(w,h,d,m,x,y,z)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); o.castShadow=true; seated.add(o); return o; };
+    const shoe=longWear&&!['victorian','edwardian','blouse'].includes(O)?AVM.clothShoe:AVM.shoe;
+    if(low){ // cross-legged on a cushion or the tatami
+      if(longWear){ const lap=new THREE.Mesh(new THREE.SphereGeometry(.3,18,10),lm); lap.scale.set(1.15,.3,.85); lap.position.set(0,HIP-.03,-.1); seated.add(lap); }
+      for(const sx of [-1,1]){ C(.065,.06,.42,longWear?lm:lm,sx*.1,HIP-.02,-.13,0,Math.PI/2+sx*.35).rotation.y=sx*.5; }
+      for(const sx of [-1,1]) B(.07,.05,.14,shoe,sx*.12,HIP-.04,-.3);
+    } else { const knee=-.44, shin=Math.max(.15,HIP-.02-floor);
+      if(longWear){ B(2*sh+.04,.12,.5,lm,0,HIP-.02,-.2); const drape=B(2*sh+.06,shin,.05,lm,0,HIP-.06-shin/2,knee-.02); drape.position.y=Math.max(floor+shin/2,HIP-.06-shin/2);
+        for(const sx of [-1,1]) B(.08,.05,.15,shoe,sx*.08,floor+.025,knee-.06); }
+      else { for(const sx of [-1,1]){ C(.07,.068,.46,lm,sx*.08,HIP-.02,-.21,Math.PI/2); C(.065,.06,shin,lm,sx*.08,HIP-.02-shin/2,knee); B(.085,.05,.17,shoe,sx*.08,floor+.025,knee-.04); } } }
+  };
+  // update the cut plane: called when the figure has been placed in the world
+  F.userData.sitCut=()=>{ if(!seated) return; F.updateMatrixWorld(true); const p=new THREE.Vector3(0,HIP,0).applyMatrix4(F.matrixWorld); cut.constant=p.y; };
+  F.userData.armBase=arms.map(a=>({x:a.rotation.x,z:a.rotation.z})); F.userData.baseRot={x:F.rotation.x,z:F.rotation.z};
   return {F,body}; }
 function makeAvatar(color,look){ const g=new THREE.Group(); const fig=buildFigure(look||{},color); g.add(fig.F);
   const tag=new THREE.Sprite(new THREE.SpriteMaterial({depthTest:false,transparent:true})); tag.scale.set(0.9,0.26,1); tag.position.y=1.95; tag.renderOrder=5; g.add(tag);
@@ -2984,33 +3019,60 @@ function makeAvatar(color,look){ const g=new THREE.Group(); const fig=buildFigur
   const snack=new THREE.Group(); g.add(snack);
   const smoke=smokeRig(g);
   scene.add(g); return {g,fig:fig.F,body:fig.body,tag,cup,snack,smoke,snI:-1,key:'',look:''}; }
-function setAvatarLook(av,color,look){ const k=JSON.stringify(cleanLook(look))+color; if(av.look===k) return; av.look=k; av.g.remove(av.fig); const fig=buildFigure(look,color); av.g.add(fig.F); av.fig=fig.F; av.body=fig.body; }
+function setAvatarLook(av,color,look){ const k=JSON.stringify(cleanLook(look))+color; if(av.look===k) return; av.look=k; av.g.remove(av.fig); av.sitKey=undefined; const fig=buildFigure(look,color); av.g.add(fig.F); av.fig=fig.F; av.body=fig.body; }
 
 // ---- smoking: a silver case, a lighter's flame, the ember and smoke; ~2½ minutes a cigarette, shared as presence `sm`
 var mySmoke=0; const SMOKE_T=150;
 const smokeMat=()=>{ const m=steamMatBase.clone(); m.color=new THREE.Color(0xd8d6d2); m.opacity=0; return m; };
+// four things to smoke, all lit with a match: 紙菸 a cigarette, 菸斗 a briar pipe, 雪茄 a cigar, 旱菸桿 a long pipe with a
+// small brass bowl. In the rig, x runs from the mouth end (0) out to where it burns. A matchbox and a match: struck
+// along the box's side, it flares, is held to the tip, then shaken out.
+var mySmokeType=(()=>{ try{ return localStorage.getItem('hk-smoke-type')||'cig'; }catch{ return 'cig'; } })();
+const SMOKE_TYPES=['cig','pipe','cigar','longpipe'];
 function smokeRig(parent){ const R=new THREE.Group(); parent.add(R); R.visible=false;
-  const cig=new THREE.Group(); R.add(cig); const paper=new THREE.Mesh(new THREE.CylinderGeometry(.0045,.0045,.07,8),AVM.shirt); paper.rotation.z=Math.PI/2; paper.position.x=.035; cig.add(paper);
-  const filt=new THREE.Mesh(new THREE.CylinderGeometry(.0047,.0047,.022,8),new THREE.MeshStandardMaterial({color:0xc89a5a,roughness:.8})); filt.rotation.z=Math.PI/2; filt.position.x=-.011; cig.add(filt);
-  const ember=new THREE.Mesh(new THREE.SphereGeometry(.0055,8,6),new THREE.MeshBasicMaterial({color:0xff6a1a})); ember.position.x=.071; cig.add(ember);
-  const kase=new THREE.Mesh(new THREE.BoxGeometry(.085,.012,.055),new THREE.MeshStandardMaterial({color:0xb8b8b4,metalness:.85,roughness:.25})); kase.position.set(0,-.02,.02); R.add(kase);
-  const lighter=new THREE.Group(); lighter.position.set(.071,-.02,0); R.add(lighter); const lb=new THREE.Mesh(new THREE.BoxGeometry(.022,.05,.012),new THREE.MeshStandardMaterial({color:0x8a1f1f,metalness:.3,roughness:.4})); lb.position.y=-.03; lighter.add(lb);
-  const flame=new THREE.Mesh(new THREE.ConeGeometry(.007,.03,8),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.9,depthWrite:false})); flame.position.y=.012; lighter.add(flame);
-  const glow=new THREE.PointLight(0xff9a40,0,1.2,2); lighter.add(glow);
+  const M_=(c,r=.7,o={})=>new THREE.MeshStandardMaterial({color:c,roughness:r,...o});
+  const C=(r1,r2,h,m,seg=10)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m); return o; };
+  const tools={}, ember=new THREE.Mesh(new THREE.SphereGeometry(.0055,8,6),new THREE.MeshBasicMaterial({color:0xff6a1a}));
+  { const g=new THREE.Group(); const paper=C(.0045,.0045,.07,AVM.shirt); paper.rotation.z=Math.PI/2; paper.position.x=.035; g.add(paper); const f=C(.0047,.0047,.022,M_(0xc89a5a,.8)); f.rotation.z=Math.PI/2; f.position.x=-.011; g.add(f); tools.cig={g,burn:paper,tip:.071,len:.07}; }
+  { const g=new THREE.Group(), wood=M_(0x5a2f1a,.4); const st=C(.004,.0055,.08,M_(0x1a1715,.3)); st.rotation.z=Math.PI/2; st.position.x=.03; g.add(st);
+    const bowl=C(.016,.013,.04,wood,14); bowl.position.set(.075,.012,0); g.add(bowl); const rim=C(.012,.012,.002,M_(0x241008,.9)); rim.position.set(.075,.032,0); g.add(rim); tools.pipe={g,tip:[.075,.033,0]}; }
+  { const g=new THREE.Group(); const body=C(.0085,.009,.12,M_(0x6b4226,.75)); body.rotation.z=Math.PI/2; body.position.x=.06; g.add(body); const band=C(.0092,.0092,.012,M_(0xb0302a,.4,{metalness:.3})); band.rotation.z=Math.PI/2; band.position.x=.018; g.add(band); tools.cigar={g,burn:body,tip:.121,len:.12}; }
+  { const g=new THREE.Group(); const jade=C(.005,.005,.03,M_(0x6f9a7a,.3)); jade.rotation.z=Math.PI/2; jade.position.x=.015; g.add(jade); const stem=C(.0045,.0045,.36,M_(0x3a2416,.6)); stem.rotation.z=Math.PI/2; stem.position.x=.21; g.add(stem);
+    const bowl=C(.011,.008,.022,M_(0xb8913e,.35,{metalness:.7}),12); bowl.position.set(.395,.009,0); g.add(bowl); tools.longpipe={g,tip:[.395,.021,0]}; }
+  for(const k in tools){ R.add(tools[k].g); tools[k].g.visible=false; }
+  R.add(ember);
+  // matchbox and match
+  const box=new THREE.Group(); box.position.set(-.01,-.03,.03); R.add(box); const bx=new THREE.Mesh(new THREE.BoxGeometry(.05,.014,.036),M_(0xd8c49a,.8)); box.add(bx);
+  const strip=new THREE.Mesh(new THREE.BoxGeometry(.05,.004,.002),M_(0x5a3a2a,.9)); strip.position.set(0,0,.019); box.add(strip);
+  const match=new THREE.Group(); R.add(match); const stick=C(.0018,.0018,.05,M_(0xe6d2a6,.8),6); stick.rotation.z=Math.PI/2; stick.position.x=-.025; match.add(stick);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.0035,8,6),M_(0x8a1f1f,.6)); match.add(head);
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(.006,.026,8),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.92,depthWrite:false})); flame.position.y=.012; match.add(flame);
+  const glow=new THREE.PointLight(0xff9a40,0,1.2,2); match.add(glow);
   const puffs=[]; for(let i=0;i<10;i++){ const s=new THREE.Sprite(smokeMat()); scene.add(s); puffs.push({s,t:1,v:new THREE.Vector3()}); }
-  return {R,cig,ember,kase,lighter,flame,glow,puffs,next:0,exhale:6}; }
+  return {R,tools,ember,box,match,head,flame,glow,puffs,next:0,type:null}; }
+function setSmokeType(S,type){ if(!SMOKE_TYPES.includes(type)) type='cig'; if(S.type===type) return; S.type=type; for(const k in S.tools) S.tools[k].g.visible=k===type; }
 const _tip=new THREE.Vector3();
-// t: seconds since lighting (-1 when not smoking). Phases: case 0–1.2, lighter 1.0–2.6, then smoke until SMOKE_T
-function poseSmoke(S,t,dt,mouth){ const on=t>=0&&t<SMOKE_T; S.R.visible=on; if(!on){ for(const p of S.puffs) p.s.material.opacity=0; return; }
-  S.kase.visible=t<1.2; S.cig.visible=t>.7; S.lighter.visible=t>1.0&&t<2.6;
-  const burnt=Math.min(1,t/SMOKE_T); S.cig.children[0].scale.y=1-burnt*.7; S.cig.children[0].position.x=.035-burnt*.0245; S.ember.position.x=.071-burnt*.049;
-  S.lighter.position.x=S.ember.position.x;
-  const draw=(t%9)<1.2&&t>3;   /* every nine seconds a draw: the ember brightens */
-  S.ember.material.color.setHex(draw?0xffb050:0xff5a10); S.ember.scale.setScalar(draw?1.4:1);
-  if(S.lighter.visible){ const k=1+.15*Math.sin(t*40); S.flame.scale.set(1,k,1); S.glow.intensity=.6*k; } else S.glow.intensity=0;
+// t: seconds since starting (-1 when not smoking). Matchbox 0–2.8; the match is struck at 0.8–1.2, flares, goes to the
+// tip 1.5–2.3, is shaken out at 2.3–2.6; smoke rises from the tip after that, and a draw every nine seconds
+function poseSmoke(S,t,dt,mouth){ const on=t>=0&&t<SMOKE_T; S.R.visible=on; if(!on){ for(const p of S.puffs) p.s.material.opacity=0; S.glow.intensity=0; return; }
+  const T=S.tools[S.type]||S.tools.cig, burnt=Math.min(1,t/SMOKE_T);
+  let tip;
+  if(T.burn){ T.burn.scale.y=1-burnt*.6; T.burn.position.x=(T===S.tools.cig?.035:.06)-burnt*.3*T.len; tip=[T.tip-burnt*.6*T.len,0,0]; } else tip=T.tip;
+  S.ember.position.set(tip[0],tip[1],tip[2]);
+  S.box.visible=t<2.8; S.match.visible=t>.6&&t<2.7;
+  if(S.match.visible){ let x,y,z, f=0;
+    if(t<1.2){ const k=(t-.6)/.6; x=-.035+k*.07; y=-.022; z=.05; f=t>1.05?.6:0; }                         // drawn along the strip
+    else if(t<1.5){ x=.04; y=-.01; z=.05; f=1.9-(t-1.2)*3; }                                          // the flare
+    else if(t<2.3){ const k=Math.min(1,(t-1.5)/.5); x=.04+(tip[0]-.04)*k; y=-.01+(tip[1]-.012+.01)*k; z=.05-(.05-tip[2])*k; f=1; }   // to the tip
+    else { x=tip[0]+.02*Math.sin(t*60); y=tip[1]-.01; z=tip[2]+.01; f=Math.max(0,1-(t-2.3)*6); }        // shaken out
+    S.match.position.set(x,y,z); S.flame.visible=f>0; S.flame.scale.set(f,f*(1+.15*Math.sin(t*40)),f); S.glow.intensity=.7*f; } else S.glow.intensity=0;
+  S.ember.visible=t>2.0;
+  const draw=(t%9)<1.2&&t>3; S.ember.material.color.setHex(draw?0xffb050:0xff5a10); S.ember.scale.setScalar((draw?1.4:1)*(S.type==='pipe'?1.6:1));
   S.ember.getWorldPosition(_tip);
-  S.next-=dt; if(t>2.4&&S.next<=0){ S.next=.28; const p=S.puffs.find(p=>p.t>=1); if(p){ p.t=0; p.big=false; p.s.position.copy(_tip); p.v.set((Math.random()-.5)*.02,.12,(Math.random()-.5)*.02); } }
-  if(t>3&&(t%9)>2.2&&(t%9)<2.2+dt*1.01&&mouth){ for(let i=0;i<3;i++){ const p=S.puffs.find(p=>p.t>=1); if(!p) break; p.t=0; p.big=true; p.s.position.copy(mouth.p); p.v.copy(mouth.f).multiplyScalar(.25+i*.05).add(new THREE.Vector3(0,.05,0)); } }
+  S.next-=dt; if(t>2.4&&S.next<=0){ S.next=S.type==='cig'?.28:.4; const p=S.puffs.find(p=>p.t>=1); if(p){ p.t=0; p.big=false; p.s.position.copy(_tip);
+      // the wind carries the smoke
+      const w=typeof windAt==='function'?windAt(performance.now()/1000)*.03:0; p.v.set((Math.random()-.5)*.02+Math.cos(WIND.dir)*w,.12,(Math.random()-.5)*.02+Math.sin(WIND.dir)*w); } }
+  if(t>3&&(t%9)>2.2&&(t%9)<2.2+dt*1.01&&mouth){ for(let i=0;i<(S.type==='cigar'?4:3);i++){ const p=S.puffs.find(p=>p.t>=1); if(!p) break; p.t=0; p.big=true; p.s.position.copy(mouth.p); p.v.copy(mouth.f).multiplyScalar(.25+i*.05).add(new THREE.Vector3(0,.05,0)); } }
   for(const p of S.puffs){ if(p.t>=1){ p.s.material.opacity=0; continue; } p.t+=dt/(p.big?2.6:3.2); p.s.position.addScaledVector(p.v,dt); p.v.y+=dt*.02; p.v.multiplyScalar(1-dt*.4);
     p.s.material.opacity=(p.big?.5:.4)*Math.sin(Math.min(1,p.t)*Math.PI); p.s.scale.setScalar((p.big?.07:.03)+p.t*(p.big?.4:.26)); } }
 // my own cigarette, held low in the right of view (filter toward player, lit tail pointing outward)
@@ -3039,23 +3101,25 @@ const fpHands=(()=>{
 })();
 function toggleSmoke(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{}
   if(mySmoke&&(Date.now()-mySmoke)/1000<SMOKE_T){ mySmoke=0; pushPresence(); toast('把菸捻熄了。'); return; }
-  mySmoke=Date.now(); pushPresence(); toast('從菸盒取出一支菸。',2500); noiseBurst(.03,2600,6,.06,.15); noiseBurst(.03,2400,6,.05,.85);
-  setTimeout(()=>{ noiseBurst(.025,4200,3,.09); noiseBurst(.6,900,.7,.035,.05); toast('打火機「喀」一聲，點著了。',3000); },1050); }
+  mySmoke=Date.now(); pushPresence(); toast(SMOKE_TXT[mySmokeType][0],2500); noiseBurst(.03,2600,6,.06,.15);
+  // the match: a scratch along the strip, the flare's hiss, then shaken out
+  setTimeout(()=>{ noiseBurst(.18,3200,1.4,.07); },800); setTimeout(()=>{ noiseBurst(.45,1100,.6,.05,.02); toast(SMOKE_TXT[mySmokeType][1],3000); },1200); setTimeout(()=>noiseBurst(.08,1800,2,.03),2300); }
+const SMOKE_TXT={cig:['從菸盒取出一支菸。','劃一根火柴，點著了。'],pipe:['填好菸斗。','火柴湊近菸斗，吸了幾口，點著了。'],cigar:['剪開一支雪茄。','火柴慢慢轉著烤雪茄頭，點著了。'],longpipe:['旱菸桿裝上一撮菸絲。','劃一根火柴，湊到銅菸鍋上點著了。']};
 const _mouth={p:new THREE.Vector3(),f:new THREE.Vector3()};
 ZL_ANIM.push(dt=>{ const now=Date.now();
   // mine
   const t=mySmoke?(now-mySmoke)/1000:-1; if(mySmoke&&t>=SMOKE_T){ mySmoke=0; pushPresence(); toast('菸抽完了，捻熄在菸灰缸裡。'); }
   camera.getWorldPosition(_mouth.p); _mouth.p.y-=.08; _mouth.f.set(-Math.sin(ME.yaw),0,-Math.cos(ME.yaw)); _mouth.p.addScaledVector(_mouth.f,.15);
   const showFP=VIEW.mode!=='plan'&&!VIEW.thirdPerson&&!renderer.xr.isPresenting;
-  FP_SMOKE.R.visible=showFP; poseSmoke(FP_SMOKE,showFP?t:-1,dt,_mouth);
-  const sb=$('#bSmoke'); if(sb){ const lab=mySmoke?'捻熄':'抽菸'; if(sb.textContent!==lab) sb.textContent=lab; }
+  setSmokeType(FP_SMOKE,mySmokeType); FP_SMOKE.R.visible=showFP; poseSmoke(FP_SMOKE,showFP?t:-1,dt,_mouth);
+  const sb=$('#bSmoke'); if(sb){ sb.classList.toggle('on',!!mySmoke); }
   // everyone else: cigarette by the right hand, raised toward the mouth on a draw
   if(typeof others==='undefined') return;
-  for(const [,o] of others){ const S=o.av.smoke; if(!S) continue; const at=num(o.p.sm,0), ot=at>0?(now-at)/1000:-1;
+  for(const [,o] of others){ const S=o.av.smoke; if(!S) continue; const at=num(o.p.sm,0), ot=at>0?(now-at)/1000:-1; setSmokeType(S,str(o.p.sk,10)||'cig');
     const draw=ot>3&&(ot%9)<1.6; S.R.position.set(.22,draw?1.5:.92,draw?-.14:-.08); S.R.rotation.set(0,Math.PI/2,0);
     const g=o.av.g; _mouth.p.set(0,1.5,-.15).applyMatrix4(g.matrixWorld); _mouth.f.set(-Math.sin(g.rotation.y),0,-Math.cos(g.rotation.y));
     poseSmoke(S,ot,dt,_mouth); }
-  if(ME.av?.smoke){ const S=ME.av.smoke; const draw=t>3&&(t%9)<1.6; S.R.position.set(.22,draw?1.5:.92,draw?-.14:-.08); S.R.rotation.set(0,Math.PI/2,0);
+  if(ME.av?.smoke){ const S=ME.av.smoke; setSmokeType(S,mySmokeType); const draw=t>3&&(t%9)<1.6; S.R.position.set(.22,draw?1.5:.92,draw?-.14:-.08); S.R.rotation.set(0,Math.PI/2,0);
     _mouth.p.set(0,1.5,-.15).applyMatrix4(ME.av.g.matrixWorld); _mouth.f.set(-Math.sin(ME.av.g.rotation.y),0,-Math.cos(ME.av.g.rotation.y));
     poseSmoke(S,VIEW.thirdPerson?t:-1,dt,_mouth); } });
 
@@ -3419,7 +3483,7 @@ function goTo(x,z,{faceTo=null,after=null}={}){ if(ME.seat>=0) standUp(); if(!wa
   ME.path=route({x:ME.x,z:ME.z},{x,z}); ME.faceTo=faceTo; ME.afterArrive=after; }
 function sit(si){ const s=SEATS[si]; if(occupied(si)){ toast('這個位子有人坐了'); return; }
   const approach=seatApproach(s);
-  goTo(approach.x,approach.z,{after:()=>{ ME.seat=si; ME.x=s.x; ME.z=s.z; ME.yaw=s.yaw; ME.pitch=SEAT_KIND[s.kind].pitch; setTimerButtons(s.kind); $('#timer').classList.remove('hide'); updateTimerUI(); pushPresence();
+  goTo(approach.x,approach.z,{after:()=>{ ME.seat=si; const P=seatPlace(s); ME.x=P.x; ME.z=P.z; ME.yaw=s.yaw; ME.pitch=SEAT_KIND[s.kind].pitch; setTimerButtons(s.kind); $('#timer').classList.remove('hide'); updateTimerUI(); pushPresence();
     toast(SEAT_KIND[s.kind].hello); }}); }
 
 /* ---------------- input ---------------- */
@@ -3716,7 +3780,7 @@ function tryPunchCharacter(){
   myHit={to:hit.k,kx:+kx.toFixed(2),kz:+kz.toFixed(2),at:Date.now()};
   pushPresence(true);
 }
-function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),vx:+(ME.vx||0).toFixed(2),vz:+(ME.vz||0).toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0,lt:myLight,ht:myHit}; }
+function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),vx:+(ME.vx||0).toFixed(2),vz:+(ME.vz||0).toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sk:mySmokeType,em:myEmote,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0,lt:myLight,ht:myHit}; }
 function pushPresence(force){ if(!room) return; const o=presenceObj(); const k=JSON.stringify(o); if(!force&&k===lastSent) return; lastSent=k; room.presence(o).catch(()=>{}); }
 function str(v,n){ return typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').slice(0,n):''; }
 function num(v,d=0){ return typeof v==='number'&&isFinite(v)?v:d; }
@@ -4314,7 +4378,7 @@ const NET={st:'',run:false,peers:null,errs:0};
 const HUD_TXT={'chat.all':'全齋','chat.jin':'同進','chat.ph':'說點什麼，Enter 送出，Esc 取消','chat.btn':'聊天 (Enter)',
   'place.xjz':'學鳩齋','place.zlj':'知了間','place.zt':'正廳','place.j3':'第三進','place.nt':'南廳','place.j2':'第二進','place.gt':'過廳','place.j1':'第一進','place.qt':'前庭',
   'help.btn':'? 操作說明 (H)','help.title':'操作說明','help.keys':'WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動',
-  'map.title':'宅院平面・點一下就過去','map.close':'關閉','map.tea':'茶席','map.books':'書櫃','hud.join':'進來了','hud.leave':'離開了'};
+  'smoke.cig':'紙菸','smoke.pipe':'菸斗','smoke.cigar':'雪茄','smoke.longpipe':'旱菸桿','emote.btn':'微動作 (G)','emote.bow':'作揖','emote.behind':'負手','emote.think':'沉思','emote.clap':'撫掌','map.title':'宅院平面・點一下就過去','map.close':'關閉','map.tea':'茶席','map.books':'書櫃','hud.join':'進來了','hud.leave':'離開了'};
 const HT=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||HUD_TXT[k]||'';
 const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
 #chatwrap{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);width:min(380px,calc(100vw - 28px));z-index:7;background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font:14px/1.6 "Noto Serif TC",serif;transition:opacity .45s;opacity:1}
@@ -4440,6 +4504,43 @@ const mapUI=(()=>{ const tr=$('#hud-tr'); tr.innerHTML='<div class="mm"><canvas 
 ZL_ANIM.push(dt=>mapUI.tick(dt||.016));
 addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.repeat) return; const k=e.key.toLowerCase();
   if(k==='h'){ e.preventDefault(); helpUI.toggle(); } else if(k==='n'){ e.preventDefault(); mapUI.toggle(); } else if(k==='escape'){ $('#helpbox')?.classList.remove('on'); $('#bigmap')?.classList.remove('on'); } });
+
+/* ---- the little capsule rows over the action bar: what to smoke, and the gestures (G) ----
+   Gestures play on the figure's arms (and a bow of the body); everyone sees them (presence `em`); moving ends them. */
+var myEmote=null;   // [id, start ms]
+const EMOTES=['bow','behind','think','clap'];
+const capUI=(()=>{ const css=document.createElement('style'); css.textContent=`
+#hud-br .caps{display:none;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+#hud-br .caps.on{display:flex}
+#hud-br .caps button{background:var(--hud-bg);border:1px solid var(--hud-rule);color:var(--hud-ink);font:13px "Noto Serif TC",serif;padding:5px 12px;border-radius:999px;box-shadow:var(--hud-sh);cursor:pointer}
+#hud-br .caps button.on{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}`; document.head.appendChild(css);
+  const br=$('#hud-br'), bar=$('#bar');
+  const mk=(id,list,key,pick)=>{ const d=document.createElement('div'); d.className='caps'; d.id=id; d.innerHTML=list.map(k=>`<button data-k="${k}">${esc(HT(key+'.'+k))}</button>`).join(''); br.insertBefore(d,bar); d.onclick=e=>{ const b=e.target.closest('button'); if(b) pick(b.dataset.k); }; return d; };
+  const sm=mk('smokepick',SMOKE_TYPES,'smoke',k=>{ mySmokeType=k; try{ localStorage.setItem('hk-smoke-type',k); }catch{} pushPresence(); sync(); });
+  const em=mk('emotepick',EMOTES,'emote',k=>{ if(myEmote&&myEmote[0]===k){ myEmote=null; } else { myEmote=[k,Date.now()]; } pushPresence(); sync(); });
+  const eb=document.createElement('button'); eb.id='bEmote'; eb.textContent=HT('emote.btn'); bar.insertBefore(eb,$('#bThird')); eb.onclick=()=>toggleEmotes();
+  function toggleEmotes(on){ on=on??!em.classList.contains('on'); em.classList.toggle('on',on); eb.classList.toggle('on',on||!!myEmote); }
+  function sync(){ sm.classList.toggle('on',!!mySmoke); sm.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===mySmokeType)); em.querySelectorAll('button').forEach(b=>b.classList.toggle('on',!!myEmote&&b.dataset.k===myEmote[0])); eb.classList.toggle('on',em.classList.contains('on')||!!myEmote); }
+  setInterval(sync,400);
+  return {toggleEmotes,sync}; })();
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.repeat) return; const k=e.key.toLowerCase();
+  if(k==='g'){ e.preventDefault(); capUI.toggleEmotes(); }
+  if(myEmote&&['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)){ myEmote=null; pushPresence(); capUI.sync(); } });
+// arm targets for each gesture (shoulder pivots: x forward, z out to the side), and how the body leans
+function emotePose(id,t,F){ const A=F.userData.arms, B=F.userData.armBase, R=F.userData.baseRot; if(!A) return;
+  let L={x:B[0].x,z:B[0].z}, Rt={x:B[1].x,z:B[1].z}, lean=0, done=false;
+  if(id==='bow'){ L={x:1.25,z:-.45}; Rt={x:1.25,z:.45}; const k=t<.6?t/.6:t<1.6?1:t<2.4?1-(t-1.6)/.8:0; lean=.28*Math.sin(Math.min(1,k)*Math.PI/2)*(t<2.4?1:0); if(t>3.2) done=true; }
+  else if(id==='behind'){ L={x:-.42,z:.32*-1}; Rt={x:-.42,z:.32}; }
+  else if(id==='think'){ Rt={x:2.3,z:.42}; L={x:1.0,z:-.55}; lean=.04; }
+  else if(id==='clap'){ const c=Math.sin(t*14); L={x:1.15,z:-.32-.12*c}; Rt={x:1.15,z:.32+.12*c}; if(t>3) done=true; }
+  const k=.25; A[0].rotation.x+=(L.x-A[0].rotation.x)*k; A[0].rotation.z+=(L.z-A[0].rotation.z)*k; A[1].rotation.x+=(Rt.x-A[1].rotation.x)*k; A[1].rotation.z+=(Rt.z-A[1].rotation.z)*k; F.rotation.x+=(lean-F.rotation.x)*k;
+  return done; }
+function emoteRest(F){ const A=F.userData.arms, B=F.userData.armBase, R=F.userData.baseRot; if(!A) return; const k=.2; A.forEach((a,i)=>{ a.rotation.x+=(B[i].x-a.rotation.x)*k; a.rotation.z+=(B[i].z-a.rotation.z)*k; }); F.rotation.x+=(R.x-F.rotation.x)*k; }
+ZL_ANIM.push(()=>{ const now=Date.now();
+  if(ME.av&&ME.av.fig){ if(myEmote){ if(emotePose(myEmote[0],(now-myEmote[1])/1000,ME.av.fig)){ myEmote=null; pushPresence(); } } else emoteRest(ME.av.fig); }
+  if(typeof others==='undefined') return;
+  for(const [,o] of others){ const F=o.av&&o.av.fig; if(!F) continue; const em=Array.isArray(o.p.em)?o.p.em:null, moving=(num(o.p.vx)**2+num(o.p.vz)**2)>.05;
+    if(em&&EMOTES.includes(em[0])&&!moving&&now-num(em[1])<120000){ if(o.emDone!==em[1]&&emotePose(em[0],(now-num(em[1]))/1000,F)) o.emDone=em[1]; if(o.emDone===em[1]) emoteRest(F); } else emoteRest(F); } });
 
 // actions
 function doJump(){ if(ME.seat>=0||ME.jy>0||ME.jv>0) return; ME.jv=3.3; ME.jy=0.0001; playStep(); myAct=['j',Date.now()]; pushPresence(); }
@@ -4657,10 +4758,10 @@ function step(dt){
     ME.av.g.visible=show3P;
     if(show3P){
       const st=ME.seat>=0&&SEATS[ME.seat]?SEATS[ME.seat]:null, spot=st&&SEAT_SPOT[st.kind];
-      let ay=floorY(ME.x,ME.z); if(st) ay=SEAT_KIND[st.kind].sink;
+      let ay=floorY(ME.x,ME.z); if(st) ay=seatPlace(st).y;
       const wBob=(isMoving&&!(ME.jy>0))?Math.abs(Math.sin((ME.walkBob||0)*1.2))*0.03:0;
       ME.av.g.position.set(ME.x,ay+(ME.jy||0)+wBob,ME.z);
-      ME.av.g.rotation.y=ME.yaw;
+      ME.av.g.rotation.y=ME.yaw; poseSeated(ME.av,st);
       ME.av.g.scale.y=ME.crouch&&ME.seat<0?0.66:1;
       ME.av.cup.visible=myDrink>=0&&!!DRINKS[myDrink];
       const sipAge=mySip?(Date.now()-mySip.a)/1000:99;
@@ -4696,7 +4797,7 @@ function step(dt){
   // others (velocity prediction + smooth interpolation + walking bob + coffee sip + punch knockback)
   const nowMs=performance.now(), nowEpoch=Date.now(), rAlpha=1-Math.exp(-16*dt), yAlpha=1-Math.exp(-18*dt);
   for(const [,o] of others){ const p=o.p; const s=num(p.s,-1); let x=num(p.x), z=num(p.z), r=num(p.r), y=floorY(x,z);
-    if(s>=0&&SEATS[s]){ x=SEATS[s].x; z=SEATS[s].z; r=SEATS[s].yaw; y=SEAT_KIND[SEATS[s].kind].sink; }
+    if(s>=0&&SEATS[s]){ const P=seatPlace(SEATS[s]); x=P.x; z=P.z; r=P.yaw; y=P.y; }
     else { const lead=Math.min(0.18,Math.max(0,(nowMs-(o.lastNet||nowMs))/1000)); x+=num(p.vx)*lead; z+=num(p.vz)*lead; }
     // remote punch hit notification
     if(p.ht&&typeof p.ht==='object'&&num(p.ht.at)>0&&o.htAt!==p.ht.at){
@@ -4732,6 +4833,7 @@ function step(dt){
       const dSq=(x-g.position.x)**2+(z-g.position.z)**2;
       if(dSq>36){ g.position.x=x; g.position.z=z; } else { g.position.x+=(x-g.position.x)*rAlpha; g.position.z+=(z-g.position.z)*rAlpha; }
     }
+    poseSeated(o.av,s>=0&&SEATS[s]&&!(o.fallenTimer>0)?SEATS[s]:null);
     if(o.fallenTimer>0){ o.fallenTimer=Math.max(0,o.fallenTimer-dt); g.rotation.x=-Math.PI/2; g.position.y=0.2; }
     else {
       g.rotation.x=o.knockTime>0?-0.22:0;

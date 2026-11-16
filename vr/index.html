@@ -94,15 +94,19 @@ button{font-family:var(--f);cursor:pointer}
 #hud .tb:hover{border-color:var(--hud-soft)}
 #hud .tb.on,#hud .tb[aria-pressed="true"]{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
 #hud .tb:disabled{opacity:.45;cursor:default}
-/* 一頁式儀表板：右上「選單 Tab」展開，三欄一次看完，不用捲動 */
+/* 一頁式儀表板：右上「選單 Tab」彈出，直排一欄 */
 #hud #utility{position:absolute;right:14px;top:12px;pointer-events:auto;color:var(--hud-ink)}
 #utility summary{list-style:none;cursor:pointer;margin-left:auto;width:max-content;background:var(--hud-bg);border:1px solid var(--hud-rule);border-radius:4px;padding:6px 12px;box-shadow:var(--hud-sh);font-size:14px;letter-spacing:.08em;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 #utility summary::-webkit-details-marker{display:none}
 #utility summary kbd{font:11px var(--f);border:1px solid var(--hud-rule);border-radius:3px;padding:0 4px;color:var(--hud-soft)}
 #utility[open] summary{background:var(--hud-on);color:var(--hud-on-ink)}
-#utility-body{margin-top:8px;background:var(--hud-bg);border-radius:4px;box-shadow:var(--hud-sh);padding:14px;width:min(860px,calc(100vw - 28px));display:grid;grid-template-columns:1.1fr 1fr 1.2fr;gap:16px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);max-height:calc(100vh - 80px);overflow:auto}
+#utility-body{margin-top:8px;margin-left:auto;background:var(--hud-bg);border-radius:4px;box-shadow:var(--hud-sh);padding:14px;width:min(310px,calc(100vw - 28px));display:flex;flex-direction:column;gap:12px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);max-height:calc(100vh - 80px);overflow:auto;transform-origin:top right;animation:dashPop .24s cubic-bezier(.2,.9,.3,1.15)}
+#utility.shut #utility-body{animation:dashShut .17s ease-in forwards}
+@keyframes dashPop{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes dashShut{to{opacity:0;transform:translateY(-8px) scale(.94)}}
+@media (prefers-reduced-motion:reduce){#utility-body,#utility.shut #utility-body{animation-duration:.01s}}
 #utility .dsec{min-width:0}
-#utility .dsec+.dsec{border-left:1px solid var(--hud-rule);padding-left:16px}
+#utility .dsec+.dsec{border-top:1px solid var(--hud-rule);padding-top:12px}
 #brand{border-left:3px solid var(--seal);padding-left:10px}
 #brand .bt{display:flex;align-items:center;gap:10px}
 #brand .n{font-family:Reisho,var(--f);font-size:25px;line-height:1.1}
@@ -144,7 +148,7 @@ button{font-family:var(--f);cursor:pointer}
 #bar button:hover{border-color:var(--hud-soft)}
 #bar button.on{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
 #bar button:disabled{opacity:.5;cursor:default}
-@media (max-width:760px){ #utility-body{grid-template-columns:1fr;max-height:calc(100vh - 140px)} #utility .dsec+.dsec{border-left:0;padding-left:0;border-top:1px solid var(--hud-rule);padding-top:10px} }
+@media (max-width:760px){ #utility-body{max-height:calc(100vh - 140px)} }
 #planbar{position:absolute;right:14px;bottom:70px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
 #planbar button{background:var(--hud-bg);border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:14px;padding:7px 12px;border-radius:4px;box-shadow:var(--hud-sh)}
 #hint{opacity:0;position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(30,26,23,.78);color:#efe8da;font-size:13px;padding:8px 14px;border-radius:4px;line-height:1.7;text-align:center;max-width:92vw;pointer-events:none;transition:opacity .4s}

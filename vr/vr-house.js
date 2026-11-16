@@ -3509,11 +3509,14 @@ var SKY_FORCE=null;
   dn.addEventListener('click',()=>{ const night=document.documentElement.dataset.hud==='night'; SKY_FORCE=night?'day':'night'; updateSky(); apply(); toast(T(SKY_FORCE==='night'?'hud.night':'hud.day')); });
   window.__hudTheme=apply; setInterval(apply,5000); apply();
   // the dashboard: Tab opens and closes it (Esc closes); a click in the scene closes it
-  ut.addEventListener('toggle',()=>{ if(ut.open&&document.pointerLockElement===canvas) document.exitPointerLock(); });
+  // opening pops the card out from the menu button; closing plays it back in before the card is folded away
+  let shutT=0; const dash=on=>{ clearTimeout(shutT); if(on){ ut.classList.remove('shut'); ut.open=true; if(document.pointerLockElement===canvas) document.exitPointerLock(); }
+    else if(ut.open&&!ut.classList.contains('shut')){ ut.classList.add('shut'); shutT=setTimeout(()=>{ ut.open=false; ut.classList.remove('shut'); },170); } };
+  window.__dash=dash; ut.querySelector('summary').addEventListener('click',e=>{ e.preventDefault(); dash(!ut.open||ut.classList.contains('shut')); });
   addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
-    if(e.key==='Tab'){ e.preventDefault(); ut.open=!ut.open; } else if(e.key==='Escape'&&ut.open) ut.open=false; });
-  $('#bar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!['bSmoke','bEmote'].includes(b.id)) ut.open=false; });
-  canvas.addEventListener('pointerdown',()=>{ ut.open=false; });
+    if(e.key==='Tab'){ e.preventDefault(); dash(!ut.open||ut.classList.contains('shut')); } else if(e.key==='Escape'&&ut.open) dash(false); });
+  $('#bar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!['bSmoke','bEmote'].includes(b.id)) dash(false); });
+  canvas.addEventListener('pointerdown',()=>dash(false));
   document.documentElement.style.setProperty('--blh','0px');
   // the voice volume shows only once you have joined the voice
   const mu=$('#voice-mute'); new MutationObserver(()=>bl.classList.toggle('voice',!mu.hidden)).observe(mu,{attributes:true,attributeFilter:['hidden']}); }
@@ -4388,8 +4391,8 @@ const HUD_TXT={'chat.all':'全齋','chat.jin':'同進','chat.ph':'說點什麼�
   'smoke.cig':'紙菸','smoke.pipe':'菸斗','smoke.cigar':'雪茄','smoke.longpipe':'旱菸桿','emote.btn':'微動作 (G)','emote.bow':'作揖','emote.behind':'負手','emote.think':'沉思','emote.clap':'撫掌','map.title':'宅院平面・點一下就過去','map.close':'關閉','map.tea':'茶席','map.books':'書櫃','hud.join':'進來了','hud.leave':'離開了'};
 const HT=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||HUD_TXT[k]||'';
 const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
-#chatwrap{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);width:min(380px,calc(100vw - 28px));z-index:7;background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font:14px/1.6 "Noto Serif TC",serif;transition:opacity .45s;opacity:1}
-#chatwrap.idle{opacity:0;pointer-events:none}
+#chatwrap{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);width:min(380px,calc(100vw - 28px));z-index:7;background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font:14px/1.6 "Noto Serif TC",serif;transition:opacity .2s,transform .2s;opacity:0;transform:translateY(8px);pointer-events:none}
+#chatwrap.typing{opacity:1;transform:none;pointer-events:auto}
 #chatwrap .ch{display:flex;gap:4px;padding:6px 8px 4px;border-bottom:1px solid var(--hud-rule);font-size:12px}
 #chatwrap .ch button{background:transparent;border:1px solid var(--hud-rule);color:var(--hud-soft);border-radius:4px;padding:1px 8px;font:12px "Noto Serif TC",serif;cursor:pointer}
 #chatwrap .ch button.on{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
@@ -4401,25 +4404,22 @@ const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
 #chatbox{display:none;padding:6px 8px 8px;border-top:1px solid var(--hud-rule)}
 #chatwrap.typing #chatbox{display:block}
 #chatbox input{width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid var(--hud-rule);background:transparent;font:15px "Noto Serif TC",serif;color:var(--hud-ink);outline:none;border-radius:4px}
-#chatbtn{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);z-index:7;background:var(--hud-bg);color:var(--hud-ink);border:1px solid var(--hud-rule);border-radius:4px;padding:4px 10px;font:13px "Noto Serif TC",serif;box-shadow:var(--hud-sh);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .45s}
-#chatwrap.idle+#chatbtn{opacity:1;pointer-events:auto}
 #actbtns{position:fixed;right:12px;bottom:76px;display:flex;flex-direction:column;gap:8px;z-index:6}
 #actbtns button{width:52px;height:52px;border-radius:50%;border:1px solid #b9b2a6;background:rgba(241,239,232,.9);font:15px "Noto Serif TC",serif;color:#3f3a39}
 #actbtns button.on{background:#a8343a;color:#fff;border-color:#a8343a}
 #netdiag{position:fixed;right:12px;top:90px;z-index:8;background:rgba(20,18,16,.86);color:#e8e2d6;font:12px/1.6 ui-monospace,monospace;padding:8px 10px;max-width:360px;white-space:pre;display:none}`; document.head.appendChild(css);
-  const wrap=document.createElement('div'); wrap.id='chatwrap'; wrap.className='idle';
+  const wrap=document.createElement('div'); wrap.id='chatwrap';
   wrap.innerHTML=`<div class="ch"><button data-c="all" class="on">${esc(HT('chat.all'))}</button><button data-c="jin">${esc(HT('chat.jin'))}</button></div><div id="chatlog"></div><div id="chatbox"><input maxlength="120" placeholder="${esc(HT('chat.ph'))}"></div>`;
-  document.body.appendChild(wrap); const btn=document.createElement('button'); btn.id='chatbtn'; btn.textContent=HT('chat.btn'); wrap.after(btn);
+  document.body.appendChild(wrap);
   const log=wrap.querySelector('#chatlog'), box=wrap.querySelector('#chatbox');
   const diag=document.createElement('div'); diag.id='netdiag'; document.body.appendChild(diag);
   const inp=box.querySelector('input');
   inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ const t=inp.value.trim(); if(t) sendChat(t); inp.value=''; closeChat(); } else if(e.key==='Escape'){ inp.value=''; closeChat(); } });
-  // idle: no new line, no typing, no pointer over it for six seconds → it fades out, leaving the small button
-  const st={last:0,hover:false,chan:'all'}; wrap.addEventListener('pointerenter',()=>{ st.hover=true; wake(); }); wrap.addEventListener('pointerleave',()=>{ st.hover=false; st.last=performance.now(); });
-  btn.onclick=()=>openChat();
-  wrap.querySelector('.ch').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; st.chan=b.dataset.c; wrap.querySelectorAll('.ch button').forEach(x=>x.classList.toggle('on',x===b)); filterChat(); wake(); };
-  function wake(){ st.last=performance.now(); wrap.classList.remove('idle'); }
-  setInterval(()=>{ if(wrap.classList.contains('typing')||st.hover) return; if(performance.now()-st.last>6000) wrap.classList.add('idle'); },500);
+  // the chat stays out of sight; Enter brings it up with the box to type in, Enter again (or Esc) puts it away
+  const st={chan:'all'}; wrap.addEventListener('pointerdown',e=>{ if(e.target!==inp) e.preventDefault(); });
+  wrap.querySelector('.ch').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; st.chan=b.dataset.c; wrap.querySelectorAll('.ch button').forEach(x=>x.classList.toggle('on',x===b)); filterChat(); inp.focus(); };
+  inp.addEventListener('blur',()=>setTimeout(()=>{ if(document.activeElement!==inp) wrap.classList.remove('typing'); },120));
+  function wake(){}
   return {log,box,inp,diag,wrap,st,wake}; })();
 // the 進 a point belongs to, and where to say it is (for the chat's labels and the 同進 channel)
 function jinOf(p){ return p.x<9.8?3:p.x<29.4?2:p.x<46.84?1:0; }
@@ -4456,11 +4456,6 @@ const helpUI=(()=>{ const css=document.createElement('style'); css.textContent=`
 #hud-tr .mm canvas{width:100%;height:100%;display:block}
 #hud-tr .mtools{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 #hud-tr.mmoff .mm{display:none}
-#bigmap{position:fixed;inset:0;z-index:39;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35)}
-#bigmap.on{display:flex}
-#bigmap .w{background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);padding:12px;font:13px "Noto Serif TC",serif}
-#bigmap .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;letter-spacing:.08em}
-#bigmap canvas{display:block;cursor:crosshair;max-width:92vw;max-height:80vh}
 `; document.head.appendChild(css);
   const box=document.createElement('div'); box.id='helpbox'; document.body.appendChild(box);
   const render=()=>{ box.innerHTML=`<div class="w"><h3>${esc(HT('help.title'))}</h3><dl>${HT('help.keys').split('｜').map(p=>{ const m=p.match(/^(.+?)\s+(\S.*)$/)||[p,p,'']; return `<dt><kbd>${esc(m[1])}</kbd></dt><dd>${esc(m[2])}</dd>`; }).join('')}</dl></div>`; };
@@ -4493,46 +4488,39 @@ function drawPlan(g,W,H,{cx,cz,scale,round=false,labels=false}){ const S=scale, 
 // the small map: the house's own plan view (roofs cut away, as in 宅院平面) seen from straight above, a rectangle that
 // follows you, north up; drawn into a texture a few times a second and copied to a little canvas with the people on top.
 // Click it for the whole compound, click there to go.
-const mapUI=(()=>{ const tr=$('#hud-tr'), W=264, H=176, DPR=2; tr.innerHTML=`<canvas width="${W*DPR}" height="${H*DPR}" style="width:${W}px;height:${H}px;display:block"></canvas>`; const c=tr.querySelector('canvas'), g=c.getContext('2d');
+const mapUI=(()=>{ const tr=$('#hud-tr'), W=300, H=142, DPR=2; tr.innerHTML=`<canvas width="${W*DPR}" height="${H*DPR}" style="width:${W}px;height:${H}px;display:block"></canvas>`; const c=tr.querySelector('canvas'), g=c.getContext('2d');
   if(LS.get('hk-map')==='off') tr.classList.add('mmoff');
-  const big=document.createElement('div'); big.id='bigmap'; big.innerHTML=`<div class="w"><div class="hd"><span>${esc(HT('map.title'))}</span><button class="tb">${esc(HT('map.close'))}</button></div><canvas></canvas></div>`; document.body.appendChild(big);
-  const bc=big.querySelector('canvas'), bg=bc.getContext('2d');
-  const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,120); cam.up.set(-1,0,0);
-  const RT={}; const rt=(w,h)=>{ const k=w+'x'+h; if(!RT[k]) RT[k]={t:(()=>{ const r=new THREE.WebGLRenderTarget(w,h); r.texture.colorSpace=THREE.SRGBColorSpace; return r; })(),buf:new Uint8Array(w*h*4),img:new ImageData(w,h)}; return RT[k]; };
-  // render the plan around (cx,cz), spanZ metres across (east–west) and spanX down (north–south), into a 2D context
-  function shoot(ctx,w,h,cx,cz,spanZ,spanX){ if(renderer.xr.isPresenting) return false; const R=rt(w,h);
-    cam.left=-spanZ/2; cam.right=spanZ/2; cam.top=spanX/2; cam.bottom=-spanX/2; cam.position.set(cx,60,cz); cam.lookAt(cx,0,cz); cam.updateProjectionMatrix();
+  /* the small map is the plan view itself (宅院平面: walls cut at 2.35 m, the even plan light, no haze), seen whole from
+     straight above with the long axis across: north (正廳) on the left, the gate on the right, east up */
+  const cam=new THREE.PerspectiveCamera(30,W/H,1,200), C={x:19.6,z:9.8}, SPAN_X=72, SPAN_Z=34;
+  const r=Math.max(SPAN_Z, SPAN_X/(W/H))/2/Math.tan(THREE.MathUtils.degToRad(cam.fov/2))+2.35;
+  cam.up.set(0,0,-1); cam.position.set(C.x,r,C.z); cam.lookAt(C.x,0,C.z); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  const R=(()=>{ const t=new THREE.WebGLRenderTarget(W*DPR,H*DPR); t.texture.colorSpace=THREE.SRGBColorSpace; return {t,buf:new Uint8Array(W*DPR*H*DPR*4),img:new ImageData(W*DPR,H*DPR)}; })();
+  let base=null;   // the building, drawn once in a while; people go on top every frame it is shown
+  function shoot(){ if(renderer.xr.isPresenting) return false; const w=W*DPR, h=H*DPR;
     const clip=renderer.clippingPlanes, fog=scene.fog, fi=planFill.intensity; renderer.clippingPlanes=planClip; scene.fog=null; planFill.intensity=1.1;
     const prev=renderer.getRenderTarget(); renderer.setRenderTarget(R.t); renderer.render(scene,cam); renderer.setRenderTarget(prev);
     renderer.clippingPlanes=clip; scene.fog=fog; planFill.intensity=fi;
     renderer.readRenderTargetPixels(R.t,0,0,w,h,R.buf); const d=R.img.data, row=w*4; for(let y=0;y<h;y++) d.set(R.buf.subarray((h-1-y)*row,(h-y)*row),y*row);
-    ctx.putImageData(R.img,0,0); return true; }
-  // people over the picture: everyone as a dot in their colour, you as a dot with the way you face
-  function marks(ctx,w,h,cx,cz,spanZ,spanX,big){ const X=z=>w/2-(z-cz)/spanZ*w, Y=x=>h/2+(x-cx)/spanX*h, r=big?6:5*DPR/2;
-    if(big){ ctx.font='600 15px "Noto Serif TC",serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for(const [k,x,z] of HPLAN.labels){ ctx.lineWidth=4; ctx.strokeStyle='rgba(244,241,234,.9)'; ctx.strokeText(HT(k),X(z),Y(x)); ctx.fillStyle='#1f1d1a'; ctx.fillText(HT(k),X(z),Y(x)); } }
-    for(const [,o] of others){ const p=o.av.g.position; ctx.fillStyle=/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'; ctx.beginPath(); ctx.arc(X(p.z),Y(p.x),r,0,Math.PI*2); ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='#fff'; ctx.stroke(); }
-    const px=X(ME.z), py=Y(ME.x), a=Math.atan2(-Math.sin(ME.yaw),Math.cos(ME.yaw));
-    ctx.fillStyle='rgba(168,52,58,.28)'; ctx.beginPath(); ctx.moveTo(px,py); ctx.arc(px,py,r*7,a-.55,a+.55); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#a8343a'; ctx.beginPath(); ctx.arc(px,py,r*1.15,0,Math.PI*2); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
-  const SPZ=36, SPX=24;   // the small map covers 36 m east–west, 24 m north–south
-  const FULL={cx:19.6,cz:9.8,spanZ:34,spanX:72};
-  let bw=0, bh=0; const fit=()=>{ const k=Math.min(innerWidth*.9/FULL.spanZ,(innerHeight*.8-40)/FULL.spanX); bw=Math.round(FULL.spanZ*k); bh=Math.round(FULL.spanX*k); bc.width=bw; bc.height=bh; };
-  big.querySelector('button').onclick=()=>big.classList.remove('on'); big.onclick=e=>{ if(e.target===big) big.classList.remove('on'); };
-  bc.onclick=e=>{ const r=bc.getBoundingClientRect(), sx=(e.clientX-r.left)/r.width, sy=(e.clientY-r.top)/r.height;
-    teleport(FULL.cx+(sy-.5)*FULL.spanX, FULL.cz-(sx-.5)*FULL.spanZ); big.classList.remove('on'); };
-  tr.onclick=()=>{ fit(); big.classList.add('on'); bigAt=0; if(document.pointerLockElement===canvas) document.exitPointerLock(); };
+    if(!base){ base=document.createElement('canvas'); base.width=w; base.height=h; } base.getContext('2d').putImageData(R.img,0,0); return true; }
+  const v=new THREE.Vector3(); const at=(x,z)=>{ v.set(x,0,z).project(cam); return [(v.x+1)/2*W*DPR,(1-v.y)/2*H*DPR]; };
+  function marks(){ g.drawImage(base,0,0); const rr=3.2*DPR;
+    for(const [,o] of others){ const p=o.av.g.position, [X,Y]=at(p.x,p.z); g.fillStyle=/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'; g.beginPath(); g.arc(X,Y,rr,0,Math.PI*2); g.fill(); g.lineWidth=1.5; g.strokeStyle='#fff'; g.stroke(); }
+    const [px,py]=at(ME.x,ME.z), [fx,fy]=at(ME.x-Math.sin(ME.yaw),ME.z-Math.cos(ME.yaw)), a=Math.atan2(fy-py,fx-px);
+    g.fillStyle='rgba(168,52,58,.3)'; g.beginPath(); g.moveTo(px,py); g.arc(px,py,rr*6,a-.55,a+.55); g.closePath(); g.fill();
+    g.fillStyle='#a8343a'; g.beginPath(); g.arc(px,py,rr*1.2,0,Math.PI*2); g.fill(); g.lineWidth=2; g.strokeStyle='#fff'; g.stroke(); }
+  // a click on the small map opens the full plan view (宅院平面)
+  tr.onclick=()=>{ if(VIEW.mode!=='plan') setView('plan'); };
   function teleport(x,z){ if(ME.seat>=0) standUp(); let best=null; for(let r=0;r<3&&!best;r+=.25) for(let a=0;a<Math.PI*2;a+=Math.PI/8){ const px=x+Math.cos(a)*r, pz=z+Math.sin(a)*r; if(walkable(px,pz)){ best={x:px,z:pz}; break; } }
     if(!best){ toast('那裡走不進去'); return; } ME.x=best.x; ME.z=best.z; ME.path=[]; ME.targetYaw=null; if(VIEW.mode!=='walk') setView('walk'); pushPresence(true); }
-  let t=1, bigAt=0, bigImg=null;
-  function tick(dt){ if(!window.__entered) return; t+=dt; bigAt-=dt;
-    if(!tr.classList.contains('mmoff')&&t>.35){ t=0; if(shoot(g,W*DPR,H*DPR,ME.x,ME.z,SPZ,SPX)) marks(g,W*DPR,H*DPR,ME.x,ME.z,SPZ,SPX,false); }
-    if(big.classList.contains('on')&&bigAt<=0){ bigAt=1.2; if(shoot(bg,bw,bh,FULL.cx,FULL.cz,FULL.spanZ,FULL.spanX)) marks(bg,bw,bh,FULL.cx,FULL.cz,FULL.spanZ,FULL.spanX,true); } }
+  let t=9, mt=0;
+  function tick(dt){ if(!window.__entered) return; const hide=tr.classList.contains('mmoff')||VIEW.mode==='plan'; tr.style.visibility=VIEW.mode==='plan'?'hidden':''; if(hide) return;
+    t+=dt; mt+=dt; if(t>2||!base){ t=0; shoot(); } if(base&&mt>.1){ mt=0; marks(); } }
   function toggle(){ tr.classList.toggle('mmoff'); LS.set('hk-map',tr.classList.contains('mmoff')?'off':'on'); }
   return {tick,toggle,teleport}; })();
 ZL_ANIM.push(dt=>mapUI.tick(dt||.016));
 addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.repeat) return; const k=e.key.toLowerCase();
-  if(k==='h'){ e.preventDefault(); helpUI.toggle(); } else if(k==='n'){ e.preventDefault(); mapUI.toggle(); } else if(k==='escape'){ $('#helpbox')?.classList.remove('on'); $('#bigmap')?.classList.remove('on'); } });
-
+  if(k==='h'){ e.preventDefault(); helpUI.toggle(); } else if(k==='n'){ e.preventDefault(); mapUI.toggle(); } else if(k==='escape'){ $('#helpbox')?.classList.remove('on'); } });
 /* ---- the little capsule rows over the action bar: what to smoke, and the gestures (G) ----
    Gestures play on the figure's arms (and a bow of the body); everyone sees them (presence `em`); moving ends them. */
 var myEmote=null;   // [id, start ms]

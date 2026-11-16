@@ -5951,11 +5951,12 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
   // hinoki platform before it, a washing place with a stool and a bucket, a glass shower at the court end, a hinoki sauna
   // at the far end with two tiers of benches and a stove of stones.
   { const X0=41.92, X1=46.56, Z0=15.6, Z1=23.6, CYb=2.9, xv=43.12, xg=44.32, zv0=18.9, zv1=20.9, dzc=19.9;
-    const hinokiT=textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#e3c491'; g.fillRect(0,0,w,h); let s3=31; const r=()=>((s3=s3*16807%2147483647)/2147483647);
-      for(let i=0;i<w;i+=32){ g.fillStyle=`rgba(${215+r()*25|0},${180+r()*20|0},${125+r()*20|0},.6)`; g.fillRect(i+1,0,30,h); g.fillStyle='rgba(120,85,45,.45)'; g.fillRect(i,0,1.2,h);
-        for(let k=0;k<5;k++){ g.strokeStyle=`rgba(160,115,60,${.1+r()*.12})`; g.lineWidth=1; g.beginPath(); const x=i+4+r()*24; g.moveTo(x,0); g.bezierCurveTo(x+r()*6-3,h*.3,x+r()*6-3,h*.7,x+r()*4-2,h); g.stroke(); } } });
+    // hinoki from a photograph of the wood: boards for walls and ceilings, plain grain for the cabinets and the tub
+    const hinokiT=new THREE.TextureLoader().load('hinoki-boards.jpg'); hinokiT.colorSpace=THREE.SRGBColorSpace; hinokiT.anisotropy=MAXANI;
+    const grainT=new THREE.TextureLoader().load('hinoki-grain.jpg'); grainT.colorSpace=THREE.SRGBColorSpace; grainT.anisotropy=MAXANI; grainT.wrapS=grainT.wrapT=THREE.RepeatWrapping;
+    const hgrain=mat(0xffffff,.55,{map:grainT});
     hinokiT.wrapS=hinokiT.wrapT=THREE.RepeatWrapping;
-    const hk=(ru,rv)=>{ const t=hinokiT.clone(); t.needsUpdate=true; t.repeat.set(ru,rv); return mat(0xffffff,.6,{map:t}); };
+    const hk=(ru,rv)=>{ const t=hinokiT.clone(); t.needsUpdate=true; t.repeat.set(ru*2,1); return mat(0xffffff,.58,{map:t}); };   // one board length per wall height, so no joints across
     const izu=mat(0xffffff,.85,{map:textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#7f877d'; g.fillRect(0,0,w,h); let s4=17; const r=()=>((s4=s4*16807%2147483647)/2147483647); for(let i=0;i<4000;i++){ g.fillStyle=r()<.5?`rgba(160,170,155,${r()*.25})`:`rgba(60,66,60,${r()*.25})`; g.fillRect(r()*w,r()*h,1+r()*2.5,1+r()*2.5); } g.strokeStyle='rgba(70,75,70,.6)'; g.lineWidth=2; for(const y of [0,128]) { g.beginPath(); g.moveTo(0,y); g.lineTo(w,y); g.stroke(); } g.beginPath(); g.moveTo(90,0); g.lineTo(90,128); g.moveTo(200,128); g.lineTo(200,256); g.stroke(); })});
     const stoneFloor=mat(0xffffff,.8,{map:izu.map.clone()}); stoneFloor.map.wrapS=stoneFloor.map.wrapT=THREE.RepeatWrapping; stoneFloor.map.repeat.set(4,8); stoneFloor.map.needsUpdate=true;
     const oakF=mat(0xffffff,.55,{map:textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#c9a678'; g.fillRect(0,0,w,h); for(let i=0;i<w;i+=32){ g.fillStyle=`rgba(${190+(i*7)%30},${150+(i*5)%25},${100+(i*3)%20},.6)`; g.fillRect(i+1,0,30,h); g.fillStyle='rgba(90,60,30,.45)'; g.fillRect(i,0,1.2,h); g.fillRect(i,(i*37)%h,32,1.2); } })}); oakF.map.wrapS=oakF.map.wrapT=THREE.RepeatWrapping; oakF.map.repeat.set(4,6);
@@ -5965,7 +5966,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     // floors: stone in the entrance and the bath, oak boards in the changing room
     const fl=(x0,x1,z0,z1,m,ru,rv)=>{ const p=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),m); p.rotation.x=-Math.PI/2; p.position.set((x0+x1)/2,.009,(z0+z1)/2); scene.add(p); p.userData={type:'floor'}; pickables.push(p); };
     fl(X0,xv,zv0,zv1,stoneFloor); fl(X0,xg,Z0,zv0,oakF); fl(X0,xg,zv1,Z1,oakF); fl(xv,xg,zv0,zv1,oakF); fl(xg,X1,Z0,Z1,stoneFloor);
-    B(xv-X0,.1,.04,woodDk,(X0+xv)/2,.05,zv0+.02); B(xv-X0,.1,.04,woodDk,(X0+xv)/2,.05,zv1-.02);
+    B(xv-X0,.1,.04,hgrain,(X0+xv)/2,.05,zv0+.02); B(xv-X0,.1,.04,hgrain,(X0+xv)/2,.05,zv1-.02);
     // ceilings: hinoki boards
     B(X1-X0,.03,Z1-Z0,hk((X1-X0)/1.0,(Z1-Z0)/1.0),(X0+X1)/2,CYb+.015,(Z0+Z1)/2);
     // the room's own walls clad inside: changing room in hinoki to the ceiling; the bath half grey-green stone to 0.6 m, hinoki above
@@ -5981,22 +5982,22 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     // ---- the entrance: a stone floor, a step, a shoe cabinet against the solid wall ahead, curtains at the side openings
     { const wall=(ax,at,a,b,y1=CYb,t=.1,m=hk(1,2.9))=>{ if(ax==='x'){ B(t,y1,b-a,m,at,y1/2,(a+b)/2); OB(at-t/2,at+t/2,a,b); } else { B(b-a,y1,t,m,(a+b)/2,y1/2,at); OB(a,b,at-t/2,at+t/2); } };
       wall('x',xv,zv0,zv1,CYb,.1,hk(2,2.9)); const op0=42.4;
-      for(const z of [zv0,zv1]){ wall('z',z,X0,op0,CYb,.1,hk(.5,2.9)); B(xv-op0,CYb-2.1,.1,hk(.7,.8),(op0+xv)/2,(2.1+CYb)/2,z); for(const xx of [op0,xv-.05]) B(.04,2.1,.12,woodDk,xx,1.05,z);
+      for(const z of [zv0,zv1]){ wall('z',z,X0,op0,CYb,.1,hk(.5,2.9)); B(xv-op0,CYb-2.1,.1,hk(.7,.8),(op0+xv)/2,(2.1+CYb)/2,z); for(const xx of [op0,xv-.05]) B(.04,2.1,.12,hgrain,xx,1.05,z);
         for(const s of [0,1]){ const p=plane((xv-op0)/2-.01,1.25,mat(0xffffff,.95,{side:THREE.DoubleSide,map:textCanvas(96,256,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle='rgba(160,140,110,.07)'; g.fillRect(0,y,w,1); } g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,8); g.font=F('600',40); g.textAlign='center'; g.fillText(s?'湯':'',w/2,h*.35); })}),op0+(xv-op0)*(.25+s*.5),2.1-.625,z,0); p.userData={type:'block'}; } }
       // the shoe step and cabinet; slippers waiting
       B(xv-X0-.15,.12,zv1-zv0-.2,hk(1,.3),(X0+xv)/2+.2,.06,(zv0+zv1)/2,scene,{type:'bathin'}); OB(xv-.42,xv-.06,19.2,20.6);
-      B(.34,.9,1.2,hk(1.2,.9),xv-.24,.45+.12,dzc,scene,{type:'bathin'}); B(.36,.03,1.22,woodDk,xv-.24,1.03,dzc); B(.004,.8,.006,woodDk,xv-.415,.57,dzc); for(const s2 of [-1,1]) B(.012,.012,.08,brass,xv-.42,.75,dzc+s2*.1);
+      B(.34,.9,1.2,hgrain,xv-.24,.45+.12,dzc,scene,{type:'bathin'}); B(.36,.03,1.22,hgrain,xv-.24,1.03,dzc); B(.004,.8,.006,hgrain,xv-.415,.57,dzc); for(const s2 of [-1,1]) B(.012,.012,.08,brass,xv-.42,.75,dzc+s2*.1);
       for(let i=0;i<3;i++) for(const s of [-1,1]){ const sl=B(.1,.025,.25,mat(0x8a7a5a,.8),42.3+i*.22+s*.055,.14,20.35,scene); } }
     // ---- the changing room: a wash basin and mirror at the court end, basket shelves and towels at the far end, benches
-    { const vz0=15.7, vz1=17.3; B(.55,.82,vz1-vz0,hk(1.6,.8),X0+.3,.41,(vz0+vz1)/2,scene,{type:'bathin'}); B(.58,.04,vz1-vz0+.02,mat(0xf1ebe0,.4),X0+.3,.84,(vz0+vz1)/2);
+    { const vz0=15.7, vz1=17.3; B(.55,.82,vz1-vz0,hgrain,X0+.3,.41,(vz0+vz1)/2,scene,{type:'bathin'}); B(.58,.04,vz1-vz0+.02,mat(0xf1ebe0,.4),X0+.3,.84,(vz0+vz1)/2);
       L([[0,-.1],[.14,-.1],[.19,-.02],[.2,0]],porcelain,X0+.32,.86,16.5); const tp=C(.012,.012,.18,steel,X0+.08,.95,16.5,scene,10); const ar=C(.01,.01,.14,steel,X0+.15,1.03,16.5,scene,10); ar.rotation.z=Math.PI/2;
-      plane(1.2,.8,mat(0xeef2f4,.05,{metalness:.8}),X0+.04,1.55,16.5,Math.PI/2); B(.02,.84,1.24,woodDk,X0+.03,1.55,16.5);
+      plane(1.2,.8,mat(0xeef2f4,.05,{metalness:.8}),X0+.04,1.55,16.5,Math.PI/2); B(.02,.84,1.24,hgrain,X0+.03,1.55,16.5);
       L([[0,0],[.03,0],[.035,.12],[.012,.16]],mat(0xf4f2ee,.3),X0+.15,.86,16.0); OB(X0,X0+.6,vz0,vz1);
       // baskets on open shelves, towels folded on top
-      const sz0=21.3, sz1=23.4; B(.5,1.6,sz1-sz0,hk(1.4,1.6),X0+.27,.8,(sz0+sz1)/2,scene,{type:'bathin'}); OB(X0,X0+.55,sz0,sz1);
+      const sz0=21.3, sz1=23.4; B(.5,1.6,sz1-sz0,hgrain,X0+.27,.8,(sz0+sz1)/2,scene,{type:'bathin'}); OB(X0,X0+.55,sz0,sz1);
       for(const y of [.35,.85,1.35]) for(let i=0;i<3;i++){ const bz=sz0+.35+i*.7; L([[.0,0],[.2,0],[.24,.25]],mat(0xb8955a,.85,{side:THREE.DoubleSide}),X0+.4,y-.22,bz).scale.set(1,1,1.2); }
       for(let i=0;i<4;i++) B(.36,.05,.5,mat(0xf6f3ee,.95),X0+.3,1.62+i*.05,22.35);
-      for(const [a,b] of [[16.4,18.6],[21.2,23.2]]){ B(.36,.05,b-a,hk(1,.2),xg-.3,.44,(a+b)/2,scene,{type:'bathin'}); for(const z of [a+.15,b-.15]) B(.3,.42,.05,woodDk,xg-.3,.21,z); OB(xg-.48,xg-.12,a,b); } }
+      for(const [a,b] of [[16.4,18.6],[21.2,23.2]]){ B(.36,.05,b-a,hk(1,.2),xg-.3,.44,(a+b)/2,scene,{type:'bathin'}); for(const z of [a+.15,b-.15]) B(.3,.42,.05,hgrain,xg-.3,.21,z); OB(xg-.48,xg-.12,a,b); } }
     // ---- the glass wall with a sliding door
     { const dz0=19.45, dz1=20.35; for(const [a,b] of [[Z0,dz0],[dz1,Z1]]){ B(.012,2.2,b-a,glassM,xg,1.1,(a+b)/2); B(.05,.05,b-a,alu,xg,2.2,(a+b)/2); B(.05,.03,b-a,alu,xg,.015,(a+b)/2); OB(xg-.03,xg+.03,a,b); }
       B(.05,CYb-2.2,Z1-Z0,hk(8,.7),xg,(2.2+CYb)/2,(Z0+Z1)/2);
@@ -6015,10 +6016,10 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       OB(X1-.75,X1,wz-.2,wz+.2); }
     // ---- the hinoki tub: 2.4 by 1.4, under the window; a hinoki spout box pouring hot water; a slatted platform before it
     { const tx0=X1-1.42, tx1=X1-.02, tz0=18.4, tz1=20.8, TH=.62, tw=.07, tag={type:'bathtub'};
-      const side=(w,d,x,z)=>B(w,TH,d,hk(Math.max(w,d)/.5,1.2),x,TH/2,z,scene,tag);
+      const side=(w,d,x,z)=>B(w,TH,d,hgrain,x,TH/2,z,scene,tag);
       side(tx1-tx0,tw,(tx0+tx1)/2,tz0+tw/2); side(tx1-tx0,tw,(tx0+tx1)/2,tz1-tw/2); side(tw,tz1-tz0-2*tw,tx0+tw/2,(tz0+tz1)/2); side(tw,tz1-tz0-2*tw,tx1-tw/2,(tz0+tz1)/2);
       for(const [w,d,x,z] of [[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz0+tw/2],[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz1-tw/2],[tw+.02,tz1-tz0,tx0+tw/2,(tz0+tz1)/2],[tw+.02,tz1-tz0,tx1-tw/2,(tz0+tz1)/2]]) B(w,.02,d,hk(2,.1),x,TH+.01,z);
-      for(const y of [.1,.52]) B(.012,.04,tz1-tz0+.01,woodDk,tx0-.005,y,(tz0+tz1)/2);
+      for(const y of [.1,.52]) B(.012,.04,tz1-tz0+.01,hgrain,tx0-.005,y,(tz0+tz1)/2);
       B(tx1-tx0-2*tw,.04,tz1-tz0-2*tw,hk(2,3),(tx0+tx1)/2,.06,(tz0+tz1)/2);
       const wat=new THREE.Mesh(new THREE.PlaneGeometry(tx1-tx0-2*tw,tz1-tz0-2*tw),new THREE.MeshStandardMaterial({color:0x9fbcbc,roughness:.05,metalness:.1,transparent:true,opacity:.62})); wat.rotation.x=-Math.PI/2; wat.position.set((tx0+tx1)/2,TH-.07,(tz0+tz1)/2); scene.add(wat); BATH.water=wat;
       OB(tx0,tx1,tz0,tz1);
@@ -6029,7 +6030,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       BATH.pour={pour,rip};
       // the slatted platform
       for(let i=0;i<9;i++) B(.62,.03,.08,hk(.6,.1),tx0-.36,.03,tz0+.05+i*.29);
-      for(const z of [tz0+.1,tz1-.1]) B(.6,.02,.05,woodDk,tx0-.36,.01,z);
+      for(const z of [tz0+.1,tz1-.1]) B(.6,.02,.05,hgrain,tx0-.36,.01,z);
       // three places to soak, along the tub, facing the room
       for(const z of [18.9,19.6,20.3]){ const si=addSeat(tx1-.45,z,Math.PI/2,'bath',NT('bath.seat')); SEATS[si].ap={x:tx0-.4,z}; BATH.seats.push(si); }
       // a hinoki bucket and dipper on the rim
@@ -6046,7 +6047,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const hx=xg+.3, hz=Z1-.35; B(.4,.6,.4,mat(0x2a2a2a,.5,{metalness:.5}),hx,.3,hz,scene,tag); for(let i=0;i<22;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(.05,6,5),mat(i%3?0x5a5652:0x777068,.8)); st.scale.y=.7; st.position.set(hx+((i*37)%7/7-.5)*.3,.63+(i%3)*.04,hz+((i*53)%9/9-.5)*.3); scene.add(st); }
       const glow=new THREE.PointLight(0xff9a50,.6,2.2,2); glow.position.set(hx,.8,hz); scene.add(glow); OB(hx-.24,hx+.24,hz-.24,hz+.24);
       L([[0,0],[.08,0],[.09,.14]],hk(1,.3),hx+.32,0,hz-.3,scene); C(.006,.006,.3,hk(.2,1),hx+.38,.2,hz-.3,scene,6).rotation.z=.6;
-      B(.02,.22,.12,woodDk,X1-.02,1.5,sz0+.35); const th=new THREE.Mesh(new THREE.CircleGeometry(.05,20),mat(0xf4efe4,.5)); th.position.set(X1-.032,1.55,sz0+.35); th.rotation.y=-Math.PI/2; scene.add(th);
+      B(.02,.22,.12,hgrain,X1-.02,1.5,sz0+.35); const th=new THREE.Mesh(new THREE.CircleGeometry(.05,20),mat(0xf4efe4,.5)); th.position.set(X1-.032,1.55,sz0+.35); th.rotation.y=-Math.PI/2; scene.add(th);
       const hg=new THREE.Group(); hg.position.set(X1-.04,1.2,sz0+.35); scene.add(hg); for(const y of [-.06,.06]) L([[0,0],[.02,.0],[.0,.05]],mat(0xe8eef0,.1,{transparent:true,opacity:.5}),0,y>0?y-.05:y,0,hg).scale.y=y>0?-1:1;
       for(const [z,kind] of [[Z1-.75,'sauna'],[Z1-.27,'sauna2']]) for(const x of [xg+1.0,xg+1.7]){ const si=addSeat(x,z,0,kind,NT('sauna.seat')); SEATS[si].ap={x,z:sz0+.45}; BATH.sseats.push(si); }
       const sl=new THREE.PointLight(0xffc48a,.5,2.6,2); sl.position.set((xg+X1)/2,2.2,(sz0+Z1)/2); scene.add(sl); }

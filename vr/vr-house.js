@@ -1226,13 +1226,29 @@ function buildPlaques(){
     plaque(name,1.8,.40,{font:'serif',bg:'#432d24',fg:'#eed5a6',size:.64,frame:'#9b7046'}),
     1.8,.40,0,y,z,0,parent,name==='知了間'?{type:'zhiliao'}:null);
   sign('知了間',oppositeWing,4.35,2.98);
-  // 正廳 plaque: 龍江衍派 in the calligraphy the owner chose (vr/plaque-longjiang.png, gold on clear, read right to left)
-  for(const {hall,name} of axialHalls) if(name==='前大廳'){ const W=1.8, H=.4, pw=1600, ph=Math.round(pw*H/W);
-    const tex=textCanvas(pw,ph,(g,w,h)=>{ g.fillStyle='#9b7046'; g.fillRect(0,0,w,h); const b=Math.max(6,h*.07); g.fillStyle='#432d24'; g.fillRect(b,b,w-2*b,h-2*b); });
-    const img=new Image(); img.onload=()=>{ const g=tex.image.getContext('2d'), w=tex.image.width, h=tex.image.height, b=Math.max(6,h*.07), aw=w-2*b, ah=h-2*b;
-      const k=Math.min(aw*.86/img.width,ah*.78/img.height), iw=img.width*k, ih=img.height*k; g.drawImage(img,(w-iw)/2,(h-ih)/2,iw,ih); tex.needsUpdate=true; };
+  // 正廳 plaque: 龍江衍派 in the calligraphy the owner chose (vr/plaque-longjiang.png, read right to left), in the manner of
+  // Kinmen and Taiwan hall plaques: gilt characters on a deep maroon lacquer board, framed by a band of small glazed
+  // tiles (cream and grey, a red-brown tile every few). The hall is squeezed sideways, so the plaque is scaled back.
+  for(const {hall,name} of axialHalls) if(name==='前大廳'){ const W=2.0, H=.5, pw=2000, ph=500;
+    const tex=textCanvas(pw,ph,(g,w,h)=>{ const R=rnd(31), t=17, rows=2, b=t*rows+6;
+      g.fillStyle='#6f6a62'; g.fillRect(0,0,w,h);                                   // grout
+      const tile=(x,y,i)=>{ const c=(i%7===3)?'#8c3b2c':(i%3===0)?'#a9a49a':'#e6dcc6'; g.fillStyle=c; g.fillRect(x+1.5,y+1.5,t-3,t-3); g.fillStyle='rgba(255,255,255,.18)'; g.fillRect(x+2,y+2,t-6,3); };
+      let k=0; for(let r=0;r<rows;r++){ for(let x=0;x<w;x+=t){ tile(x,r*t+2,k++); tile(x,h-(r+1)*t-2,k++); } for(let y=rows*t+2;y<h-rows*t-2;y+=t){ tile(r*t+2,y,k++); tile(w-(r+1)*t-2,y,k++); } }
+      g.fillStyle='#2b1210'; g.fillRect(b-4,b-4,w-2*b+8,h-2*b+8);                    // dark fillet
+      g.fillStyle='#c9a24e'; g.fillRect(b-1,b-1,w-2*b+2,h-2*b+2);                    // thin gilt line
+      const gr=g.createLinearGradient(0,b,0,h-b); gr.addColorStop(0,'#5e1d1b'); gr.addColorStop(.5,'#541918'); gr.addColorStop(1,'#4a1514');
+      g.fillStyle=gr; g.fillRect(b+3,b+3,w-2*b-6,h-2*b-6);
+      for(let i=0;i<500;i++){ g.fillStyle=`rgba(${R()<.5?'0,0,0':'255,200,180'},${.03+R()*.04})`; g.fillRect(b+R()*(w-2*b),b+R()*(h-2*b),1+R()*40,1); }   // lacquer grain
+      });
+    const img=new Image(); img.onload=()=>{ const c=tex.image, g=c.getContext('2d'), w=c.width, h=c.height, b=17*2+9, aw=w-2*b, ah=h-2*b;
+      const k=Math.min(aw*.9/img.width,ah*.8/img.height), iw=img.width*k, ih=img.height*k, x=(w-iw)/2, y=(h-ih)/2;
+      // gild the characters: a shadow cut into the lacquer, then the gold with a soft light from above
+      const off=document.createElement('canvas'); off.width=Math.ceil(iw); off.height=Math.ceil(ih); const o=off.getContext('2d'); o.drawImage(img,0,0,iw,ih);
+      o.globalCompositeOperation='source-in'; const gg=o.createLinearGradient(0,0,0,ih); gg.addColorStop(0,'#f2d27a'); gg.addColorStop(.55,'#d6a944'); gg.addColorStop(1,'#a87a2a'); o.fillStyle=gg; o.fillRect(0,0,iw,ih);
+      const sh=document.createElement('canvas'); sh.width=off.width; sh.height=off.height; const so=sh.getContext('2d'); so.drawImage(img,0,0,iw,ih); so.globalCompositeOperation='source-in'; so.fillStyle='rgba(20,4,2,.75)'; so.fillRect(0,0,iw,ih);
+      g.drawImage(sh,x+3,y+4); g.drawImage(off,x,y); tex.needsUpdate=true; };
     img.src='plaque-longjiang.png';
-    plaqueMesh(tex,W,H,0,2.98,4.35,0,hall); }   // 後大廳 has no plaque
+    const m=plaqueMesh(tex,W,H,0,3.04,4.35,0,hall); m.scale.x=1/(hall.scale.x||1); }   // 後大廳 has no plaque
 plaqueMesh(plaque('獺祭魚書庫',1.6,0.4,{font:'Reisho',bg:'#efe6cf',fg:'#a8343a',size:.62,frame:'#5a3a26'}),1.6,0.4,-7.95*roomWidthScale,3.4,-0.4,Math.PI/2,scene,{type:'case',ci:0});
 }
 

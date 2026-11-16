@@ -5465,6 +5465,7 @@ for(const [key,title,body] of [
   ['ksink','水槽','窗下的水槽，老式雙把龍頭，紅熱藍冷。點龍頭開水、再點一次關水。'],
   ['krice','米缸','有木蓋的陶米缸，量米的竹筒擱在蓋上。'],
   ['kjar','水缸','老灶旁的陶水缸，水瓢浮在上面。'],
+  ['dscreen','屏風・趙孟頫《雙松平遠圖》','四扇屏風，擋在通往廁所的門前。畫取自元・趙孟頫《雙松平遠圖》：近處兩株松樹、亂石，遠處平遠的山水。原作為手卷，紐約大都會藝術博物館藏（開放資料），這裡裁取松樹與遠山一段。'],
   ['wcf','女廁','米白牆、淺米色大地磚、淺橡木門，兩間到頂的隔間各一座免治馬桶。點拉門、隔間門開關，點馬桶或遙控器掀蓋、沖水。'],
   ['wcm','男廁','米白牆、淺米色大地磚、淺橡木門，一間小便斗、一間免治馬桶，都是到頂的隔間。'],
   ['wcvase','竹花入','一截竹筒掛在牆上，只插一枝：冬梅、春桃、夏荷、秋芒，照臺北的月份自動換。'],
@@ -5919,6 +5920,23 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       B(.2,.025,.34,oak,cw0+.1,1.18,22.55); for(let i=0;i<5;i++) B(.16,.022,.26,mat(0xf6f3ee,.95),cw0+.1,1.205+i*.024,22.55); }
   }
 
+  // a four-leaf folding screen in the west 明間, before the door to the toilets: 趙孟頫《雙松平遠圖》 (Met open access),
+  // cropped to the pines and the far hills and spread across the leaves; dark wood frames, a wooden lower panel, plain silk behind
+  { const tag={type:'dscreen'}, N=4, PW=.62, PH=1.82, th=.22, z0=19.72, span=N*PW*Math.cos(th), x0=39.2-span/2, py0=.58, py1=1.66, inner=PW-.08;
+    const tex=new THREE.TextureLoader().load('screen-zhaomengfu-twinpines.jpg'); tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=MAXANI;
+    const frameM=mat(0x3a2418,.45), silk=mat(0xd9cfb8,.9), back=mat(0xe6dcc8,.92), panelM=mat(0xffffff,.55,{map:T.cypressDark||T.cypress,color:0x8a6648});
+    const ar=(N*inner)/(py1-py0), iar=1600/695, ry=Math.min(1,ar/iar);
+    let hx=x0, hz=z0;
+    for(let k=0;k<N;k++){ const a=(k%2?-th:th), g=new THREE.Group(); g.position.set(hx,0,hz); g.rotation.y=-a; scene.add(g);
+      const cxk=PW/2;
+      for(const u of [.02,PW-.02]) B(.04,PH,.04,frameM,u,PH/2,0,g,tag); B(PW,.05,.045,frameM,cxk,PH-.025,0,g,tag); B(PW,.04,.04,frameM,cxk,py1+.03,0,g); B(PW,.04,.04,frameM,cxk,py0-.03,0,g); B(PW,.04,.04,frameM,cxk,.12,0,g);
+      B(inner,py0-.17,.02,panelM,cxk,(py0+.15)/2,0,g,tag); B(inner,py1-py0+.02,.012,silk,cxk,(py0+py1)/2,0,g,tag);
+      const t=tex.clone(); t.needsUpdate=true; t.repeat.set(1/N,ry); t.offset.set((N-1-k)/N,(1-ry)/2);   // seen from the hall the first leaf is on the right
+      const pic=new THREE.Mesh(new THREE.PlaneGeometry(inner-.03,py1-py0-.03),mat(0xffffff,.85,{map:t})); pic.position.set(cxk,(py0+py1)/2,-.0075); pic.rotation.y=Math.PI; g.add(pic); pic.userData=tag; pickables.push(pic);
+      const bk=new THREE.Mesh(new THREE.PlaneGeometry(inner-.03,py1-py0-.03),back); bk.position.set(cxk,(py0+py1)/2,.0075); g.add(bk);
+      for(const u of [.06,PW-.06]) B(.08,.03,.12,frameM,u,.015,0,g);
+      if(k) for(const y of [.4,1.4]) B(.012,.06,.02,brass,0,y,0,g);
+      const ex=hx+PW*Math.cos(a), ez=hz+PW*Math.sin(a); OB(Math.min(hx,ex),Math.max(hx,ex),Math.min(hz,ez)-.04,Math.max(hz,ez)+.04); hx=ex; hz=ez; } }
   // ------------------------------------------------------------ what is on the table
   // each meal is one group built from simple shapes, merged by material so a full table is a handful of draws
   const merged=(g)=>{ g.updateMatrixWorld(true); const by=new Map(); g.traverse(o=>{ if(!o.isMesh) return; const k=o.material.uuid; if(!by.has(k)) by.set(k,{m:o.material,geos:[]}); const gg=o.geometry.clone().applyMatrix4(o.matrixWorld); for(const n of Object.keys(gg.attributes)) if(!['position','normal','uv'].includes(n)) gg.deleteAttribute(n); if(!gg.attributes.uv){ gg.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*2),2)); } by.get(k).geos.push(gg); });

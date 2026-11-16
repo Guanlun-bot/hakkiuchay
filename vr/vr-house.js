@@ -1226,7 +1226,13 @@ function buildPlaques(){
     plaque(name,1.8,.40,{font:'serif',bg:'#432d24',fg:'#eed5a6',size:.64,frame:'#9b7046'}),
     1.8,.40,0,y,z,0,parent,name==='知了間'?{type:'zhiliao'}:null);
   sign('知了間',oppositeWing,4.35,2.98);
-  for(const {hall,name} of axialHalls) if(name==='前大廳') sign('龍江衍派',hall,4.35,2.98);   // 後大廳 has no plaque
+  // 正廳 plaque: 龍江衍派 in the calligraphy the owner chose (vr/plaque-longjiang.png, gold on clear, read right to left)
+  for(const {hall,name} of axialHalls) if(name==='前大廳'){ const W=1.8, H=.4, pw=1600, ph=Math.round(pw*H/W);
+    const tex=textCanvas(pw,ph,(g,w,h)=>{ g.fillStyle='#9b7046'; g.fillRect(0,0,w,h); const b=Math.max(6,h*.07); g.fillStyle='#432d24'; g.fillRect(b,b,w-2*b,h-2*b); });
+    const img=new Image(); img.onload=()=>{ const g=tex.image.getContext('2d'), w=tex.image.width, h=tex.image.height, b=Math.max(6,h*.07), aw=w-2*b, ah=h-2*b;
+      const k=Math.min(aw*.86/img.width,ah*.78/img.height), iw=img.width*k, ih=img.height*k; g.drawImage(img,(w-iw)/2,(h-ih)/2,iw,ih); tex.needsUpdate=true; };
+    img.src='plaque-longjiang.png';
+    plaqueMesh(tex,W,H,0,2.98,4.35,0,hall); }   // 後大廳 has no plaque
 plaqueMesh(plaque('獺祭魚書庫',1.6,0.4,{font:'Reisho',bg:'#efe6cf',fg:'#a8343a',size:.62,frame:'#5a3a26'}),1.6,0.4,-7.95*roomWidthScale,3.4,-0.4,Math.PI/2,scene,{type:'case',ci:0});
 }
 

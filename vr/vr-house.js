@@ -5929,8 +5929,8 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     let hx=x0, hz=z0;
     for(let k=0;k<N;k++){ const a=(k%2?-th:th), g=new THREE.Group(); g.position.set(hx,0,hz); g.rotation.y=-a; scene.add(g);
       const cxk=PW/2;
-      for(const u of [.02,PW-.02]) B(.04,PH,.04,frameM,u,PH/2,0,g,tag); B(PW,.05,.045,frameM,cxk,PH-.025,0,g,tag); B(PW,.04,.04,frameM,cxk,py1+.03,0,g); B(PW,.04,.04,frameM,cxk,py0-.03,0,g); B(PW,.04,.04,frameM,cxk,.12,0,g);
-      B(inner,py0-.17,.02,panelM,cxk,(py0+.15)/2,0,g,tag); B(inner,py1-py0+.02,.012,silk,cxk,(py0+py1)/2,0,g,tag);
+      for(const u of [.02,PW-.02]) B(.04,PH,.04,frameM,u,PH/2,0,g,tag); B(PW,.05,.045,frameM,cxk,PH-.025,0,g,tag); B(PW,.04,.04,frameM,cxk,py1+.03,0,g); B(PW,.04,.04,frameM,cxk,py0-.03,0,g); B(PW,.04,.04,frameM,cxk,.26,0,g);
+      B(inner,py0-.31,.02,panelM,cxk,(py0+.29)/2,0,g,tag); B(inner,py1-py0+.02,.012,silk,cxk,(py0+py1)/2,0,g,tag);
       const t=tex.clone(); t.needsUpdate=true; t.repeat.set(1/N,ry); t.offset.set((N-1-k)/N,(1-ry)/2);   // seen from the hall the first leaf is on the right
       const pic=new THREE.Mesh(new THREE.PlaneGeometry(inner-.03,py1-py0-.03),mat(0xffffff,.85,{map:t})); pic.position.set(cxk,(py0+py1)/2,-.0075); pic.rotation.y=Math.PI; g.add(pic); pic.userData=tag; pickables.push(pic);
       const bk=new THREE.Mesh(new THREE.PlaneGeometry(inner-.03,py1-py0-.03),back); bk.position.set(cxk,(py0+py1)/2,.0075); g.add(bk);

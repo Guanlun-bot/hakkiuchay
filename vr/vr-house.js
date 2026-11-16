@@ -3442,7 +3442,7 @@ function walkable(x,z){
   let inSide=false; for(const r of SIDE_ROOMS) if(x>r.x0+.32&&x<r.x1-.32&&z>r.z0+.32&&z<r.z1-.32){ inSide=true; break; }
   const zz=z<courtAxis?z:2*courtAxis-z;   /* fold the west half onto the east: the rooms and doors are mirrored */
   const inSideDoor=(Math.abs(x+10.87)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-9.8)<.5&&zz>3.9&&zz<5.4)||(Math.abs(zz-.1)<.5&&x>11.5&&x<13.1)||(Math.abs(x-29.4)<.5&&zz>3.9&&zz<5.4);
-  const inDine=x>36.85&&x<41.55&&z>-3.82&&z<-3.0;   /* 明間: the strip behind the dining table's back bench */
+  const inDine=x>36.85&&x<41.55&&z>-3.86&&z<-3.0;   /* 明間: the strip behind the dining table's back bench */
   if(!(inRoom||inYard||inDoor||inMatchingRoom||inFirst||inBackDoor||inFirstWing||inFirstDoor||inSide||inSideDoor||inGateHall||inGateDoor||inFore||inDine)) return false;
   if(zlBlocked(x,z)) return false;
   for(const o of OBST) if(x>o.x0-0.22&&x<o.x1+0.22&&z>o.z0-0.22&&z<o.z1+0.22) return false;
@@ -3582,7 +3582,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu']);
+const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3594,6 +3594,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'hou': showText(`${HOU.term}・${HOU.hou}`,`<p style="font-size:22px;letter-spacing:.2em;margin:6px 0 14px">${esc(HOU.yu)}</p><p class="meta">七十二候，五日一候。今天是${esc(HOU.term)}${esc(HOU.hou)}。書齋的時節依臺北時間更新；天色也跟著日出日落（06:00～18:00 為白天）。</p>`); break;
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
+  case 'kgas': case 'ktap': case 'kpantry': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
@@ -4491,13 +4492,13 @@ function drawPlan(g,W,H,{cx,cz,scale,round=false,labels=false}){ const S=scale, 
 // the small map: the house's own plan view (roofs cut away, as in 宅院平面) seen from straight above, a rectangle that
 // follows you, north up; drawn into a texture a few times a second and copied to a little canvas with the people on top.
 // Click it for the whole compound, click there to go.
-const mapUI=(()=>{ const tr=$('#hud-tr'), W=300, H=142, DPR=2; tr.innerHTML=`<canvas width="${W*DPR}" height="${H*DPR}" style="width:${W}px;height:${H}px;display:block"></canvas>`; const c=tr.querySelector('canvas'), g=c.getContext('2d');
+const mapUI=(()=>{ const tr=$('#hud-tr'), W=140, H=296, DPR=2; tr.innerHTML=`<canvas width="${W*DPR}" height="${H*DPR}" style="width:${W}px;height:${H}px;display:block"></canvas>`; const c=tr.querySelector('canvas'), g=c.getContext('2d');
   if(LS.get('hk-map')==='off') tr.classList.add('mmoff');
   /* the small map is the plan view itself (宅院平面: walls cut at 2.35 m, the even plan light, no haze), seen whole from
-     straight above with the long axis across: north (正廳) on the left, the gate on the right, east up */
+     straight above, upright like the plan view: north (正廳) at the top, the gate at the bottom, east on the right */
   const cam=new THREE.PerspectiveCamera(30,W/H,1,200), C={x:19.6,z:9.8}, SPAN_X=72, SPAN_Z=34;
-  const r=Math.max(SPAN_Z, SPAN_X/(W/H))/2/Math.tan(THREE.MathUtils.degToRad(cam.fov/2))+2.35;
-  cam.up.set(0,0,-1); cam.position.set(C.x,r,C.z); cam.lookAt(C.x,0,C.z); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  const r=Math.max(SPAN_X, SPAN_Z/(W/H))/2/Math.tan(THREE.MathUtils.degToRad(cam.fov/2))+2.35;
+  cam.up.set(-1,0,0); cam.position.set(C.x,r,C.z); cam.lookAt(C.x,0,C.z); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
   const R=(()=>{ const t=new THREE.WebGLRenderTarget(W*DPR,H*DPR); t.texture.colorSpace=THREE.SRGBColorSpace; return {t,buf:new Uint8Array(W*DPR*H*DPR*4),img:new ImageData(W*DPR,H*DPR)}; })();
   let base=null;   // the building, drawn once in a while; people go on top every frame it is shown
   function shoot(){ if(renderer.xr.isPresenting) return false; const w=W*DPR, h=H*DPR;
@@ -5135,7 +5136,7 @@ const NP={
   gate:{x:51.9,z:12.6}, gateSweep:[{x:51.4,z:12.9},{x:50.2,z:14.2},{x:49.2,z:12.6},{x:50.6,z:6.8},{x:51.8,z:7.4}], stool:{x:52.5,z:13.3}, jar:{x:52.6,z:7.6},
   porch:[{x:36.2,z:14.25},{x:43.6,z:14.25}], teaDoor:{x:-1.5,z:19.9}, tea:{x:-6.3,z:20.7},
   prep:{x:10.4,z:-2.7}, garden:{x:16.6,z:12.85}, gardenB:{x:15.2,z:12.85},
-  stove:{x:44.3,z:-2.55}, woodDrop:{x:45.3,z:-2.6}, kitchenIn:{x:43.0,z:-1.2}, woodpile:{x:45.9,z:5.6}, outGate:{x:52.6,z:9.8},
+  stove:{x:44.99,z:-2.55}, woodDrop:{x:45.25,z:-2.6}, kitchenIn:{x:43.0,z:-1.2}, woodpile:{x:45.9,z:5.6}, outGate:{x:52.6,z:9.8},
   store:{x:10.6,z:22.0},
 };
 const NZONES=[['gate',46.84,53.3,-4.3,23.9],['kitchen',41.85,46.84,-4.3,4.3],['well',41.5,46.84,4.3,8.6],['porch',33.7,46.84,12.4,15.3],
@@ -5451,22 +5452,23 @@ if(NS.cake.st===4||NS.cake.st===5){ npcPlace(NPC.chun,NP.prep); }
    other partition; a bamboo lamp over the table.
    Meals follow Taipei time, so every visitor sees the same thing at the same moment: 火師 cooks for forty minutes,
    carries the dishes in, calls everyone, and they eat for twenty minutes; then he washes up. Menu and words: back office. */
-const DINE={x:39.2,z:-2.5,r:.65,top:.76,bo:.9,bl:1.5,bh:.46};
-const KIT={x0:41.92,x1:46.56,z0:-4.0,z1:4.0, run:{x0:45.94,z0:-3.96,z1:2.66}, tall:{z0:2.7,z1:3.98}};
-const MEAL_DYN=[]; var KITCHEN_STRIP=null; const NOODLE_STEAM={at:null,s:[]};
-Object.assign(NP,{noodle:{x:45.62,z:-3.05},hob:{x:45.62,z:-2.15},sink:{x:45.62,z:-.05},pass:{x:45.62,z:1.4},dineDoor:{x:41.25,z:-.3},tableDrop:{x:40.62,z:-1.3}});
+const DINE={x:39.2,z:-2.5,r:.72,top:.77,bo:1.05,bl:1.65,bh:.46};
+const KIT={x0:41.92,x1:46.56,z0:-4.0,z1:4.0, run:{x0:45.94,z0:-3.58,z1:2.66}, tall:{z0:2.7,z1:3.98}};
+const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}; var KITCHEN_STRIP=null; const NOODLE_STEAM={at:null,s:[]};
+Object.assign(NP,{noodle:{x:45.62,z:1.78},hob:{x:45.62,z:-3.0},sink:{x:45.62,z:-.05},pass:{x:45.62,z:-1.6},dineDoor:{x:41.25,z:-.3},tableDrop:{x:40.62,z:-1.3}});
 // click texts: back office (_data/vr.yml › texts) first, these when it is blank
 for(const [key,title,body] of [
   ['kstove','大灶','紅磚砌的老灶，兩個灶口：大鼎上疊著竹蒸籠，另一口燒水。灶後的煙囪穿出屋頂，開伙時院子裡看得見煙。'],
   ['kzaojun','司命灶君','灶上方的小龕供著灶君，一年到頭看顧這一家的三餐。年底送神，正月初四再迎回來。'],
-  ['knoodle','煮麵台','嵌在檯面裡的兩口深鍋：一口滾水燙麵，一口熬著湯頭。竹柄麵篩掛在上方的橫桿。'],
-  ['ksink','水槽','窗下的水槽。洗菜、洗碗都在這裡，抬頭就是竹節窗。'],
+  ['knoodle','煮麵爐','嵌在檯面裡的煮麵爐：一池滾水、六個麵篩，長柄掛在後面的橫桿上。開伙時水氣直冒。'],
+  ['ksink','水槽','窗下的水槽，老式雙把龍頭，紅熱藍冷。點龍頭開水、再點一次關水。'],
   ['krice','米缸','有木蓋的陶米缸，量米的竹筒擱在蓋上。'],
   ['kjar','水缸','老灶旁的陶水缸，水瓢浮在上面。'],
-  ['kcab','碗櫥','木碗櫥，上層放碗盤，下層收鍋子和乾貨。'],
-  ['ktall','冰箱與乾糧櫃','冰箱和乾糧調味料櫃做成一樣高、一樣的門板，看起來是一整面櫃子。'],
-  ['dpaint','白菜蘿蔔','後牆上一幅白菜與蘿蔔，取「清清白白」之意，坐在飯桌前抬頭就看得見。'],
-  ['dbasin','洗手台','洗石子的洗手台，白瓷盆、黃銅龍頭。飯前洗手，毛巾摺好疊在旁邊的層板上。'],
+  ['kwood','柴','劈好的乾柴堆在水缸旁，起灶火時伸手就拿得到。'],
+  ['kcab','菜櫥','傳統菜櫥：上層霧面玻璃後放碗盤，中層竹條紗網透氣放剩菜醬菜，三個抽屜收筷匙，下層拉門放鍋子。'],
+  ['ktall','冰箱','冰箱和乾糧櫃做成一樣高、一樣的門板，看起來是一整面櫃子。旁邊的乾糧櫃點一下就打開。'],
+  ['dpaint','張熊《蔬果圖》','清・張熊《蔬果圖》，同治九年（1870）夏四月十九日作，畫紅、白蘿蔔與幾樣蔬果。國立故宮博物院藏，取自故宮開放資料。'],
+  ['dbasin','洗手台','洗石子的洗手台，白瓷盆、老式黃銅龍頭。飯前洗手，毛巾摺好疊在旁邊的層板上。'],
   ['dclock','掛鐘','老式掛鐘，走的是臺北時間。'],
   ['dcup','菜櫥與茶水櫃','左邊是紗門菜櫥，收剩菜和醬菜；右邊是茶水櫃，熱水瓶、茶壺和杯子，飯後喝茶。'],
 ]) if(!VRT[key]||!String(VRT[key].body||'').trim()) VRT[key]={key,title,body};
@@ -5532,59 +5534,149 @@ const hhmm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%6
 
   // ------------------------------------------------------------ 灶腳
   B(KIT.x1-KIT.x0,.012,KIT.z1-KIT.z0,terrazzo,(KIT.x0+KIT.x1)/2,.006,0).userData={type:'floor'};
-  // the chimney from the back of the stove up through the roof, and the kitchen god above the stove
-  { const tag={type:'kstove'}; B(.46,6.7,.42,brickM,45.5,3.35,-3.79,scene,tag); B(.56,.08,.52,plaster,45.5,6.72,-3.79); OB(45.27,45.73,-4.0,-3.58);
-    const zj={type:'kzaojun'}; B(.5,.6,.06,lacquer,43.75,1.86,-3.97,scene,zj); plane(.36,.46,mat(0xffffff,.85,{map:textCanvas(160,200,(g,w,h)=>{ g.fillStyle='#b8322f'; g.fillRect(0,0,w,h); g.strokeStyle='#e0b75e'; g.lineWidth=4; g.strokeRect(8,8,w-16,h-16); g.fillStyle='#f0d27a'; g.font=F('700',34); vtext(g,'司命灶君',w/2,22,34,h-10); })}),43.75,1.88,-3.935,0,scene,zj);
-    B(.5,.04,.16,lacquer,43.75,1.53,-3.9,scene,zj); L([[0,0],[.05,0],[.06,.05],[.055,.07]],brass,43.75,1.55,-3.88,scene,zj);
-    for(const dx of [-.015,.015]){ const st=C(.003,.003,.16,mat(0xa8343a,.8),43.75+dx,1.68,-3.88,scene,4); st.rotation.z=dx*4; } }
-  // water jar with a lid and a gourd ladle
+  // the chimney in the south-east corner, the stove against it; the kitchen god high above the steamer, three sticks of incense
+  { const tag={type:'kstove'}; B(.62,6.7,.42,brickM,46.25,3.35,-3.79,scene,tag); B(.72,.08,.52,plaster,46.25,6.72,-3.79); OB(45.94,46.56,-4.0,-3.58);
+    const zx=NP.stove.x-.45, zj={type:'kzaojun'}; B(.5,.62,.06,lacquer,zx,2.22,-3.97,scene,zj);
+    plane(.36,.48,mat(0xffffff,.85,{map:textCanvas(160,210,(g,w,h)=>{ g.fillStyle='#b8322f'; g.fillRect(0,0,w,h); g.strokeStyle='#e0b75e'; g.lineWidth=4; g.strokeRect(8,8,w-16,h-16); g.fillStyle='#f0d27a'; g.font=F('700',34); vtext(g,'司命灶君',w/2,24,34,h-10); })}),zx,2.24,-3.935,0,scene,zj);
+    B(.4,.03,.04,lacquer,zx,2.55,-3.93,scene,zj); for(const s of [-1,1]) B(.03,.62,.03,mat(0xc89b45,.4,{metalness:.5}),zx+s*.235,2.22,-3.935);
+    B(.52,.04,.18,lacquer,zx,1.86,-3.9,scene,zj); L([[0,0],[.045,0],[.06,.045],[.055,.065],[.05,.07]],brass,zx,1.88,-3.88,scene,zj);
+    for(const [dx,lean] of [[-.022,-.12],[0,0],[.022,.12]]){ const st=C(.0025,.0025,.2,mat(0xa8343a,.8),zx+dx+lean*.1,2.04,-3.88,scene,4); st.rotation.z=-lean;
+      const tip=new THREE.Mesh(new THREE.SphereGeometry(.005,6,4),mat(0xff7a2a,.5,{emissive:0xff6a1a,emissiveIntensity:1.2})); tip.position.set(zx+dx+lean*.22,2.14,-3.88); scene.add(tip); } }
+  // water jar with a lid and a gourd ladle; split firewood stacked beside it
   { const tag={type:'kjar'}; L([[0,0],[.22,0],[.31,.22],[.32,.42],[.27,.62],[.25,.66]],clay,42.38,0,-3.6,scene,tag); C(.27,.27,.03,wood,42.38,.68,-3.6,scene,24,tag);
-    const lad=L([[0,0],[.06,.0],[.09,.05],[.085,.08]],mat(0xc8a35e,.7),42.3,.7,-3.55,scene,tag); const h=C(.012,.012,.32,mat(0xc8a35e,.7),42.48,.72,-3.52,scene,6,tag); h.rotation.z=Math.PI/2.3;
-    OB(42.05,42.7,-3.95,-3.25); }
-  // the built-in run along the south wall: base cabinets, one worktop, white tiles to the window, wall cabinets with the hood in them
+    L([[0,0],[.06,.0],[.09,.05],[.085,.08]],mat(0xc8a35e,.7),42.3,.7,-3.55,scene,tag); const h=C(.012,.012,.32,mat(0xc8a35e,.7),42.48,.72,-3.52,scene,6,tag); h.rotation.z=Math.PI/2.3;
+    OB(42.05,42.7,-3.95,-3.25);
+    const log=mat(0x8a6a48,.85), end=mat(0xc9a77a,.8), wt={type:'kwood'};
+    for(let r=0;r<4;r++) for(let i=0;i<7-r;i++){ const x=42.86+i*.13+r*.065+(r%2?.01:0), y=.055+r*.098, z=-3.74;
+      const lg=C(.05+((i*7+r)%3)*.006,.052,.42,log,x,y,z,scene,7,wt); lg.rotation.x=Math.PI/2; const e=new THREE.Mesh(new THREE.CircleGeometry(.048,7),end); e.position.set(x,y,z+.211); scene.add(e); }
+    OB(42.8,43.85,-3.97,-3.5); }
+  // tools on a rail on the back wall above the wood: ladle, slotted spoon, spatula, strainer, a bamboo brush, a ladle of gourd
+  const utensil=(kind,p)=>{ const g=new THREE.Group(); p.add(g); const hk=new THREE.Mesh(new THREE.TorusGeometry(.014,.003,5,10,Math.PI*1.4),steel); hk.rotation.y=Math.PI/2; g.add(hk);
+    const handle=(len,m=woodDk,r=.011)=>{ const h=C(r,r*.9,len,m,0,-.03-len/2,0,g,8); return -.03-len; };
+    if(kind==='ladle'){ const y=handle(.3,steel,.006); L([[0,-.05],[.045,-.04],[.055,0]],steel,0,y-.0,0,g); }
+    if(kind==='slot'){ const y=handle(.26,woodDk); const s=new THREE.Mesh(new THREE.CircleGeometry(.055,16),steelDark); s.position.set(0,y-.05,.004); g.add(s); for(let i=0;i<6;i++){ const d=new THREE.Mesh(new THREE.CircleGeometry(.007,6),iron); d.position.set(Math.cos(i)*.028,y-.05+Math.sin(i)*.028,.006); g.add(d); } }
+    if(kind==='spatula'){ const y=handle(.24,woodDk); B(.085,.1,.004,steelDark,0,y-.055,0,g); }
+    if(kind==='strainer'){ const y=handle(.3,bamboo,.008); L([[0,-.03],[.05,-.02],[.065,.01]],mat(0x9c9fa1,.5,{metalness:.5,side:THREE.DoubleSide}),0,y,0,g); }
+    if(kind==='brush'){ const y=handle(.08,bamboo,.014); for(let i=0;i<14;i++){ const b=C(.0025,.0025,.16,bambooDk,Math.cos(i)*.01,y-.08,Math.sin(i)*.01,g,3); b.rotation.z=(i%3-1)*.06; } }
+    if(kind==='gourd'){ const y=handle(.18,mat(0xc8a35e,.7),.012); L([[0,-.06],[.05,-.05],[.06,-.02],[.055,0]],mat(0xc8a35e,.7,{side:THREE.DoubleSide}),0,y,0,g); }
+    if(kind==='chop'){ const y=handle(.12,bamboo,.004); C(.03,.03,.16,bamboo,0,y-.06,0,g,10); }
+    return g; };
+  { C(.008,.008,1.1,steel,43.35,1.62,-3.955,scene,8).rotation.z=Math.PI/2; for(const x of [42.82,43.88]) B(.02,.04,.04,steel,x,1.62,-3.975);
+    ['ladle','slot','spatula','strainer','gourd','brush','chop'].forEach((k,i)=>{ const u=utensil(k,scene); u.position.set(42.92+i*.145,1.62,-3.94); }); }
+  // the built-in run along the south wall, from the chimney to the tall cupboards: base cabinets, one worktop, white tiles,
+  // wall cabinets with the hood in them; two gas rings that can be lit, the sink with an old two-handled tap that runs,
+  // and the noodle cooker sunk into the worktop at the far end (six baskets in a steaming well)
   { const R=KIT.run, x0=R.x0, xw=46.56, d=xw-x0, cx=(x0+xw)/2, zL=R.z1-R.z0, zc=(R.z0+R.z1)/2;
-    B(d-.06,.1,zL,mat(0x6e6a64,.8),cx+.03,.05,zc);                                  // plinth
-    B(d-.02,.76,zL,carcass,cx+.01,.1+.38,zc);                                          // carcass
-    const doorsAt=[-3.96,-3.36,-2.76,-2.16,-1.56,-.96,-.36,.36,.96,1.56,2.16,2.66];  // door joints (z)
-    for(let i=0;i<doorsAt.length-1;i++){ const a=doorsAt[i]+.004, b=doorsAt[i+1]-.004; B(.02,.72,b-a,door,x0-.005,.5,(a+b)/2); B(.012,.012,.16,steel,x0-.03,.8,(a+b)/2); }
-    B(d+.03,.04,zL+.02,worktop,cx-.015,.88,zc); B(.004,.6,zL,tile,xw-.002,1.2,zc);   // worktop, splash tiles (worktop to window sill)
-    const uppers=[[-3.96,-1.02],[1.02,2.66]]; for(const [a,b] of uppers){ B(.35,.72,b-a,door,xw-.175,1.94,(a+b)/2); for(let z=a;z<b-.05;z+=.6) B(.004,.7,.004,seam,xw-.352,1.94,Math.min(b,z+.6)); }
-    B(.36,.03,2.6,glassBlack,xw-.18,1.565,-2.66);                                     // the hood's intake under the cabinets over the rings and the pots
-    const strip=mat(0xfff0d0,.6,{emissive:0xffd9a0,emissiveIntensity:.0}); B(.03,.01,1.5,strip,xw-.33,1.572,1.84); B(.03,.01,2.9,strip,xw-.33,1.572,-2.5); KITCHEN_STRIP=strip;
+    B(d-.06,.1,zL,mat(0x6e6a64,.8),cx+.03,.05,zc); B(d-.02,.76,zL,carcass,cx+.01,.1+.38,zc);
+    const doorsAt=[R.z0,-2.94,-2.3,-1.66,-1.02,-.36,.36,.96,1.56,2.11,R.z1];
+    for(let i=0;i<doorsAt.length-1;i++){ const a=doorsAt[i]+.004, b=doorsAt[i+1]-.004; B(.02,.72,b-a,door,x0-.005,.5,(a+b)/2); if(!(a>.95&&b<2.2)) B(.012,.012,.16,steel,x0-.03,.8,(a+b)/2); }
+    B(d+.03,.04,zL+.02,worktop,cx-.015,.88,zc); B(.004,.6,zL,tile,xw-.002,1.2,zc);
+    const uppers=[[R.z0,-1.02],[1.02,R.z1]]; for(const [a,b] of uppers){ B(.35,.72,b-a,door,xw-.175,1.94,(a+b)/2); for(let z=a+.6;z<b-.05;z+=.6) B(.004,.7,.004,seam,xw-.352,1.94,z); }
+    for(const [a,b] of [[-3.5,-2.5],[1.05,2.55]]) B(.36,.03,b-a,glassBlack,xw-.18,1.565,(a+b)/2);    // the hood's intake over the rings and the noodles
+    const strip=mat(0xfff0d0,.6,{emissive:0xffd9a0,emissiveIntensity:0}); B(.03,.01,1.6,strip,xw-.33,1.572,1.84); B(.03,.01,2.5,strip,xw-.33,1.572,-2.3); KITCHEN_STRIP=strip;
     OB(x0,xw,R.z0,R.z1);
-    // noodle station: two deep pots sunk in a steel inset, a rail of bamboo strainers above
-    { const tag={type:'knoodle'}; B(.5,.012,1.08,steel,x0+.3,.905,-3.36,scene,tag);
-      for(const [z,r] of [[-3.62,.19],[-3.1,.17]]){ C(r+.015,r+.015,.02,steelDark,x0+.3,.91,z,scene,24,tag); const w=C(r,r,.01,water,x0+.3,.905,z,scene,24,tag); MEAL_DYN.push(w); }
-      C(.008,.008,1.0,steel,xw-.07,1.42,-3.36,scene,8).rotation.x=Math.PI/2;
-      for(let i=0;i<5;i++){ const z=-3.78+i*.105, g=new THREE.Group(); g.position.set(xw-.07,1.42,z); scene.add(g); C(.008,.008,.28,bamboo,0,-.14,0,g,6); L([[0,0],[.045,.005],[.055,.04]],steelDark,0,-.33,0,g); }
-      NOODLE_STEAM.at={x:x0+.3,y:.95,z:-3.36}; }
-    // two gas rings in black glass
-    { const tag={type:'knoodle'}; B(.5,.008,.72,glassBlack,x0+.28,.904,-2.15,scene,tag);
-      for(const z of [-2.33,-1.97]){ const ring=new THREE.Mesh(new THREE.TorusGeometry(.07,.012,8,24),iron); ring.rotation.x=Math.PI/2; ring.position.set(x0+.28,.915,z); scene.add(ring);
-        for(let k=0;k<4;k++){ const a=k*Math.PI/2; const bar=B(.012,.012,.22,iron,x0+.28,.93,z); bar.rotation.y=a; } }
-      for(const z of [-2.42,-2.28,-1.98,-1.84]) C(.018,.018,.02,steelDark,x0-.01,.83,z,scene,12).rotation.z=Math.PI/2; }
-    // the sink under the window, a tall spout
-    { const tag={type:'ksink'}; B(.42,.006,.7,steelDark,x0+.27,.903,0,scene,tag); B(.38,.004,.66,mat(0x5d6265,.3,{metalness:.6}),x0+.27,.9,0,scene,tag);
-      C(.02,.025,.06,steel,xw-.1,.93,.0,scene,12,tag); const sp=C(.012,.012,.36,steel,xw-.1,1.1,0,scene,10,tag); const arm=C(.011,.011,.22,steel,xw-.2,1.27,0,scene,10,tag); arm.rotation.z=Math.PI/2; C(.011,.011,.06,steel,xw-.3,1.24,0,scene,10,tag); }
-    // a few things on the worktop: a cutting board and a jar, nothing more
-    B(.3,.02,.42,wood,x0+.28,.91,-1.2); L([[0,0],[.05,0],[.05,.13],[.035,.15]],porcelain,xw-.12,.9,1.3); }
-  // fridge and pantry: same height, same doors as the run
-  { const tag={type:'ktall'}, T2=KIT.tall, x0=KIT.run.x0, xw=46.56, d=xw-x0, h=2.3, half=(T2.z1-T2.z0)/2;
-    B(d,h,T2.z1-T2.z0,carcass,(x0+xw)/2,h/2,(T2.z0+T2.z1)/2,scene,tag);
-    for(let i=0;i<2;i++){ const a=T2.z0+i*half+.004, b=a+half-.008, zc=(a+b)/2;
-      if(i===0){ B(.02,1.36,b-a,door,x0-.005,.1+1.36/2+.8,zc,scene,tag); B(.02,.76,b-a,door,x0-.005,.1+.38,zc,scene,tag); B(.014,.5,.014,steel,x0-.03,1.3,b-.06); B(.014,.3,.014,steel,x0-.03,.7,b-.06); }
-      else { B(.02,2.16,b-a,door,x0-.005,.1+1.08,zc,scene,tag); B(.014,.5,.014,steel,x0-.03,1.15,a+.06); } }
+    // two gas rings in black glass; turn the knob (or the ring) to light it
+    { B(.5,.008,.82,glassBlack,x0+.28,.904,-3.0,scene,{type:'kgas',i:0});
+      const flameM=new THREE.MeshBasicMaterial({color:0x5aa0ff,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false});
+      [-3.2,-2.78].forEach((z,i)=>{ const tag={type:'kgas',i}, cx2=x0+.28;
+        const burner=C(.05,.055,.02,iron,cx2,.915,z,scene,16,tag); C(.03,.03,.012,mat(0x7a5a2a,.4,{metalness:.6}),cx2,.928,z,scene,16,tag);
+        for(let k=0;k<4;k++){ const bar=B(.012,.012,.22,iron,cx2,.94,z,scene,tag); bar.rotation.y=k*Math.PI/4; }
+        const fl=new THREE.Group(); fl.position.set(cx2,.93,z); scene.add(fl); for(let k=0;k<16;k++){ const a=k/16*Math.PI*2, c=new THREE.Mesh(new THREE.ConeGeometry(.007,.04,5),flameM); c.position.set(Math.cos(a)*.052,.018,Math.sin(a)*.052); fl.add(c); }
+        fl.visible=false; MEAL_DYN.push(fl); KGAS.push({fl,on:false});
+        const kn=C(.022,.022,.03,mat(0x1c1c1c,.4),x0-.02,.8,z,scene,14,tag); kn.rotation.z=Math.PI/2; B(.006,.034,.008,steel,x0-.037,.8,z,scene,tag); }); }
+    // the sink under the window and an old bridge tap: two cross handles, a swan spout; it runs when you turn it
+    { const tag={type:'ktap'}; B(.42,.006,.7,steel,x0+.27,.903,0,scene,tag); B(.36,.004,.62,mat(0x9aa0a3,.3,{metalness:.6}),x0+.27,.907,0,scene,tag); C(.02,.02,.003,iron,x0+.27,.91,.15,scene,12);
+      const tx=xw-.1; for(const s of [-1,1]){ C(.014,.016,.12,steel,tx,.96,s*.12,scene,10,tag); const hub=C(.016,.016,.03,steel,tx,1.03,s*.12,scene,10,tag);
+        for(let k=0;k<2;k++){ const arm=B(.09,.012,.012,steel,tx,1.05,s*.12,scene,tag); arm.rotation.y=k*Math.PI/2+.4; } const nb=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),steel); nb.position.set(tx,1.06,s*.12); scene.add(nb);
+        const cap=new THREE.Mesh(new THREE.CircleGeometry(.008,10),mat(s<0?0x2f5fa8:0xa8343a,.4)); cap.position.set(tx,1.067,s*.12); cap.rotation.x=-Math.PI/2; scene.add(cap); }
+      const br=C(.012,.012,.24,steel,tx,.99,0,scene,10,tag); br.rotation.x=Math.PI/2;
+      const neck=new THREE.Mesh(new THREE.TorusGeometry(.1,.011,8,20,Math.PI),steel); neck.position.set(tx-.1,.99,0); neck.rotation.set(0,0,0); scene.add(neck); neck.userData=tag; pickables.push(neck);
+      C(.012,.01,.05,steel,tx-.2,.965,0,scene,10,tag);
+      const stream=new THREE.Mesh(new THREE.CylinderGeometry(.007,.009,.06,8,1,true),new THREE.MeshStandardMaterial({color:0xd8e6ee,roughness:.05,metalness:.1,transparent:true,opacity:.6})); stream.position.set(tx-.2,.92,0); stream.visible=false; scene.add(stream);
+      const splash=new THREE.Mesh(new THREE.RingGeometry(.012,.05,20),new THREE.MeshBasicMaterial({color:0xe8f2f6,transparent:true,opacity:.5,depthWrite:false})); splash.rotation.x=-Math.PI/2; splash.position.set(tx-.2,.904,0); splash.visible=false; scene.add(splash);
+      KTAP.stream=stream; KTAP.splash=splash; MEAL_DYN.push(stream,splash); }
+    // a cutting board and a knife on the worktop between rings and sink
+    B(.3,.02,.42,mat(0xd9c39c,.7),x0+.28,.91,-1.65); B(.02,.004,.18,steel,x0+.2,.922,-1.6); B(.03,.02,.1,woodDk,x0+.2,.925,-1.47);
+    // the noodle cooker: a steel well sunk in the worktop, six baskets in two rows, long black handles hooked to a rail at the back
+    { const tag={type:'knoodle'}, nz=1.78, nx=x0+.29;
+      B(.52,.014,1.44,steel,nx,.903,nz,scene,tag); B(.44,.004,1.34,mat(0x3c4245,.3,{metalness:.6}),nx,.908,nz,scene,tag);
+      const wm=mat(0xb4c2c4,.05,{transparent:true,opacity:.55}); B(.42,.002,1.3,wm,nx,.912,nz,scene,tag);
+      C(.006,.006,1.3,steel,xw-.05,1.08,nz,scene,8).rotation.x=Math.PI/2; for(const z of [nz-.66,nz+.66]) B(.04,.18,.02,steel,xw-.05,.99,z);
+      const net=mat(0xb8bcbe,.4,{metalness:.6,side:THREE.DoubleSide}), blk=mat(0x151515,.5);
+      for(const dx of [-.1,.1]) for(const dz of [-.43,0,.43]){ const g=new THREE.Group(); g.position.set(nx+dx,.95,nz+dz); scene.add(g);
+        const rim=new THREE.Mesh(new THREE.TorusGeometry(.08,.005,6,20),steel); rim.rotation.x=Math.PI/2; g.add(rim); L([[.08,0],[.075,-.08],[.04,-.12],[0,-.125]],net,0,0,0,g,tag);
+        const h=C(.006,.006,.34,blk,.0,.0,0,g,6,tag); h.position.set(.055+(dx<0?.1:0),.15,0); h.rotation.z=-.35; const hk=new THREE.Mesh(new THREE.TorusGeometry(.015,.004,5,10,Math.PI),steel); hk.position.set(.12+(dx<0?.1:0),.32,0); g.add(hk); }
+      for(const z of [nz-.45,nz,nz+.45]){ const k=C(.022,.022,.03,mat(0x1c1c1c,.4),x0-.02,.78,z,scene,14,tag); k.rotation.z=Math.PI/2; const lamp=new THREE.Mesh(new THREE.CircleGeometry(.006,8),mat(0x3a8a3a,.4,{emissive:0x2a8a2a,emissiveIntensity:.6})); lamp.position.set(x0-.016,.84,z); lamp.rotation.y=-Math.PI/2; scene.add(lamp); }
+      B(.01,.06,1.44,mat(0x9a2a2a,.5),x0-.012,.7,nz);
+      NOODLE_STEAM.at={x:nx,y:.93,z:nz}; } }
+  // fridge and pantry: same height, same doors as the run; the pantry opens (click it) on four shelves of dry goods
+  { const tag={type:'ktall'}, T2=KIT.tall, x0=KIT.run.x0, xw=46.56, d=xw-x0, h=2.3, half=(T2.z1-T2.z0)/2, fz1=T2.z0+half;
+    B(d,h,half,carcass,(x0+xw)/2,h/2,(T2.z0+fz1)/2,scene,tag);
+    { const a=T2.z0+.004, b=fz1-.004, zc=(a+b)/2; B(.02,1.36,b-a,door,x0-.005,.1+1.36/2+.8,zc,scene,tag); B(.02,.76,b-a,door,x0-.005,.1+.38,zc,scene,tag); B(.014,.5,.014,steel,x0-.03,1.3,b-.06); B(.014,.3,.014,steel,x0-.03,.7,b-.06); }
+    const pt={type:'kpantry'}, za=fz1, zb=T2.z1, pc=(za+zb)/2, pw=zb-za;
+    B(d,.02,pw,carcass,(x0+xw)/2,h-.01,pc); B(d,.1,pw,carcass,(x0+xw)/2,.05,pc); B(.02,h,pw,carcass,xw-.01,h/2,pc); for(const z of [za+.01,zb-.01]) B(d,h,.02,carcass,(x0+xw)/2,h/2,z);
+    const inner=mat(0xf0ebe0,.7), sx=(x0+xw)/2+.01; const shelves=[.1,.58,1.06,1.54,2.02];
+    for(const y of shelves.slice(1)) B(d-.04,.018,pw-.04,inner,sx,y,pc,scene,pt);
+    // dry goods: jars of beans, mushrooms, wood ear, noodles in bundles, bottles of soy sauce and sesame oil, tins
+    const glass=mat(0xdfe8e6,.05,{transparent:true,opacity:.35}), jar=(x,y,z,c,r=.05,hh=.14,lid=0x8a2a24)=>{ C(r,r,hh,glass,x,y+hh/2,z,scene,14,pt); C(r*.94,r*.94,hh*.72,mat(c,.85),x,y+hh*.36,z,scene,14); C(r*1.02,r*1.02,.025,mat(lid,.5),x,y+hh+.012,z,scene,14); };
+    const bottle=(x,y,z,c,lab)=>{ L([[0,0],[.032,0],[.032,.17],[.014,.21],[.012,.25]],mat(c,.15,{transparent:true,opacity:.9}),x,y,z,scene,pt); C(.033,.033,.06,mat(lab,.7),x,y+.09,z,scene,12); C(.013,.013,.02,mat(0xb03a2a,.5),x,y+.26,z,scene,8); };
+    const bundle=(x,y,z,c,band)=>{ for(let i=0;i<5;i++){ const b=B(.03,.03,.3,mat(c,.8),x+(i%3)*.03,y+.017+Math.floor(i/3)*.03,z,scene,pt); } B(.1,.064,.03,mat(band,.6),x+.03,y+.032,z); };
+    const tin=(x,y,z,c)=>{ C(.04,.04,.1,mat(c,.4,{metalness:.4}),x,y+.05,z,scene,14,pt); };
+    const X=i=>x0+.12+i*.15;
+    // shelf 1 (floor): rice-flour noodles and bean thread in bundles, a bag of brown sugar
+    bundle(X(0),shelves[0],pc-.12,0xf2ead6,0xa8343a); bundle(X(0),shelves[0],pc+.14,0xe9e4d6,0x2f5f8a); B(.14,.2,.16,mat(0xa7703a,.9),X(2.4),shelves[0]+.1,pc,scene,pt);
+    // shelf 2: beans and grains
+    jar(X(0),shelves[1],pc-.17,0x7a2a24); jar(X(0),shelves[1],pc,0x4f7a3a); jar(X(0),shelves[1],pc+.17,0xd9b45a); jar(X(1.6),shelves[1],pc-.09,0xc89a68,.055,.16); jar(X(1.6),shelves[1],pc+.11,0x2c2a28,.055,.16,0x3a5a3a);
+    // shelf 3: shiitake, wood ear, goji, dried bean curd sticks
+    jar(X(0),shelves[2],pc-.16,0x6a4630,.06,.16); jar(X(0),shelves[2],pc+.04,0x1d1b1a,.06,.16); jar(X(1.5),shelves[2],pc-.12,0xb83224,.04,.11); for(let i=0;i<4;i++){ const s=B(.025,.025,.34,mat(0xe0b862,.7),X(1.7)+(i%2)*.03,shelves[2]+.02+Math.floor(i/2)*.026,pc+.13,scene,pt); }
+    // shelf 4: soy sauce, sesame oil, vinegar, salt and sugar tins, vegetarian floss
+    bottle(X(0),shelves[3],pc-.18,0x2a160c,0xe8d9b0); bottle(X(0),shelves[3],pc-.08,0x8a5a1a,0xb83224); bottle(X(.4),shelves[3],pc+.02,0x3a1a10,0xf0ece0);
+    tin(X(1.7),shelves[3],pc-.14,0xd9d3c4); tin(X(1.7),shelves[3],pc-.03,0xb83224); tin(X(1.7),shelves[3],pc+.09,0x2f5f8a); jar(X(1),shelves[3],pc+.18,0xc89a68,.045,.12,0xd9a43a);
+    // shelf 5: kelp and nori, a sack of flour
+    B(.2,.05,.14,mat(0x2a3a2a,.8),X(.3),shelves[4]+.025,pc-.1,scene,pt); B(.16,.02,.2,mat(0x15201a,.6),X(.3),shelves[4]+.06,pc-.1); B(.2,.18,.2,mat(0xe9e1cf,.95),X(1.3),shelves[4]+.09,pc+.08,scene,pt);
+    // the door, on a hinge at the front-wall end
+    const pv=new THREE.Group(); pv.position.set(x0-.005,0,zb-.004); scene.add(pv); const dw=pw-.008;
+    B(.02,2.16,dw,door,0,.1+1.08,-dw/2,pv,pt); B(.014,.5,.014,steel,-.025,1.15,-dw+.06,pv);
+    KPANTRY.pv=pv; MEAL_DYN.push(pv);
     OB(x0,xw,T2.z0,T2.z1); }
-  // the work table in the middle of the kitchen
-  { const tx=43.9, tz=1.0; B(.72,.05,1.4,wood,tx,.82,tz); for(const sx of [-1,1]) for(const sz of [-1,1]) B(.06,.8,.06,woodDk,tx+sx*.3,.4,tz+sz*.63); B(.6,.03,1.26,woodDk,tx,.18,tz);
-    B(.36,.025,.26,mat(0xd9c39c,.7),tx-.1,.857,tz-.3); B(.02,.005,.2,steel,tx-.1,.874,tz-.25); L([[0,0],[.13,0],[.16,.06],[.17,.08]],porcelain,tx+.08,.845,tz+.35);
-    OB(tx-.36,tx+.36,tz-.7,tz+.7); }
-  // the bowl cupboard against the front wall, the rice jar under the window
-  { const tag={type:'kcab'}, cx=42.85, w=1.4, d=.42, z=4.0-d/2; B(w,1.8,d,woodDk,cx,.9,z,scene,tag);
-    for(const s of [-1,1]){ B(w/2-.05,.66,.02,wood,cx+s*w/4,1.38,z-d/2-.005,scene,tag); B(w/2-.05,.62,.02,wood,cx+s*w/4,.42,z-d/2-.005,scene,tag); B(.014,.1,.014,brass,cx+s*.06,1.38,z-d/2-.03); B(.014,.1,.014,brass,cx+s*.06,.42,z-d/2-.03); }
-    B(w,.05,d+.03,woodDk,cx,1.825,z); OB(cx-w/2,cx+w/2,z-d/2,z+d/2);
+  // the work table in the middle, twice as long; a pot rack above it with the pans and baskets hanging on S-hooks
+  { const tx=43.6, tz=.95, TL=2.8; B(.72,.05,TL,wood,tx,.82,tz); for(const sx of [-1,1]) for(const sz of [-1,0,1]) B(.06,.8,.06,woodDk,tx+sx*.3,.4,tz+sz*(TL/2-.07)); B(.6,.03,TL-.14,woodDk,tx,.18,tz);
+    B(.36,.025,.26,mat(0xd9c39c,.7),tx-.1,.857,tz-.8); B(.02,.005,.2,steel,tx-.1,.874,tz-.75); L([[0,0],[.13,0],[.16,.06],[.17,.08]],porcelain,tx+.08,.845,tz-.2);
+    L([[0,0],[.15,0],[.19,.07],[.2,.09]],mat(0xb08a52,.7),tx,.845,tz+.7); for(let i=0;i<3;i++){ const v=new THREE.Mesh(new THREE.SphereGeometry(.04,10,8),mat([0x3c7a2a,0xd8452e,0xe8c24a][i],.6)); v.position.set(tx+(i-1)*.06,.89,tz+.7+(i%2)*.04); scene.add(v); }
+    OB(tx-.36,tx+.36,tz-TL/2,tz+TL/2);
+    const ry=2.12, rack=new THREE.Group(); scene.add(rack);
+    for(const dx of [-.18,.18]) B(.05,.05,2.3,woodDk,tx+dx,ry,tz,rack); for(const dz of [-1.1,1.1]) B(.42,.05,.05,woodDk,tx,ry,tz+dz,rack);
+    for(const dz of [-1.0,1.0]) for(const dx of [-.18,.18]){ C(.004,.004,1.6,iron,tx+dx,ry+.8,tz+dz,rack,4); }
+    const hook=(x,z)=>{ const h=new THREE.Mesh(new THREE.TorusGeometry(.018,.003,5,10),iron); h.position.set(x,ry-.045,z); rack.add(h); const h2=h.clone(); h2.position.y-=.03; rack.add(h2); return ry-.075; };
+    const pans=[
+      ['wok',-.18,-.85],['saucepan',-.18,-.35],['steamer',-.18,.15],['colander',-.18,.6],
+      ['fry',.18,-.75],['pot',.18,-.2],['sieve',.18,.35],['garlic',.18,.85]];
+    for(const [k,dx,dz] of pans){ const x=tx+dx, z=tz+dz, y=hook(x,z), g=new THREE.Group(); g.position.set(x,y,z); rack.add(g);
+      if(k==='wok'){ g.rotation.x=Math.PI/2.1; L([[0,0],[.12,.01],[.17,.05],[.18,.065]],mat(0x232120,.45,{metalness:.5,side:THREE.DoubleSide}),0,-.19,0,g); C(.012,.012,.16,woodDk,0,-.02,0,g,8); }
+      if(k==='fry'){ g.rotation.x=Math.PI/2.05; L([[0,0],[.11,0],[.12,.04]],mat(0x2b2b2b,.4,{metalness:.5,side:THREE.DoubleSide}),0,-.25,0,g); C(.012,.012,.18,mat(0x3a2418,.5),0,-.06,0,g,8); }
+      if(k==='saucepan'){ L([[0,0],[.08,0],[.085,.11]],mat(0xc9ccce,.25,{metalness:.8,side:THREE.DoubleSide}),0,-.22,0,g); const hd=B(.15,.012,.02,steel,.12,-.12,0,g); hd.rotation.z=.6; }
+      if(k==='pot'){ L([[0,0],[.1,0],[.105,.13]],mat(0xc9ccce,.25,{metalness:.8,side:THREE.DoubleSide}),0,-.2,0,g); for(const s of [-1,1]){ const e=new THREE.Mesh(new THREE.TorusGeometry(.022,.005,5,10,Math.PI),steel); e.position.set(s*.105,-.08,0); e.rotation.z=s*Math.PI/2; g.add(e); } }
+      if(k==='steamer'){ g.rotation.x=Math.PI/2; C(.13,.13,.08,bamboo,0,-.13,0,g,20); const b=new THREE.Mesh(new THREE.TorusGeometry(.13,.007,5,20),bambooDk); b.position.y=-.13; b.rotation.x=Math.PI/2; g.add(b); }
+      if(k==='colander'){ L([[0,0],[.1,.01],[.13,.07]],mat(0xd8cba0,.7,{side:THREE.DoubleSide}),0,-.2,0,g); C(.003,.003,.12,iron,0,-.07,0,g,4); }
+      if(k==='sieve'){ g.rotation.x=Math.PI/2; C(.16,.16,.025,bamboo,0,-.17,0,g,24); const f=new THREE.Mesh(new THREE.CircleGeometry(.15,20),mat(0xc9ae72,.8,{side:THREE.DoubleSide})); f.rotation.x=Math.PI/2; f.position.y=-.17; g.add(f); }
+      if(k==='garlic'){ C(.004,.004,.1,mat(0xd8c9a0,.8),0,-.05,0,g,4); for(let i=0;i<7;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),mat(i%2?0xece4d2:0xd9a0a8,.7)); s.position.set(Math.cos(i*1.7)*.03,-.1-i*.035,Math.sin(i*1.7)*.03); g.add(s); } } } }
+  // the food cupboard (菜櫥) against the front wall: textured glass above, slats over green screen, three drawers, sliding doors below
+  { const tag={type:'kcab'}, cx=42.62, W=.88, D=.44, H=1.55, zf=4.0-D, zc=4.0-D/2, oak=mat(0xffffff,.55,{map:T.cypress,color:0xc89a62}), oakDk=mat(0xffffff,.55,{map:T.cypress,color:0x9c7244});
+    for(const s of [-1,1]) for(const t of [-1,1]) B(.045,H,.045,oak,cx+s*(W/2-.022),H/2,zc+t*(D/2-.022),scene,tag);
+    B(W+.04,.035,D+.04,oak,cx,H+.017,zc,scene,tag); B(W,.02,D,oakDk,cx,1.12,zc); B(W,.02,D,oakDk,cx,.66,zc); B(W,.02,D,oakDk,cx,.52,zc); B(W,.02,D,oakDk,cx,.1,zc);
+    B(W-.04,H-.1,.01,oakDk,cx,H/2+.05,4.0-.006); for(const s of [-1,1]) B(.01,H-.1,D-.04,oakDk,cx+s*(W/2-.005),H/2+.05,zc);
+    // inside, behind the glass: stacked bowls and plates
+    for(let i=0;i<5;i++) L([[0,0],[.045,0],[.065,.035]],porcelain,cx-.22,1.14+i*.032,zc+.05,scene); for(let i=0;i<6;i++) C(.09,.08,.012,porcelain,cx+.15,1.14+i*.016,zc+.05,scene,20);
+    const gl=mat(0x9a9c94,.15,{transparent:true,opacity:.42,metalness:.2}); for(const s of [-1,1]){ B(W/2-.04,.3,.012,gl,cx+s*(W/4-.005),1.31,zf+(s<0?.01:.025),scene,tag); for(const y of [1.155,1.465]) B(W/2-.02,.025,.02,oak,cx+s*(W/4-.005),y,zf+(s<0?.01:.025)); for(const xx of [-1,1]) B(.025,.33,.02,oak,cx+s*(W/4-.005)+xx*(W/4-.015),1.31,zf+(s<0?.01:.025)); }
+    const green=mat(0x2c6a3e,.85); for(const s of [-1,1]){ const px=cx+s*(W/4-.005), zz=zf+(s<0?.01:.025); B(W/2-.04,.34,.006,green,px,.93,zz+.008,scene,tag); for(let i=0;i<7;i++) B(.014,.34,.014,oak,px-(W/2-.08)/2+i*(W/2-.08)/6,.93,zz-.004); B(W/2-.02,.11,.02,oakDk,px,.725,zz); B(W/2-.02,.025,.02,oak,px,1.11,zz); }
+    for(let i=0;i<3;i++){ const dx=cx-W/3+i*W/3; B(W/3-.03,.11,.02,oakDk,dx,.59,zf-.002,scene,tag); B(.06,.012,.012,brass,dx,.59,zf-.018); }
+    for(const s of [-1,1]) B(W/2-.04,.38,.02,oakDk,cx+s*(W/4-.005),.31,zf+(s<0?.0:.015),scene,tag);
+    OB(cx-W/2,cx+W/2,zf,4.0);
+    // the rice jar under the window, a red square with 滿 on it
     const rt={type:'krice'}; L([[0,0],[.2,0],[.27,.18],[.28,.42],[.24,.6]],clayDark,44.35,0,3.62,scene,rt); C(.26,.26,.035,wood,44.35,.615,3.62,scene,24,rt); C(.03,.03,.06,woodDk,44.35,.66,3.62,scene,10,rt);
-    const sc=C(.035,.035,.12,bamboo,44.47,.69,3.55,scene,10,rt); sc.rotation.z=Math.PI/2; OB(44.05,44.65,3.32,3.92); }
+    const sc=C(.035,.035,.12,bamboo,44.47,.69,3.55,scene,10,rt); sc.rotation.z=Math.PI/2;
+    const man=plane(.2,.2,mat(0xffffff,.85,{transparent:true,map:textCanvas(160,160,(g,w,h)=>{ g.clearRect(0,0,w,h); g.translate(w/2,h/2); g.rotate(Math.PI/4); g.fillStyle='#c0352c'; g.fillRect(-52,-52,104,104); g.rotate(-Math.PI/4); g.fillStyle='#1a1614'; g.font=F('700',60); g.textAlign='center'; g.textBaseline='middle'; g.fillText('滿',0,4); })}),44.35,.36,3.62-.287,Math.PI,scene,rt);
+    OB(44.05,44.65,3.32,3.92); }
   // the indigo curtain in the doorway to the 明間, split in two
   for(const s of [-1,1]){ const p=plane(.68,.82,indigo,41.86,2.02,-.3+s*.35,Math.PI/2); p.userData={type:'block'}; }
   C(.012,.012,1.5,woodDk,41.86,2.44,-.3).rotation.x=Math.PI/2;
@@ -5601,10 +5693,10 @@ const hhmm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%6
     const benches=[[0,-T0.bo,'x'],[0,T0.bo,'x'],[-T0.bo,0,'z'],[T0.bo,0,'z']];
     DINE.seats=[];
     for(const [dx,dz,al] of benches){ const bx=T0.x+dx, bz=T0.z+dz, lx=al==='x'?T0.bl:.28, lz=al==='x'?.28:T0.bl;
-      for(let s=-1;s<=1;s++){ const sx=al==='x'?bx+s*.5:bx, sz=al==='z'?bz+s*.5:bz, yaw=Math.atan2(-(T0.x-sx),-(T0.z-sz));
+      for(let s=-1;s<=1;s++){ const sx=al==='x'?bx+s*.55:bx, sz=al==='z'?bz+s*.55:bz, yaw=Math.atan2(-(T0.x-sx),-(T0.z-sz));
         const host=dz<0&&s===0, si=addSeat(sx,sz,yaw,'dine',host?NT('dine.host'):NT('dine.title'));
         // stepping in and out: from the open side, or for the back bench from the corner nearer the seat
-        SEATS[si].ap=dz<0?{x:T0.x+(s<=0?-1.32:1.32),z:-3.66}:{x:sx+Math.sign(dx)*.62,z:sz+Math.sign(dz)*.62};
+        SEATS[si].ap=dz<0?{x:T0.x+(s<=0?-1.5:1.5),z:-3.76}:{x:sx+Math.sign(dx)*.62,z:sz+Math.sign(dz)*.62};
         DINE.seats.push({si,host,x:sx,z:sz,yaw}); }
       const st={type:'seat',si:DINE.seats[DINE.seats.length-2].si};
       B(lx,.05,lz,wood,bx,T0.bh-.025,bz,scene,st);
@@ -5618,25 +5710,13 @@ const hhmm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%6
     const shade=L([[.05,.42],[.12,.4],[.26,.2],[.34,0]],mat(0xd9bf87,.8,{side:THREE.DoubleSide,emissive:0xffcf8a,emissiveIntensity:0}),T0.x,2.25,T0.z); DINE.shade=shade; MEAL_DYN.push(shade);
     const bulb=new THREE.Mesh(new THREE.SphereGeometry(.06,12,8),mat(0xfff3d8,.3,{emissive:0xffe2b0,emissiveIntensity:0})); bulb.position.set(T0.x,2.32,T0.z); scene.add(bulb); DINE.bulb=bulb; MEAL_DYN.push(bulb);
     const lamp=new THREE.PointLight(0xffd8a0,0,6,2); lamp.position.set(T0.x,2.15,T0.z); scene.add(lamp); DINE.lamp=lamp; }
-  // the painting on the back wall: cabbage and radish in ink (drawn here; 清白 — plain and clean)
-  { const tag={type:'dpaint'}, pw=.78, ph=1.38, py=2.15, wz=-3.99;
-    B(pw+.14,ph+.44,.008,mat(0xd9ccb0,.95),DINE.x,py+.05,wz+.004,scene,tag); B(pw+.05,ph+.05,.006,mat(0x5e6a5c,.9),DINE.x,py,wz+.01);
-    const pic=textCanvas(390,690,(g,w,h)=>{ g.fillStyle='#e8dcc0'; g.fillRect(0,0,w,h); let s=11; const r=()=>((s=s*16807%2147483647)/2147483647);
-      for(let i=0;i<2200;i++){ g.fillStyle=`rgba(120,100,70,${r()*.05})`; g.fillRect(r()*w,r()*h,2,2); }
-      // cabbage: pale ribs, ink-wash leaves
-      const cx=w*.47, cy=h*.66; g.lineCap='round';
-      for(let i=0;i<9;i++){ const a=-Math.PI/2+(i-4)*.21, L1=150+r()*40; g.fillStyle=`rgba(40,48,40,${.16+r()*.16})`; g.beginPath(); g.ellipse(cx+Math.cos(a)*L1*.55,cy+Math.sin(a)*L1*.55,48+r()*18,L1*.5,a+Math.PI/2,0,Math.PI*2); g.fill(); }
-      for(let i=0;i<5;i++){ const a=-Math.PI/2+(i-2)*.16; g.strokeStyle='rgba(250,248,238,.9)'; g.lineWidth=16-i; g.beginPath(); g.moveTo(cx,cy+60); g.quadraticCurveTo(cx+Math.cos(a)*60,cy+Math.sin(a)*90,cx+Math.cos(a)*150,cy+Math.sin(a)*190); g.stroke();
-        g.strokeStyle='rgba(60,60,52,.35)'; g.lineWidth=1.5; g.stroke(); }
-      for(let i=0;i<40;i++){ g.strokeStyle=`rgba(25,28,25,${.25+r()*.3})`; g.lineWidth=1+r()*1.5; const a=-Math.PI/2+(r()-.5)*1.7, d=60+r()*140; g.beginPath(); g.moveTo(cx+Math.cos(a)*d,cy+Math.sin(a)*d); g.lineTo(cx+Math.cos(a+.08)*(d+20),cy+Math.sin(a+.08)*(d+20)); g.stroke(); }
-      // two radishes lying in front
-      for(const [x,y,ang] of [[w*.3,h*.86,.25],[w*.62,h*.89,-.18]]){ g.save(); g.translate(x,y); g.rotate(ang); g.fillStyle='rgba(248,246,236,.95)'; g.strokeStyle='rgba(30,30,28,.75)'; g.lineWidth=2;
-        g.beginPath(); g.moveTo(-60,0); g.quadraticCurveTo(-30,-22,30,-14); g.quadraticCurveTo(70,-4,90,2); g.quadraticCurveTo(70,6,30,14); g.quadraticCurveTo(-30,22,-60,0); g.fill(); g.stroke();
-        g.fillStyle='rgba(30,50,30,.55)'; for(let k=0;k<4;k++){ g.beginPath(); g.ellipse(-70-k*6,-8+k*5,22,7,-.5+k*.3,0,Math.PI*2); g.fill(); } g.restore(); }
-      g.fillStyle='#2a2522'; g.font=F('400',30); vtext(g,'清白傳家',w*.85,h*.08,30,h*.5); g.font=F('400',18); vtext(g,'學鳩齋寫',w*.75,h*.1,18,h*.4);
-      g.fillStyle='#a8343a'; g.fillRect(w*.715,h*.28,18,18); });
-    plane(pw,ph,mat(0xffffff,.9,{map:pic}),DINE.x,py,wz+.016,0,scene,tag);
-    for(const dy of [ph/2+.24,-ph/2-.18]) C(.016,.016,pw+.22,woodDk,DINE.x,py+dy,wz+.03,scene,10).rotation.z=Math.PI/2; }
+  // 張熊《蔬果圖》(1870, National Palace Museum open data), framed behind the table: a pale silk mount in a dark wood frame
+  { const tag={type:'dpaint'}, pw=1.0, ph=pw*730/1024, py=1.98, wz=-3.99, mt=.1, fw=.045;
+    const tex=new THREE.TextureLoader().load('painting-zhangxiong-veg.jpg'); tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=MAXANI;
+    const Wm=pw+2*mt, Hm=ph+2*mt; B(Wm,Hm,.012,mat(0xd9d2bd,.9),DINE.x,py,wz+.008,scene,tag);
+    for(const [w,h,x,y] of [[Wm+2*fw,fw,0,Hm/2+fw/2],[Wm+2*fw,fw,0,-Hm/2-fw/2],[fw,Hm,Wm/2+fw/2,0],[fw,Hm,-Wm/2-fw/2,0]]) B(w,h,.04,lacquer,DINE.x+x,py+y,wz+.02,scene,tag);
+    B(pw+.012,ph+.012,.004,mat(0xb9ae94,.9),DINE.x,py,wz+.0145);
+    plane(pw,ph,mat(0xffffff,.88,{map:tex}),DINE.x,py,wz+.017,0,scene,tag); }
   // a low food cupboard and a tea cabinet under the two front windows
   { const tag={type:'dcup'};
     for(const [cx,kind] of [[37.35,'food'],[41.05,'tea']]){ const w=1.18, d=.42, h=.8, z=4.0-d/2; B(w,h,d,woodDk,cx,h/2,z,scene,tag); B(w+.04,.035,d+.04,wood,cx,h+.017,z,scene,tag);
@@ -5646,14 +5726,15 @@ const hhmm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(Math.round(m%6
       if(kind==='tea'){ C(.07,.07,.32,mat(0x6f8f88,.4),cx-.35,h+.19,z,scene,16,tag); C(.04,.04,.05,mat(0x6f8f88,.4),cx-.35,h+.37,z,scene,12); L([[0,0],[.08,0],[.1,.06],[.07,.12],[.03,.13]],mat(0x8a4b32,.35),cx-.02,h+.035,z,scene,tag);
         for(let i=0;i<4;i++) L([[0,0],[.025,0],[.035,.045]],porcelain,cx+.22+(i%2)*.09,h+.035,z-.06+Math.floor(i/2)*.1,scene); B(.36,.012,.24,wood,cx+.26,h+.036,z); }
       else { L([[0,0],[.09,0],[.11,.1],[.06,.12]],mat(0xb08a52,.6),cx-.25,h+.035,z,scene,tag); L([[0,0],[.06,0],[.08,.12],[.05,.15]],clayDark,cx+.2,h+.035,z,scene,tag); L([[0,0],[.05,0],[.07,.1],[.04,.12]],clay,cx+.36,h+.035,z,scene,tag); } } }
-  // the wash basin by the kitchen door: terrazzo stand, white bowl, brass tap; a mirror; folded towels on a shelf; a basket for used ones
+  // the wash basin by the kitchen door: terrazzo stand, white bowl, an old brass tap; folded towels on a shelf
   { const tag={type:'dbasin'}, xw=41.78, z=3.0, d=.46, x=xw-d/2;
     B(d,.78,.56,washStone,x,.39,z,scene,tag); B(d+.03,.06,.62,washStone,x-.015,.81,z,scene,tag);
     L([[0,-.1],[.1,-.1],[.17,-.03],[.19,0],[.2,.01]],porcelain,x-.02,.84,z,scene,tag);
-    const tp=C(.014,.014,.2,brass,xw-.07,.95,z,scene,10,tag); const sp=C(.012,.012,.14,brass,xw-.13,1.04,z,scene,10,tag); sp.rotation.z=Math.PI/2; C(.022,.022,.03,brass,xw-.07,1.06,z,scene,10);
-    B(.03,.46,.42,woodDk,xw-.015,1.5,z,scene,tag); plane(.38,.36,mat(0xc9d2d6,.05,{metalness:.9}),xw-.032,1.5,z,-Math.PI/2,scene,tag);
+    // an old brass bib tap from the wall: a round flange, the body, a cross handle on top, the spout bending down
+    { const fl=C(.035,.035,.012,brass,xw-.006,1.06,z,scene,16,tag); fl.rotation.z=Math.PI/2; const bd=C(.017,.02,.12,brass,xw-.07,1.06,z,scene,12,tag); bd.rotation.z=Math.PI/2;
+      C(.008,.008,.05,brass,xw-.085,1.1,z,scene,8,tag); for(let k=0;k<2;k++){ const arm=B(.08,.01,.01,brass,xw-.085,1.13,z,scene,tag); arm.rotation.y=k*Math.PI/2+.5; } const kb=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),brass); kb.position.set(xw-.085,1.135,z); scene.add(kb);
+      const sp=new THREE.Mesh(new THREE.TorusGeometry(.03,.01,8,12,Math.PI/2),brass); sp.position.set(xw-.13,1.03,z); sp.rotation.y=0; sp.rotation.z=Math.PI; scene.add(sp); C(.011,.009,.03,brass,xw-.16,1.0,z,scene,10,tag); }
     B(.2,.025,.36,woodDk,xw-.1,1.12,2.52,scene,tag); for(let i=0;i<5;i++){ B(.16,.022,.26,mat(0xf4f1ea,.95),xw-.1,1.145+i*.024,2.52,scene,tag); B(.161,.004,.262,mat(0x3b5b8a,.9),xw-.1,1.145+i*.024+.008,2.52); }
-    L([[0,0],[.13,0],[.16,.2]],bambooDk,xw-.16,0,2.5,scene,tag); B(.12,.03,.18,mat(0xf4f1ea,.95),xw-.17,.17,2.5);
     OB(xw-d,xw,z-.31,z+.31); OB(xw-.32,xw,2.32,2.68); }
   // the menu board by the kitchen door (today's three meals), the wall clock on the other partition
   { const tag={type:'dmenu'}; const c=document.createElement('canvas'); c.width=240; c.height=360; const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
@@ -5751,13 +5832,18 @@ const MEALRUN={t:1,id:'',called:'',bowl:'',chatAt:0,chatI:0};
 function mealTick(dt){ if(!window.__entered) return; const now=performance.now(), w=now/1000;
   // steam and smoke move every frame
   const M=MEALRUN.M; const cooking=M&&M.phase==='cook', noodle=cooking&&(M.k==='l'||M.k==='n'), fire=(cooking&&(M.k==='b'||M.k==='d'))||NS.cake.st===1||NS.cake.st===2;
-  if(NOODLE_STEAM.at) NOODLE_STEAM.s.forEach((s,i)=>{ const ph=(w*.45+i/6)%1, A=NOODLE_STEAM.at; s.position.set(A.x+Math.sin(i*2+w)*.06,A.y+ph*.8,A.z+(i%2?-.26:.26)+Math.cos(i*3)*.05); s.material.opacity=noodle?(1-ph)*.3:0; s.scale.setScalar(.2+ph*.4); });
-  DINE.smoke.forEach((s,i)=>{ const ph=(w*.18+i/8)%1; s.position.set(45.5+Math.sin(i*2.3+w*.3)*.2+ph*.5*WIND.speed*.08,6.85+ph*2.2,-3.79-ph*.4); s.material.opacity=fire?(1-ph)*.32:0; s.scale.setScalar(.35+ph*1.2); });
+  if(NOODLE_STEAM.at) NOODLE_STEAM.s.forEach((s,i)=>{ const ph=(w*.45+i/6)%1, A=NOODLE_STEAM.at; s.position.set(A.x+(i%2?-.1:.1)+Math.sin(i*2+w)*.04,A.y+ph*.8,A.z+((i%3)-1)*.43+Math.cos(i*3)*.04); s.material.opacity=noodle?(1-ph)*.3:0; s.scale.setScalar(.2+ph*.4); });
+  DINE.smoke.forEach((s,i)=>{ const ph=(w*.18+i/8)%1; s.position.set(46.25+Math.sin(i*2.3+w*.3)*.2+ph*.5*WIND.speed*.08,6.85+ph*2.2,-3.79-ph*.4); s.material.opacity=fire?(1-ph)*.32:0; s.scale.setScalar(.35+ph*1.2); });
   { const c=DINE.clock, T=taipeiNow(); const sw=Math.sin(w*Math.PI)*.18; c.pend.rotation.x=sw;
     const key=Math.floor(T.min)+''; if(c.last!==key){ c.last=key; const g=c.dc.getContext('2d'), R=80; g.fillStyle='#f3ecda'; g.fillRect(0,0,160,160); g.strokeStyle='#3a2a20'; g.lineWidth=4; g.beginPath(); g.arc(R,R,R-4,0,Math.PI*2); g.stroke();
       g.fillStyle='#2a221c'; g.font='600 16px serif'; g.textAlign='center'; g.textBaseline='middle'; for(let i=1;i<=12;i++){ const a=i/12*Math.PI*2-Math.PI/2; g.fillText(String(i),R+Math.cos(a)*(R-20),R+Math.sin(a)*(R-20)); }
       const hm=T.min%720, hand=(a,l,wd)=>{ g.lineWidth=wd; g.beginPath(); g.moveTo(R,R); g.lineTo(R+Math.cos(a-Math.PI/2)*l,R+Math.sin(a-Math.PI/2)*l); g.stroke(); };
       hand(hm/720*Math.PI*2,R*.5,5); hand((T.min%60)/60*Math.PI*2,R*.75,3); c.dt.needsUpdate=true; } }
+  // gas flames flicker, the tap runs, the pantry door swings; 火師 lights a ring when he stirs and runs the tap when he washes
+  const hu=NPC.huo, autoGas=hu.act==='stir', autoTap=hu.act==='wash';
+  KGAS.forEach((G,i)=>{ const on=G.on||(autoGas&&i===0); G.fl.visible=on; if(on) G.fl.children.forEach((c,k)=>{ c.scale.y=.8+Math.sin(w*23+k*1.7)*.25; }); });
+  { const on=KTAP.on||autoTap; KTAP.stream.visible=KTAP.splash.visible=on; if(on){ KTAP.splash.scale.setScalar(.8+Math.sin(w*30)*.2); KTAP.stream.scale.x=KTAP.stream.scale.z=.9+Math.sin(w*40)*.1; } }
+  if(KPANTRY.pv){ const want=KPANTRY.open?1.75:0; KPANTRY.pv.rotation.y+=(want-KPANTRY.pv.rotation.y)*Math.min(1,dt*6); }
   MEALRUN.t+=dt; if(MEALRUN.t<.5) return; MEALRUN.t=0;
   const S=mealState(); MEALRUN.M=S;
   // the table: dishes come in during the last ten minutes, stay through the meal; then the cover and the teapot
@@ -5783,6 +5869,9 @@ function mealTick(dt){ if(!window.__entered) return; const now=performance.now()
   if(S.phase==='eat'&&Math.hypot(ME.x-DINE.x,ME.z-DINE.z)<6&&now>MEALRUN.chatAt){ MEALRUN.chatAt=now+22000+Math.random()*12000; const ids=Object.keys(DINE_SEAT).filter(id=>NPC[id].seated);
     if(ids.length){ const id=ids[(MEALRUN.chatI++)%ids.length]; npcSay(id,npcLine('mchat.'+id)); } } }
 ZL_ANIM.push(dt=>mealTick(dt||.016));
+window.__kitchenAct=u=>{ if(u.type==='kgas'){ const G=KGAS[u.i||0]; G.on=!G.on; toast(G.on?'點火':'關火'); return true; }
+  if(u.type==='ktap'){ KTAP.on=!KTAP.on; toast(KTAP.on?'開水':'關水'); return true; }
+  if(u.type==='kpantry'){ KPANTRY.open=!KPANTRY.open; return true; } return false; };
 function dineText(){ const S=mealState(), T=S.T, nm=nextMeal(); let h=`<p style="line-height:2">${esc(NT('dine.intro'))}</p>`;
   h+=`<p style="line-height:2">${esc(S.phase&&S.phase!=='cook'&&S.phase!=='clear'?NT('dine.now').replace('{餐}',NT('meal.'+S.k)):NT('dine.next').replace('{餐}',NT('meal.'+nm.k)).replace('{時間}',hhmm(nm.at)))}</p>`;
   h+=`<p style="line-height:2"><b>${esc(NT('dine.today'))}</b></p>`+['b','l','d','n'].map(k=>`<p style="line-height:1.9;margin:.2em 0">${esc(NT('meal.'+k))}　${hhmm(MEALS.find(m=>m.k===k).at)}<br>${esc(menuOf(T.dow,k))}</p>`).join('');

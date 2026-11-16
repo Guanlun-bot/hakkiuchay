@@ -236,29 +236,11 @@ function tiledRoof(parent,width,halfDepth,eave,rise,tip){
     const inner = new THREE.Mesh(geometry,underside);
     inner.position.y=-.11;
     parent.add(inner);
-    const eaveLine=Array.from({length:65},(_,i)=>point(i/32-1,1,side));
-    if(mainRoof){
-      const fasciaPositions=[],fasciaIndices=[];
-      eaveLine.forEach((tile,i)=>{
-        fasciaPositions.push(tile.x,tile.y,tile.z,tile.x,tile.y-.20,tile.z);
-        const a=2*i;
-        if(i>0) fasciaIndices.push(a-2,a-1,a,a,a-1,a+1);
-      });
-      const fascia=new THREE.BufferGeometry();
-      fascia.setAttribute('position',new THREE.Float32BufferAttribute(fasciaPositions,3));
-      fascia.setIndex(fasciaIndices);
-      fascia.computeVertexNormals();
-      const fasciaMaterial=new THREE.MeshStandardMaterial({
-        color:0x553529,roughness:.9,side:THREE.DoubleSide
-      });
-      parent.add(new THREE.Mesh(fascia,fasciaMaterial));
-      edging(eaveLine.map(tile=>tile.clone().add(new THREE.Vector3(0,-.19,0))),.043,M.woodDark);
-    }
-    edging(eaveLine,mainRoof ? .105 : .085,ridgeClay);
     for(const end of [-1,1]){
       edging(Array.from({length:13},(_,j)=>point(end,j/12,side,.055)),.09,trim);
     }
   }
+  { const a=new THREE.Object3D(); a.userData.roofAnchor={width,halfDepth,eave,rise,tip}; parent.add(a); }   // eaves: see buildEaves()
   edging(Array.from({length:41},(_,i)=>point(i/20-1,0,1,.07)),.13,ridgeClay);
   edging(Array.from({length:41},(_,i)=>point(i/20-1,0,1,.18)),.043,trim);
   if(mainRoof){
@@ -291,7 +273,7 @@ box(16.6,2.78,0.3,mWhite(8,1.7),0,2.29,-4.15,mainHall,BLOCK);
 // Pale lime plaster over brick, with curved gables under the tile roof.
 for(const sx of [-1,1]){
   box(.3,.9,8.6,mBrick(8.6,.9),sx*8.15,.45,0,mainHall,BLOCK);
-  box(.3,2.78,8.6,mWhite(4.3,1.7),sx*8.15,2.29,0,mainHall,BLOCK);
+  box(.3,2.78,8.6,mBrick(6.7,2.9),sx*8.15,2.29,0,mainHall,BLOCK);   // brick, so the inside corners of the courts show no pale strip
   const gable=new THREE.Shape();
   gable.moveTo(-4.3,3.62);
   for(let step=0;step<=24;step++){
@@ -538,7 +520,7 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
     // 過水間 beside the 南廳
     sideRoom(s>0?'東過水':'西過水',7.636,11.964,za,zb,[['z',outerZ,7.636,11.964,true]],RISE*2.164/5.62);
     // close the slits where a long range's end wall stops short of the side hall's end wall
-    for(const x of [-7.5,7.5,12.1,27.1,31.7]) box(.28,3.92,.2,mWhite(.2,2),x,1.96,Z(4.394),scene,BLOCK);
+    for(const x of [-7.5,7.5,12.1,27.1,31.7]) box(.28,3.92,.2,mBrick(.2,3.92),x,1.96,Z(4.394),scene,BLOCK);
     // doors: 正廳 to 大房, 南廳 to 過水, 過水 to the 第二進 wing; 過廳 to 前過水, 前過水 to the 第一進 wing
     cutDoor(hallW,-10.87,Z(4.584)); cutDoor(hallE,9.8,Z(4.584)); cutDoor(firstWings[s>0?0:1],11.964,Z(.1)); cutDoor(gateHall,29.4,Z(4.584)); } }
 // 前庭 in front of the 第一進, closed by a low brick wall (矮牆) with an opening and two square posts, as in front of a 大厝
@@ -4687,6 +4669,64 @@ function canonical(m){ const live=[lampPaper,lanternSilk,...ZL_LIVE,...LAMPS.map
   let c=canonMats.get(sig); if(!c){ c=m; if(uv){ c=m.clone(); c.map=t.clone(); c.map.repeat.set(1,1); c.map.offset.set(0,0); c.map.rotation=0; c.map.updateMatrix(); } canonMats.set(sig,c); }
   return {m:c,uv}; }
 await __yield(0.86);
+/* ================= 屋簷：瓦當、滴水、椽頭、桁 =================
+   Every roof's eaves are finished here, after all the roofs stand: along each eave a row of round tile ends (瓦當)
+   with pointed drip tiles (滴水) between them over a thin clay edge; under the deep eaves of the long halls and wings
+   a row of round rafters (椽) runs out from the wall to the edge, carried near the edge by a purlin (桁). Where one
+   roof's eave runs on under a neighbour's roof (the inside corners of the courts) it stops, so the two roofs meet in a
+   valley instead of crossing. Built in world space, so the squeezed side halls keep round tiles. */
+function roofH(p,u,v){ const main=p.tip>.3; return p.eave+p.rise*(1-v)**1.26+p.tip*Math.abs(u)**8*(main?(1-v)**2:1-.78*v)+(main?.29*Math.abs(u)**10*v**3:0); }
+function buildEaves(){ scene.updateMatrixWorld(true);
+  const ROOFS=[]; scene.traverse(o=>{ const p=o.userData&&o.userData.roofAnchor; if(p) ROOFS.push({o,p,inv:o.matrixWorld.clone().invert()}); });
+  const tmp=new THREE.Vector3();
+  // is this world point tucked under another roof?
+  const under=(P,self)=>{ for(const R of ROOFS){ if(R===self) continue; tmp.copy(P).applyMatrix4(R.inv); const u=tmp.x/(R.p.width/2), v=Math.abs(tmp.z)/R.p.halfDepth; if(Math.abs(u)<=1&&v<=1&&tmp.y<roofH(R.p,u,v)-.03) return true; } return false; };
+  const clay=new THREE.MeshStandardMaterial({color:0x96523a,roughness:.8}), clayD=new THREE.MeshStandardMaterial({color:0x7c4330,roughness:.85}),
+    rafterM=new THREE.MeshStandardMaterial({color:0x4a3324,roughness:.75}), endM=new THREE.MeshStandardMaterial({color:0x2f2219,roughness:.8});
+  // shapes: a round tile end with a raised rim, a drip tile like an upturned leaf, a rafter (unit long, along +y)
+  const wdGeo=new THREE.CylinderGeometry(.068,.068,.035,16); wdGeo.rotateX(Math.PI/2);
+  const rimGeo=new THREE.TorusGeometry(.056,.008,6,16);
+  const dsShape=new THREE.Shape(); dsShape.moveTo(-.085,0); dsShape.quadraticCurveTo(-.08,-.07,0,-.12); dsShape.quadraticCurveTo(.08,-.07,.085,0); dsShape.closePath();
+  const dsGeo=new THREE.ExtrudeGeometry(dsShape,{depth:.018,bevelEnabled:false,curveSegments:6});
+  const rfGeo=new THREE.CylinderGeometry(.038,.038,1,8); rfGeo.translate(0,.5,0);
+  const capGeo=new THREE.CircleGeometry(.038,10);
+  const lists={wd:[],rim:[],ds:[],rf:[],cap:[]};
+  const runs=[], purlins=[];
+  const m4=new THREE.Matrix4(), q=new THREE.Quaternion(), sc=new THREE.Vector3(1,1,1), Z=new THREE.Vector3(0,0,1), Y=new THREE.Vector3(0,1,0);
+  for(const R of ROOFS){ const p=R.p, main=p.tip>.3, mw=R.o.matrixWorld;
+    const W2=p.width/2, hd=p.halfDepth, wallZ=main?4.3:hd;   // long ranges: walls at ±4.15 (+ half their thickness); side rooms: eaves flush
+    for(const side of [-1,1]){
+      const loc=(u,v,dy=0)=>new THREE.Vector3(u*W2,roofH(p,u,v)+dy,side*v*hd).applyMatrix4(mw);
+      const out=new THREE.Vector3(0,0,side).transformDirection(mw).setY(0).normalize();
+      // walk along the eave in world steps
+      const a=loc(-1,1), b=loc(1,1), len=a.distanceTo(b), N=Math.max(8,Math.round(len/.04));
+      let run=[], k=0, acc=0, prev=null;
+      const flush=()=>{ if(run.length>1) runs.push(run); run=[]; };
+      for(let i=0;i<=N;i++){ const u=-1+2*i/N, P=loc(u,1);
+        if(under(P,R)){ flush(); prev=null; continue; }
+        run.push(P);
+        if(prev) acc+=P.distanceTo(prev); prev=P;
+        if(i===0||acc>=.13){ acc=0; k++;
+          const t=loc(Math.min(1,u+.01),1).sub(loc(Math.max(-1,u-.01),1)).normalize();
+          const n=out.clone(); q.setFromRotationMatrix(m4.makeBasis(t,new THREE.Vector3().crossVectors(n,t).normalize(),n));
+          if(k%2){ m4.compose(P.clone().addScaledVector(n,.02).add(new THREE.Vector3(0,-.02,0)),q,sc); lists.wd.push(m4.clone()); m4.compose(P.clone().addScaledVector(n,.04).add(new THREE.Vector3(0,-.02,0)),q,sc); lists.rim.push(m4.clone()); }
+          else { m4.compose(P.clone().addScaledVector(n,.012).add(new THREE.Vector3(0,-.035,0)),q,sc); lists.ds.push(m4.clone()); }
+          // rafters under the deep eaves, every other tile
+          if(main&&k%2===1){ const w0=loc(u,wallZ/hd,-.15), w1=loc(u,1,-.15); const mid=w0.clone().lerp(w1,.5);
+            if(!under(mid,R)&&!under(w0,R)){ const d=w1.clone().sub(w0), L=d.length(); q.setFromUnitVectors(Y,d.normalize()); m4.compose(w0,q,new THREE.Vector3(1,L+.04,1)); lists.rf.push(m4.clone());
+              const qc=new THREE.Quaternion().setFromUnitVectors(Z,d); m4.compose(w1.clone().addScaledVector(d,.041),qc,sc); lists.cap.push(m4.clone()); } } } }
+      flush();
+      // the purlin near the edge, under the rafters (long ranges only)
+      if(main){ let pr=[]; for(let i=0;i<=N;i+=2){ const u=-1+2*i/N, P=loc(u,(hd-.3)/hd,-.22); if(under(loc(u,1),R)||under(P,R)){ if(pr.length>1) purlins.push(pr); pr=[]; } else pr.push(P); } if(pr.length>1) purlins.push(pr); }
+    } }
+  const inst=(geo,mat,arr)=>{ if(!arr.length) return; const im=new THREE.InstancedMesh(geo,mat,arr.length); arr.forEach((m,i)=>im.setMatrixAt(i,m)); im.castShadow=true; im.receiveShadow=true; im.instanceMatrix.needsUpdate=true; im.computeBoundingSphere(); scene.add(im); EAVE_PARTS.push(im); };
+  inst(wdGeo,clay,lists.wd); inst(rimGeo,clayD,lists.rim); inst(dsGeo,clay,lists.ds); inst(rfGeo,rafterM,lists.rf); inst(capGeo,endM,lists.cap);
+  // the thin clay edge along each visible run, and the purlins
+  for(const r of runs){ if(r.length<3) continue; const pts=r.filter((_,i)=>i%3===0||i===r.length-1); scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),Math.max(4,pts.length),.03,6,false),clayD)); }
+  for(const r of purlins){ if(r.length<3) continue; scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(r),Math.max(4,r.length),.055,8,false),rafterM)); } }
+const EAVE_PARTS=[];
+buildEaves();
+
 /* ================= 24、28 號房南牆：石框竹節窗 =================
    On the south end walls of the 第一進 wings, facing the 前庭: a stone window frame with scrolled head and sill and
    capped side posts, five bars turned like bamboo, in the same stone and dark wood as the other windows. The opening
@@ -5161,7 +5201,7 @@ function optimizeScene(){
   const dyn=new Set();
   const keep=o=>{ if(o) o.traverse(c=>dyn.add(c)); };
   for(const k in DOORS){ for(const l of DOORS[k].leaves) keep(l.pv); keep(DOORS[k].bar); }
-  [platter,cuckoo.g,PINE,myCup,mySnackMesh,hl,hlGlow,marker,floorShade,...LANTERNS,...GF_CUPS,...IRORI_CUPS,...PINZI,...ZL_DYN,...LEAVES.map(l=>l.m),...NPC_DYN].forEach(keep);
+  [platter,cuckoo.g,PINE,myCup,mySnackMesh,hl,hlGlow,marker,floorShade,...LANTERNS,...GF_CUPS,...IRORI_CUPS,...PINZI,...ZL_DYN,...LEAVES.map(l=>l.m),...NPC_DYN,...EAVE_PARTS].forEach(keep);
   const groups=new Map(), victims=[], pickId=new Map();
   scene.traverse(o=>{ if(!o.isMesh||o.isInstancedMesh||dyn.has(o)||!o.visible) return; let p=o.parent; while(p&&p!==scene){ if(!p.visible) return; p=p.parent; }
     if(Array.isArray(o.material)) return; const m=o.material, u=o.userData&&o.userData.type?o.userData:null;

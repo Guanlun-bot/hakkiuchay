@@ -24,6 +24,8 @@
 - 獺祭魚、禪修室是外部連結（`site.yml` 的 tajiyu_url、chanroom_url）：https://otterslibrary.pages.dev/、https://chanroom.pages.dev/
 - `_chanroom/`：禪修室的完整程式（底線開頭，Jekyll 不會把它放上學鳩齋）。正式網址仍是 https://chanroom.pages.dev/ （Cloudflare Pages 專案 chanroom）。改禪修室就改這裡，並把 `_chanroom/sw.js` 的 VERSION 數字加一，否則已安裝的使用者會一直看到舊版快取。改完由齋主在總控台「禪修室」按「發布最新版」，書庫電腦的 bridge.ps1 會下載 `_chanroom/` 用 wrangler 上傳。`config.js` 內是 Supabase 公開金鑰（anon key，本來就會出現在網頁上），可以留在儲存庫。
 
+- 線上書齋第一進東廂：南間是灶腳、明間是飯廳（`vr/vr-house.js` 的「灶腳與飯廳」段）。三餐依臺北時間（`_data/vr.yml` › npc 的 `meal.times`），菜單是 `menu.<星期1–7>.<b/l/d>`，點擊說明在 texts 的 k*/d*。測試時網址加 `?meal=<分鐘>` 可把時間往後推。
+
 - `vr/look.js`：線上書齋門口的扮相目錄（衣著、帽冠、面飾、隨身、髮型、氣質、顏色）與左側預覽圖；3D 人物在 `vr/vr-house.js` 的 `buildFigure()`。新增扮相要兩邊都加，名稱另加進 `_data/vr.yml` 的 `look`。門口按「進門」才開始載入 3D，載入小故事在 `_data/vr.yml` 的 `loading`；門口文字由 `vr/gate.json` 讀取。
 
 - `_vrserver/`：線上書齋的多人伺服器（Cloudflare Worker＋Durable Objects，專案名 hakkiuchay-vr），作用同 `server.py`：一房一台、位置與語音經伺服器轉送。放在 khoguanlun@gmail.com 的 Cloudflare 帳號（子網域 hakkiuchay.workers.dev），已連 GitHub：推上 main 後 Cloudflare 自動以 `_vrserver` 為根目錄重新發布。網址 wss://hakkiuchay-vr.hakkiuchay.workers.dev 填在 `vr/config.js` 的 `ws`；`ws` 空白時書齋改用 Supabase。

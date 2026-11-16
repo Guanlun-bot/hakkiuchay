@@ -248,7 +248,7 @@ content:
           - { name: a, label: 甲句, type: text }
           - { name: b, label: 乙句, type: text }
       - name: look
-        label: 門口的文字與扮相名稱（衣著、帽冠、面飾、隨身、髮型、氣質、顏色、按鈕；代號請不要改）
+        label: 門口與畫面四角的文字、扮相名稱（衣著、帽冠、面飾、隨身、髮型、氣質、顏色、按鈕；代號請不要改）
         type: object
         list: true
         fields:

@@ -724,7 +724,7 @@ function treeStep(dt,t){ const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
   const cr=PINE.userData.crown; if(cr){ cr.rotation.x=cap(TREE_SPR.b.x*1.4); cr.rotation.z=cap(TREE_SPR.b.z*1.4); } }
 function updateSky(){
   const [hour,minute]=taipeiClock.format(new Date()).split(':').map(Number);
-  const time=location.hash==='#night'?0:location.hash==='#day'?12:hour+minute/60;
+  const time=(typeof SKY_FORCE!=='undefined'&&SKY_FORCE)?(SKY_FORCE==='night'?0:12):location.hash==='#night'?0:location.hash==='#day'?12:hour+minute/60;
   const angle=(time-6)*Math.PI/12;
   const altitude=Math.sin(angle);
   const day=THREE.MathUtils.smoothstep(altitude,-.15,.23); SKY_DAY=day;
@@ -3428,10 +3428,24 @@ addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName=
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 addEventListener('blur',()=>{ keys.clear(); isRightMouseDown=false; });
 const aim=document.getElementById('aim');
-const utility=document.getElementById('utility');
-utility.addEventListener('toggle',()=>{if(utility.open&&document.pointerLockElement===canvas) document.exitPointerLock();});
-utility.querySelector('#bar').addEventListener('click',event=>{if(event.target.closest('button')) utility.open=false;});
-canvas.addEventListener('pointerdown',()=>{utility.open=false;});
+/* ---- the four-corner HUD: the almanac folds open for the lights and weather; on phones the actions fold into one button;
+   晝／夜: by default the colours follow the time of day in Taipei; pressing the button sets day or night (sky, lamps and
+   the HUD) for this visit only */
+var SKY_FORCE=null;
+{ const tl=$('#hud-tl'), bt=$('#brand .bt'), dn=$('#bDayNight'), acts=$('#bActs'), bar=$('#bar'), bl=$('#hud-bl');
+  bt.addEventListener('click',e=>{ if(e.target.closest('#bDayNight')) return; tl.classList.toggle('open'); if(document.pointerLockElement===canvas) document.exitPointerLock(); });
+  const T=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||({'hud.day':'晝','hud.night':'夜'})[k];
+  const apply=()=>{ const night=SKY_FORCE?SKY_FORCE==='night':SKY_DAY<.35; document.documentElement.dataset.hud=night?'night':'day'; dn.textContent=T(night?'hud.night':'hud.day'); dn.setAttribute('aria-pressed',SKY_FORCE?'true':'false'); };
+  dn.addEventListener('click',()=>{ const night=document.documentElement.dataset.hud==='night'; SKY_FORCE=night?'day':'night'; updateSky(); apply(); toast(T(SKY_FORCE==='night'?'hud.night':'hud.day')); });
+  window.__hudTheme=apply; setInterval(apply,5000); apply();
+  acts.addEventListener('click',()=>{ bar.classList.toggle('open'); acts.classList.toggle('on',bar.classList.contains('open')); });
+  bar.addEventListener('click',e=>{ if(e.target.closest('button')&&document.body.classList.contains('touch')){ bar.classList.remove('open'); acts.classList.remove('on'); } });
+  $('#pplHead').addEventListener('click',()=>bl.classList.toggle('fold'));
+  canvas.addEventListener('pointerdown',()=>{ tl.classList.remove('open'); });
+  // the chat lines sit just above the panel in the bottom-left corner
+  const ro=new ResizeObserver(()=>document.documentElement.style.setProperty('--blh',bl.offsetHeight+'px')); ro.observe(bl);
+  // the voice volume shows only once you have joined the voice
+  const mu=$('#voice-mute'); new MutationObserver(()=>bl.classList.toggle('voice',!mu.hidden)).observe(mu,{attributes:true,attributeFilter:['hidden']}); }
 
 const locked=()=>document.pointerLockElement===canvas;
 document.addEventListener('pointerlockchange',()=>{ drag=null; keys.clear(); aim.hidden=!locked(); });
@@ -4272,7 +4286,7 @@ async function connectRoom(){
     NET.st='單人模式';
     const vb=$('#voice-toggle'), vs=$('#voice-status'), vh=$('#voice-hud');
     if(vb){ vb.disabled=true; vb.textContent='加入語音 (M)'; }
-    if(vs) vs.textContent='單人模式';
+    if(vs) vs.textContent='';
     if(vh) vh.innerHTML='';
     renderPeople(); return;
   }
@@ -4298,10 +4312,10 @@ async function connectRoomOnce(){
 const NET={st:'',run:false,peers:null,errs:0};
 // chat: the last line each person said rides along in their shared state; new lines show in the log and over their head
 const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
-#chatlog{position:fixed;left:14px;bottom:66px;width:min(360px,70vw);display:flex;flex-direction:column;gap:4px;pointer-events:none;z-index:6;font:14px/1.5 "Noto Serif TC",serif}
+#chatlog{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 24px);width:min(360px,70vw);display:flex;flex-direction:column;gap:4px;pointer-events:none;z-index:6;font:14px/1.5 "Noto Serif TC",serif}
 #chatlog .m{background:rgba(241,239,232,.92);color:#3f3a39;border-left:3px solid #a8343a;padding:4px 8px;border-radius:2px;transition:opacity .8s}
 #chatlog .m b{font-weight:700;margin-right:.4em}
-#chatbox{position:fixed;left:14px;bottom:24px;width:min(360px,70vw);z-index:7;display:none}
+#chatbox{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);width:min(360px,70vw);z-index:7;display:none}
 #chatbox input{width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #b9b2a6;background:#f6f3ec;font:15px "Noto Serif TC",serif;color:#3f3a39;outline:none}
 #actbtns{position:fixed;right:12px;bottom:76px;display:flex;flex-direction:column;gap:8px;z-index:6}
 #actbtns button{width:52px;height:52px;border-radius:50%;border:1px solid #b9b2a6;background:rgba(241,239,232,.9);font:15px "Noto Serif TC",serif;color:#3f3a39}

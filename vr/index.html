@@ -84,39 +84,85 @@ button{font-family:var(--f);cursor:pointer}
 #planlabels .pl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;margin:-9px 0 0 -6px;background:rgba(241,239,232,.88);padding:1px 6px 1px 3px;border-radius:9px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 #planlabels .pl i{width:10px;height:10px;border-radius:50%;display:inline-block}
 #planlabels .pl.me{background:var(--ink);color:#f1efe8}
-/* hud */
-#hud{position:fixed;inset:0;pointer-events:none;z-index:10}
-#hud>*{pointer-events:auto}
-#brand{position:absolute;left:14px;top:12px;background:rgba(241,239,232,.92);padding:8px 14px 9px;border-left:3px solid var(--seal);box-shadow:0 2px 12px rgba(0,0,0,.25)}
-#brand .n{font-family:Reisho,var(--f);font-size:26px;line-height:1.1;color:var(--ink)}
-#lighting,#ctempRow{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:7px;pointer-events:auto}
-#lighting input,#ctempRow input{width:88px;accent-color:var(--seal)}
-#ctempRow input{accent-color:#8a7a5a;background:linear-gradient(90deg,#ffb46b,#fff4e6,#cfe0ff);border-radius:4px;height:6px;-webkit-appearance:none;appearance:none}
-#lighting output,#ctempRow output{min-width:3em;text-align:right}
-#brand .t{font-size:12px;color:var(--ink-soft);margin-top:3px;letter-spacing:.05em}
-#people{position:absolute;right:14px;top:12px;background:rgba(241,239,232,.92);padding:8px 12px;font-size:13px;min-width:150px;max-width:240px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
-#people .h{font-size:12px;color:var(--ink-soft);letter-spacing:.1em;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
+/* hud：四角散點。白晝宣紙、夜裡松煙墨；開啟中的按鈕用墨色反白（朱色只留標題細線） */
+:root{--hud-bg:rgba(244,241,234,.94);--hud-ink:#1f1d1a;--hud-soft:#5f5a52;--hud-rule:rgba(63,58,57,.22);--hud-on:#1f1d1a;--hud-on-ink:#f4f1ea;--hud-track:#d9d3c6;--hud-sh:0 4px 18px rgba(0,0,0,.22)}
+:root[data-hud="night"]{--hud-bg:rgba(24,23,21,.94);--hud-ink:#f0ece1;--hud-soft:#b5ae9f;--hud-rule:rgba(240,236,225,.22);--hud-on:#f0ece1;--hud-on-ink:#181715;--hud-track:#4a4640;--hud-sh:0 4px 18px rgba(0,0,0,.5)}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;font-family:var(--f)}
+#hud .hp{position:absolute;pointer-events:auto;background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#hud button{font-family:var(--f);cursor:pointer}
+#hud .tb{background:transparent;border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:13px;padding:5px 10px;border-radius:4px;letter-spacing:.06em;transition:background .2s,color .2s,border-color .2s}
+#hud .tb:hover{border-color:var(--hud-soft)}
+#hud .tb.on,#hud .tb[aria-pressed="true"]{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
+#hud .tb:disabled{opacity:.45;cursor:default}
+/* 左上：天時 */
+#hud-tl{left:14px;top:12px;padding:8px 12px 9px 14px;border-left:3px solid var(--seal);max-width:min(440px,calc(100vw - 210px))}
+#brand .bt{display:flex;align-items:center;gap:10px;cursor:pointer}
+#brand .n{font-family:Reisho,var(--f);font-size:25px;line-height:1.1}
+#brand .t{font-size:12px;color:var(--hud-soft);margin-top:3px;letter-spacing:.04em;line-height:1.6}
+#bDayNight{margin-left:auto;padding:2px 9px!important;font-size:13px!important}
+#envpanel{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--hud-rule)}
+#hud-tl.open #envpanel{display:block}
+#lighting,#ctempRow,#wxRow{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:6px}
+#lighting input,#ctempRow input{width:120px}
+#lighting output,#ctempRow output{min-width:3.2em;text-align:right;color:var(--hud-soft)}
+/* 自訂滑桿與下拉 */
+#hud input[type=range],#panel input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--hud-track);outline:none;margin:6px 0}
+#hud input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--hud-bg);border:1.5px solid var(--hud-ink);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+#hud input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--hud-bg);border:1.5px solid var(--hud-ink)}
+#ctempRow input[type=range]{background:linear-gradient(90deg,#f0b071,#f6eee0 55%,#dbe8e3)}
+#hud select{-webkit-appearance:none;appearance:none;font-family:var(--f);font-size:12.5px;color:var(--hud-ink);background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.3'/%3E%3C/svg%3E") no-repeat right 7px center;border:1px solid var(--hud-rule);border-radius:4px;padding:4px 24px 4px 8px;outline:none}
+#hud select:focus{border-color:var(--hud-soft)}
+#hud select option{color:#1f1d1a;background:#f4f1ea}
+/* 右上：小地圖（第二段） */
+#hud #hud-tr,#hud #hud-br{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+#hud-tr{right:14px;top:12px}
+/* 左下：在齋、語音、設定 */
+#hud-bl{left:14px;bottom:14px;padding:8px 12px;font-size:13px;width:min(300px,calc(100vw - 28px))}
+#people .h{font-size:12.5px;color:var(--hud-soft);letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+#pl{max-height:30vh;overflow:auto;margin-top:4px}
+#hud-bl.fold #pl{display:none}
 #people .p{display:flex;gap:6px;align-items:baseline;line-height:1.7}
 #people .dot{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
-#people .st{color:var(--ink-soft);font-size:12px;margin-left:auto;white-space:nowrap}
-#bar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:max-content;max-width:96vw}
-#bar button{background:rgba(241,239,232,.94);border:1px solid var(--rule);color:var(--ink);font-size:14px;padding:8px 14px;border-radius:2px;box-shadow:0 2px 10px rgba(0,0,0,.22);letter-spacing:.08em}
-#bar button:hover{background:#fff}
+#people .st{color:var(--hud-soft);font-size:12px;margin-left:auto;white-space:nowrap}
+#hud-bl .vrow{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+#voice-status{font-size:11.5px;color:var(--hud-soft)}
+.vctl{margin-top:6px;font-size:12px;display:flex;flex-direction:column;gap:4px}
+.vctl label{display:flex;align-items:center;gap:6px;color:var(--hud-soft)}
+.vctl input[type=range]{flex:1}
+#voicevol{display:none}
+#hud-bl.voice #voicevol{display:flex}
+#settings{margin-top:6px;border-top:1px solid var(--hud-rule);padding-top:4px}
+#settings summary{font-size:12px;color:var(--hud-soft);cursor:pointer;list-style:none}
+#settings summary::-webkit-details-marker{display:none}
+#settings summary::before{content:"▸ "}
+#settings[open] summary::before{content:"▾ "}
+/* 右下：動作列 */
+#hud-br{right:14px;bottom:14px;background:transparent;box-shadow:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:min(560px,calc(100vw - 340px))}
+#bar button{background:var(--hud-bg);border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:13.5px;padding:7px 12px;border-radius:4px;box-shadow:var(--hud-sh);letter-spacing:.06em;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .2s,color .2s}
+#bar button:hover{border-color:var(--hud-soft)}
+#bar button.on{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
 #bar button:disabled{opacity:.5;cursor:default}
-#planbar{position:absolute;right:14px;bottom:70px;display:flex;flex-direction:column;gap:6px}
-#planbar button{background:rgba(241,239,232,.94);border:1px solid var(--rule);color:var(--ink);font-size:14px;padding:7px 12px;border-radius:2px;box-shadow:0 2px 10px rgba(0,0,0,.22)}
-#hint{opacity:0;position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(30,26,23,.78);color:#efe8da;font-size:13px;padding:8px 14px;border-radius:2px;line-height:1.7;text-align:center;max-width:92vw;pointer-events:none;transition:opacity .8s}
-#drink{position:absolute;left:14px;bottom:14px;background:rgba(241,239,232,.94);padding:6px 10px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.22);display:flex;gap:8px;align-items:center}
-#drink button{font-size:12px;padding:3px 8px;border:1px solid var(--rule);background:#fff;border-radius:2px;color:var(--ink)}
+#bActs{display:none}
+body.touch #bActs{display:block;position:absolute;right:14px;top:12px;pointer-events:auto}
+body.touch #hud-br{top:52px;bottom:auto;right:14px}
+body.touch #bar{display:none;flex-direction:column;align-items:stretch;max-width:none}
+body.touch #bar.open{display:flex}
+#planbar{position:absolute;right:14px;bottom:70px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+#planbar button{background:var(--hud-bg);border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:14px;padding:7px 12px;border-radius:4px;box-shadow:var(--hud-sh)}
+#hint{opacity:0;position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(30,26,23,.78);color:#efe8da;font-size:13px;padding:8px 14px;border-radius:4px;line-height:1.7;text-align:center;max-width:92vw;pointer-events:none;transition:opacity .4s}
+#drink{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:var(--hud-bg);color:var(--hud-ink);padding:6px 10px;font-size:13px;box-shadow:var(--hud-sh);display:flex;gap:8px;align-items:center;border-radius:4px;pointer-events:auto}
+#drink button{font-size:12px;padding:3px 8px;border:1px solid var(--hud-rule);background:transparent;border-radius:4px;color:var(--hud-ink)}
 .menu li{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .vol{display:flex;align-items:center;gap:8px;font-size:13px;margin:10px 0}
-.vol input{flex:1;accent-color:var(--seal)}
-#timer{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(241,239,232,.95);padding:10px 16px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.25);border-top:3px solid var(--c-talks)}
-#timer .lab{font-size:12px;color:var(--ink-soft);letter-spacing:.2em}
+.vol input{flex:1;accent-color:var(--ink)}
+#timer{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--hud-bg);color:var(--hud-ink);padding:10px 16px;text-align:center;box-shadow:var(--hud-sh);border-top:3px solid var(--c-talks);border-radius:4px;pointer-events:auto}
+#timer .lab{font-size:12px;color:var(--hud-soft);letter-spacing:.2em}
 #timer .clk{font-size:34px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.04em;line-height:1.2}
 #timer .row{display:flex;gap:6px;margin-top:6px;justify-content:center}
-#timer button{font-size:13px;padding:5px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px}
+#timer button{font-size:13px;padding:5px 10px;border:1px solid var(--hud-rule);background:transparent;color:var(--hud-ink);border-radius:4px}
 #timer button.pri{background:var(--c-talks);color:#fff;border-color:var(--c-talks)}
+@media (max-width:640px){#brand .n{font-size:21px}#hud-tl{max-width:calc(100vw - 110px)}#hud-bl{width:min(240px,calc(100vw - 28px));font-size:12px}#hint{bottom:110px}}
 /* side panel */
 #panel{position:fixed;right:0;top:0;bottom:0;width:min(400px,100vw);background:var(--paper);z-index:20;box-shadow:-6px 0 24px rgba(0,0,0,.3);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .35s cubic-bezier(.22,.61,.36,1)}
 #panel.open{transform:none}
@@ -161,24 +207,13 @@ button{font-family:var(--f);cursor:pointer}
 #reader a{color:var(--c-academic)}
 @media (max-width:640px){#brand .n{font-size:21px}#people{font-size:12px;min-width:0;top:107px;right:auto;left:14px;padding:6px 10px}#people .st{margin-left:10px}#bar button{padding:8px 10px;font-size:13px}#hint{bottom:110px}}
 #aim{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);color:white;text-shadow:0 0 3px black;pointer-events:none;z-index:5;font:22px monospace}
-#hud #utility{position:fixed;top:12px;right:12px;z-index:8;pointer-events:auto;color:#332d26}
-#utility summary{cursor:pointer;background:#f1efe8;border:1px solid #a39a8f;padding:6px 12px;width:max-content;margin-left:auto}
-#utility-body{margin-top:8px;background:#f1efe8;padding:12px;width:min(290px,85vw);max-height:70vh;overflow:auto;border:1px solid #a39a8f}
-#utility #people,#utility #brand,#utility #bar{position:static;inset:auto;width:auto;max-width:none;margin:0 0 10px;transform:none}
-#utility #bar{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px}
-body:has(#utility[open]) #aim{visibility:hidden}
 #aim-action{position:absolute;top:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#29231ee8;padding:4px 8px;border-radius:3px;font:14px system-ui}
 /* voice hud & lobby room */
-#voice-hud{position:fixed;right:14px;top:54px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;pointer-events:none;z-index:9}
+#voice-hud{position:fixed;right:14px;top:190px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;pointer-events:none;z-index:9}
 .voice-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(27,23,20,.78);border:1px solid rgba(211,206,195,.35);color:#f1efe8;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.28);transition:all .15s ease}
 .voice-pill svg{width:13px;height:13px;flex-shrink:0;fill:rgba(241,239,232,.86)}
 .voice-pill.speaking{background:rgba(168,52,58,.92);border-color:#f0c265;color:#fff6dc;box-shadow:0 2px 10px rgba(0,0,0,.45)}
 .voice-pill.speaking svg{fill:#f0c265}
-.vctl{margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);font-size:12px;display:flex;flex-direction:column;gap:6px}
-.vctl label{display:flex;flex-direction:column;gap:3px;color:var(--ink-soft)}
-.vctl input[type=range]{width:100%;accent-color:var(--seal)}
-.vctl select{font-family:var(--f);font-size:12.5px;padding:4px 6px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px}
-.khint{font-size:11.5px;line-height:1.6;color:var(--ink-soft);background:rgba(255,255,255,.6);padding:6px 8px;border-radius:2px;margin-top:6px}
 </style>
 <link rel="stylesheet" href="./vr-fonts.css" media="print" onload="this.media='all'">
 </head>
@@ -220,7 +255,10 @@ body:has(#utility[open]) #aim{visibility:hidden}
   // texts the back office can change (_data/vr.yml › look); these are the defaults
   const UI={'ui.mode':'模式','ui.solo':'單人','ui.multi':'多人','ui.ctrl':'鼠標','ui.fps':'FPS','ui.hand':'手模式','ui.room':'房間','ui.copy':'複製邀請連結','ui.copied':'已複製連結',
     'ui.name':'名字','ui.namePh':'怎麼稱呼你','ui.nameNeed':'請先取個名字','ui.color':'衣色','ui.hair':'髮色','ui.random':'隨機扮相','ui.enter':'進門','ui.change':'換好了','ui.failed':'載入失敗，點此重新整理',
-    'ui.keys':'進門後｜WASD 移動｜Shift 跑｜空白鍵 跳｜Z 蹲｜V 第三人稱｜M 麥克風｜C 抽菸｜Enter 聊天'};
+    'ui.keys':'進門後｜WASD 移動｜Shift 跑｜空白鍵 跳｜Z 蹲｜V 第三人稱｜M 麥克風｜C 抽菸｜Enter 聊天',
+    'hud.day':'晝','hud.night':'夜','hud.light':'燈光','hud.ctemp':'色溫','hud.here':'在齋','hud.voice':'加入語音 (M)','hud.mute':'靜音','hud.vol':'語音音量','hud.settings':'設定','hud.audio':'音效',
+    'hud.audioOn':'全部音效（含腳步聲）','hud.audioAmb':'只留互動提示（無腳步聲）','hud.audioOff':'全部靜音','hud.mouse':'鼠標','hud.fps':'FPS（鎖定視角）','hud.hand':'手模式（自由拖曳）','hud.acts':'動作',
+    'hud.plan':'宅院平面','hud.books':'找書','hud.posts':'文章','hud.seat':'找位子','hud.name':'名字・裝扮','hud.smoke':'抽菸 (C)','hud.third':'第三人稱 (V)','hud.entry':'入口視角','hud.vr':'進入 VR'};
   for(const k of Object.keys(UI)) K.labels[k]=UI[k];
   let LOADING=['玉姨把門埕最後一撮落葉掃到牆邊','許總管翻開冊子，看今天有誰要來','阿春在備茶處燒水，擦乾茶盤','火師生起灶火，蒸籠冒出第一縷白煙','阿財把柴挑進灶腳，順手掩上後門','水生叔給含笑澆了水','書架上的書一本本歸位','壁燈點上了，請進'];
   const T=k=>K.labels[k]||k;
@@ -237,7 +275,7 @@ body:has(#utility[open]) #aim{visibility:hidden}
   function build(){ $('#gsel').innerHTML=SEL.map(k=>`<div class="gf"><span class="gl">${T('cat.'+k)}</span><select data-k="${k}">${K.CAT[k].groups.map((g,gi)=>{ const o=g.items.map(([id])=>`<option value="${id}">${T(k+'.'+id)}</option>`).join(''); return g.label?`<optgroup label="${T('grp.'+k+'.'+gi)}">${o}</optgroup>`:o; }).join('')}</select></div>`).join('');
     $('#gsw').innerHTML=K.COLORS.map(([c])=>`<button type="button" data-c="${c}" data-n="${T('color.'+c)}" style="background:${c}" aria-label="${T('color.'+c)}"></button>`).join('');
     $('#ghc').innerHTML=K.HAIR.map(([c])=>`<button type="button" data-c="${c}" data-n="${T('hair.'+c)}" style="background:${c}" aria-label="${T('hair.'+c)}"></button>`).join('');
-    document.querySelectorAll('#gate [data-t]').forEach(e=>{ e.textContent=T(e.dataset.t); });
+    document.querySelectorAll('[data-t]').forEach(e=>{ e.textContent=T(e.dataset.t); });
     inp.placeholder=T('ui.namePh');
     $('#gkeys').innerHTML=T('ui.keys').split('｜').map((p,i)=>i?`<span>${p.replace(/^(\S+)\s/,(m,k)=>`<kbd>${k}</kbd>`)}</span>`:`<span>${p}</span>`).join('');
     $('#gsel').onchange=e=>{ const s=e.target.closest('select'); if(!s) return; G.look[s.dataset.k]=s.value; sync(true); };
@@ -275,6 +313,7 @@ body:has(#utility[open]) #aim{visibility:hidden}
     for(let r=0;r*bh<H;r++){ const off=r%2?bw/2:0; for(let x=-off;x<W;x+=bw){ const h=8+R()*10|0, l=34+R()*10|0, s=48+R()*14|0; g.fillStyle=`hsl(${h} ${s}% ${l}%)`; g.fillRect(x+m/2,r*bh+m/2,bw-m,bh-m);
       for(let i=0;i<14;i++){ g.fillStyle=`rgba(${R()<.5?'40,12,6':'230,170,140'},${.06+R()*.1})`; g.fillRect(x+m/2+R()*(bw-m-4),r*bh+m/2+R()*(bh-m-2),2+R()*5,1+R()*2); } } }
     document.getElementById('gate').style.setProperty('--brick',`url(${c.toDataURL('image/jpeg',.82)})`); }
+  if(matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
   build(); if(!G.name) setTimeout(()=>inp.focus(),50);
   // the back office: renamed items, the loading story
   fetch('gate.json').then(r=>r.ok?r.json():null).then(j=>{ if(!j) return;
@@ -298,17 +337,30 @@ body:has(#utility[open]) #aim{visibility:hidden}
   <div id="drink" class="hide"><span id="dname"></span><button id="dsip">喝一口</button><button id="dfin">不喝了</button></div>
   <div id="hint"></div>
   <div id="voice-hud" aria-live="polite"></div>
-  <details id="utility"><summary>選單</summary><div id="utility-body"><div id="people"><div class="h"><span>在齋</span><span id="pc"></span></div><div id="pl"></div><button class="btn" id="voice-toggle" disabled>加入語音 (M)</button><button class="btn" id="voice-mute" hidden>靜音</button><div id="voice-status" role="status"></div><div class="vctl"><label>語音音量：<span id="voice-vol-val">100%</span><input id="voice-volume" type="range" min="0" max="3" step="0.1" value="1.0"></label><label>音效設定<select id="audio-mode"><option value="on">開啟全部音效（含腳步聲）</option><option value="ambient">僅保留互動與提示（關閉腳步聲）</option><option value="off">全部靜音</option></select></label><label>鼠標模式<select id="ctrl-mode"><option value="fps">FPS 模式（鎖定視角）</option><option value="hand">手模式（自由鼠標拖曳）</option></select></label></div></div><div id="brand"><div class="n">學鳩齋</div><div class="t" id="today"></div><label id="lighting">燈光 <input id="lightLevel" type="range" min="0" max="100" value="45"><output id="lightValue" for="lightLevel">45%</output></label><label id="ctempRow">色溫 <input id="ctemp" type="range" min="2200" max="6500" step="100" value="3000"><output id="ctempValue" for="ctemp">3000K</output></label></div><div id="bar">
-    <button id="bBooks">找書</button>
-    <button id="bPosts">文章</button>
-    <button id="bSeat">找位子</button>
-    <button id="bName">名字・裝扮</button>
-    <button id="bPlan">宅院平面</button>
-    <button id="bSmoke">抽菸</button>
-    <button id="bThird">第三人稱視角 (V)</button>
-    <button id="bEntry">入口視角</button>
-    <button id="bVR">進入 VR</button>
-  </div><div class="khint"><b>WASD</b> 移動 · <b>Shift</b> 奔跑 · <b>空白鍵</b> 跳躍 · <b>Z</b> 蹲下 · <b>V</b> 第三人稱視角 · <b>右鍵+滾輪</b> 放大 · <b>左鍵</b> 互動/揮拳 · <b>M</b> 麥克風 · <b>C</b> 抽菸 · <b>Enter</b> 聊天 · <b>Esc</b> 釋放滑鼠</div></div></details>
+  <div id="hud-tl" class="hp">
+    <div id="brand"><div class="bt"><span class="n">學鳩齋</span><button type="button" class="tb" id="bDayNight" aria-pressed="false" data-t="hud.day">晝</button></div><div class="t" id="today"></div></div>
+    <div id="envpanel"><label id="lighting"><span data-t="hud.light">燈光</span> <input id="lightLevel" type="range" min="0" max="100" value="45"><output id="lightValue" for="lightLevel">45%</output></label><label id="ctempRow"><span data-t="hud.ctemp">色溫</span> <input id="ctemp" type="range" min="2700" max="6500" step="100" value="4900"><output id="ctempValue" for="ctemp">4900K</output></label></div>
+  </div>
+  <div id="hud-tr" class="hp"></div>
+  <div id="hud-bl" class="hp">
+    <div id="people"><div class="h" id="pplHead"><span><span data-t="hud.here">在齋</span> <span id="pc"></span></span><span id="whereNow"></span></div><div id="pl"></div></div>
+    <div class="vrow"><button class="tb" id="voice-toggle" disabled data-t="hud.voice">加入語音 (M)</button><button class="tb" id="voice-mute" hidden data-t="hud.mute">靜音</button></div>
+    <div id="voice-status" role="status"></div>
+    <div class="vctl"><label id="voicevol"><span data-t="hud.vol">語音音量</span> <input id="voice-volume" type="range" min="0" max="2" step="0.05" value="1.0"><span id="voice-vol-val">100%</span></label></div>
+    <details id="settings"><summary data-t="hud.settings">設定</summary><div class="vctl"><label><span data-t="hud.audio">音效</span><select id="audio-mode"><option value="on" data-t="hud.audioOn">全部音效（含腳步聲）</option><option value="ambient" data-t="hud.audioAmb">只留互動提示（無腳步聲）</option><option value="off" data-t="hud.audioOff">全部靜音</option></select></label><label><span data-t="hud.mouse">鼠標</span><select id="ctrl-mode"><option value="fps" data-t="hud.fps">FPS（鎖定視角）</option><option value="hand" data-t="hud.hand">手模式（自由拖曳）</option></select></label></div></details>
+  </div>
+  <button type="button" class="tb hp" id="bActs" data-t="hud.acts">動作</button>
+  <div id="hud-br" class="hp"><div id="bar">
+    <button id="bPlan" data-t="hud.plan">宅院平面</button>
+    <button id="bBooks" data-t="hud.books">找書</button>
+    <button id="bPosts" data-t="hud.posts">文章</button>
+    <button id="bSeat" data-t="hud.seat">找位子</button>
+    <button id="bName" data-t="hud.name">名字・裝扮</button>
+    <button id="bSmoke" data-t="hud.smoke">抽菸 (C)</button>
+    <button id="bThird" data-t="hud.third">第三人稱 (V)</button>
+    <button id="bEntry" data-t="hud.entry">入口視角</button>
+    <button id="bVR" data-t="hud.vr">進入 VR</button>
+  </div></div>
   <div id="planbar" class="hide"><button id="pzIn">＋</button><button id="pzOut">－</button><button id="pTop">回到正上方</button><button id="pWalk">回到行走</button></div>
 </div>
 

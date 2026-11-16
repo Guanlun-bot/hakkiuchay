@@ -332,9 +332,9 @@ for(const side of [-1,1]){
   facadePanel(outerLeft,outerRight,3.26,facadeTop,entryWall,mBrick((outerRight-outerLeft)*.78,.45));   // brick right up to the eaves
 }
 facadePanel(-bayEdge,bayEdge,3.26,facadeTop,entryWall,mBrick(bayEdge*2*.78,.45));
-facadePanel(-1,1,2.66,3.26,entryWall,mBrick(1.56,.6));
-for(const x of [-1.08,1.08]) box(.19,2.69,.37,stone,x,1.345,entryWall,mainHall);
-box(2.35,.17,.38,stone,0,2.71,entryWall,mainHall);
+facadePanel(-1,1,2.86,3.26,entryWall,mBrick(1.56,.4));
+for(const x of [-1.08,1.08]) box(.19,2.89,.37,stone,x,1.445,entryWall,mainHall);
+box(2.35,.17,.38,stone,0,2.91,entryWall,mainHall);
 box(2.05,.3,.26,M.woodDark,0,.15,entryWall,mainHall);
 const porch=new THREE.Mesh(new THREE.PlaneGeometry(6.32,1.12),std(stonePaving,3,1));
 porch.rotation.x=-Math.PI/2;
@@ -404,10 +404,10 @@ function facadeAt(g,sg){ const z=sg*entryWall, gone=[];
   for(const side of [-1,1]){ const [oL,oR]=side<0?[-8.3,-bayEdge]:[bayEdge,8.3], [iL,iR]=side<0?[-bayEdge,-1]:[1,bayEdge];
     windowBay(iL,iR,side*2.02,1.50,z,1.0,2.33,g); windowBay(oL,oR,side*(6.35+8.12)/2,8.12-6.35,z,1.04,2.37,g);
     facadePanel(oL,oR,3.26,facadeTop,z,mBrick((oR-oL)*.78,.45),g); }
-  facadePanel(-bayEdge,bayEdge,3.26,facadeTop,z,mBrick(bayEdge*2*.78,.45),g); facadePanel(-1,1,2.66,3.26,z,mBrick(1.56,.6),g);
-  for(const x of [-1.08,1.08]) box(.19,2.69,.37,stone,x,1.345,z,g);
-  box(2.35,.17,.38,stone,0,2.71,z,g); box(2.05,.3,.26,M.woodDark,0,.15,z,g);
-  const pl=new THREE.Group(); pl.position.set(0,3.06,sg*4.36); if(sg<0) pl.rotation.y=Math.PI; g.add(pl);
+  facadePanel(-bayEdge,bayEdge,3.26,facadeTop,z,mBrick(bayEdge*2*.78,.45),g); facadePanel(-1,1,2.86,3.26,z,mBrick(1.56,.4),g);
+  for(const x of [-1.08,1.08]) box(.19,2.89,.37,stone,x,1.445,z,g);
+  box(2.35,.17,.38,stone,0,2.91,z,g); box(2.05,.3,.26,M.woodDark,0,.15,z,g);
+  const pl=new THREE.Group(); pl.position.set(0,3.34,sg*4.36); if(sg<0) pl.rotation.y=Math.PI; g.add(pl);
   box(1.5,.52,.05,M.woodDark,0,0,0,pl); box(1.36,.38,.02,new THREE.MeshStandardMaterial({color:0x2a201a,roughness:.6}),0,0,.03,pl);
   const porch=new THREE.Mesh(new THREE.PlaneGeometry(6.32,1.12),std(stonePaving,3,1)); porch.rotation.x=-Math.PI/2; porch.position.set(0,.018,sg*4.54); porch.userData={type:'floor'}; g.add(porch); pickables.push(porch); }
 facadeAt(axialHalls[1].hall,-1);   // 南廳, toward the 第二進
@@ -421,9 +421,9 @@ function widenHallDoor(g,z){ const D=HALL_DOOR, gone=[];
   for(const m of gone){ g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
   const w=1.2, c=(D+bayEdge)/2+.02;
   for(const side of [-1,1]) windowBay(side<0?-bayEdge:D,side<0?-D:bayEdge,side*c,w,z,1.0,2.33,g);
-  facadePanel(-D,D,2.66,3.26,z,mBrick(2*D*.78,.6),g);
-  for(const x of [-D-.08,D+.08]) box(.19,2.69,.37,stone,x,1.345,z,g);
-  box(2*D+.35,.17,.38,stone,0,2.71,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
+  facadePanel(-D,D,2.86,3.26,z,mBrick(2*D*.78,.4),g);
+  for(const x of [-D-.08,D+.08]) box(.19,2.89,.37,stone,x,1.445,z,g);
+  box(2*D+.35,.17,.38,stone,0,2.91,z,g); box(2*D+.05,.3,.26,M.woodDark,0,.15,z,g); }
 for(const {hall} of axialHalls) widenHallDoor(hall,entryWall);
 widenHallDoor(axialHalls[1].hall,-entryWall); widenHallDoor(gateHall,entryWall); widenHallDoor(gateHall,-entryWall);
 // Two-leaf board doors with a traditional sliding bar (門閂) on the inside. The leaves: dark cinnabar (暗硃砂) lacquer over
@@ -434,7 +434,7 @@ function buildDoors(g,key,hw=1){
   const pick={type:'door',key}, plank=DOOR_LEAF, iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});
   const leaves=[];
   for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*.985*hw,0,4.0); pv.scale.x=hw; g.add(pv);
-    const leaf=box(.97,2.58,.055,plank,-side*.485,1.35,0,pv,pick);
+    const leaf=box(.97,2.78,.055,plank,-side*.485,1.45,0,pv,pick);
     for(const y of [.55,1.3,2.05]) box(.9,.09,.03,M.woodDark,-side*.485,y,-.04,pv);               // battens inside
     for(const y of [1.17,1.33]) box(.06,.07,.06,M.woodDark,-side*.12,y-.08+.08,-.06,pv);          // bar brackets
     const ring=new THREE.Mesh(new THREE.TorusGeometry(.045,.008,8,20),iron); ring.position.set(-side*.86,1.25,.04); pv.add(ring);
@@ -475,13 +475,13 @@ function addDoor(key,x,z,rot,half,h,wallT,inside){
   DOOR_BLOCKS.push(alongZ?{key,x0:x-.15,x1:x+.15,z0:z-half,z1:z+half}:{key,x0:x-half,x1:x+half,z0:z-.15,z1:z+.15}); }
 { const A=courtAxis, P=Math.PI, inHall=(x0,x1)=>p=>p.x>x0&&p.x<x1&&Math.abs(p.z-A)<5.3;
   // hall doors (1.84 m)
-  addDoor('d11',13.95,A,P/2,.92,2.62,.3,inHall(5.65,13.95));
-  addDoor('d20',25.25,A,-P/2,.92,2.62,.3,inHall(25.25,33.55));
-  addDoor('d23',33.55,A,P/2,.92,2.62,.3,inHall(25.25,33.55));
+  addDoor('d11',13.95,A,P/2,.92,2.82,.3,inHall(5.65,13.95));
+  addDoor('d20',25.25,A,-P/2,.92,2.82,.3,inHall(25.25,33.55));
+  addDoor('d23',33.55,A,P/2,.92,2.82,.3,inHall(25.25,33.55));
   // wing doors of the 第二進 and 第一進 (the 明間 behind each)
   for(const [cx,w,e] of [[2*A,'d14','d17'],[4*A,'d26','d29']]){
-    addDoor(w,cx,2*A-4.15,P,.92,2.62,.3,p=>p.z>2*A-4.15&&Math.abs(p.x-cx)<2.65);
-    addDoor(e,cx,4.15,0,.92,2.62,.3,p=>p.z<4.15&&Math.abs(p.x-cx)<2.65); }
+    addDoor(w,cx,2*A-4.15,P,.92,2.82,.3,p=>p.z>2*A-4.15&&Math.abs(p.x-cx)<2.65);
+    addDoor(e,cx,4.15,0,.92,2.82,.3,p=>p.z<4.15&&Math.abs(p.x-cx)<2.65); }
 }
 for(const k in DOORS) doorPose(DOORS[k]);
 // Low stone edging and a grass surface that stays walkable.
@@ -505,7 +505,7 @@ const lawnTexture=ctex(512,512,(g,w,h)=>{
 // ---- 閩南合院 fill: 東大房、西大房 flank the 正廳 so the 正身 is one full row; 東、西過水間 flank the 南廳 between
 //      the two 進. With them the whole compound is one clean rectangle in plan. Left empty for now, with doors.
 // cut a doorway into one end wall of a cloned range; (wx,wz) is a point on that wall, in world space
-function cutDoor(g,wx,wz,width=1.3,height=2.55){ g.updateMatrixWorld(true); const L=g.worldToLocal(new THREE.Vector3(wx,0,wz)), side=Math.sign(L.x), mats=[];
+function cutDoor(g,wx,wz,width=1.3,height=2.75){ g.updateMatrixWorld(true); const L=g.worldToLocal(new THREE.Vector3(wx,0,wz)), side=Math.sign(L.x), mats=[];
   const gone=[]; g.children.forEach(m=>{ const p=m.geometry&&m.geometry.parameters; if(m.isMesh&&p&&Math.abs(p.depth-8.6)<.01&&Math.abs(p.width-.3)<.01&&Math.abs(m.position.x-side*8.15)<.05) gone.push(m); });
   let brick=null, white=null; for(const m of gone){ if(m.geometry.parameters.height<1) brick=m.material; else white=m.material; g.remove(m); const i=pickables.indexOf(m); if(i>=0) pickables.splice(i,1); }
   brick=brick||mBrick(4,.9); white=white||mWhite(2,1.7); const x=side*8.15, a=L.z-width/2, b=L.z+width/2;
@@ -1161,7 +1161,7 @@ function exteriorNameplate(){
       const gold=g.createLinearGradient(0,y-fs/2,0,y+fs/2); gold.addColorStop(0,'#e6c98e'); gold.addColorStop(1,'#b38a4f');
       g.fillStyle=gold; g.fillText(ch,x,y); });
   });
-  plaqueMesh(texture,1.76,.51,0,2.98,4.35,0,mainHall,{type:'about'});
+  plaqueMesh(texture,1.76,.51,0,3.34,4.35,0,mainHall,{type:'about'});
 }
 function inkLandscape(g,w,h){
   const R=rnd(1372);
@@ -1225,7 +1225,7 @@ function buildPlaques(){
   const sign=(name,parent,z,y)=>plaqueMesh(
     plaque(name,1.8,.40,{font:'serif',bg:'#432d24',fg:'#eed5a6',size:.64,frame:'#9b7046'}),
     1.8,.40,0,y,z,0,parent,name==='知了間'?{type:'zhiliao'}:null);
-  sign('知了間',oppositeWing,4.35,2.98);
+  sign('知了間',oppositeWing,4.35,3.34);
   // 正廳 plaque: 龍江衍派 in the calligraphy the owner chose (vr/plaque-longjiang.png, read right to left), in the manner of
   // Kinmen and Taiwan hall plaques: gilt characters on a deep maroon lacquer board, framed by a band of small glazed
   // tiles (cream and grey, a red-brown tile every few). The hall is squeezed sideways, so the plaque is scaled back.
@@ -1248,7 +1248,7 @@ function buildPlaques(){
       const sh=document.createElement('canvas'); sh.width=off.width; sh.height=off.height; const so=sh.getContext('2d'); so.drawImage(img,0,0,iw,ih); so.globalCompositeOperation='source-in'; so.fillStyle='rgba(20,4,2,.75)'; so.fillRect(0,0,iw,ih);
       g.drawImage(sh,x+3,y+4); g.drawImage(off,x,y); tex.needsUpdate=true; };
     img.src='plaque-longjiang.png';
-    const m=plaqueMesh(tex,W,H,0,3.04,4.35,0,hall); m.scale.x=1/(hall.scale.x||1); }   // 後大廳 has no plaque
+    const m=plaqueMesh(tex,W,H,0,3.34,4.35,0,hall); m.scale.x=1/(hall.scale.x||1); }   // 後大廳 has no plaque
 plaqueMesh(plaque('獺祭魚書庫',1.6,0.4,{font:'Reisho',bg:'#efe6cf',fg:'#a8343a',size:.62,frame:'#5a3a26'}),1.6,0.4,-7.95*roomWidthScale,3.4,-0.4,Math.PI/2,scene,{type:'case',ci:0});
 }
 
@@ -1797,7 +1797,7 @@ function ruochen(parent,x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z)
 const ZL_ANIM=[];   // per-frame updates of small living things (frogs in the tank)
 // the roof underside of the hall, so partitions close against it
 const roofUnder=zl=>3.70+RISE*Math.pow(1-Math.min(1,Math.abs(zl)/5.62),1.26)-.16;
-const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.3}, win:{z:21.95,y:1.55,r:.5} };
+const ZR={ wallX:2.65, wallT:.14, brickH:.9, door:{z0:19.1,z1:20.7,h:2.5}, win:{z:21.95,y:1.55,r:.5} };
 // PP: the parent to build into (a wing group for the other halls); PB: records a wall as an obstacle
 let PP=scene, PB=(x0,x1,z0,z1)=>OB(x0,x1,z0,z1);
 function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1,ZP.back]];

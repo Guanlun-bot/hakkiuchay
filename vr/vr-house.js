@@ -799,6 +799,10 @@ const LAMP_BRONZE=new THREE.MeshStandardMaterial({color:0x5b4a34,metalness:.65,r
   LAMP_GLASS=new THREE.MeshStandardMaterial({color:0xe9dcc0,transparent:true,opacity:.45,roughness:.08,metalness:.1,emissive:0xffb05a,emissiveIntensity:0,side:THREE.DoubleSide,depthWrite:false}),
   LAMP_FLAME=new THREE.MeshStandardMaterial({color:0xd8a060,emissive:0xffa040,emissiveIntensity:0,roughness:.5});
 // every lamp has the same light as those at 學鳩齋; the house's light pool (see optimizeScene) lights the nearest few
+const LAMP_GLOW_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d'), gr=g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(255,190,110,1)'); gr.addColorStop(.35,'rgba(255,170,90,.45)'); gr.addColorStop(1,'rgba(255,150,70,0)'); g.fillStyle=gr; g.fillRect(0,0,128,128); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; })();
+const LAMP_HALO_GEO=new THREE.PlaneGeometry(1.5,1.5), LAMP_POOL_GEO=new THREE.PlaneGeometry(3.2,2.4);
+const LAMP_HALO_MAT=new THREE.MeshBasicMaterial({map:LAMP_GLOW_TEX,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+const LAMP_POOL_MAT=new THREE.MeshBasicMaterial({map:LAMP_GLOW_TEX,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
 function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=Math.atan2(nx,nz); scene.add(g); LANTERNS.push(g);
   const B=LAMP_BRONZE, lathe=(pts,m,seg=24)=>{ const k=new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r,h])=>new THREE.Vector2(r,h)),seg),m); k.castShadow=true; g.add(k); return k; };
   // back plate with a shell top, and the scrolled arm reaching out and up to the lamp
@@ -816,7 +820,10 @@ function wallLamp(x,y,z,nx,nz,lit){ const g=new THREE.Group(); g.position.set(x,
   for(let i=0;i<12;i++){ const a=i*Math.PI/6, sc=new THREE.Mesh(new THREE.SphereGeometry(.02,8,6,0,Math.PI*2,0,Math.PI/2),B); sc.rotation.x=Math.PI; sc.position.set(Math.sin(a)*.13,.275,Math.cos(a)*.13); L.add(sc); }
   put(lathe([[0,.37],[.055,.37],[.06,.39],[.04,.42],[.025,.43],[0,.43]],B,16));
   const fin=new THREE.Mesh(new THREE.ConeGeometry(.015,.06,10),B); fin.position.y=.47; L.add(fin); const kn=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),B); kn.position.y=.44; L.add(kn);
-  const P=new THREE.PointLight(0xffb066,0,6,2); P.position.set(0,.14,.05); L.add(P); LANTERN_LIGHTS.push(P);
+  // its light, painted rather than computed so every lamp in the house is equally bright wherever you stand:
+  // a warm halo on the wall round it and a soft pool on the ground below
+  const halo=new THREE.Mesh(LAMP_HALO_GEO,LAMP_HALO_MAT); halo.position.set(0,-.05,.02); halo.renderOrder=2; g.add(halo);
+  const pool=new THREE.Mesh(LAMP_POOL_GEO,LAMP_POOL_MAT); pool.rotation.x=-Math.PI/2; pool.position.set(x+nx*1.1,.025,z+nz*1.1); pool.rotation.z=Math.atan2(nx,nz); pool.renderOrder=2; scene.add(pool); LANTERNS.push(pool);
   return g; }
 // for one building: a lamp over each of the two windows beside the door, on the face at local z = sg·4.30
 function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
@@ -830,7 +837,7 @@ function doorLamps(g,cx,sg,lit,y=2.8){ g.updateMatrixWorld(true);
   doorLamps(axialHalls[0].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,1,false); doorLamps(axialHalls[1].hall,hc,-1,false);
   doorLamps(gateHall,hc,1,false); doorLamps(gateHall,hc,-1,false); }
 function lanternStep(dt,t){ const k=SKY_DAY<.35?1:SKY_DAY<.6?(.6-SKY_DAY)/.25:0;
-  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
+  LANTERN_RED.emissiveIntensity=.95*k; LANTERN_RIB.emissiveIntensity=.7*k; LAMP_GLASS.emissiveIntensity=.9*k; LAMP_GLASS.opacity=.45+.35*k; LAMP_FLAME.emissiveIntensity=2.2*k; LAMP_HALO_MAT.opacity=.55*k; LAMP_POOL_MAT.opacity=.42*k; LAMP_HALO_MAT.visible=LAMP_POOL_MAT.visible=k>0; for(const L of LANTERN_LIGHTS) L.intensity=1.8*k;
   const dx=Math.cos(WIND.dir), dz=Math.sin(WIND.dir);
   for(const l of LANTERN_SIM){ const v=windAt(t,l.ph), th=Math.min(.5,.009*v*v), g=9.8/l.len, wob=1+.25*Math.sin(t*2.6+l.ph*2);
     // the angle the wind would hold it at, about each axis: wind toward +x swings it about −z, toward +z about +x
@@ -3496,18 +3503,18 @@ const aim=document.getElementById('aim');
    晝／夜: by default the colours follow the time of day in Taipei; pressing the button sets day or night (sky, lamps and
    the HUD) for this visit only */
 var SKY_FORCE=null;
-{ const tl=$('#hud-tl'), bt=$('#brand .bt'), dn=$('#bDayNight'), acts=$('#bActs'), bar=$('#bar'), bl=$('#hud-bl');
-  bt.addEventListener('click',e=>{ if(e.target.closest('#bDayNight')) return; tl.classList.toggle('open'); if(document.pointerLockElement===canvas) document.exitPointerLock(); });
+{ const ut=$('#utility'), dn=$('#bDayNight'), bl=$('#hud-bl');
   const T=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||({'hud.day':'晝','hud.night':'夜'})[k];
   const apply=()=>{ const night=SKY_FORCE?SKY_FORCE==='night':SKY_DAY<.35; document.documentElement.dataset.hud=night?'night':'day'; dn.textContent=T(night?'hud.night':'hud.day'); dn.setAttribute('aria-pressed',SKY_FORCE?'true':'false'); };
   dn.addEventListener('click',()=>{ const night=document.documentElement.dataset.hud==='night'; SKY_FORCE=night?'day':'night'; updateSky(); apply(); toast(T(SKY_FORCE==='night'?'hud.night':'hud.day')); });
   window.__hudTheme=apply; setInterval(apply,5000); apply();
-  acts.addEventListener('click',()=>{ bar.classList.toggle('open'); acts.classList.toggle('on',bar.classList.contains('open')); });
-  bar.addEventListener('click',e=>{ if(e.target.closest('button')&&document.body.classList.contains('touch')){ bar.classList.remove('open'); acts.classList.remove('on'); } });
-  $('#pplHead').addEventListener('click',()=>bl.classList.toggle('fold'));
-  canvas.addEventListener('pointerdown',()=>{ tl.classList.remove('open'); });
-  // the chat lines sit just above the panel in the bottom-left corner
-  const ro=new ResizeObserver(()=>document.documentElement.style.setProperty('--blh',bl.offsetHeight+'px')); ro.observe(bl);
+  // the dashboard: Tab opens and closes it (Esc closes); a click in the scene closes it
+  ut.addEventListener('toggle',()=>{ if(ut.open&&document.pointerLockElement===canvas) document.exitPointerLock(); });
+  addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+    if(e.key==='Tab'){ e.preventDefault(); ut.open=!ut.open; } else if(e.key==='Escape'&&ut.open) ut.open=false; });
+  $('#bar').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!['bSmoke','bEmote'].includes(b.id)) ut.open=false; });
+  canvas.addEventListener('pointerdown',()=>{ ut.open=false; });
+  document.documentElement.style.setProperty('--blh','0px');
   // the voice volume shows only once you have joined the voice
   const mu=$('#voice-mute'); new MutationObserver(()=>bl.classList.toggle('voice',!mu.hidden)).observe(mu,{attributes:true,attributeFilter:['hidden']}); }
 
@@ -4377,7 +4384,7 @@ const NET={st:'',run:false,peers:null,errs:0};
 // chat: the last line each person said rides along in their shared state; new lines show in the log and over their head
 const HUD_TXT={'chat.all':'全齋','chat.jin':'同進','chat.ph':'說點什麼，Enter 送出，Esc 取消','chat.btn':'聊天 (Enter)',
   'place.xjz':'學鳩齋','place.zlj':'知了間','place.zt':'正廳','place.j3':'第三進','place.nt':'南廳','place.j2':'第二進','place.gt':'過廳','place.j1':'第一進','place.qt':'前庭',
-  'help.btn':'? 操作說明 (H)','help.title':'操作說明','help.keys':'WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動',
+  'help.btn':'? 操作說明 (H)','help.title':'操作說明','help.keys':'Tab 選單｜WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動',
   'smoke.cig':'紙菸','smoke.pipe':'菸斗','smoke.cigar':'雪茄','smoke.longpipe':'旱菸桿','emote.btn':'微動作 (G)','emote.bow':'作揖','emote.behind':'負手','emote.think':'沉思','emote.clap':'撫掌','map.title':'宅院平面・點一下就過去','map.close':'關閉','map.tea':'茶席','map.books':'書櫃','hud.join':'進來了','hud.leave':'離開了'};
 const HT=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||HUD_TXT[k]||'';
 const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
@@ -4445,7 +4452,7 @@ const helpUI=(()=>{ const css=document.createElement('style'); css.textContent=`
 #helpbox dl{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:0}
 #helpbox dt{white-space:nowrap}#helpbox dt kbd{font:12.5px "Noto Serif TC",serif;border:1px solid var(--hud-rule);border-bottom-width:2px;border-radius:3px;padding:0 6px}
 #helpbox dd{margin:0;color:var(--hud-soft)}
-#hud-tr .mm{position:relative;width:160px;height:160px;border-radius:50%;overflow:hidden;background:var(--hud-bg);box-shadow:var(--hud-sh);cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#hud-tr .mm{position:relative;width:160px;height:160px;overflow:hidden;background:var(--hud-bg);box-shadow:var(--hud-sh);cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 #hud-tr .mm canvas{width:100%;height:100%;display:block}
 #hud-tr .mtools{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 #hud-tr.mmoff .mm{display:none}
@@ -4454,7 +4461,7 @@ const helpUI=(()=>{ const css=document.createElement('style'); css.textContent=`
 #bigmap .w{background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);padding:12px;font:13px "Noto Serif TC",serif}
 #bigmap .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;letter-spacing:.08em}
 #bigmap canvas{display:block;cursor:crosshair;max-width:92vw;max-height:80vh}
-body.touch #hud-tr{top:52px}`; document.head.appendChild(css);
+`; document.head.appendChild(css);
   const box=document.createElement('div'); box.id='helpbox'; document.body.appendChild(box);
   const render=()=>{ box.innerHTML=`<div class="w"><h3>${esc(HT('help.title'))}</h3><dl>${HT('help.keys').split('｜').map(p=>{ const m=p.match(/^(.+?)\s+(\S.*)$/)||[p,p,'']; return `<dt><kbd>${esc(m[1])}</kbd></dt><dd>${esc(m[2])}</dd>`; }).join('')}</dl></div>`; };
   box.onclick=()=>box.classList.remove('on');
@@ -4483,22 +4490,43 @@ function drawPlan(g,W,H,{cx,cz,scale,round=false,labels=false}){ const S=scale, 
   const px=X(ME.z), py=Y(ME.x), fx=Math.cos(ME.yaw), fy=-Math.sin(ME.yaw);   // forward (−sin yaw, −cos yaw) in (x,z) lands on screen as (cos yaw, −sin yaw)
   const ang=Math.atan2(fy,fx); g.fillStyle=night?'rgba(240,236,225,.22)':'rgba(31,29,26,.18)'; g.beginPath(); g.moveTo(px,py); g.arc(px,py,labels?40:26,ang-.55,ang+.55); g.closePath(); g.fill();
   g.fillStyle=ink; g.beginPath(); g.arc(px,py,labels?5:4,0,Math.PI*2); g.fill(); }
-const mapUI=(()=>{ const tr=$('#hud-tr'); tr.innerHTML='<div class="mm"><canvas width="320" height="320"></canvas></div>'; const mm=tr.querySelector('.mm'), c=mm.querySelector('canvas'), g=c.getContext('2d');
+// the small map: the house's own plan view (roofs cut away, as in 宅院平面) seen from straight above, a rectangle that
+// follows you, north up; drawn into a texture a few times a second and copied to a little canvas with the people on top.
+// Click it for the whole compound, click there to go.
+const mapUI=(()=>{ const tr=$('#hud-tr'), W=264, H=176, DPR=2; tr.innerHTML=`<canvas width="${W*DPR}" height="${H*DPR}" style="width:${W}px;height:${H}px;display:block"></canvas>`; const c=tr.querySelector('canvas'), g=c.getContext('2d');
   if(LS.get('hk-map')==='off') tr.classList.add('mmoff');
   const big=document.createElement('div'); big.id='bigmap'; big.innerHTML=`<div class="w"><div class="hd"><span>${esc(HT('map.title'))}</span><button class="tb">${esc(HT('map.close'))}</button></div><canvas></canvas></div>`; document.body.appendChild(big);
   const bc=big.querySelector('canvas'), bg=bc.getContext('2d');
-  // the whole compound fits: 68.5 m north–south, 29 m east–west
-  const fit=()=>{ const s=Math.min(innerWidth*.9/29,innerHeight*.75/68.5); bc.width=Math.round(29*s*1.4); bc.height=Math.round(68.5*s); return s; };
-  let bs=fit(); const bcx=19.6, bcz=9.8;
+  const cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,120); cam.up.set(-1,0,0);
+  const RT={}; const rt=(w,h)=>{ const k=w+'x'+h; if(!RT[k]) RT[k]={t:(()=>{ const r=new THREE.WebGLRenderTarget(w,h); r.texture.colorSpace=THREE.SRGBColorSpace; return r; })(),buf:new Uint8Array(w*h*4),img:new ImageData(w,h)}; return RT[k]; };
+  // render the plan around (cx,cz), spanZ metres across (east–west) and spanX down (north–south), into a 2D context
+  function shoot(ctx,w,h,cx,cz,spanZ,spanX){ if(renderer.xr.isPresenting) return false; const R=rt(w,h);
+    cam.left=-spanZ/2; cam.right=spanZ/2; cam.top=spanX/2; cam.bottom=-spanX/2; cam.position.set(cx,60,cz); cam.lookAt(cx,0,cz); cam.updateProjectionMatrix();
+    const clip=renderer.clippingPlanes, fog=scene.fog, fi=planFill.intensity; renderer.clippingPlanes=planClip; scene.fog=null; planFill.intensity=1.1;
+    const prev=renderer.getRenderTarget(); renderer.setRenderTarget(R.t); renderer.render(scene,cam); renderer.setRenderTarget(prev);
+    renderer.clippingPlanes=clip; scene.fog=fog; planFill.intensity=fi;
+    renderer.readRenderTargetPixels(R.t,0,0,w,h,R.buf); const d=R.img.data, row=w*4; for(let y=0;y<h;y++) d.set(R.buf.subarray((h-1-y)*row,(h-y)*row),y*row);
+    ctx.putImageData(R.img,0,0); return true; }
+  // people over the picture: everyone as a dot in their colour, you as a dot with the way you face
+  function marks(ctx,w,h,cx,cz,spanZ,spanX,big){ const X=z=>w/2-(z-cz)/spanZ*w, Y=x=>h/2+(x-cx)/spanX*h, r=big?6:5*DPR/2;
+    if(big){ ctx.font='600 15px "Noto Serif TC",serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for(const [k,x,z] of HPLAN.labels){ ctx.lineWidth=4; ctx.strokeStyle='rgba(244,241,234,.9)'; ctx.strokeText(HT(k),X(z),Y(x)); ctx.fillStyle='#1f1d1a'; ctx.fillText(HT(k),X(z),Y(x)); } }
+    for(const [,o] of others){ const p=o.av.g.position; ctx.fillStyle=/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'; ctx.beginPath(); ctx.arc(X(p.z),Y(p.x),r,0,Math.PI*2); ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='#fff'; ctx.stroke(); }
+    const px=X(ME.z), py=Y(ME.x), a=Math.atan2(-Math.sin(ME.yaw),Math.cos(ME.yaw));
+    ctx.fillStyle='rgba(168,52,58,.28)'; ctx.beginPath(); ctx.moveTo(px,py); ctx.arc(px,py,r*7,a-.55,a+.55); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#a8343a'; ctx.beginPath(); ctx.arc(px,py,r*1.15,0,Math.PI*2); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
+  const SPZ=36, SPX=24;   // the small map covers 36 m east–west, 24 m north–south
+  const FULL={cx:19.6,cz:9.8,spanZ:34,spanX:72};
+  let bw=0, bh=0; const fit=()=>{ const k=Math.min(innerWidth*.9/FULL.spanZ,(innerHeight*.8-40)/FULL.spanX); bw=Math.round(FULL.spanZ*k); bh=Math.round(FULL.spanX*k); bc.width=bw; bc.height=bh; };
   big.querySelector('button').onclick=()=>big.classList.remove('on'); big.onclick=e=>{ if(e.target===big) big.classList.remove('on'); };
-  bc.onclick=e=>{ const r=bc.getBoundingClientRect(), sx=(e.clientX-r.left)*bc.width/r.width, sy=(e.clientY-r.top)*bc.height/r.height;
-    const x=bcx+(sy-bc.height/2)/bs, z=bcz-(sx-bc.width/2)/bs; teleport(x,z); big.classList.remove('on'); };
-  mm.onclick=()=>{ bs=fit(); big.classList.add('on'); if(document.pointerLockElement===canvas) document.exitPointerLock(); };
-  // to a walkable spot at or near where you pointed
+  bc.onclick=e=>{ const r=bc.getBoundingClientRect(), sx=(e.clientX-r.left)/r.width, sy=(e.clientY-r.top)/r.height;
+    teleport(FULL.cx+(sy-.5)*FULL.spanX, FULL.cz-(sx-.5)*FULL.spanZ); big.classList.remove('on'); };
+  tr.onclick=()=>{ fit(); big.classList.add('on'); bigAt=0; if(document.pointerLockElement===canvas) document.exitPointerLock(); };
   function teleport(x,z){ if(ME.seat>=0) standUp(); let best=null; for(let r=0;r<3&&!best;r+=.25) for(let a=0;a<Math.PI*2;a+=Math.PI/8){ const px=x+Math.cos(a)*r, pz=z+Math.sin(a)*r; if(walkable(px,pz)){ best={x:px,z:pz}; break; } }
     if(!best){ toast('那裡走不進去'); return; } ME.x=best.x; ME.z=best.z; ME.path=[]; ME.targetYaw=null; if(VIEW.mode!=='walk') setView('walk'); pushPresence(true); }
-  let t=0; function tick(dt){ t+=dt; if(t<.1) return; t=0; if(!tr.classList.contains('mmoff')) drawPlan(g,320,320,{cx:ME.x,cz:ME.z,scale:4.2});
-    if(big.classList.contains('on')) drawPlan(bg,bc.width,bc.height,{cx:bcx,cz:bcz,scale:bs,labels:true}); }
+  let t=1, bigAt=0, bigImg=null;
+  function tick(dt){ if(!window.__entered) return; t+=dt; bigAt-=dt;
+    if(!tr.classList.contains('mmoff')&&t>.35){ t=0; if(shoot(g,W*DPR,H*DPR,ME.x,ME.z,SPZ,SPX)) marks(g,W*DPR,H*DPR,ME.x,ME.z,SPZ,SPX,false); }
+    if(big.classList.contains('on')&&bigAt<=0){ bigAt=1.2; if(shoot(bg,bw,bh,FULL.cx,FULL.cz,FULL.spanZ,FULL.spanX)) marks(bg,bw,bh,FULL.cx,FULL.cz,FULL.spanZ,FULL.spanX,true); } }
   function toggle(){ tr.classList.toggle('mmoff'); LS.set('hk-map',tr.classList.contains('mmoff')?'off':'on'); }
   return {tick,toggle,teleport}; })();
 ZL_ANIM.push(dt=>mapUI.tick(dt||.016));

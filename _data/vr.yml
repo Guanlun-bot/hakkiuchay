@@ -841,7 +841,7 @@ look:
   - key: "help.title"
     label: "操作說明"
   - key: "help.keys"
-    label: "WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動"
+    label: "Tab 選單｜WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動"
   - key: "map.title"
     label: "宅院平面・點一下就過去"
   - key: "map.close"
@@ -872,6 +872,8 @@ look:
     label: "沉思"
   - key: "emote.clap"
     label: "撫掌"
+  - key: "hud.menu"
+    label: "選單"
 loading:
   - line: "玉姨把門埕最後一撮落葉掃到牆邊"
   - line: "許總管翻開冊子，看今天有誰要來"

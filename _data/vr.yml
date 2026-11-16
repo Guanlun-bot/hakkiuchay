@@ -142,15 +142,18 @@ texts:
   - key: dbasin
     title: 洗手台
     body: "洗石子的洗手台，白瓷盆、老式黃銅龍頭。飯前洗手，毛巾摺好疊在旁邊的層板上。"
-  - key: dclock
-    title: 掛鐘
-    body: "老式掛鐘，走的是臺北時間。"
+  - key: dcal
+    title: 日曆
+    body: "撕一頁過一天的老日曆，走臺北時間：國曆、農曆、星期，每天自動翻頁。"
   - key: dcup
     title: 菜櫥與茶水櫃
     body: "左邊是紗門菜櫥，收剩菜和醬菜；右邊是茶水櫃，熱水瓶、茶壺和杯子，飯後喝茶。"
   - key: kwood
     title: 柴
     body: "劈好的乾柴堆在水缸旁，起灶火時伸手就拿得到。"
+  - key: kwine
+    title: 米酒與醋
+    body: "菜櫥旁的三罈：兩罈米酒、一罈醋，罈口包著布、用紅繩紮緊。素菜的三杯、紅燒都靠它。"
 teas:
   - name: 凍頂烏龍
     note: 南投鹿谷・中焙火・熟果蜜香
@@ -692,6 +695,14 @@ npc:
     when: "吃飯時的閒聊：火師"
     a: "明天的菜我想換個做法，大家吃吃看。"
     b: "鍋裡還有，誰要再添？"
+  - key: cal.head
+    when: "日曆上方紅板的字"
+    a: "學鳩齋"
+    b: ""
+  - key: cal.foot
+    when: "日曆下方紅框的兩行字（甲、乙）"
+    a: "學鳩齋"
+    b: "hakkiuchay.space"
 look:
   - key: "cat.o"
     label: "衣著"

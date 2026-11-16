@@ -1405,11 +1405,12 @@ const SEAT_KIND={
   taishi:{eye:1.18,pitch:-.08,front:true, sink:-.38,label:'小坐',hello:'在太師椅坐下。',status:()=>'在明間坐著'},
   luohan:{eye:1.12,pitch:-.1, front:true, sink:-.42,label:'小憩',hello:'在羅漢床上坐下。牆上的月琴和殼仔弦可以點來調弦。',status:()=>'在羅漢床上'},
   modern:{eye:1.15,pitch:-.3, front:false,sink:-.42,label:'品茗',hello:'在當代茶席坐下。點提梁壺或紫砂壺，點爐泡一壺茶。',status:()=>'在當代茶席'+teaStatus('modern')},
+  wc:    {eye:1.1, pitch:-.05,front:true, sink:-.42,label:'如廁',hello:'坐下了，門已關上。',status:()=>'在廁所'},
   dine:  {eye:1.12,pitch:-.3, front:true, sink:-.42,label:'用餐',hello:'在飯桌坐下。',status:()=>'在明間吃飯'},
   qin:   {eye:1.12,pitch:-.05,front:false,sink:-.42,label:'調弦',hello:'在琴凳坐下。點牆上的月琴或殼仔弦，撥弦調音。',status:()=>'在調月琴'},
 };
 function deskNo(i){ let n=0; for(let k=0;k<=i;k++) if(SEATS[k].kind==='desk'&&!SEATS[k].name) n++; return n; }
-function seatLabel(i){ const s=SEATS[i]; if(s.name) return s.name; return s.kind==='desk'?'第'+cnNum(deskNo(i))+'席':({lounge:'閱讀角',bench:'講堂長凳',zen:'禪堂蒲團',tea:'知了間',yard:'大樹跤石椅',irori:'囲炉裏',gongfu:'茶席',qin:'琴凳',modern:'當代茶席',luohan:'羅漢床',taishi:'太師椅',dine:'飯桌'})[s.kind]; }
+function seatLabel(i){ const s=SEATS[i]; if(s.name) return s.name; return s.kind==='desk'?'第'+cnNum(deskNo(i))+'席':({lounge:'閱讀角',bench:'講堂長凳',zen:'禪堂蒲團',tea:'知了間',yard:'大樹跤石椅',irori:'囲炉裏',gongfu:'茶席',qin:'琴凳',modern:'當代茶席',luohan:'羅漢床',taishi:'太師椅',dine:'飯桌',wc:'馬桶'})[s.kind]; }
 // stand up / sit down on the side you can reach: behind a desk chair, in front of a sofa or cushion
 // where a seated figure goes: its seat, moved forward 12 cm (6 on low seats) along the way it faces, and lifted 3 cm
 function seatPlace(s){ const k=SEAT_KIND[s.kind]||{}, low=(k.sink??-.42)<=-.6, f=k.fz??(low?.06:.12); return {x:s.x-Math.sin(s.yaw)*f, z:s.z-Math.cos(s.yaw)*f, y:(k.sink??-.42)+(k.lift??(low?.02:.03)), yaw:s.yaw, low, sink:(k.sink??-.42)+(k.lift??(low?.02:.03))}; }
@@ -3442,7 +3443,7 @@ function walkable(x,z){
   let inSide=false; for(const r of SIDE_ROOMS) if(x>r.x0+.32&&x<r.x1-.32&&z>r.z0+.32&&z<r.z1-.32){ inSide=true; break; }
   const zz=z<courtAxis?z:2*courtAxis-z;   /* fold the west half onto the east: the rooms and doors are mirrored */
   const inSideDoor=(Math.abs(x+10.87)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-9.8)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-29.4)<.5&&zz>3.9&&zz<5.4);
-  const inDine=x>36.85&&x<41.55&&z>-3.86&&z<-3.0;   /* 明間: the strip behind the dining table's back bench */
+  const inDine=(x>36.85&&x<41.55&&z>-3.86&&z<-3.0)||(x>36.7&&x<41.7&&z>20.98&&z<23.42);   /* 明間 dining strip; the toilets in the west 明間 */   /* 明間: the strip behind the dining table's back bench */
   if(!(inRoom||inYard||inDoor||inMatchingRoom||inFirst||inBackDoor||inFirstWing||inFirstDoor||inSide||inSideDoor||inGateHall||inGateDoor||inFore||inDine)) return false;
   if(zlBlocked(x,z)) return false;
   for(const o of OBST) if(x>o.x0-0.22&&x<o.x1+0.22&&z>o.z0-0.22&&z<o.z1+0.22) return false;
@@ -3582,7 +3583,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide']);
+const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3594,7 +3595,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'hou': showText(`${HOU.term}・${HOU.hou}`,`<p style="font-size:22px;letter-spacing:.2em;margin:6px 0 14px">${esc(HOU.yu)}</p><p class="meta">七十二候，五日一候。今天是${esc(HOU.term)}${esc(HOU.hou)}。書齋的時節依臺北時間更新；天色也跟著日出日落（06:00～18:00 為白天）。</p>`); break;
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
-  case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': if(window.__kitchenAct) window.__kitchenAct(u); break;
+  case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
@@ -5490,7 +5491,7 @@ const MEAL_TXT={
   'menu.n':['素陽春麵加蛋，配兩碟小菜','麵線，配兩碟小菜'],
   'wc.f':['女',''],'wc.m':['男',''],
   'act.fire':['生火','熄火'],'act.gas':['點火','關火'],'act.tap':['開水','關水'],'act.noodle':['煮麵爐加熱','煮麵爐關掉'],'act.basin':['開水','關水'],
-  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],
+  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
   'cal.head':['學鳩齋',''],'cal.foot':['學鳩齋','hakkiuchay.space'],
   'dine.title':['飯桌',''],'dine.intro':['圓桌配四條長凳，一條坐三人。開飯時空位都可以坐，按 E 或點長凳入座。',''],
   'dine.next':['下一餐：{餐}　{時間}',''],'dine.now':['正在吃{餐}',''],'dine.today':['今日菜單',''],
@@ -5834,10 +5835,11 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     tiles.map.wrapS=tiles.map.wrapT=THREE.RepeatWrapping; tiles.map.repeat.set((nx1-nx0)/1.2,(zb-zw)/1.2); tiles.metalness=.05;
     const fl=plane(nx1-nx0,zb-zw-.07,tiles,cx,.008,(zw+.07+zb)/2,0); fl.rotation.x=-Math.PI/2; fl.userData={type:'floor'};
     B(nx1-nx0,.04,zb-zw-.07,mat(0xf6f3ec,.95),cx,CY+.02,(zw+.07+zb)/2);
+    const ledgeGlow=mat(0xfff2dc,.6,{emissive:0xffd9a8,emissiveIntensity:1.0});
     // a wall face in cream with the lower part standing proud to make a ledge at 1.1 m; n points into the room
     const face=(ax,at,a,b,n,ledge=true)=>{ const L0=b-a, m=(a+b)/2; if(L0<.02) return;
-      if(ax==='x'){ B(.04,CY,L0,cream,at+n*.02,CY/2,m); if(ledge){ B(LP,LH,L0,cream,at+n*(.04+LP/2),LH/2,m); B(LP+.006,.012,L0,mat(0xf4ede1,.7),at+n*(.04+LP/2),LH+.006,m); } }
-      else { B(L0,CY,.04,cream,m,CY/2,at+n*.02); if(ledge){ B(L0,LH,LP,cream,m,LH/2,at+n*(.04+LP/2)); B(L0,.012,LP+.006,mat(0xf4ede1,.7),m,LH+.006,at+n*(.04+LP/2)); } } };
+      if(ax==='x'){ B(.04,CY,L0,cream,at+n*.02,CY/2,m); if(ledge){ B(LP,LH,L0,cream,at+n*(.04+LP/2),LH/2,m); B(LP+.03,.014,L0,mat(0xf4ede1,.7),at+n*(.04+LP/2+.015),LH+.007,m); B(.006,.008,L0-.04,ledgeGlow,at+n*(.04+LP+.024),LH-.006,m); } }
+      else { B(L0,CY,.04,cream,m,CY/2,at+n*.02); if(ledge){ B(L0,LH,LP,cream,m,LH/2,at+n*(.04+LP/2)); B(L0,.014,LP+.03,mat(0xf4ede1,.7),m,LH+.007,at+n*(.04+LP/2+.015)); B(L0-.04,.008,.006,ledgeGlow,m,LH-.006,at+n*(.04+LP+.024)); } } };
     // a free-standing wall in cream, both faces, thickness t
     const cwall=(ax,at,a,b,t=.1,top=CY)=>{ const L0=b-a, m=(a+b)/2; if(L0<.02) return; if(ax==='x'){ B(t,top,L0,cream,at,top/2,m); OB(at-t/2,at+t/2,a,b); } else { B(L0,top,t,cream,m,top/2,at); OB(a,b,at-t/2,at+t/2); } };
     // the rooms' outer walls, the back walls, the dividing wall's inner face
@@ -5855,28 +5857,30 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     // stalls: cream walls to the ceiling, pale oak flush doors, all hinged on the same side, opening inwards; a slim chrome pull
     WC.doors=[]; WC.seats=[];
     const stalls=(x0,x1)=>{ const z=22.25, xm=(x0+x1)/2, dw=.64; let p=x0;
-      for(const [a,b] of [[x0,xm],[xm,x1]]){ const d0=(a+b)/2-dw/2; cwall('z',z,p,d0); p=d0+dw; B(dw,CY-2.06,.1,cream,d0+dw/2,(2.06+CY)/2,z);
+      const piece=(a2,b2)=>{ if(b2-a2<.02) return; B(b2-a2,CY,.1,cream,(a2+b2)/2,CY/2,z); const s0=a2>x0+.01?a2+.17:a2, s1=b2<x1-.01?b2-.17:b2; if(s1>s0) OB(s0,s1,z-.05,z+.05); };
+      for(const [a,b] of [[x0,xm],[xm,x1]]){ const d0=(a+b)/2-dw/2; piece(p,d0); p=d0+dw; B(dw,CY-2.06,.1,cream,d0+dw/2,(2.06+CY)/2,z);
         for(const xx of [d0,d0+dw]) B(.03,2.06,.11,oak,xx,1.03,z); B(dw+.03,.03,.11,oak,d0+dw/2,2.06,z);
         const pv=new THREE.Group(); pv.position.set(d0+dw-.015,0,z-.04); scene.add(pv); const tag={type:'wcdoor',i:WC.doors.length};
         B(dw-.04,2.0,.035,oak,-(dw-.04)/2,1.02,0,pv,tag); B(.012,.34,.012,chrome,-(dw-.04)+.07,1.0,-.03,pv,tag); for(const y of [.83,1.17]) B(.012,.012,.03,chrome,-(dw-.04)+.07,y,-.017,pv);
         const ind=mat(0x3a8a4a,.35,{emissive:0x1a5a2a,emissiveIntensity:.4}); B(.05,.016,.006,ind,-(dw-.04)+.07,1.26,-.02,pv,tag);
-        WC.doors.push({pv,open:false,stall:true,side:-1,ind}); MEAL_DYN.push(pv);
+        WC.doors.push({pv,open:true,stall:true,side:-1,ind,si:-1}); MEAL_DYN.push(pv);
         // a high window in each stall, pale oak frame
         plane(.46,.26,mat(0xf2f5f6,.4,{emissive:0xe8eef2,emissiveIntensity:.6}),(a+b)/2,2.6,zb-.022,Math.PI); for(const [w2,h2,ox,oy] of [[.5,.025,0,.14],[.5,.025,0,-.14],[.025,.3,.24,0],[.025,.3,-.24,0],[.02,.26,0,0]]) B(w2,h2,.04,oak,(a+b)/2+ox,2.6+oy,zb-.03);
-        const sl=new THREE.PointLight(0xfff0dc,.45,2.4,2); sl.position.set((a+b)/2,2.7,(z+zb)/2); scene.add(sl); }
-      cwall('z',z,p,x1); cwall('x',xm,z+.05,zb); OB(x0,x1,z-.05,zb); };
+        const sl=new THREE.PointLight(0xffe2bc,.28,2.4,2); sl.position.set((a+b)/2,2.7,(z+zb)/2); scene.add(sl); }
+      piece(p,x1); cwall('x',xm,z+.05,zb); };
     // a two-piece toilet with a bidet seat; a slim remote on the side wall; click it and the lid lifts
     const toilet=(tx)=>{ const tz=zb-.36, tag={type:'wcseat',i:WC.seats.length}, cer=porcelain;
+      { const si=addSeat(tx,tz-.06,0,'wc',NT('wc.seat')); SEATS[si].ap={x:tx,z:22.62}; const D=WC.doors[WC.doors.length-(tx<cx?(tx<37.61?2:1):(tx<40.79?2:1))]; if(D) D.si=si; OB(tx-.2,tx+.2,zb-.62,zb); }
       L([[0,0],[.14,0],[.12,.2],[.16,.36]],cer,tx,0,tz+.06,scene,tag); const bowl=new THREE.Mesh(new THREE.SphereGeometry(.19,22,12,0,Math.PI*2,0,Math.PI/2),cer); bowl.rotation.x=Math.PI; bowl.scale.set(1,.55,1.3); bowl.position.set(tx,.42,tz-.02); scene.add(bowl); bowl.userData=tag; pickables.push(bowl);
       B(.34,.06,.24,cer,tx,.42,tz+.2,scene,tag); B(.4,.4,.18,cer,tx,.66,zb-.11,scene,tag); B(.42,.03,.2,cer,tx,.875,zb-.11); B(.05,.012,.02,chrome,tx-.15,.82,zb-.205);
       const seat=new THREE.Mesh(new THREE.TorusGeometry(.165,.028,8,26),mat(0xfafaf7,.3)); seat.rotation.x=Math.PI/2; seat.scale.set(1,1.3,1); seat.position.set(tx,.45,tz-.02); scene.add(seat);
       B(.36,.07,.14,mat(0xfafaf7,.3),tx,.46,tz+.22,scene,tag); const led=mat(0x9ad0ff,.3,{emissive:0x4aa8ff,emissiveIntensity:0}); B(.03,.006,.015,led,tx+.12,.497,tz+.18);
       const lid=new THREE.Group(); lid.position.set(tx,.48,tz+.16); scene.add(lid); const lp=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.022,26),mat(0xfafaf7,.3)); lp.scale.set(1,1,1.3); lp.position.set(0,0,-.24); lid.add(lp); lp.userData=tag; pickables.push(lp);
-      WC.seats.push({lid,led,open:false}); MEAL_DYN.push(lid);
+      WC.seats.push({lid,led,open:false,si:SEATS.length-1}); MEAL_DYN.push(lid);
       const rx=tx+.43; B(.015,.2,.05,mat(0xf4f4f2,.3),rx,1.0,tz-.1,scene,tag); for(let k=0;k<4;k++) B(.004,.012,.022,mat(k?0xc8ccd0:0x4a8ad0,.3),rx-.009,1.06-k*.03,tz-.1);
       const hx=tx-.43; B(.02,.02,.14,chrome,hx,.75,tz-.1); const roll=C(.055,.055,.1,mat(0xfbfaf6,.9),hx+.06,.7,tz-.1,scene,16); roll.rotation.x=Math.PI/2; };
     // the urinal: a tall white china urinal with a rounded top, hung on the back wall, a sensor at the top
-    const urinal=(ux)=>{ const ut={type:'wcm'}, uz=zb-.02, cer=porcelain, g=new THREE.Group(); g.position.set(ux,0,uz); scene.add(g);
+    const urinal=(ux)=>{ const ut={type:'wcuri',x:ux}; OB(ux-.18,ux+.18,zb-.32,zb); const uz=zb-.02, cer=porcelain, g=new THREE.Group(); g.position.set(ux,0,uz); scene.add(g);
       B(.36,.72,.3,cer,0,.6,-.15,g,ut); const top=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.3,24,1,false,0,Math.PI),cer); top.rotation.z=Math.PI/2; top.rotation.y=Math.PI/2; top.position.set(0,.96,-.15); g.add(top); top.userData=ut; pickables.push(top);
       const inner=new THREE.Mesh(new THREE.PlaneGeometry(.26,.62),mat(0xeef1f2,.2)); inner.position.set(0,.68,-.302); inner.rotation.y=Math.PI; g.add(inner); const lip=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.02,20,1,false,0,Math.PI),mat(0xf2f4f5,.2)); lip.position.set(0,.38,-.3); g.add(lip);
       const sensor=new THREE.Mesh(new THREE.CircleGeometry(.025,16),mat(0xd8dcdf,.2)); sensor.position.set(0,.98,-.302); sensor.rotation.y=Math.PI; g.add(sensor); C(.008,.008,.012,chrome,0,.45,-.24,g,10); };
@@ -5885,9 +5889,10 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     // one long cotton mat before each row of stalls
     for(const [x0,x1] of [[nx0+.12,cw0-.22],[cw1+.22,nx1-.12]]){ const m=plane(x1-x0,.5,mat(0xd9d3c8,.98),(x0+x1)/2,.012,22.25-.36,0); m.rotation.x=-Math.PI/2; }
     // light: a soft glow along the ceiling, flush downlights, the high windows
-    const cove=mat(0xfff4e2,.8,{emissive:0xffe2b8,emissiveIntensity:.5});
+    const cove=mat(0xfff4e2,.8,{emissive:0xffdcb0,emissiveIntensity:.38});
     for(const [x0,x1,z0,z1] of [[nx0,cw0-.05,zw+.08,22.2],[cw1+.05,nx1,zw+.08,22.2],[cw0+.02,cw1-.02,zw+.08,zb]]){ B(x1-x0,.02,.03,cove,(x0+x1)/2,CY-.03,z0+.02); B(.03,.02,z1-z0,cove,x0+.02,CY-.03,(z0+z1)/2); B(.03,.02,z1-z0,cove,x1-.02,CY-.03,(z0+z1)/2); }
-    for(const [lx,lz,pi] of [[37.6,21.55,.7],[40.8,21.55,.7],[cx,21.6,.5]]){ const d=new THREE.Mesh(new THREE.CircleGeometry(.07,20),mat(0xffffff,.3,{emissive:0xfff2dc,emissiveIntensity:1.1})); d.rotation.x=Math.PI/2; d.position.set(lx,CY-.001,lz); scene.add(d); const pl=new THREE.PointLight(0xfff0dc,pi,4.5,2); pl.position.set(lx,CY-.2,lz); scene.add(pl); }
+    for(const [lx,lz,pi] of [[37.6,21.55,.38],[40.8,21.55,.38],[cx,21.6,.3]]){ const d=new THREE.Mesh(new THREE.CircleGeometry(.05,20),mat(0xffffff,.3,{emissive:0xffe6c4,emissiveIntensity:.7})); d.rotation.x=Math.PI/2; d.position.set(lx,CY-.001,lz); scene.add(d); const pl=new THREE.PointLight(0xffe2bc,pi,4.5,2); pl.position.set(lx,CY-.2,lz); scene.add(pl); }
+    for(const [lx,lz] of [[37.0,21.5],[41.4,21.5],[cx,22.6]]){ const wl=new THREE.PointLight(0xffd8a6,.32,2.2,2); wl.position.set(lx,LH-.1,lz); scene.add(wl); }
     // the corridor end: a granite stand straight on the floor, a rough stone bowl, one bamboo spout over its centre;
     // a wall-mounted soap pump beside it; the mirror above
     { const tag={type:'wcspout'}, bz=zb-.36, rough=mat(0xffffff,.95,{map:T.granite,color:0x8f8b84});
@@ -5905,9 +5910,10 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const mz=zb-.05, my=1.7, mw=.5, mh=.7, rt=new THREE.WebGLRenderTarget(384,384), mcam=new THREE.PerspectiveCamera();
       const mm=new THREE.ShaderMaterial({uniforms:{map:{value:rt.texture},tm:{value:new THREE.Matrix4()}},
         vertexShader:'uniform mat4 tm; varying vec4 vU; void main(){ vU=tm*modelMatrix*vec4(position,1.); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
-        fragmentShader:'uniform sampler2D map; varying vec4 vU; void main(){ vec4 c=texture2DProj(map,vU); gl_FragColor=vec4(c.rgb*.92+vec3(.02,.02,.025),1.); \n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'});
+        fragmentShader:'uniform sampler2D map; varying vec4 vU; void main(){ vec4 c=texture2DProj(map,vU); gl_FragColor=vec4(c.rgb*1.18+vec3(.035,.033,.03),1.); \n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'});
       const mirror=new THREE.Mesh(new THREE.PlaneGeometry(mw,mh),mm); mirror.position.set(cx,my,mz); mirror.rotation.y=Math.PI; scene.add(mirror); MEAL_DYN.push(mirror);
-      const ml=new THREE.SpotLight(0xfff0dc,1.8,2.4,.6,.7,2); ml.position.set(cx,2.7,zb-.6); ml.target.position.set(cx,.85,bz); scene.add(ml,ml.target);
+      const fl2=new THREE.PointLight(0xffe8cc,.55,2.2,2); fl2.position.set(cx,1.75,zb-.75); scene.add(fl2);
+      const ml=new THREE.SpotLight(0xffe6c8,1.5,2.4,.6,.8,2); ml.position.set(cx,2.7,zb-.6); ml.target.position.set(cx,.85,bz); scene.add(ml,ml.target);
       WC.mirror={mesh:mirror,rt,cam:mcam,mat:mm,z:mz,clip:[new THREE.Plane(new THREE.Vector3(0,0,-1),mz-.004)]};
       // towels on a pale oak shelf on the corridor wall
       B(.2,.025,.34,oak,cw0+.1,1.18,22.55); for(let i=0;i<5;i++) B(.16,.022,.26,mat(0xf6f3ee,.95),cw0+.1,1.205+i*.024,22.55); }
@@ -5972,7 +5978,7 @@ NPC_DYN.push(...MEAL_DYN);
 // 火師 carries the dishes on a tray
 { const n=NPC.huo, P=n.g.userData.parts; n.tray=npcTool('tray'); P.F.add(n.tray); n.tray.position.set(0,1.02,-.36); n.tray.visible=false; }
 // who is sitting where at meals; the master's place is left for the master
-SEAT_KIND.dine.hello=NT('dine.hello'); SEAT_KIND.dine.status=()=>NT('dine.status');
+SEAT_KIND.wc.hello=NT('wc.hello'); SEAT_KIND.wc.status=()=>NT('wc.status'); SEAT_KIND.dine.hello=NT('dine.hello'); SEAT_KIND.dine.status=()=>NT('dine.status');
 const DINE_SEAT={xu:DINE.seats[0].si,huo:DINE.seats[2].si,yu:DINE.seats[6].si,shui:DINE.seats[7].si,chun:DINE.seats[9].si,cai:DINE.seats[10].si};
 window.__seatNpc=si=>{ for(const id in DINE_SEAT){ const n=NPC[id]; if(DINE_SEAT[id]===si&&n&&n.seated) return true; } return false; };
 
@@ -6043,10 +6049,30 @@ function mealTick(dt){ if(!window.__entered) return; const now=performance.now()
   if(S.phase==='eat'&&Math.hypot(ME.x-DINE.x,ME.z-DINE.z)<6&&now>MEALRUN.chatAt){ MEALRUN.chatAt=now+22000+Math.random()*12000; const ids=Object.keys(DINE_SEAT).filter(id=>NPC[id].seated);
     if(ids.length){ const id=ids[(MEALRUN.chatI++)%ids.length]; npcSay(id,npcLine('mchat.'+id)); } } }
 ZL_ANIM.push(dt=>mealTick(dt||.016));
+const WCMUSIC=(()=>{ let ac=null, out=null, t0=0, nextAt=0, vol=0, step=0;
+  const inside=()=>ME.x>36.6&&ME.x<41.8&&ME.z>20.97&&ME.z<23.6&&VIEW.mode==='walk';
+  function start(){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return; ac=new A(); out=ac.createGain(); out.gain.value=0;
+    const rev=ac.createConvolver(), len=ac.sampleRate*3.2, buf=ac.createBuffer(2,len,ac.sampleRate); for(let c=0;c<2;c++){ const d=buf.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); } rev.buffer=buf;
+    const dry=ac.createGain(); dry.gain.value=.55; const wet=ac.createGain(); wet.gain.value=.6; out.connect(dry).connect(ac.destination); out.connect(rev).connect(wet).connect(ac.destination);
+    const resume=()=>{ if(ac.state==='suspended') ac.resume(); }; addEventListener('pointerdown',resume); addEventListener('keydown',resume); resume(); }
+  const hz=m=>440*Math.pow(2,(m-69)/12);
+  // D major pentatonic, slow: a chord every eight seconds, two or three soft piano notes between
+  const CH=[[50,57,62,66],[47,54,59,62],[43,50,55,59],[45,52,57,61]], MEL=[74,76,78,81,83,86];
+  function pad(t,notes,dur){ for(const n of notes) for(const det of [-4,4]){ const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter(); o.type='triangle'; o.frequency.value=hz(n); o.detune.value=det; f.type='lowpass'; f.frequency.value=900;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.022,t+2.4); g.gain.setValueAtTime(.022,t+dur-2.6); g.gain.linearRampToValueAtTime(0,t+dur+.4); o.connect(f).connect(g).connect(out); o.start(t); o.stop(t+dur+.5); } }
+  function bell(t,n){ for(const [mul,a] of [[1,.07],[2,.018],[3,.008]]){ const o=ac.createOscillator(), g=ac.createGain(); o.type='sine'; o.frequency.value=hz(n)*mul; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(a,t+.012); g.gain.exponentialRampToValueAtTime(.0001,t+3.2/mul); o.connect(g).connect(out); o.start(t); o.stop(t+3.4); } }
+  function tick(dt){ const want=inside()?.9:0; if(want&&!ac) start(); if(!ac) return; vol+=(want-vol)*Math.min(1,dt*.8); out.gain.value=vol*.6;
+    if(vol<.02) return; const t=ac.currentTime; if(t<nextAt-.5) return; const at=Math.max(t+.05,nextAt); const ch=CH[step%CH.length]; pad(at,ch,8.4);
+    for(let i=0;i<2+(step%2);i++) bell(at+1.2+i*2.3+Math.random()*.6,MEL[(step*3+i*2+(Math.random()*2|0))%MEL.length]);
+    if(step%2===0) bell(at+.1,ch[0]+12); step++; nextAt=at+8; }
+  return {tick}; })();
+ZL_ANIM.push(dt=>WCMUSIC.tick(dt||.016));
 { const smk=[]; const sm=new THREE.SpriteMaterial({color:0xe8e4dc,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX});
   for(const I of WC.incense) for(let k=0;k<4;k++){ const s=new THREE.Sprite(sm.clone()); s.scale.set(.05,.05,1); scene.add(s); smk.push({s,I,ph:k/4}); NPC_DYN.push(s); }
   ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*6);
-    for(const D of WC.doors){ const want=D.open?-D.side*1.3:0; D.pv.rotation.y+=(want-D.pv.rotation.y)*k; if(D.ind){ D.ind.color.setHex(D.open?0x2f8a4a:0xb8322f); D.ind.emissive.setHex(D.open?0x1a6a30:0x8a1a14); } }
+    const sitting=si=>si>=0&&(ME.seat===si||occupied(si));
+    if(WC.lastSeat!==ME.seat){ const was=WC.lastSeat; WC.lastSeat=ME.seat; if(was>=0&&SEATS[was]&&SEATS[was].kind==='wc') toast(NT('act.flush')); }
+    for(const D of WC.doors){ const busy=sitting(D.si); if(D.ind){ D.busy=busy; } const want=(D.open&&!busy)?-D.side*1.3:0; D.pv.rotation.y+=(want-D.pv.rotation.y)*k; if(D.ind){ const red=D.busy||!D.open; D.ind.color.setHex(red?0xb8322f:0x2f8a4a); D.ind.emissive.setHex(red?0x8a1a14:0x1a6a30); } }
     for(const S3 of WC.slides){ const want=S3.z0+.88*S3.open; S3.g.position.z+=(want-S3.g.position.z)*k; }
     // the mirror reflects only while you stand near it: the scene drawn again from the far side of the glass
     const Mi=WC.mirror; if(Mi&&!renderer.xr.isPresenting&&VIEW.mode==='walk'&&Math.hypot(ME.x-39.2,ME.z-Mi.z)<3.6){ Mi.t=(Mi.t||0)+dt; if(Mi.t>.05){ Mi.t=0;
@@ -6056,7 +6082,7 @@ ZL_ANIM.push(dt=>mealTick(dt||.016));
       const av=ME.av, avVis=av&&av.g.visible; if(av&&!avVis){ av.g.position.set(ME.x,floorY(ME.x,ME.z),ME.z); av.g.rotation.y=ME.yaw; av.g.visible=true; if(av.tag) av.tag.visible=false; }
       const clip=renderer.clippingPlanes, prev=renderer.getRenderTarget(); Mi.mesh.visible=false; renderer.clippingPlanes=Mi.clip; renderer.setRenderTarget(Mi.rt); renderer.render(scene,c); renderer.setRenderTarget(prev); renderer.clippingPlanes=clip; Mi.mesh.visible=true;
       if(av&&!avVis) av.g.visible=false; } }
-    for(const S2 of WC.seats){ S2.lid.rotation.x+=((S2.open?1.45:0)-S2.lid.rotation.x)*k; S2.led.emissiveIntensity=S2.open?1.2:0; }
+    for(const S2 of WC.seats){ const up=S2.open||sitting(S2.si); S2.lid.rotation.x+=((up?1.45:0)-S2.lid.rotation.x)*k; S2.led.emissiveIntensity=up?1.2:0; }
     const sp=WC.spout; if(sp.st){ sp.st.visible=sp.on; sp.rip.forEach((r,i)=>{ const ph=(w*.8+i/3)%1; r.scale.setScalar(1+ph*4); r.material.opacity=sp.on?(1-ph)*.6:0; }); }
     for(const P of smk){ const ph=(w*.25+P.ph)%1; P.s.position.set(P.I.x+Math.sin(w*1.3+P.ph*6)*.02*ph,P.I.y+ph*.45,P.I.z+Math.cos(w+P.ph*5)*.02*ph); P.s.material.opacity=(1-ph)*.25*Math.min(1,ph*4); P.s.scale.setScalar(.03+ph*.12); } }); }
 window.__kitchenAct=u=>{ if(u.type==='kgas'){ const G=KGAS[u.i||0]; G.on=!G.on; toast(NT('act.gas',G.on?0:1)); return true; }
@@ -6068,6 +6094,7 @@ window.__kitchenAct=u=>{ if(u.type==='kgas'){ const G=KGAS[u.i||0]; G.on=!G.on; 
   if(u.type==='wcdoor'){ const D=WC.doors[u.i]; D.open=!D.open; toast(NT('act.door',D.open?0:1)); return true; }
   if(u.type==='wcslide'){ const S3=WC.slides[u.i]; S3.open=S3.open<.99?1:0; toast(NT('act.slide',S3.open?0:1)); return true; }
   if(u.type==='wcseat'){ const S2=WC.seats[u.i]; S2.open=!S2.open; toast(NT('act.seat',S2.open?0:1)); return true; }
+  if(u.type==='wcuri'){ goTo(u.x,23.6-.62,{faceTo:{x:u.x,z:24},after:()=>setTimeout(()=>toast(NT('act.urinal')),3500)}); return true; }
   if(u.type==='wcspout'){ WC.spout.on=!WC.spout.on; toast(NT('act.spout',WC.spout.on?0:1)); return true; } return false; };
 // the calendar page for today in Taipei: 民國 year and 干支, the lunar month and day, the big date, the weekday
 function calPage(){ const C=DINE.cal; if(!C) return; const T=taipeiNow(); if(C.day===T.day) return; C.day=T.day;

@@ -759,6 +759,26 @@ npc:
     when: "點廁所拉門（甲：拉開；乙：關上）"
     a: "拉門拉開"
     b: "拉門關上"
+  - key: act.flush
+    when: "起身離開馬桶時的提示"
+    a: "沖水"
+    b: ""
+  - key: act.urinal
+    when: "用完小便斗時的提示"
+    a: "感應沖水"
+    b: ""
+  - key: wc.seat
+    when: "馬桶座位的名稱"
+    a: "馬桶"
+    b: ""
+  - key: wc.hello
+    when: "坐上馬桶時的提示"
+    a: "坐下了，門已關上。"
+    b: ""
+  - key: wc.status
+    when: "在人物名單上顯示的狀態（如廁時）"
+    a: "在廁所"
+    b: ""
 look:
   - key: "cat.o"
     label: "衣著"

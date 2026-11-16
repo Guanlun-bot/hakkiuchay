@@ -1,0 +1,5 @@
+---
+layout: null
+permalink: /vr/gate.json
+---
+{"look":{{ site.data.vr.look | jsonify }},"loading":{{ site.data.vr.loading | jsonify }}}

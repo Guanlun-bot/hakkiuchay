@@ -16,29 +16,70 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1b1714;color:var(--in
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
 button{font-family:var(--f);cursor:pointer}
 .hide{display:none!important}
-/* gate */
-#gate{position:fixed;inset:0;z-index:50;background:#f1efe8;color:var(--ink);overflow:auto;transition:opacity .6s}
+/* gate：門口（取名與扮相）。顏色與字型跟學鳩齋網站一致：灰白和紙、消炭墨、細線，朱色只留一道細線 */
+#gate{position:fixed;inset:0;z-index:50;background:linear-gradient(rgba(34,14,9,.3),rgba(34,14,9,.38)),var(--brick,none) 0 0/640px auto,#8e4433;color:var(--ink);overflow:auto;transition:opacity .6s;--ez:cubic-bezier(.25,.8,.25,1)}
 #gate.out{opacity:0;pointer-events:none}
-#gate .gwrap{max-width:760px;margin:0 auto;padding:4vh 22px 30px}
-#gate .gsky{height:120px;position:relative;overflow:hidden}
-#gate .gbird{position:absolute;width:118px;left:50%;top:30px;transform:translateX(-50%)}
-#gate .gtitle{font-family:Reisho,ReishoFull,var(--f);font-size:46px;letter-spacing:.12em;line-height:1.1}
-#gate .gsub{font-size:14px;color:#6b6358;margin:6px 0 22px;border-left:3px solid var(--seal);padding-left:10px}
-#gate .gmain{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
-#gate .gprev{flex:0 0 160px;display:flex;justify-content:center;padding-top:6px;border:1px solid var(--rule);background:#faf8f3}
-#gate .gform{flex:1 1 320px;display:grid;grid-template-columns:52px 1fr;gap:10px 12px;align-items:center}
-#gate .gl{font-size:14px;color:#6b6358}
-#gate input{font-family:var(--f);font-size:17px;padding:7px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px;width:100%;max-width:260px;box-sizing:border-box}
+#gate .gwrap{max-width:960px;margin:0 auto;padding:4.5vh 22px 28px}
+#gate .ghead{display:flex;justify-content:center;text-align:center;margin-bottom:18px}
+#gate .gtitle{font-family:Reisho,ReishoFull,var(--f);font-size:3.2rem;letter-spacing:.15em;line-height:1.05;color:#f4efe4;text-shadow:0 2px 6px rgba(40,16,10,.45)}
+#gate .gsub{display:inline-block;font-size:14px;color:#f1e9dc;text-shadow:0 1px 4px rgba(40,16,10,.5);margin:8px 0 0;border-left:3px solid var(--seal);padding-left:10px}
+#gate .gcard{background:var(--card);border:1px solid var(--rule);outline:1px solid rgba(241,239,232,.55);outline-offset:4px;padding:22px;display:grid;grid-template-columns:260px 1fr;gap:26px;box-shadow:0 10px 30px rgba(40,16,10,.35)}
+#gate .gleft{display:flex;flex-direction:column;gap:10px}
+#gate .gprev{position:relative;height:340px;background:linear-gradient(#f8f6f0,#ece8dd);border:1px solid var(--rule);padding:18px 26px 10px}
+#gate .gprev::after{content:"";position:absolute;inset:5px;border:1px solid rgba(211,206,195,.8);pointer-events:none}
+#gate .gprev svg{transform-origin:50% 100%}
+#gate .gprev.pop svg{animation:gpop .32s var(--ez)}
+@keyframes gpop{0%{transform:scale(.97)}60%{transform:scale(1.01)}100%{transform:scale(1)}}
+#gate .gform{display:flex;flex-direction:column;gap:14px;min-width:0}
+#gate .gsec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+#gate .gsec+.gsec{border-top:1px solid var(--rule);padding-top:14px}
+#gate .gf{display:flex;flex-direction:column;gap:5px;min-width:0}
+#gate .gf.wide{grid-column:1/-1}
+#gate .gl{font-size:12px;color:var(--ink-soft);letter-spacing:.08em}
+#gate input,#gate select,#gate .gopt button,#gate .gbtn2{height:38px;border-radius:4px;border:1px solid #d2c8b8;background:#fffdf8;color:var(--ink);font-family:var(--f);font-size:15px;transition:background .2s var(--ez),border-color .2s var(--ez),box-shadow .2s var(--ez),transform .2s var(--ez)}
+#gate input{padding:0 10px;width:100%}
+#gate select{padding:0 8px;width:100%;appearance:auto}
+#gate input:hover,#gate select:hover,#gate .gopt button:hover,#gate .gbtn2:hover{background:#f6f1e6;border-color:#b9ad99}
+#gate input:focus,#gate select:focus{outline:none;border-color:var(--ink-soft);box-shadow:0 0 0 3px rgba(168,52,58,.12)}
 #gate input.need{border-color:var(--seal)}
-#gate .gopt{display:flex;flex-wrap:wrap;gap:6px}
-#gate .gopt button{font-size:14px;padding:5px 12px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px}
-#gate .gopt button.on{background:var(--ink);color:#f1efe8;border-color:var(--ink)}
-#gate .gsw{display:flex;gap:7px;flex-wrap:wrap}
-#gate .gsw button{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--rule)}
+#gate .gopt{display:flex;gap:6px}
+#gate .gopt button{flex:1;padding:0 8px;white-space:nowrap}
+#gate .gopt button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#gate .gopt button:active,#gate .gbtn2:active{transform:translateY(1px) scale(.985)}
+#gate #groomRow{display:flex;gap:6px}
+#gate #groomRow input{flex:1;text-transform:uppercase}
+#gate #groomRow .gbtn2{white-space:nowrap;padding:0 12px;width:auto;flex:none;letter-spacing:.05em}
+#gate .gbtn2{width:100%;letter-spacing:.2em}
+#gate .gsw{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:38px}
+#gate .gsw button{position:relative;width:24px;height:24px;border-radius:50%;border:2px solid #fffdf8;box-shadow:0 0 0 1px var(--rule);transition:transform .2s var(--ez),box-shadow .2s var(--ez);padding:0}
+#gate .gsw button:hover{transform:scale(1.15)}
 #gate .gsw button.on{box-shadow:0 0 0 2px var(--ink)}
-#gate .gnote{grid-column:1/-1;font-size:12px;color:#857c70;margin:2px 0 0}
-#gate .gbtn{grid-column:1/-1;justify-self:start;font-size:17px;padding:9px 34px;background:var(--seal);color:#fff;border:0;border-radius:2px;letter-spacing:.3em;margin-top:6px}
+#gate .gsw button::after{content:attr(data-n);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;padding:2px 6px;border-radius:2px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+#gate .gsw button:hover::after{opacity:1}
+#gate .gbtn{height:46px;width:100%;font-family:var(--f);font-size:17px;letter-spacing:.4em;padding-left:.4em;background:var(--ink);color:var(--paper);border:0;border-radius:4px;transition:background .2s var(--ez),transform .2s var(--ez),box-shadow .2s var(--ez)}
+#gate .gbtn:hover{background:#2b2726;transform:translateY(-1px);box-shadow:0 4px 12px rgba(63,58,57,.22)}
+#gate .gbtn:active{transform:translateY(1px) scale(.99);box-shadow:none}
 #gate .gbtn:disabled{opacity:.6}
+#gate .gkeys{margin-top:16px;font-size:.82rem;color:#f1e9dc;line-height:2;text-shadow:0 1px 3px rgba(40,16,10,.6)}
+#gate .gkeys span{white-space:nowrap;margin-right:12px}
+#gate kbd{font-family:var(--f);font-size:.78rem;border:1px solid var(--rule);border-bottom-width:2px;border-radius:3px;padding:0 5px;background:#fffdf8;color:var(--ink-soft);margin-right:3px;text-shadow:none}
+@media (max-width:760px){ #gate .gcard{grid-template-columns:1fr} #gate .gprev{height:300px;max-width:260px;margin:0 auto;width:100%} #gate .gleft{align-items:stretch} #gate .gtitle{font-size:2.6rem} }
+@media (max-width:420px){ #gate .gsec{grid-template-columns:1fr} }
+/* loading：推門與宅中人整理屋子的故事 */
+#loading-overlay{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;opacity:0;pointer-events:none;transition:opacity .6s}
+#loading-overlay.on{opacity:1;pointer-events:auto}
+#loading-overlay .ldoor{position:relative;width:180px;height:230px;perspective:600px;background:#f4d9a0;box-shadow:inset 0 0 40px 10px #e9b866;border:12px solid #a8a6a1;border-bottom-width:6px;outline:1px solid #8f8d88}
+#loading-overlay .ldoor i{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(90deg,#5a3a26 0 21px,#4c311f 21px 22px);will-change:transform;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+#loading-overlay .ldoor i:first-child{left:0;transform-origin:0 50%}
+#loading-overlay .ldoor i:last-child{right:0;transform-origin:100% 50%}
+#loading-overlay.on .ldoor i:first-child{animation:ldl 3.2s var(--ez,ease) .3s forwards}
+#loading-overlay.on .ldoor i:last-child{animation:ldr 3.2s var(--ez,ease) .3s forwards}
+@keyframes ldl{to{transform:rotateY(-72deg)}}
+@keyframes ldr{to{transform:rotateY(72deg)}}
+#loading-overlay .ltxt{font-size:15px;color:var(--ink-soft);min-height:1.6em;letter-spacing:.06em;animation:lbreath 2.4s ease-in-out infinite}
+@keyframes lbreath{50%{opacity:.55}}
+#loading-overlay .lbar{width:220px;height:2px;background:var(--rule);overflow:hidden}
+#loading-overlay .lbar b{display:block;height:100%;background:var(--ink);transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.25,.8,.25,1);will-change:transform}
 #planlabels{position:fixed;inset:0;pointer-events:none;z-index:9}
 #planlabels .pl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;margin:-9px 0 0 -6px;background:rgba(241,239,232,.88);padding:1px 6px 1px 3px;border-radius:9px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 #planlabels .pl i{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -133,9 +174,6 @@ body:has(#utility[open]) #aim{visibility:hidden}
 .voice-pill svg{width:13px;height:13px;flex-shrink:0;fill:rgba(241,239,232,.86)}
 .voice-pill.speaking{background:rgba(168,52,58,.92);border-color:#f0c265;color:#fff6dc;box-shadow:0 2px 10px rgba(0,0,0,.45)}
 .voice-pill.speaking svg{fill:#f0c265}
-#groomRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-#groomRow input{max-width:165px;text-transform:uppercase}
-#groomRow button{font-size:13px;padding:7px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px;white-space:nowrap}
 .vctl{margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);font-size:12px;display:flex;flex-direction:column;gap:6px}
 .vctl label{display:flex;flex-direction:column;gap:3px;color:var(--ink-soft)}
 .vctl input[type=range]{width:100%;accent-color:var(--seal)}
@@ -148,71 +186,102 @@ body:has(#utility[open]) #aim{visibility:hidden}
 <canvas id="c" tabindex="0"></canvas><span id="aim" hidden aria-hidden="true">+<span id="aim-action" hidden></span></span>
 <div id="gate">
   <div class="gwrap">
-    <div class="gsky"><img class="gbird" src="data:image/png;base64,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" alt=""></div>
-    <div class="gtitle">學鳩齋</div>
-    <div class="gsub" id="gsub">線上書齋・入門前，先報上名來</div>
-    <div class="gmain">
-      <div class="gprev" id="gprev"></div>
+    <div class="ghead">
+      <div><div class="gtitle">學鳩齋</div><div class="gsub" id="gsub">線上書齋・入門前，先報上名來</div></div>
+    </div>
+    <div class="gcard">
+      <div class="gleft">
+        <div class="gprev" id="gprev"></div>
+        <button type="button" class="gbtn2" id="grand" data-t="ui.random">隨機扮相</button>
+      </div>
       <div class="gform">
-        <label class="gl">模式</label><div class="gopt" data-k="mode"><button data-v="solo">單人模式</button><button data-v="multi">多人同遊</button></div>
-        <label class="gl" id="groomLab">房間</label><div id="groomRow"><input id="groom" maxlength="16" placeholder="HAKKIUCHAY-01" autocomplete="off"><button type="button" id="gcopy">複製邀請連結</button></div>
-        <label class="gl">名字</label><input id="gname" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname">
-        <label class="gl">身形</label><div class="gopt" data-k="g"><button data-v="m">男</button><button data-v="f">女</button></div>
-        <label class="gl">衣著</label><div class="gopt" data-k="o"><button data-v="robe">長袍</button><button data-v="suit">西裝</button><button data-v="modern">便服</button></div>
-        <label class="gl">顏色</label><div class="gsw" id="gsw"></div>
-        <label class="gl">隨身</label><div class="gopt" data-k="a"><button data-v="none">無</button><button data-v="douli">斗笠</button><button data-v="straw">草帽</button><button data-v="scarf">圍巾</button><button data-v="glasses">眼鏡</button><button data-v="bag">書袋</button><button data-v="fan">摺扇</button></div>
-        <label class="gl">鼠標</label><div class="gopt" data-k="ctrlMode"><button data-v="fps">FPS 模式（鎖定視角）</button><button data-v="hand">手模式（自由鼠標拖曳）</button></div>
-        <p class="gnote">進門後：WASD 移動、Shift 跑、空白鍵跳、Z 蹲、V 第三人稱、M 開關麥克風、C 抽菸、Enter 聊天。</p>
-        <button id="genter" class="gbtn">進門</button>
+        <div class="gsec">
+          <div class="gf"><span class="gl" data-t="ui.mode">模式</span><div class="gopt" data-k="mode"><button data-v="solo" data-t="ui.solo">單人</button><button data-v="multi" data-t="ui.multi">多人</button></div></div>
+          <div class="gf"><span class="gl" data-t="ui.ctrl">鼠標</span><div class="gopt" data-k="ctrlMode"><button data-v="fps" data-t="ui.fps">FPS</button><button data-v="hand" data-t="ui.hand">手模式</button></div></div>
+          <div class="gf wide" id="groomF"><span class="gl" data-t="ui.room">房間</span><div id="groomRow"><input id="groom" maxlength="16" placeholder="HAKKIUCHAY-01" autocomplete="off"><button type="button" class="gbtn2" id="gcopy" data-t="ui.copy">複製邀請連結</button></div></div>
+          <div class="gf"><span class="gl" data-t="ui.name">名字</span><input id="gname" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname"></div>
+          <div class="gf"><span class="gl" data-t="cat.g">身形</span><div class="gopt" data-k="g"><button data-v="m" data-t="g.m">男</button><button data-v="f" data-t="g.f">女</button></div></div>
+        </div>
+        <div class="gsec" id="gsel"></div>
+        <div class="gsec">
+          <div class="gf"><span class="gl" data-t="ui.color">衣色</span><div class="gsw" id="gsw"></div></div>
+          <div class="gf"><span class="gl" data-t="ui.hair">髮色</span><div class="gsw" id="ghc"></div></div>
+        </div>
+        <button id="genter" class="gbtn" data-t="ui.enter">進門</button>
       </div>
     </div>
+    <div class="gkeys" id="gkeys"></div>
   </div>
 </div>
+<div id="loading-overlay"><div class="ldoor"><i></i><i></i></div><div class="ltxt" id="ltxt"></div><div class="lbar"><b id="lbar"></b></div></div>
+<script src="look.js"></script>
 <script>
-(()=>{ const COLORS=['#3e5873','#3d6b4f','#86683c','#a8343a','#5b4b6b','#2f5f6b','#7a5a2e','#6c7163'];
-  const LS={get:k=>{ try{ return localStorage.getItem(k); }catch{ return null; } }};
-  let look={g:'m',o:'robe',a:'none'}; try{ const l=JSON.parse(LS.get('hk-look')||'null'); if(l&&typeof l==='object') look=Object.assign(look,l); }catch{}
+(()=>{ const K=window.HK_LOOK, LS={get:k=>{ try{ return localStorage.getItem(k); }catch{ return null; } }};
+  // texts the back office can change (_data/vr.yml › look); these are the defaults
+  const UI={'ui.mode':'模式','ui.solo':'單人','ui.multi':'多人','ui.ctrl':'鼠標','ui.fps':'FPS','ui.hand':'手模式','ui.room':'房間','ui.copy':'複製邀請連結','ui.copied':'已複製連結',
+    'ui.name':'名字','ui.namePh':'怎麼稱呼你','ui.nameNeed':'請先取個名字','ui.color':'衣色','ui.hair':'髮色','ui.random':'隨機扮相','ui.enter':'進門','ui.change':'換好了','ui.failed':'載入失敗，點此重新整理',
+    'ui.keys':'進門後｜WASD 移動｜Shift 跑｜空白鍵 跳｜Z 蹲｜V 第三人稱｜M 麥克風｜C 抽菸｜Enter 聊天'};
+  for(const k of Object.keys(UI)) K.labels[k]=UI[k];
+  let LOADING=['玉姨把門埕最後一撮落葉掃到牆邊','許總管翻開冊子，看今天有誰要來','阿春在備茶處燒水，擦乾茶盤','火師生起灶火，蒸籠冒出第一縷白煙','阿財把柴挑進灶腳，順手掩上後門','水生叔給含笑澆了水','書架上的書一本本歸位','壁燈點上了，請進'];
+  const T=k=>K.labels[k]||k;
+  const COLORS=K.COLORS.map(c=>c[0]);
+  let look=K.clean((()=>{ try{ return JSON.parse(LS.get('hk-look')||'null'); }catch{ return null; } })());
   const urlRoom=(new URLSearchParams(location.search).get('room')||'').trim().toUpperCase().slice(0,16);
-  const initMode=urlRoom?'multi':(LS.get('hk-mode')==='solo'?'solo':'multi');
-  const initRoom=(urlRoom||LS.get('hk-room')||'HAKKIUCHAY-01').trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01';
-  const initCtrl=LS.get('hk-ctrl-mode')==='hand'?'hand':'fps';
-  const G=window.__gate={name:(LS.get('hk-name')||'').trim().slice(0,12),color:LS.get('hk-color')||COLORS[Math.floor(Math.random()*COLORS.length)],look,mode:initMode,room:initRoom,ctrlMode:initCtrl};
+  const G=window.__gate={name:(LS.get('hk-name')||'').trim().slice(0,12),color:COLORS.includes(LS.get('hk-color'))?LS.get('hk-color'):(LS.get('hk-color')||COLORS[Math.floor(Math.random()*COLORS.length)]),look,
+    mode:urlRoom?'multi':(LS.get('hk-mode')==='solo'?'solo':'multi'),room:(urlRoom||LS.get('hk-room')||'HAKKIUCHAY-01').trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01',ctrlMode:LS.get('hk-ctrl-mode')==='hand'?'hand':'fps'};
   if(G.name==='訪客') G.name='';
-  const $=s=>document.querySelector(s), inp=$('#gname'), btn=$('#genter'), roomInp=$('#groom'), roomRow=$('#groomRow'), roomLab=$('#groomLab'), copyBtn=$('#gcopy');
-  inp.value=G.name; if(roomInp) roomInp.value=G.room;
-  const sw=$('#gsw'); sw.innerHTML=COLORS.map(c=>`<button data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('');
-  function svg(){ const L=G.look, c=G.color, f=L.g==='f', sh=f?24:28, skin='#e7cfb4', hair='#1d1a18'; let s='';
-    const dark=(()=>{ const n=parseInt(c.slice(1),16); const r=(n>>16)*.62|0, g=(n>>8&255)*.62|0, b=(n&255)*.62|0; return `rgb(${r},${g},${b})`; })();
-    if(L.o==='robe'){ s+=`<path d="M${60-sh} 70 L${60+sh} 70 L${60+(f?27:36)} 196 L${60-(f?27:36)} 196 Z" fill="${c}"/><rect x="53" y="64" width="14" height="8" fill="${dark}"/><rect x="${55}" y="198" width="9" height="5" fill="#1a1716"/><rect x="66" y="198" width="9" height="5" fill="#1a1716"/>`; }
-    else if(L.o==='suit'){ s+=`<path d="M${60-sh} 70 L${60+sh} 70 L${60+sh-3} 132 L${60-sh+3} 132 Z" fill="${c}"/><path d="M53 70 L67 70 L60 96 Z" fill="#f2efe8"/>`+(f?'':`<path d="M58 74 L62 74 L63 98 L60 103 L57 98 Z" fill="#7a2a2a"/>`)+
-        (f?`<path d="M38 130 L82 130 L88 166 L32 166 Z" fill="${dark}"/><rect x="47" y="166" width="7" height="32" fill="${skin}"/><rect x="66" y="166" width="7" height="32" fill="${skin}"/>`:`<rect x="41" y="130" width="17" height="68" fill="${dark}"/><rect x="62" y="130" width="17" height="68" fill="${dark}"/>`)+`<rect x="41" y="198" width="17" height="6" fill="#1a1716"/><rect x="62" y="198" width="17" height="6" fill="#1a1716"/>`; }
-    else { s+=`<path d="M${60-sh} 70 L${60+sh} 70 L${60+sh-2} 132 L${60-sh+2} 132 Z" fill="${c}"/><rect x="41" y="130" width="17" height="68" fill="#3b4a66"/><rect x="62" y="130" width="17" height="68" fill="#3b4a66"/><rect x="40" y="198" width="19" height="7" rx="2" fill="#ece8e0" stroke="#bbb"/><rect x="61" y="198" width="19" height="7" rx="2" fill="#ece8e0" stroke="#bbb"/>`; }
-    s+=`<rect x="${60-sh-9}" y="72" width="9" height="56" rx="4" fill="${c}"/><rect x="${60+sh}" y="72" width="9" height="56" rx="4" fill="${c}"/><circle cx="${60-sh-4.5}" cy="131" r="5" fill="${skin}"/><circle cx="${60+sh+4.5}" cy="131" r="5" fill="${skin}"/>`;
-    s+=`<rect x="55" y="54" width="10" height="12" fill="${skin}"/>`+(f&&L.o!=='robe'?`<rect x="44" y="34" width="32" height="40" rx="6" fill="${hair}"/>`:'')+`<circle cx="60" cy="40" r="17" fill="${skin}"/><path d="M43 40 A17 17 0 0 1 77 40 L77 34 A17 15 0 0 0 43 34 Z" fill="${hair}"/><path d="M43 38 Q60 18 77 38 Q72 26 60 24 Q48 26 43 38 Z" fill="${hair}"/>`+(f&&L.o==='robe'?`<circle cx="60" cy="22" r="8" fill="${hair}"/>`:'');
-    const A=L.a; if(A==='douli') s+=`<path d="M20 34 L60 10 L100 34 Z" fill="#c8a96a" stroke="#a88a4e"/>`;
-    if(A==='straw') s+=`<ellipse cx="60" cy="27" rx="34" ry="5" fill="#c8a96a"/><rect x="44" y="13" width="32" height="15" rx="4" fill="#c8a96a"/><rect x="44" y="22" width="32" height="4" fill="#7a2a2a"/>`;
-    if(A==='scarf') s+=`<rect x="46" y="62" width="28" height="9" rx="4" fill="${c==='#a8343a'?'#2f4f6f':'#a8343a'}"/><rect x="62" y="68" width="8" height="30" fill="${c==='#a8343a'?'#2f4f6f':'#a8343a'}"/>`;
-    if(A==='glasses') s+=`<circle cx="53" cy="41" r="5" fill="none" stroke="#2a2622" stroke-width="1.6"/><circle cx="67" cy="41" r="5" fill="none" stroke="#2a2622" stroke-width="1.6"/><path d="M58 41 L62 41" stroke="#2a2622" stroke-width="1.6"/>`;
-    if(A==='bag') s+=`<path d="M${60-sh} 70 L${60+sh+10} 118" stroke="#8a7a5c" stroke-width="4"/><rect x="${60+sh+2}" y="110" width="24" height="28" rx="2" fill="#8a7a5c"/>`;
-    if(A==='fan') s+=`<path d="M${60+sh+5} 132 L${60+sh+30} 112 A28 28 0 0 1 ${60+sh+33} 140 Z" fill="#efe6d0" stroke="#b9a77d"/>`;
-    $('#gprev').innerHTML=`<svg viewBox="0 0 120 210" width="150" height="262">${s}</svg>`; }
-  function sync(){ document.querySelectorAll('.gopt').forEach(d=>d.querySelectorAll('button').forEach(b=>b.classList.toggle('on',d.dataset.k==='mode'?G.mode===b.dataset.v:d.dataset.k==='ctrlMode'?G.ctrlMode===b.dataset.v:G.look[d.dataset.k]===b.dataset.v)));
-    const showRoom=G.mode==='multi'; if(roomRow) roomRow.style.display=showRoom?'flex':'none'; if(roomLab) roomLab.style.display=showRoom?'':'none';
-    sw.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===G.color)); svg(); }
-  document.querySelectorAll('.gopt').forEach(d=>d.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; if(d.dataset.k==='mode') G.mode=b.dataset.v; else if(d.dataset.k==='ctrlMode') G.ctrlMode=b.dataset.v; else G.look[d.dataset.k]=b.dataset.v; sync(); });
-  if(roomInp) roomInp.oninput=()=>{ G.room=roomInp.value.trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01'; };
-  if(copyBtn) copyBtn.onclick=()=>{ const code=((roomInp?.value||G.room||'HAKKIUCHAY-01').trim().toUpperCase().slice(0,16))||'HAKKIUCHAY-01'; G.room=code; if(roomInp) roomInp.value=code;
+  const $=s=>document.querySelector(s), inp=$('#gname'), btn=$('#genter'), roomInp=$('#groom'), roomF=$('#groomF'), copyBtn=$('#gcopy'), prev=$('#gprev');
+  inp.value=G.name; roomInp.value=G.room;
+  // six menus in a two-by-three grid, each grouped
+  const SEL=['o','h','f','a','hs','p'];
+  function build(){ $('#gsel').innerHTML=SEL.map(k=>`<div class="gf"><span class="gl">${T('cat.'+k)}</span><select data-k="${k}">${K.CAT[k].groups.map((g,gi)=>{ const o=g.items.map(([id])=>`<option value="${id}">${T(k+'.'+id)}</option>`).join(''); return g.label?`<optgroup label="${T('grp.'+k+'.'+gi)}">${o}</optgroup>`:o; }).join('')}</select></div>`).join('');
+    $('#gsw').innerHTML=K.COLORS.map(([c])=>`<button type="button" data-c="${c}" data-n="${T('color.'+c)}" style="background:${c}" aria-label="${T('color.'+c)}"></button>`).join('');
+    $('#ghc').innerHTML=K.HAIR.map(([c])=>`<button type="button" data-c="${c}" data-n="${T('hair.'+c)}" style="background:${c}" aria-label="${T('hair.'+c)}"></button>`).join('');
+    document.querySelectorAll('#gate [data-t]').forEach(e=>{ e.textContent=T(e.dataset.t); });
+    inp.placeholder=T('ui.namePh');
+    $('#gkeys').innerHTML=T('ui.keys').split('｜').map((p,i)=>i?`<span>${p.replace(/^(\S+)\s/,(m,k)=>`<kbd>${k}</kbd>`)}</span>`:`<span>${p}</span>`).join('');
+    $('#gsel').onchange=e=>{ const s=e.target.closest('select'); if(!s) return; G.look[s.dataset.k]=s.value; sync(true); };
+    $('#gsw').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.color=b.dataset.c; sync(true); };
+    $('#ghc').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.look.hc=b.dataset.c; sync(true); };
+    sync(false); }
+  function sync(pop){ G.look=K.clean(G.look);
+    document.querySelectorAll('#gate .gopt').forEach(d=>d.querySelectorAll('button').forEach(b=>b.classList.toggle('on',(d.dataset.k==='mode'?G.mode:d.dataset.k==='ctrlMode'?G.ctrlMode:G.look[d.dataset.k])===b.dataset.v)));
+    document.querySelectorAll('#gsel select').forEach(s=>{ s.value=G.look[s.dataset.k]; });
+    roomF.style.display=G.mode==='multi'?'':'none';
+    document.querySelectorAll('#gsw button').forEach(b=>b.classList.toggle('on',b.dataset.c===G.color));
+    document.querySelectorAll('#ghc button').forEach(b=>b.classList.toggle('on',b.dataset.c===G.look.hc));
+    prev.innerHTML=K.svg(G.look,G.color); if(pop){ prev.classList.remove('pop'); void prev.offsetWidth; prev.classList.add('pop'); } }
+  document.querySelectorAll('#gate .gopt').forEach(d=>d.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; const k=d.dataset.k;
+    if(k==='mode') G.mode=b.dataset.v; else if(k==='ctrlMode') G.ctrlMode=b.dataset.v; else { G.look[k]=b.dataset.v; if(k==='g'){ const fem=K.FEM_O.includes(G.look.o); if((b.dataset.v==='f')!==fem&&!['robe','suit','trench','tang'].includes(G.look.o)) G.look.o=b.dataset.v==='f'?'qipao':'robe'; } } sync(k==='g'); });
+  $('#grand').onclick=()=>{ G.look=K.random(G.look.g); G.color=COLORS[Math.floor(Math.random()*COLORS.length)]; sync(true); };
+  roomInp.oninput=()=>{ G.room=roomInp.value.trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01'; };
+  copyBtn.onclick=()=>{ const code=(roomInp.value||G.room||'HAKKIUCHAY-01').trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01'; G.room=code; roomInp.value=code;
     const url=`${location.origin}${location.pathname}?room=${encodeURIComponent(code)}`;
-    if(navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(()=>{ copyBtn.textContent='已複製連結'; setTimeout(()=>copyBtn.textContent='複製邀請連結',1800); }).catch(()=>prompt('複製邀請連結：',url));
-    else prompt('複製邀請連結：',url); };
-  sw.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.color=b.dataset.c; sync(); };
+    if(navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(()=>{ copyBtn.textContent=T('ui.copied'); setTimeout(()=>copyBtn.textContent=T('ui.copy'),1800); }).catch(()=>prompt(T('ui.copy'),url)); else prompt(T('ui.copy'),url); };
   inp.oninput=()=>{ G.name=inp.value; };
-  function go(){ G.name=inp.value.trim(); if(!G.name){ inp.focus(); inp.classList.add('need'); inp.placeholder='請先取個名字'; return; }
-    if(roomInp) G.room=roomInp.value.trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01';
-    if(window.__houseReady&&window.__enterHouse) window.__enterHouse(); else { window.__wantEnter=true; btn.textContent='宅院整理中…'; btn.disabled=true; window.__loadHouse?.(); } }
+  // the loading screen: the doors swing open while the household gets the place ready; the house reports its progress
+  const ov=$('#loading-overlay'), lt=$('#ltxt'), lb=$('#lbar'); let li=-1, lastP=0;
+  window.__loadStep=p=>{ p=Math.max(lastP,Math.min(1,p)); lastP=p; lb.style.transform=`scaleX(${p})`; const i=Math.min(LOADING.length-1,Math.floor(p*LOADING.length)); if(i!==li){ li=i; lt.textContent=LOADING[i]; } };
+  window.__loadDone=()=>{ window.__loadStep(1); setTimeout(()=>ov.classList.remove('on'),450); };
+  function go(){ G.name=inp.value.trim(); if(!G.name){ inp.focus(); inp.classList.add('need'); inp.placeholder=T('ui.nameNeed'); return; }
+    G.room=roomInp.value.trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01';
+    if(window.__houseReady&&window.__enterHouse){ window.__enterHouse(); return; }
+    window.__wantEnter=true; btn.disabled=true; li=-1; lastP=0; window.__loadStep(.02); ov.classList.add('on'); setTimeout(()=>window.__loadHouse?.(),650); }
   btn.onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } e.stopPropagation(); };
-  window.__openGate=()=>{ const g=$('#gate'); inp.value=G.name; if(roomInp) roomInp.value=G.room; btn.textContent='換好了'; btn.disabled=false; g.classList.remove('hide','out'); sync(); };
-  sync(); if(!G.name) setTimeout(()=>inp.focus(),50);
+  window.__openGate=()=>{ const g=$('#gate'); inp.value=G.name; roomInp.value=G.room; btn.textContent=T('ui.change'); btn.disabled=false; g.classList.remove('hide','out'); sync(false); };
+  window.__gateFail=()=>{ ov.classList.remove('on'); btn.textContent=T('ui.failed'); btn.disabled=false; btn.onclick=()=>location.reload(); };
+  { const c=document.createElement('canvas'), W=720, H=480, bw=60, bh=20, m=3; c.width=W; c.height=H; const g=c.getContext('2d'); let sd=7; const R=()=>(sd=(sd*16807)%2147483647)/2147483647;
+    g.fillStyle='#b9ab95'; g.fillRect(0,0,W,H);
+    for(let r=0;r*bh<H;r++){ const off=r%2?bw/2:0; for(let x=-off;x<W;x+=bw){ const h=8+R()*10|0, l=34+R()*10|0, s=48+R()*14|0; g.fillStyle=`hsl(${h} ${s}% ${l}%)`; g.fillRect(x+m/2,r*bh+m/2,bw-m,bh-m);
+      for(let i=0;i<14;i++){ g.fillStyle=`rgba(${R()<.5?'40,12,6':'230,170,140'},${.06+R()*.1})`; g.fillRect(x+m/2+R()*(bw-m-4),r*bh+m/2+R()*(bh-m-2),2+R()*5,1+R()*2); } } }
+    document.getElementById('gate').style.setProperty('--brick',`url(${c.toDataURL('image/jpeg',.82)})`); }
+  build(); if(!G.name) setTimeout(()=>inp.focus(),50);
+  // the back office: renamed items, the loading story
+  fetch('gate.json').then(r=>r.ok?r.json():null).then(j=>{ if(!j) return;
+    if(j.sub) $('#gsub').textContent=j.sub;
+    for(const e of Array.isArray(j.look)?j.look:[]) if(e&&e.key&&String(e.label||'').trim()) K.labels[e.key]=String(e.label).trim();
+    const L=(Array.isArray(j.loading)?j.loading:[]).map(x=>String(x&&x.line||x||'').trim()).filter(Boolean); if(L.length) LOADING=L;
+    build(); }).catch(()=>{});
 })();
 </script>
 
@@ -261,21 +330,12 @@ configReady.then(()=>{ if(!window.VR_CONFIG||!window.VR_CONFIG.url||window.supab
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script>
 let houseLoading=false;
+// the house is built only after the visitor has chosen a name and look and pressed 進門 (nothing 3D runs at the gate)
 window.__loadHouse=()=>{
   if(houseLoading) return;
   houseLoading=true;
-  import('./vr-house.js').catch(error=>{
-    console.error(error);
-    const button=document.getElementById('genter');
-    button.textContent='載入失敗，點此重新整理';
-    button.disabled=false;
-    button.onclick=()=>location.reload();
-  });
+  import('./vr-house.js').catch(error=>{ console.error(error); houseLoading=false; window.__gateFail?.(); });
 };
-if(window.__wantEnter) window.__loadHouse();
-// 在大門等待取名時即於背景預載，進門時不需等待整理
-if('requestIdleCallback' in window) requestIdleCallback(()=>window.__loadHouse(),{timeout:2500});
-else setTimeout(()=>window.__loadHouse(),1200);
 </script>
 </body>
 </html>

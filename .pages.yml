@@ -247,6 +247,19 @@ content:
           - { name: when, label: 情境（說明用）, type: string }
           - { name: a, label: 甲句, type: text }
           - { name: b, label: 乙句, type: text }
+      - name: look
+        label: 門口的文字與扮相名稱（衣著、帽冠、面飾、隨身、髮型、氣質、顏色、按鈕；代號請不要改）
+        type: object
+        list: true
+        fields:
+          - { name: key, label: 代號, type: string }
+          - { name: label, label: 顯示文字, type: string }
+      - name: loading
+        label: 進門載入時的小故事（一句一行，依序出現）
+        type: object
+        list: true
+        fields:
+          - { name: line, label: 句子, type: string }
 
   - name: text
     label: 網站文字

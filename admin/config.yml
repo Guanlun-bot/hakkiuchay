@@ -179,6 +179,19 @@ collections:
               - { name: when, label: 情境（說明用）, widget: string, required: false }
               - { name: a, label: 甲句, widget: text, required: false }
               - { name: b, label: 乙句, widget: text, required: false }
+          - name: look
+            label: 門口的文字與扮相名稱（衣著、帽冠、面飾、隨身、髮型、氣質、顏色、按鈕；代號請不要改）
+            widget: list
+            summary: "{{fields.key}}：{{fields.label}}"
+            fields:
+              - { name: key, label: 代號, widget: string }
+              - { name: label, label: 顯示文字, widget: string }
+          - name: loading
+            label: 進門載入時的小故事（一句一行，依序出現）
+            widget: list
+            summary: "{{fields.line}}"
+            fields:
+              - { name: line, label: 句子, widget: string }
       - name: text
         label: 網站文字
         file: _data/text.yml

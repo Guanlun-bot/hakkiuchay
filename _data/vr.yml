@@ -827,6 +827,10 @@ npc:
     when: "點烤箱門（甲：開；乙：關）"
     a: "烤箱門打開"
     b: "烤箱門關上"
+  - key: bath.noren
+    when: "浴室門簾上的字"
+    a: "湯"
+    b: ""
 look:
   - key: "cat.o"
     label: "衣著"

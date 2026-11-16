@@ -5498,7 +5498,7 @@ const MEAL_TXT={
   'menu.n':['素陽春麵加蛋，配兩碟小菜','麵線，配兩碟小菜'],
   'wc.f':['女',''],'wc.m':['男',''],
   'act.fire':['生火','熄火'],'act.gas':['點火','關火'],'act.tap':['開水','關水'],'act.noodle':['煮麵爐加熱','煮麵爐關掉'],'act.basin':['開水','關水'],
-  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'bath.seat':['浴缸',''],'sauna.seat':['烤箱',''],'bath.hello':['泡進檜木浴缸。',''],'sauna.hello':['在烤箱坐下，沙漏開始走。',''],'bath.status':['在浴室',''],'act.shower':['淋浴出水','淋浴關水'],'act.wash':['水龍頭打開','水龍頭關上'],'act.bdoor':['玻璃門拉開','玻璃門關上'],'act.sdoor':['烤箱門打開','烤箱門關上'],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
+  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'bath.seat':['浴缸',''],'bath.noren':['湯',''],'sauna.seat':['烤箱',''],'bath.hello':['泡進檜木浴缸。',''],'sauna.hello':['在烤箱坐下，沙漏開始走。',''],'bath.status':['在浴室',''],'act.shower':['淋浴出水','淋浴關水'],'act.wash':['水龍頭打開','水龍頭關上'],'act.bdoor':['玻璃門拉開','玻璃門關上'],'act.sdoor':['烤箱門打開','烤箱門關上'],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
   'cal.head':['學鳩齋',''],'cal.foot':['學鳩齋','hakkiuchay.space'],
   'dine.title':['飯桌',''],'dine.intro':['圓桌配四條長凳，一條坐三人。開飯時空位都可以坐，按 E 或點長凳入座。',''],
   'dine.next':['下一餐：{餐}　{時間}',''],'dine.now':['正在吃{餐}',''],'dine.today':['今日菜單',''],
@@ -5981,12 +5981,17 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     plane(44.82-43.85,1.45,frosted,(43.85+44.82)/2,1.695,Z0+.035,0); plane(1.6,1.35,frosted,X1-.035,2.175,19.6,-Math.PI/2);
     // ---- the entrance: a stone floor, a step, a shoe cabinet against the solid wall ahead, curtains at the side openings
     { const wall=(ax,at,a,b,y1=CYb,t=.1,m=hk(1,2.9))=>{ if(ax==='x'){ B(t,y1,b-a,m,at,y1/2,(a+b)/2); OB(at-t/2,at+t/2,a,b); } else { B(b-a,y1,t,m,(a+b)/2,y1/2,at); OB(a,b,at-t/2,at+t/2); } };
-      wall('x',xv,zv0,zv1,CYb,.1,hk(2,2.9)); const op0=42.4;
+      wall('x',xv,zv0,zv1,CYb,.1,hk(2,2.9)); const op0=42.2;
       for(const z of [zv0,zv1]){ wall('z',z,X0,op0,CYb,.1,hk(.5,2.9)); B(xv-op0,CYb-2.1,.1,hk(.7,.8),(op0+xv)/2,(2.1+CYb)/2,z); for(const xx of [op0,xv-.05]) B(.04,2.1,.12,hgrain,xx,1.05,z);
         for(const s of [0,1]){ const p=plane((xv-op0)/2-.01,1.25,mat(0xffffff,.95,{side:THREE.DoubleSide,map:textCanvas(96,256,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle='rgba(160,140,110,.07)'; g.fillRect(0,y,w,1); } g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,8); g.font=F('600',40); g.textAlign='center'; g.fillText(s?'湯':'',w/2,h*.35); })}),op0+(xv-op0)*(.25+s*.5),2.1-.625,z,0); p.userData={type:'block'}; } }
-      // the shoe step and cabinet; slippers waiting
-      B(xv-X0-.15,.12,zv1-zv0-.2,hk(1,.3),(X0+xv)/2+.2,.06,(zv0+zv1)/2,scene,{type:'bathin'}); OB(xv-.42,xv-.06,19.2,20.6);
-      B(.34,.9,1.2,hgrain,xv-.24,.45+.12,dzc,scene,{type:'bathin'}); B(.36,.03,1.22,hgrain,xv-.24,1.03,dzc); B(.004,.8,.006,hgrain,xv-.415,.57,dzc); for(const s2 of [-1,1]) B(.012,.012,.08,brass,xv-.42,.75,dzc+s2*.1);
+      // a long linen curtain in the doorway from the 明間, 湯 on it
+      { const nm=mat(0xffffff,.95,{side:THREE.DoubleSide,map:textCanvas(256,384,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle=`rgba(160,140,110,${y%4?.05:.09})`; g.fillRect(0,y,w,1); }
+          g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,10); g.fillRect(0,h-6,w,6); g.fillStyle='#6a4e36'; g.font=F('600',96); g.textAlign='center'; g.textBaseline='middle'; g.fillText(NT('bath.noren'),w*.75,h*.3); })});
+        const w2=(20.6-19.2)/2; for(const s2 of [0,1]){ const p2=new THREE.Mesh(new THREE.PlaneGeometry(w2-.01,1.45),nm.clone()); p2.material.map=nm.map.clone(); p2.material.map.needsUpdate=true; p2.material.map.repeat.set(.5,1); p2.material.map.offset.set(s2*.5,0);
+          p2.position.set(41.76,2.44-.725,19.2+w2*(s2+.5)); p2.rotation.y=-Math.PI/2; scene.add(p2); p2.userData={type:'block'}; }
+        const rod=C(.01,.01,1.5,hgrain,41.76,2.45,19.9,scene,8); rod.rotation.x=Math.PI/2; }
+      // the shoe step; slippers waiting
+      B(xv-X0-.15,.12,zv1-zv0-.2,hk(1,.3),(X0+xv)/2+.2,.06,(zv0+zv1)/2,scene,{type:'bathin'});
       for(let i=0;i<3;i++) for(const s of [-1,1]){ const sl=B(.1,.025,.25,mat(0x8a7a5a,.8),42.3+i*.22+s*.055,.14,20.35,scene); } }
     // ---- the changing room: a wash basin and mirror at the court end, basket shelves and towels at the far end, benches
     { const vz0=15.7, vz1=17.3; B(.55,.82,vz1-vz0,hgrain,X0+.3,.41,(vz0+vz1)/2,scene,{type:'bathin'}); B(.58,.04,vz1-vz0+.02,mat(0xf1ebe0,.4),X0+.3,.84,(vz0+vz1)/2);

@@ -5889,7 +5889,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     for(const [x0,x1,z0,z1] of [[nx0,cw0-.05,zw+.08,22.2],[cw1+.05,nx1,zw+.08,22.2],[cw0+.02,cw1-.02,zw+.08,zb]]){ B(x1-x0,.02,.03,cove,(x0+x1)/2,CY-.03,z0+.02); B(.03,.02,z1-z0,cove,x0+.02,CY-.03,(z0+z1)/2); B(.03,.02,z1-z0,cove,x1-.02,CY-.03,(z0+z1)/2); }
     for(const [lx,lz,pi] of [[37.6,21.55,.7],[40.8,21.55,.7],[cx,21.6,.5]]){ const d=new THREE.Mesh(new THREE.CircleGeometry(.07,20),mat(0xffffff,.3,{emissive:0xfff2dc,emissiveIntensity:1.1})); d.rotation.x=Math.PI/2; d.position.set(lx,CY-.001,lz); scene.add(d); const pl=new THREE.PointLight(0xfff0dc,pi,4.5,2); pl.position.set(lx,CY-.2,lz); scene.add(pl); }
     // the corridor end: a granite stand straight on the floor, a rough stone bowl, one bamboo spout over its centre;
-    // a wall-mounted soap pump beside it; the mirror above; grey pebbles filling the half circle in front of the stand
+    // a wall-mounted soap pump beside it; the mirror above
     { const tag={type:'wcspout'}, bz=zb-.36, rough=mat(0xffffff,.95,{map:T.granite,color:0x8f8b84});
       B(.46,.62,.42,stone,cx,.31,bz,scene,{type:'wcbowl'}); L([[0,0],[.22,0],[.27,.06],[.28,.16],[.26,.2],[.2,.2],[.18,.12],[0,.1]],rough,cx,.62,bz,scene,{type:'wcbowl'});
       const wpool=new THREE.Mesh(new THREE.CircleGeometry(.19,28),mat(0x9eb4b8,.05,{transparent:true,opacity:.75})); wpool.rotation.x=-Math.PI/2; wpool.position.set(cx,.8,bz); scene.add(wpool);
@@ -5897,12 +5897,6 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const tip=C(.02,.024,.07,bamboo,cx,1.075,bz+.01,scene,12,tag); tip.rotation.x=-.6;
       // soap pump on a chrome bracket
       { const sx=cx+.34, sy=1.05, sz=zb-.07; B(.07,.02,.06,chrome,sx,sy-.07,sz+.03); L([[0,0],[.035,0],[.038,.1],[.03,.13],[.014,.14]],mat(0xf4f2ee,.25),sx,sy-.06,sz,scene,{type:'wcbowl'}); C(.007,.007,.04,chrome,sx,sy+.1,sz,scene,8); B(.012,.012,.055,chrome,sx,sy+.12,sz-.02); }
-      // pebbles: one instanced mesh, packed in the half circle before the stand
-      { const R0=.62, N=520, geo=new THREE.SphereGeometry(.028,7,5), pm=new THREE.MeshStandardMaterial({roughness:.75}), im=new THREE.InstancedMesh(geo,pm,N), m4=new THREE.Matrix4(), q=new THREE.Quaternion(), e=new THREE.Euler(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), col=new THREE.Color();
-        let s0=9; const r=()=>((s0=s0*16807%2147483647)/2147483647); let n=0;
-        for(let t=0;t<4000&&n<N;t++){ const a=Math.PI+r()*Math.PI, d=Math.sqrt(r()), x=cx+Math.cos(a)*d*.36, z=bz-.21+Math.sin(a)*d*R0; if(z>bz-.2) continue;
-          const k=.7+r()*.8; ps.set(x,.012+r()*.012,z); e.set(r()*3,r()*3,r()*3); q.setFromEuler(e); sc.set(k*1.3,k*.55,k); m4.compose(ps,q,sc); im.setMatrixAt(n,m4); const v=.42+r()*.3; col.setRGB(v,v*.99,v*.97); im.setColorAt(n,col); n++; }
-        im.count=n; im.receiveShadow=true; scene.add(im); }
       const wM=new THREE.MeshStandardMaterial({color:0xeaf4f8,roughness:.05,transparent:true,opacity:.8,emissive:0x8aa8b8,emissiveIntensity:.25});
       const st=new THREE.Mesh(new THREE.CylinderGeometry(.006,.009,.24,8,1,true),wM); st.position.set(cx,.92,bz+.02); st.visible=false; scene.add(st);
       const rip=[]; for(let k=0;k<3;k++){ const rr=new THREE.Mesh(new THREE.RingGeometry(.03,.036,24),new THREE.MeshBasicMaterial({color:0xf2f8fa,transparent:true,opacity:0,depthWrite:false})); rr.rotation.x=-Math.PI/2; rr.position.set(cx,.802,bz+.02); scene.add(rr); rip.push(rr); }

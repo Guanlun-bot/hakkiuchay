@@ -4311,34 +4311,136 @@ async function connectRoomOnce(){
 /* ---------------- people: chat, run / jump / crouch, a network check panel, adaptive resolution ---------------- */
 const NET={st:'',run:false,peers:null,errs:0};
 // chat: the last line each person said rides along in their shared state; new lines show in the log and over their head
+const HUD_TXT={'chat.all':'全齋','chat.jin':'同進','chat.ph':'說點什麼，Enter 送出，Esc 取消','chat.btn':'聊天 (Enter)',
+  'place.xjz':'學鳩齋','place.zlj':'知了間','place.zt':'正廳','place.j3':'第三進','place.nt':'南廳','place.j2':'第二進','place.gt':'過廳','place.j1':'第一進','place.qt':'前庭',
+  'help.btn':'? 操作說明 (H)','help.title':'操作說明','help.keys':'WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動',
+  'map.title':'宅院平面・點一下就過去','map.close':'關閉','map.tea':'茶席','map.books':'書櫃','hud.join':'進來了','hud.leave':'離開了'};
+const HT=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||HUD_TXT[k]||'';
 const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
-#chatlog{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 24px);width:min(360px,70vw);display:flex;flex-direction:column;gap:4px;pointer-events:none;z-index:6;font:14px/1.5 "Noto Serif TC",serif}
-#chatlog .m{background:rgba(241,239,232,.92);color:#3f3a39;border-left:3px solid #a8343a;padding:4px 8px;border-radius:2px;transition:opacity .8s}
-#chatlog .m b{font-weight:700;margin-right:.4em}
-#chatbox{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);width:min(360px,70vw);z-index:7;display:none}
-#chatbox input{width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #b9b2a6;background:#f6f3ec;font:15px "Noto Serif TC",serif;color:#3f3a39;outline:none}
+#chatwrap{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);width:min(380px,calc(100vw - 28px));z-index:7;background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font:14px/1.6 "Noto Serif TC",serif;transition:opacity .45s;opacity:1}
+#chatwrap.idle{opacity:0;pointer-events:none}
+#chatwrap .ch{display:flex;gap:4px;padding:6px 8px 4px;border-bottom:1px solid var(--hud-rule);font-size:12px}
+#chatwrap .ch button{background:transparent;border:1px solid var(--hud-rule);color:var(--hud-soft);border-radius:4px;padding:1px 8px;font:12px "Noto Serif TC",serif;cursor:pointer}
+#chatwrap .ch button.on{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
+#chatlog{max-height:min(34vh,260px);overflow:auto;padding:6px 10px;display:flex;flex-direction:column;gap:2px;text-shadow:0 0 1px rgba(0,0,0,.05)}
+#chatlog .m b{font-weight:700;margin-right:.2em}
+#chatlog .m i{font-style:normal;font-size:11.5px;color:var(--hud-soft);margin-right:.2em}
+#chatlog .m.me b{color:var(--hud-ink)}
+#chatlog .m.sys{font-size:12px;color:var(--hud-soft)}
+#chatbox{display:none;padding:6px 8px 8px;border-top:1px solid var(--hud-rule)}
+#chatwrap.typing #chatbox{display:block}
+#chatbox input{width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid var(--hud-rule);background:transparent;font:15px "Noto Serif TC",serif;color:var(--hud-ink);outline:none;border-radius:4px}
+#chatbtn{position:fixed;left:14px;bottom:calc(var(--blh,120px) + 22px);z-index:7;background:var(--hud-bg);color:var(--hud-ink);border:1px solid var(--hud-rule);border-radius:4px;padding:4px 10px;font:13px "Noto Serif TC",serif;box-shadow:var(--hud-sh);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .45s}
+#chatwrap.idle+#chatbtn{opacity:1;pointer-events:auto}
 #actbtns{position:fixed;right:12px;bottom:76px;display:flex;flex-direction:column;gap:8px;z-index:6}
 #actbtns button{width:52px;height:52px;border-radius:50%;border:1px solid #b9b2a6;background:rgba(241,239,232,.9);font:15px "Noto Serif TC",serif;color:#3f3a39}
 #actbtns button.on{background:#a8343a;color:#fff;border-color:#a8343a}
 #netdiag{position:fixed;right:12px;top:90px;z-index:8;background:rgba(20,18,16,.86);color:#e8e2d6;font:12px/1.6 ui-monospace,monospace;padding:8px 10px;max-width:360px;white-space:pre;display:none}`; document.head.appendChild(css);
-  const log=document.createElement('div'); log.id='chatlog'; document.body.appendChild(log);
-  const box=document.createElement('div'); box.id='chatbox'; box.innerHTML='<input maxlength="120" placeholder="說點什麼，Enter 送出，Esc 取消">'; document.body.appendChild(box);
+  const wrap=document.createElement('div'); wrap.id='chatwrap'; wrap.className='idle';
+  wrap.innerHTML=`<div class="ch"><button data-c="all" class="on">${esc(HT('chat.all'))}</button><button data-c="jin">${esc(HT('chat.jin'))}</button></div><div id="chatlog"></div><div id="chatbox"><input maxlength="120" placeholder="${esc(HT('chat.ph'))}"></div>`;
+  document.body.appendChild(wrap); const btn=document.createElement('button'); btn.id='chatbtn'; btn.textContent=HT('chat.btn'); wrap.after(btn);
+  const log=wrap.querySelector('#chatlog'), box=wrap.querySelector('#chatbox');
   const diag=document.createElement('div'); diag.id='netdiag'; document.body.appendChild(diag);
   const inp=box.querySelector('input');
   inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ const t=inp.value.trim(); if(t) sendChat(t); inp.value=''; closeChat(); } else if(e.key==='Escape'){ inp.value=''; closeChat(); } });
-  return {log,box,inp,diag}; })();
+  // idle: no new line, no typing, no pointer over it for six seconds → it fades out, leaving the small button
+  const st={last:0,hover:false,chan:'all'}; wrap.addEventListener('pointerenter',()=>{ st.hover=true; wake(); }); wrap.addEventListener('pointerleave',()=>{ st.hover=false; st.last=performance.now(); });
+  btn.onclick=()=>openChat();
+  wrap.querySelector('.ch').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; st.chan=b.dataset.c; wrap.querySelectorAll('.ch button').forEach(x=>x.classList.toggle('on',x===b)); filterChat(); wake(); };
+  function wake(){ st.last=performance.now(); wrap.classList.remove('idle'); }
+  setInterval(()=>{ if(wrap.classList.contains('typing')||st.hover) return; if(performance.now()-st.last>6000) wrap.classList.add('idle'); },500);
+  return {log,box,inp,diag,wrap,st,wake}; })();
+// the 進 a point belongs to, and where to say it is (for the chat's labels and the 同進 channel)
+function jinOf(p){ return p.x<9.8?3:p.x<29.4?2:p.x<46.84?1:0; }
+function placeName(p){ if(Math.abs(p.x)<7.64&&p.z<4.3) return HT('place.xjz'); if(Math.abs(p.x)<7.64&&p.z>15.3) return HT('place.zlj');
+  return HT(p.x<-5.5?'place.zt':p.x<5.5?'place.j3':p.x<14.1?'place.nt':p.x<25.1?'place.j2':p.x<33.7?'place.gt':p.x<46.84?'place.j1':'place.qt'); }
+function filterChat(){ const mine=jinOf(ME); for(const d of chatUI.log.children) d.style.display=chatUI.st.chan==='jin'&&d.dataset.j!==undefined&&d.dataset.j!==''&&+d.dataset.j!==mine?'none':''; }
 let myChat=null, myAct=null;
-function openChat(){ if(document.pointerLockElement===canvas) document.exitPointerLock(); chatUI.box.style.display='block'; keys.clear(); chatUI.inp.focus(); }
-function closeChat(){ chatUI.box.style.display='none'; chatUI.inp.blur(); }
-function chatLine(name,text,color){ const d=document.createElement('div'); d.className='m'; if(color) d.style.borderLeftColor=color; const b=document.createElement('b'); b.textContent=name+'：'; d.appendChild(b); d.appendChild(document.createTextNode(text)); chatUI.log.appendChild(d);
-  while(chatUI.log.children.length>6) chatUI.log.firstChild.remove(); setTimeout(()=>{ d.style.opacity=0; setTimeout(()=>d.remove(),900); },14000); }
-function sendChat(t){ t=t.replace(/[\u0000-\u001f]/g,'').slice(0,120); myChat=[t,Date.now()]; chatLine(myName+'（你）',t,myColor); pushPresence(); }
+function openChat(){ if(document.pointerLockElement===canvas) document.exitPointerLock(); chatUI.wrap.classList.add('typing'); chatUI.wake(); keys.clear(); chatUI.inp.focus(); }
+function closeChat(){ chatUI.wrap.classList.remove('typing'); chatUI.inp.blur(); chatUI.wake(); }
+// one line: the speaker's name in their own colour (yours in ink), where they are, the words; system lines small and grey
+function chatLine(name,text,color,{me=false,sys=false,at=null}={}){ const d=document.createElement('div'); d.className='m'+(me?' me':'')+(sys?' sys':'');
+  if(!sys){ const b=document.createElement('b'); b.textContent=name; if(!me&&color){ const c=new THREE.Color(color); if(document.documentElement.dataset.hud==='night') c.lerp(new THREE.Color(0xffffff),.35); else c.multiplyScalar(.8); b.style.color='#'+c.getHexString(); } d.appendChild(b);
+    if(at){ const i=document.createElement('i'); i.textContent='['+placeName(at)+']'; d.appendChild(i); d.dataset.j=jinOf(at); } d.appendChild(document.createTextNode('：')); }
+  d.appendChild(document.createTextNode(text)); chatUI.log.appendChild(d);
+  while(chatUI.log.children.length>60) chatUI.log.firstChild.remove(); filterChat(); chatUI.log.scrollTop=chatUI.log.scrollHeight; chatUI.wake(); }
+function chatSys(text){ chatLine('',text,null,{sys:true}); }
+function sendChat(t){ t=t.replace(/[\u0000-\u001f]/g,'').slice(0,120); myChat=[t,Date.now()]; chatLine(myName,t,myColor,{me:true,at:{x:ME.x,z:ME.z}}); pushPresence(); }
 function bubbleTex(text){ const c=document.createElement('canvas'); c.width=512; c.height=160; const g=c.getContext('2d'); g.font='30px "Noto Serif TC",serif';
   const lines=[]; let cur=''; for(const ch of text){ if(g.measureText(cur+ch).width>460){ lines.push(cur); cur=ch; if(lines.length===2) break; } else cur+=ch; } if(lines.length<3&&cur) lines.push(cur); if(lines.length>3) lines.length=3;
   const h=24+lines.length*40; g.fillStyle='rgba(246,243,236,.95)'; g.strokeStyle='#8a8478'; g.lineWidth=2; g.beginPath(); g.roundRect(4,4,504,h,10); g.fill(); g.stroke();
   g.fillStyle='#3f3a39'; g.textBaseline='top'; lines.forEach((l,i)=>g.fillText(l,20,16+i*40)); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return {t,h}; }
 function showBubble(o,text){ if(o.bub){ o.av.g.remove(o.bub); o.bub.material.map.dispose(); }
   const {t,h}=bubbleTex(text); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true})); sp.scale.set(1.2,1.2*160/512,1); sp.center.set(.5,1-(h+8)/160); sp.position.y=2.02; sp.renderOrder=6; o.av.g.add(sp); o.bub=sp; o.bubT=6.5; }
+/* ---- 操作說明 (H) and the small map (N) ---- */
+const helpUI=(()=>{ const css=document.createElement('style'); css.textContent=`
+#helpbox{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
+#helpbox.on{display:flex}
+#helpbox .w{background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);padding:16px 20px;max-width:min(560px,92vw);font:14px/1.9 "Noto Serif TC",serif;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#helpbox h3{margin:0 0 8px;font-size:16px;letter-spacing:.1em;border-left:3px solid var(--seal);padding-left:8px}
+#helpbox dl{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:0}
+#helpbox dt{white-space:nowrap}#helpbox dt kbd{font:12.5px "Noto Serif TC",serif;border:1px solid var(--hud-rule);border-bottom-width:2px;border-radius:3px;padding:0 6px}
+#helpbox dd{margin:0;color:var(--hud-soft)}
+#hud-tr .mm{position:relative;width:160px;height:160px;border-radius:50%;overflow:hidden;background:var(--hud-bg);box-shadow:var(--hud-sh);cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#hud-tr .mm canvas{width:100%;height:100%;display:block}
+#hud-tr .mtools{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+#hud-tr.mmoff .mm{display:none}
+#bigmap{position:fixed;inset:0;z-index:39;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35)}
+#bigmap.on{display:flex}
+#bigmap .w{background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);padding:12px;font:13px "Noto Serif TC",serif}
+#bigmap .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;letter-spacing:.08em}
+#bigmap canvas{display:block;cursor:crosshair;max-width:92vw;max-height:80vh}
+body.touch #hud-tr{top:52px}`; document.head.appendChild(css);
+  const box=document.createElement('div'); box.id='helpbox'; document.body.appendChild(box);
+  const render=()=>{ box.innerHTML=`<div class="w"><h3>${esc(HT('help.title'))}</h3><dl>${HT('help.keys').split('｜').map(p=>{ const m=p.match(/^(.+?)\s+(\S.*)$/)||[p,p,'']; return `<dt><kbd>${esc(m[1])}</kbd></dt><dd>${esc(m[2])}</dd>`; }).join('')}</dl></div>`; };
+  box.onclick=()=>box.classList.remove('on');
+  const hb=document.createElement('button'); hb.id='bHelp'; hb.textContent=HT('help.btn'); $('#bar').appendChild(hb); hb.onclick=()=>toggle();
+  function toggle(on){ render(); on=on??!box.classList.contains('on'); box.classList.toggle('on',on); hb.classList.toggle('on',on); if(on&&document.pointerLockElement===canvas) document.exitPointerLock(); }
+  return {toggle}; })();
+
+// the compound in plan, north (−x) up, east (−z) right; the same drawing serves the small round map and the big one
+const HPLAN={ blds:[], yards:[[-5.5,5.5,4.3,15.3],[14.1,25.1,4.3,15.3],[33.7,46.84,4.3,15.3],[46.84,53.3,-4.3,23.9]], labels:[] };
+for(const cx of [0,19.6,39.2]) HPLAN.blds.push([cx-7.64,cx+7.64,-4.3,4.3],[cx-7.64,cx+7.64,15.3,23.9]);
+for(const [a,b] of [[-14.1,-5.5],[5.5,14.1],[25.1,33.7]]) HPLAN.blds.push([a,b,4.3,15.3]);
+for(const [a,b] of [[-14.1,-7.64],[7.64,11.96],[27.24,31.56]]) HPLAN.blds.push([a,b,-4.3,4.49],[a,b,15.11,23.9]);
+HPLAN.labels=[['place.xjz',0,0],['place.zlj',0,19.6],['place.zt',-9.8,9.8],['place.j3',0,9.8],['place.nt',9.8,9.8],['place.j2',19.6,9.8],['place.gt',29.4,9.8],['place.j1',40,9.8],['place.qt',50,9.8]];
+const POIS=[['map.tea',ZP.modern.cx,ZP.modern.cz],['map.books',-2,-2.6]];
+function drawPlan(g,W,H,{cx,cz,scale,round=false,labels=false}){ const S=scale, X=z=>W/2-(z-cz)*S, Y=x=>H/2+(x-cx)*S;
+  const night=document.documentElement.dataset.hud==='night', ink=night?'#f0ece1':'#1f1d1a', soft=night?'rgba(240,236,225,.35)':'rgba(31,29,26,.28)', yard=night?'rgba(240,236,225,.06)':'rgba(120,110,90,.10)';
+  g.clearRect(0,0,W,H);
+  const rect=(r,fill,stroke)=>{ const [x0,x1,z0,z1]=r, a=X(z1), b=X(z0), c=Y(x0), d=Y(x1); if(fill){ g.fillStyle=fill; g.fillRect(a,c,b-a,d-c); } if(stroke){ g.strokeStyle=stroke; g.lineWidth=1; g.strokeRect(a+.5,c+.5,b-a,d-c); } };
+  for(const r of HPLAN.yards) rect(r,yard,null);
+  for(const r of HPLAN.blds) rect(r,night?'rgba(240,236,225,.12)':'rgba(31,29,26,.10)',soft);
+  g.font=`${labels?13:10}px "Noto Serif TC",serif`; g.textAlign='center'; g.textBaseline='middle';
+  if(labels) for(const [k,x,z] of HPLAN.labels){ g.fillStyle=ink; g.fillText(HT(k),X(z),Y(x)); }
+  for(const [k,x,z] of POIS){ g.fillStyle=night?'#d8b56a':'#8a6a2e'; g.beginPath(); g.arc(X(z),Y(x),labels?4:3,0,Math.PI*2); g.fill(); if(labels){ g.fillText(HT(k),X(z),Y(x)-12); } }
+  for(const [,o] of others){ const p=o.av.g.position, c=/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'; g.fillStyle=c; g.beginPath(); g.arc(X(p.z),Y(p.x),labels?5:4,0,Math.PI*2); g.fill(); g.strokeStyle=ink; g.lineWidth=1; g.stroke(); }
+  // you: a dot and the way you are looking (north up: the screen's up is −x, right is −z)
+  const px=X(ME.z), py=Y(ME.x), fx=Math.cos(ME.yaw), fy=-Math.sin(ME.yaw);   // forward (−sin yaw, −cos yaw) in (x,z) lands on screen as (cos yaw, −sin yaw)
+  const ang=Math.atan2(fy,fx); g.fillStyle=night?'rgba(240,236,225,.22)':'rgba(31,29,26,.18)'; g.beginPath(); g.moveTo(px,py); g.arc(px,py,labels?40:26,ang-.55,ang+.55); g.closePath(); g.fill();
+  g.fillStyle=ink; g.beginPath(); g.arc(px,py,labels?5:4,0,Math.PI*2); g.fill(); }
+const mapUI=(()=>{ const tr=$('#hud-tr'); tr.innerHTML='<div class="mm"><canvas width="320" height="320"></canvas></div>'; const mm=tr.querySelector('.mm'), c=mm.querySelector('canvas'), g=c.getContext('2d');
+  if(LS.get('hk-map')==='off') tr.classList.add('mmoff');
+  const big=document.createElement('div'); big.id='bigmap'; big.innerHTML=`<div class="w"><div class="hd"><span>${esc(HT('map.title'))}</span><button class="tb">${esc(HT('map.close'))}</button></div><canvas></canvas></div>`; document.body.appendChild(big);
+  const bc=big.querySelector('canvas'), bg=bc.getContext('2d');
+  // the whole compound fits: 68.5 m north–south, 29 m east–west
+  const fit=()=>{ const s=Math.min(innerWidth*.9/29,innerHeight*.75/68.5); bc.width=Math.round(29*s*1.4); bc.height=Math.round(68.5*s); return s; };
+  let bs=fit(); const bcx=19.6, bcz=9.8;
+  big.querySelector('button').onclick=()=>big.classList.remove('on'); big.onclick=e=>{ if(e.target===big) big.classList.remove('on'); };
+  bc.onclick=e=>{ const r=bc.getBoundingClientRect(), sx=(e.clientX-r.left)*bc.width/r.width, sy=(e.clientY-r.top)*bc.height/r.height;
+    const x=bcx+(sy-bc.height/2)/bs, z=bcz-(sx-bc.width/2)/bs; teleport(x,z); big.classList.remove('on'); };
+  mm.onclick=()=>{ bs=fit(); big.classList.add('on'); if(document.pointerLockElement===canvas) document.exitPointerLock(); };
+  // to a walkable spot at or near where you pointed
+  function teleport(x,z){ if(ME.seat>=0) standUp(); let best=null; for(let r=0;r<3&&!best;r+=.25) for(let a=0;a<Math.PI*2;a+=Math.PI/8){ const px=x+Math.cos(a)*r, pz=z+Math.sin(a)*r; if(walkable(px,pz)){ best={x:px,z:pz}; break; } }
+    if(!best){ toast('那裡走不進去'); return; } ME.x=best.x; ME.z=best.z; ME.path=[]; ME.targetYaw=null; if(VIEW.mode!=='walk') setView('walk'); pushPresence(true); }
+  let t=0; function tick(dt){ t+=dt; if(t<.1) return; t=0; if(!tr.classList.contains('mmoff')) drawPlan(g,320,320,{cx:ME.x,cz:ME.z,scale:4.2});
+    if(big.classList.contains('on')) drawPlan(bg,bc.width,bc.height,{cx:bcx,cz:bcz,scale:bs,labels:true}); }
+  function toggle(){ tr.classList.toggle('mmoff'); LS.set('hk-map',tr.classList.contains('mmoff')?'off':'on'); }
+  return {tick,toggle,teleport}; })();
+ZL_ANIM.push(dt=>mapUI.tick(dt||.016));
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.repeat) return; const k=e.key.toLowerCase();
+  if(k==='h'){ e.preventDefault(); helpUI.toggle(); } else if(k==='n'){ e.preventDefault(); mapUI.toggle(); } else if(k==='escape'){ $('#helpbox')?.classList.remove('on'); $('#bigmap')?.classList.remove('on'); } });
+
 // actions
 function doJump(){ if(ME.seat>=0||ME.jy>0||ME.jv>0) return; ME.jv=3.3; ME.jy=0.0001; playStep(); myAct=['j',Date.now()]; pushPresence(); }
 function toggleCrouch(){ if(ME.seat>=0) return; ME.crouch=!ME.crouch; actBtn('蹲',ME.crouch); pushPresence(); }
@@ -4347,7 +4449,7 @@ function actBtn(label,on){ const b=[...document.querySelectorAll('#actbtns butto
 if(isTouch){ const w=document.createElement('div'); w.id='actbtns'; for(const [l,f] of [['聊',openChat],['跑',toggleRun],['跳',doJump],['蹲',toggleCrouch]]){ const b=document.createElement('button'); b.textContent=l; b.onclick=e=>{ e.stopPropagation(); f(); }; w.appendChild(b); } document.body.appendChild(w); }
 // others: chat bubbles, jumps and crouching, every frame
 function tickPeople(dt){ for(const [,o] of others){ const p=o.p||{};
-    const cm=Array.isArray(p.cm)?p.cm:null; if(o.cmAt===undefined) o.cmAt=cm?cm[1]:null; else if(cm&&cm[1]!==o.cmAt){ if(typeof cm[0]==='string'){ const nm=str(p.n,12)||'訪客'; chatLine(nm,cm[0].slice(0,120),/^#[0-9a-f]{6}$/i.test(p.c)?p.c:'#888'); showBubble(o,cm[0].slice(0,120)); } o.cmAt=cm[1]; }
+    const cm=Array.isArray(p.cm)?p.cm:null; if(o.cmAt===undefined) o.cmAt=cm?cm[1]:null; else if(cm&&cm[1]!==o.cmAt){ if(typeof cm[0]==='string'){ const nm=str(p.n,12)||'訪客'; chatLine(nm,cm[0].slice(0,120),/^#[0-9a-f]{6}$/i.test(p.c)?p.c:'#888',{at:{x:o.av.g.position.x,z:o.av.g.position.z}}); showBubble(o,cm[0].slice(0,120)); } o.cmAt=cm[1]; }
     if(o.bub){ o.bubT-=dt; if(o.bubT<=0){ o.av.g.remove(o.bub); o.bub.material.map.dispose(); o.bub=null; } }
     const ac=Array.isArray(p.ac)?p.ac:null; if(o.acAt===undefined) o.acAt=ac?ac[1]:null; else if(ac&&ac[1]!==o.acAt){ if(ac[0]==='j') o.jt=0; o.acAt=ac[1]; }
     let jy=0; if(o.jt!==undefined&&o.jt<.68){ o.jt+=dt; jy=Math.max(0,Math.sin(Math.PI*Math.min(1,o.jt/.68)))*.55; }

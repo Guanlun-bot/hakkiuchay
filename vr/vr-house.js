@@ -5811,15 +5811,27 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
   // beige floor tiles, pale oak doors, white china, chrome; stalls walled to the ceiling (women: two bidet toilets; men: a
   // urinal and a bidet toilet); a long mat before each row of stalls; a soft glow along the ceiling and high windows.
   { const nx0=36.62, nx1=41.78, zw=20.9, zb=23.6, cx=39.2, H=roofUnder(zw-19.6)-.03, CY=3.0, cw0=38.7, cw1=39.7, dz0=21.05, dz1=21.95, BH=ZR.brickH, LH=1.1, LP=.08;
-    const white=new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92}), cream=mat(0xefe7d9,.88), oak=mat(0xd8b88c,.55), chrome=mat(0xd9dde0,.25,{metalness:.35});
+    // pale oak with its grain: long straight lines, a few cathedral arches, the odd darker streak
+    const oakTex=textCanvas(256,512,(g,w,h)=>{ g.fillStyle='#d9b98d'; g.fillRect(0,0,w,h); let s1=13; const r=()=>((s1=s1*16807%2147483647)/2147483647);
+      for(let i=0;i<70;i++){ const x=r()*w, a=.05+r()*.12; g.strokeStyle=`rgba(${150+r()*30|0},${105+r()*25|0},${60+r()*20|0},${a})`; g.lineWidth=.6+r()*1.6; g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+(r()-.5)*14,h*.33,x+(r()-.5)*14,h*.66,x+(r()-.5)*10,h); g.stroke(); }
+      for(let k=0;k<5;k++){ const x0=r()*w, y0=r()*h, sw=12+r()*26; for(let j=0;j<6;j++){ g.strokeStyle=`rgba(140,95,55,${.08+r()*.06})`; g.lineWidth=1; g.beginPath(); g.moveTo(x0-sw+j*3,y0+120); g.quadraticCurveTo(x0,y0-40+j*8,x0+sw-j*3,y0+120); g.stroke(); } }
+      for(let i=0;i<900;i++){ g.fillStyle=`rgba(120,80,40,${r()*.06})`; g.fillRect(r()*w,r()*h,1,3+r()*6); } });
+    const oak=mat(0xffffff,.5,{map:oakTex});
+    const white=new THREE.MeshStandardMaterial({map:texRep(T.white,1,1),roughness:.92}), cream=mat(0xefe7d9,.88), chrome=mat(0xd9dde0,.25,{metalness:.35});
     // the dividing wall seen from the hall: like the house (brick below, plaster above); the axis door with its curtain
     for(const [a,b] of [[nx0-.07,cx-.45],[cx+.45,nx1+.07]]){ const L0=b-a; B(L0,BH,.14,mBrick(L0*.78,BH*1.05),(a+b)/2,BH/2,zw); B(L0,H-BH,.14,white,(a+b)/2,(BH+H)/2,zw); OB(a,b,zw-.07,zw+.07); }
     B(.9,H-2.45,.14,white,cx,(2.45+H)/2,zw); for(const s of [-1,1]) B(.08,2.47,.2,darkWood,cx+s*.49,1.235,zw); B(1.06,.1,.2,darkWood,cx,2.5,zw); B(.9,.06,.24,stone,cx,.03,zw);
-    for(const s of [-1,1]){ const p=plane(.45,.8,indigo,cx+s*.225,2.02,zw-.075,Math.PI); p.userData={type:'block'}; }
+    { const linen=mat(0xffffff,.95,{side:THREE.DoubleSide,map:textCanvas(128,384,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle=`rgba(160,140,110,${y%4?.05:.09})`; g.fillRect(0,y,w,1); } for(let x=0;x<w;x+=3){ g.fillStyle='rgba(255,255,255,.05)'; g.fillRect(x,0,1,h); }
+        g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,10); g.fillRect(0,h-6,w,6); g.strokeStyle='#8a6a4a'; g.lineWidth=4; g.beginPath(); g.arc(w/2,h*.22,16,0,Math.PI*2); g.stroke(); })});
+      for(const s of [-1,1]){ const p=plane(.44,1.45,linen,cx+s*.222,2.42-1.45/2,zw-.075,Math.PI); p.userData={type:'block'}; } C(.01,.01,.92,woodDk,cx,2.43,zw-.075,scene,8).rotation.z=Math.PI/2; }
     for(const px of [36.55,41.85]) B(.2,1.22,1.22,white,px,1.55,ZR.win.z);   // the octagonal windows behind the wall, walled up
     // pale beige tiles, 60 cm, thin joints
-    const tiles=mat(0xffffff,.55,{map:textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#d8cfbf'; g.fillRect(0,0,w,h); for(let i=0;i<2;i++) for(let j=0;j<2;j++){ const v=232-((i+j)%2)*4; g.fillStyle=`rgb(${v},${v-8},${v-20})`; g.fillRect(i*128+1.5,j*128+1.5,125,125); } })});
-    tiles.map.wrapS=tiles.map.wrapT=THREE.RepeatWrapping; tiles.map.repeat.set((nx1-nx0)/1.2,(zb-zw)/1.2);
+    const tiles=mat(0xffffff,.32,{map:textCanvas(512,512,(g,w,h)=>{ g.fillStyle='#cbc1b0'; g.fillRect(0,0,w,h); let s2=21; const r=()=>((s2=s2*16807%2147483647)/2147483647);
+      for(let i=0;i<2;i++) for(let j=0;j<2;j++){ const x0=i*256+2, y0=j*256+2, S=252, v=228+(r()-.5)*10; g.fillStyle=`rgb(${v|0},${(v-9)|0},${(v-22)|0})`; g.fillRect(x0,y0,S,S);
+        for(let k=0;k<2600;k++){ const t=r(); g.fillStyle=t<.5?`rgba(255,250,240,${r()*.18})`:`rgba(150,135,110,${r()*.12})`; const d=.8+r()*2.4; g.fillRect(x0+r()*S,y0+r()*S,d,d); }
+        for(let k=0;k<3;k++){ g.strokeStyle=`rgba(190,178,158,${.25+r()*.2})`; g.lineWidth=.8+r(); g.beginPath(); let x=x0+r()*S, y=y0; g.moveTo(x,y); for(let m=0;m<8;m++){ x+=(r()-.5)*50; y+=S/8; g.lineTo(Math.min(x0+S,Math.max(x0,x)),y); } g.stroke(); }
+        const gr=g.createLinearGradient(x0,y0,x0+S,y0+S); gr.addColorStop(0,'rgba(255,255,255,.06)'); gr.addColorStop(1,'rgba(0,0,0,.04)'); g.fillStyle=gr; g.fillRect(x0,y0,S,S); } })});
+    tiles.map.wrapS=tiles.map.wrapT=THREE.RepeatWrapping; tiles.map.repeat.set((nx1-nx0)/1.2,(zb-zw)/1.2); tiles.metalness=.05;
     const fl=plane(nx1-nx0,zb-zw-.07,tiles,cx,.008,(zw+.07+zb)/2,0); fl.rotation.x=-Math.PI/2; fl.userData={type:'floor'};
     B(nx1-nx0,.04,zb-zw-.07,mat(0xf6f3ec,.95),cx,CY+.02,(zw+.07+zb)/2);
     // a wall face in cream with the lower part standing proud to make a ledge at 1.1 m; n points into the room

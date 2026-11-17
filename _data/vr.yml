@@ -148,6 +148,15 @@ texts:
   - key: dcup
     title: 菜櫥與茶水櫃
     body: "左邊是紗門菜櫥，收剩菜和醬菜；右邊是茶水櫃，熱水瓶、茶壺和杯子，飯後喝茶。"
+  - key: cinescreen
+    title: 電影院銀幕
+    body: "點銀幕打開片單：選片、播放、暫停、快轉、全螢幕。誰按都算，在電影院的人看到的都一樣。"
+  - key: cinespk
+    title: 電影院音響
+    body: "銀幕兩側一對落地喇叭，矮櫃裡是中置喇叭和重低音，兩側牆上四顆環繞喇叭。影片的左聲道從北邊、右聲道從南邊出來，走出房間聲音就漸漸聽不到。"
+  - key: cinecab
+    title: 電影院矮櫃
+    body: "銀幕下的長矮櫃，中間兩格是喇叭的布面，兩側收著影片和遙控器。"
   - key: clsshelf
     title: 教室矮書櫃
     body: "窗下的矮書櫃，線裝書平放成疊，幾個藍布書套，櫃頂擱著三卷書畫。"
@@ -255,6 +264,9 @@ music:
   - title: Silent Night
     artist: Piano
     file: Silent Night - Piano.mp3
+
+# 電影院（12 號房）的片單：影片放在 Cloudflare R2，這裡填標題和網址；字幕檔（.srt 或 .vtt）可留空
+films: []
 
 npc:
   - key: who.yu
@@ -849,6 +861,74 @@ npc:
   - key: wash.hello
     when: "坐上洗身矮凳時的提示"
     a: "坐下洗身。"
+    b: ""
+  - key: cine.seat
+    when: "電影院座位名稱（甲：前排沙發；乙：後排）"
+    a: "電影院沙發"
+    b: "電影院後排"
+  - key: cine.label
+    when: "電影院座位的動作"
+    a: "看電影"
+    b: ""
+  - key: cine.hello
+    when: "在電影院坐下時"
+    a: "在沙發坐下。點銀幕選片、播放。"
+    b: ""
+  - key: cine.status
+    when: "在電影院時的狀態"
+    a: "在電影院看電影"
+    b: ""
+  - key: cine.title
+    when: "電影院面板標題"
+    a: "電影院"
+    b: ""
+  - key: cine.none
+    when: "片單是空的時候"
+    a: "片單還是空的：請在後台「電影院片單」加入影片。"
+    b: ""
+  - key: cine.now
+    when: "面板上的放映狀態（甲：播放中；乙：暫停）"
+    a: "正在放映"
+    b: "暫停中"
+  - key: cine.idle
+    when: "沒有放映時"
+    a: "目前沒有放映。"
+    b: ""
+  - key: cine.play
+    when: "播放鍵（甲：播放；乙：暫停）"
+    a: "播放"
+    b: "暫停"
+  - key: cine.skip
+    when: "跳轉鍵（甲：倒退；乙：快轉）"
+    a: "倒退 10 秒"
+    b: "快轉 10 秒"
+  - key: cine.stop
+    when: "停止鍵"
+    a: "停止放映"
+    b: ""
+  - key: cine.vol
+    when: "音量"
+    a: "音量"
+    b: ""
+  - key: cine.subs
+    when: "字幕鍵（甲：開；乙：關）"
+    a: "字幕：開"
+    b: "字幕：關"
+  - key: cine.full
+    when: "全螢幕鍵（甲：進入；乙：離開）"
+    a: "全螢幕"
+    b: "離開全螢幕"
+  - key: cine.toast
+    when: "有人開始／暫停時的提示（後面接片名）"
+    a: "開始放映"
+    b: "暫停放映"
+  - key: cine.err
+    when: "影片載入失敗時"
+    a: "影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。"
+    b: ""
+  - key: cine.tap
+    when: "瀏覽器擋住自動播放時"
+    a: "點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。"
     b: ""
   - key: cls.seat
     when: "教室座位的名稱（甲：學生座；乙：講桌）"

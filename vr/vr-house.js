@@ -3589,7 +3589,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['cinescreen','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3603,6 +3603,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
   case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
+  case 'cinescreen': if(window.__cineAct) window.__cineAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
@@ -3938,7 +3939,7 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
   ch.on('presence',{event:'sync'},()=>{ const st=ch.presenceState(); here=new Set(Object.keys(st));
     for(const k of here){ const m=st[k][st[k].length-1]; if(m&&m.p){ take(k,m.t,m.p,false); const v=peers.get(k); if(v) v.slow=Date.now(); } }
     for(const k of [...peers.keys()]) if(!here.has(k)&&Date.now()-peers.get(k).heard>8000) peers.delete(k); soon(); });
-  ch.on('broadcast',{event:'b'},msg=>{ const m=msg&&(msg.payload||msg); if(!m||m.from===MY_PID||(m.to&&m.to!==MY_PID)||!m.d) return; try{ window.__clsRecv?.(m.d,m.from); }catch(err){ console.warn(err); } });
+  ch.on('broadcast',{event:'b'},msg=>{ const m=msg&&(msg.payload||msg); if(!m||m.from===MY_PID||(m.to&&m.to!==MY_PID)||!m.d) return; try{ window.__clsRecv?.(m.d,m.from); window.__cineRecv?.(m.d,m.from); }catch(err){ console.warn(err); } });
   NET.bcast=(d,to)=>{ try{ ch.send({type:'broadcast',event:'b',payload:{from:MY_PID,to:to||'',d}}); return true; }catch{ return false; } };
   ch.on('broadcast',{event:'s'},msg=>{ const m=msg&&(msg.payload||msg); if(!m) return; take(m.k,m.t,m.p,true); soon(); if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
   const moving=(a,b)=>{ if(!a||!b) return false; const x={...a}, y={...b}; for(const f of ['x','z','r']){ delete x[f]; delete y[f]; } return JSON.stringify(x)===JSON.stringify(y); };
@@ -3948,7 +3949,7 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
     if(!trackT) trackT=setTimeout(track,Math.max(0,1500-(Date.now()-trackAt))); }
   NET.st='連線中';
   try { await new Promise((res,rej)=>{ const to=setTimeout(()=>{ NET.st='連線逾時'; rej(new Error('timeout')); },15000);
-    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); setTimeout(()=>window.__clsHello?.(),600); }
+    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); setTimeout(()=>{ window.__clsHello?.(); window.__cineHello?.(); },600); }
       else { ready=false; stopVoice(); NET.errs++; renderPeople(); if(heartbeat) lose(); } }); }); } catch(error){ dead=true; try{ await sb.removeChannel(ch); }catch{} sb.realtime.disconnect(); throw error; }
   // A channel that drops (phone asleep, wifi switch, server restart) is not always rejoined by the library, and someone stuck on
   // a dead channel sees nobody and is seen by nobody. So on any drop, or if nothing has been heard from the server for a while,
@@ -4164,7 +4165,7 @@ async function cfRoom(){
     else if(m.t==='u'&&m.id&&m.id!==me){ const v=peers.get(m.id)||{p:{}}; if(m.p&&typeof m.p==='object') v.p=m.p; v.micActive=!!m.mic; v.speaking=!!m.sp; v.fast=Date.now(); peers.set(m.id,v);
       if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
     else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); }
-    else if(m.t==='b'&&m.id&&m.id!==me&&m.d){ try{ window.__clsRecv?.(m.d,m.id); }catch(err){ console.warn(err); } } }
+    else if(m.t==='b'&&m.id&&m.id!==me&&m.d){ try{ window.__clsRecv?.(m.d,m.id); window.__cineRecv?.(m.d,m.id); }catch(err){ console.warn(err); } } }
   // ten times a second: what changed, plus any voice; when nothing changes, a heartbeat every 2.5 s
   function tick(){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8);
     const st={...cur,vc:micEnabled}, k=JSON.stringify(st), changed=k!==lastKey;
@@ -4177,7 +4178,7 @@ async function cfRoom(){
       // a busy page (the house just built, a slow phone) can hold the 'open' event back past the timer: an opened or still
       // connecting socket gets more time instead of being given up
       let waits=0; const sock=ws, check=()=>{ if(wsOpen||sock!==ws) return; if(sock.readyState===1||(sock.readyState===0&&waits++<2)){ to=setTimeout(check,3500); return; } try{ sock.close(); }catch{} fin(false); }; let to=setTimeout(check,first?6000:5000);
-      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); setTimeout(()=>window.__clsHello?.(),400); };
+      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); setTimeout(()=>{ window.__clsHello?.(); window.__cineHello?.(); },400); };
       sock.onmessage=e=>{ if(sock===ws) onMsg(e); };
       sock.onclose=ev=>{ if(sock!==ws) return; clearTimeout(to); const was=wsOpen; wsOpen=false; fin(false); if(closed||(first&&!was)) return;
         NET.st='重新連線中'; NET.errs++; renderPeople(); later(); };
@@ -5073,6 +5074,10 @@ await __yield(0.9);
    Every line can be changed in the back office (_data/vr.yml › npc); these are the defaults. */
 const NPC_DYN=[];
 const NPC_TXT={
+  'cine.seat':['電影院沙發','電影院後排'],'cine.label':['看電影',''],'cine.hello':['在沙發坐下。點銀幕選片、播放。',''],'cine.status':['在電影院看電影',''],'cine.title':['電影院',''],
+  'cine.none':['片單還是空的：請在後台「電影院片單」加入影片。',''],'cine.now':['正在放映','暫停中'],'cine.idle':['目前沒有放映。',''],'cine.play':['播放','暫停'],'cine.skip':['倒退 10 秒','快轉 10 秒'],
+  'cine.stop':['停止放映',''],'cine.vol':['音量',''],'cine.subs':['字幕：開','字幕：關'],'cine.full':['全螢幕','離開全螢幕'],'cine.toast':['開始放映','暫停放映'],
+  'cine.err':['影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。',''],'cine.tap':['點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。',''],
   'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
   'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
   'cls.undo':['復原','清空'],'cls.clearq':['再按一次清空',''],'cls.cleared':['黑板被擦乾淨了。',''],'cls.load':['貼上圖片',''],'cls.export':['存成圖片','匯出文字'],
@@ -5478,6 +5483,9 @@ const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}, KFIRE
 Object.assign(NP,{noodle:{x:45.62,z:1.78},hob:{x:45.62,z:-2.72},sink:{x:45.62,z:-.05},pass:{x:45.62,z:-1.6},dineDoor:{x:41.25,z:-.3},tableDrop:{x:40.62,z:-1.3}});
 // click texts: back office (_data/vr.yml › texts) first, these when it is blank
 for(const [key,title,body] of [
+  ['cinescreen','電影院銀幕','點銀幕打開片單：選片、播放、暫停、快轉、全螢幕。誰按都算，在電影院的人看到的都一樣。'],
+  ['cinespk','音響','銀幕兩側一對落地喇叭，矮櫃裡是中置喇叭和重低音，兩側牆上四顆環繞喇叭。影片的左聲道從北邊、右聲道從南邊出來，走出房間聲音就漸漸聽不到。'],
+  ['cinecab','矮櫃','銀幕下的長矮櫃，中間兩格是喇叭的布面，兩側收著影片和遙控器。'],
   ['clsshelf','矮書櫃','窗下的矮書櫃，線裝書平放成疊，幾個藍布書套，櫃頂擱著三卷書畫。'],
   ['clsdesk','課桌','雙人課桌，桌下有放書的隔板，兩側有掛書包的銅鉤。點椅子坐下。'],
   ['clstdesk','講桌','講台中間的長講桌。點筆電開投影，點黑板寫字。'],
@@ -6549,6 +6557,202 @@ SEAT_KIND.clst={eye:1.27,pitch:-.3,front:false,sink:-.27,get label(){ return NT(
     send({o:'snap',for:to,ops,pj}); }
   window.__clsAct=u=>{ if(u.type==='clsboard') openBoard(); else if(u.type==='clslaptop'||u.type==='clsproj') openProj(); else if(u.type==='clsscreen'){ setDown(!PJ.down); toast(NT('cls.screened',PJ.down?0:1)); } return true; };
   window.__cls={ST,PJ,LZ,openBoard,openProj,close,apply,show,boardText};
+}
+// ------------------------------------------------------------ 12 號房（二進西廂北間）：電影院
+// A small home theatre: the screen fills the white plaster of the west (back) wall, a tall speaker on each side of it and a
+// low cabinet under it with the centre speaker; light wooden slats along the north wall carry the surround speakers;
+// a fabric L-sofa with a round ottoman in front, a second sofa on a low riser behind; a rug, curtains at the court window,
+// two track rails of spots that dim while a film plays. The films are files the master keeps on Cloudflare R2 and lists
+// in the back office (_data/vr.yml › films). Everyone may choose, play, pause and skip; what one does goes to everyone in
+// the house (through the house server's relay, as with the classroom), and a newcomer is handed the current state by
+// someone already here. Each player keeps time against their own clock and corrects drift by itself.
+const CIN={x0:12.24,x1:16.88,z0:15.6,z1:23.6,xc:14.5};
+SEAT_KIND.cine={eye:1.02,pitch:.18,front:true,sink:-.44,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
+SEAT_KIND.cine2={eye:1.22,pitch:.12,front:true,sink:-.24,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
+{ const {x0:X0,x1:X1,z0:Z0,z1:Z1,xc:XC}=CIN, m=(c,r=.9,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},o));
+  const roof=z=>5.88-.5*Math.abs(z-19.6)-.06;
+  const fabric=m(0x9a8a76,.97), fabricD=m(0x857563,.97), pillowM=[m(0x7d6c5a,.97),m(0xb3a38c,.97),m(0x8f7d68,.97)], black=m(0x1b1a19,.6), grille=m(0x262524,.95), cone=m(0x3a3936,.5,{metalness:.3}),
+    slat=WD_HHL.V, slatBack=m(0x2b241e,.9), cab=WD_HHD.H, cabD=WD_HHD.V, rug=m(0xcdbfa7,1), curtain=m(0x6f6253,.98), metal=m(0x1e1e1f,.5,{metalness:.4});
+  const B=(w,h,d,mt,x,y,z,pk=null)=>{ const o=box(w,h,d,mt,x,y,z,scene,pk); o.castShadow=true; o.receiveShadow=true; return o; };
+  const Cy=(r1,r2,h,mt,x,y,z,seg=16)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),mt); o.position.set(x,y,z); o.castShadow=true; scene.add(o); return o; };
+  // ---- rug
+  { const r=new THREE.Mesh(new THREE.PlaneGeometry(4.0,4.5),rug); r.rotation.x=-Math.PI/2; r.position.set(XC,.006,20.75); r.receiveShadow=true; r.userData={type:'floor'}; scene.add(r); pickables.push(r); }
+  // ---- the screen in the white of the back wall: a thin black frame, the picture, and a strip for subtitles over its foot
+  const SW=3.6, SH=SW*9/16, SY=.98+SH/2, SZ=Z1-.035;
+  B(SW+.1,SH+.1,.04,black,XC,SY,Z1-.02);
+  const scrM=new THREE.MeshBasicMaterial({color:0x161616,toneMapped:false}), scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),scrM);
+  scr.rotation.y=Math.PI; scr.position.set(XC,SY,SZ-.005); scr.userData={type:'cinescreen'}; scene.add(scr); pickables.push(scr);
+  const subCv=document.createElement('canvas'); subCv.width=1600; subCv.height=200; const subTex=new THREE.CanvasTexture(subCv); subTex.colorSpace=THREE.SRGBColorSpace;
+  const sub=new THREE.Mesh(new THREE.PlaneGeometry(SW*.9,SW*.9/8),new THREE.MeshBasicMaterial({map:subTex,transparent:true,toneMapped:false,depthWrite:false}));
+  sub.rotation.y=Math.PI; sub.position.set(XC,SY-SH/2+SW*.9/16+.06,SZ-.012); sub.visible=false; scene.add(sub);
+  // ---- low cabinet under the screen: four doors, the centre speaker and the subwoofer behind cloth in the middle bays
+  { const x0=XC-1.75, x1=XC+1.75, d=.38, h=.48, z=Z1-d/2-.01, pk={type:'cinecab'};
+    B(x1-x0,h-.08,d,cab,XC,.08+(h-.08)/2,z,pk); B(x1-x0+.03,.03,d+.02,cab,XC,h+.015,z,pk); B(x1-x0-.06,.08,d-.06,black,XC,.04,z);
+    const bw=(x1-x0)/4; for(let i=0;i<4;i++){ const bx=x0+bw*(i+.5), fz=z-d/2-.004;
+      if(i===1||i===2){ B(bw-.03,h-.16,.01,grille,bx,.08+(h-.08)/2,fz,{type:'cinespk'}); }
+      else { B(bw-.03,h-.16,.012,cabD,bx,.08+(h-.08)/2,fz,pk); B(.012,.12,.012,metal,bx+(i<2?bw/2-.06:-(bw/2-.06)),.08+(h-.08)/2,fz-.012); } }
+    OB(x0,x1,Z1-d-.02,Z1); }
+  // ---- two tall speakers either side of the screen, and four small ones on the side walls
+  const SPK={L:{x:XC-2.02,y:1.1,z:Z1-.25},R:{x:XC+2.02,y:1.1,z:Z1-.25}};
+  for(const k of ['L','R']){ const s=SPK[k], pk={type:'cinespk'}, w=.26, d=.32, h=1.12;
+    B(w,h-.04,d,black,s.x,.04+(h-.04)/2,s.z,pk); for(const sx of [-1,1]) for(const sz of [-1,1]) Cy(.018,.018,.04,metal,s.x+sx*(w/2-.03),.02,s.z+sz*(d/2-.03),8);
+    const fz=s.z-d/2-.004; B(w-.03,h-.12,.01,grille,s.x,.06+(h-.04)/2,fz,pk);
+    for(const [yy,r] of [[h-.16,.035],[h-.4,.085],[h-.66,.085]]){ const c=Cy(r,r,.012,cone,s.x,yy,fz-.008,20); c.rotation.x=Math.PI/2; } }
+  function wallSpk(x,z,y,nx){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=nx>0?Math.PI/2:-Math.PI/2; scene.add(g);
+    const b=box(.22,.32,.16,black,0,0,.08,g,{type:'cinespk'}); b.castShadow=true; box(.19,.29,.008,grille,0,0,.162,g,{type:'cinespk'}); box(.04,.04,.06,metal,0,0,-.02,g); }
+  // ---- light wooden slats over the brick of the north wall (the colour of the doors), with the speakers on them
+  { const x=X0+.012, zs=Z0+.12, ze=Z1-.12, H=3.3; B(.016,H,ze-zs,slatBack,x+.008,H/2,(zs+ze)/2);
+    for(let z=zs+.04;z<ze-.02;z+=.1) B(.026,H,.048,slat,x+.03,H/2,z);
+    wallSpk(X0+.06,22.75,2.15,1); wallSpk(X0+.06,16.9,2.3,1); }
+  wallSpk(X1-.005,23.05,2.15,-1); wallSpk(X1-.005,16.35,2.3,-1);
+  // ---- curtains at the court window, gathered to the sides, on a dark rod
+  { const z=Z0+.08, top=2.78; B(2.6,.03,.03,metal,XC,top+.06,z+.02);
+    for(const s of [-1,1]) for(let i=0;i<6;i++){ const p=B(.11,top-.04,.05,curtain,XC+s*(.92+i*.085),(top-.04)/2+.02,z+.03+(i%2)*.035); p.receiveShadow=true; } }
+  // ---- sofas: an L in front (three seats and a chaise toward the screen on the north side), three seats on a riser behind
+  function sofa(x0,x1,zc,y0,n,kind,ap){ const W=x1-x0, D=.95, zb=zc-D/2, pk=[];
+    B(W,.36,D,fabricD,(x0+x1)/2,y0+.2,zc); B(W,.5,.24,fabric,(x0+x1)/2,y0+.38+.25,zb+.12);
+    for(const ax of [x0+.1,x1-.1]) B(.2,.6,D,fabric,ax,y0+.3,zc);
+    const sw=(W-.4)/n; for(let i=0;i<n;i++){ const sx=x0+.2+sw*(i+.5);
+      const c=B(sw-.02,.14,D-.3,fabric,sx,y0+.45,zc+.1); const si=addSeat(sx,zc+.08,Math.PI,kind,NT('cine.seat',kind==='cine2'?1:0)); c.userData={type:'seat',si}; pickables.push(c);
+      if(ap) SEATS[si].ap={x:sx,z:ap};
+      const bc=B(sw-.04,.4,.14,fabric,sx,y0+.68,zb+.3); bc.rotation.x=-.12; bc.userData={type:'seat',si}; pickables.push(bc); }
+    for(const [px,pi,rz] of [[x0+.38,0,.18],[x1-.38,1,-.2],[(x0+x1)/2+.25,2,.08]]){ const p=B(.42,.4,.13,pillowM[pi],px,y0+.74,zb+.4); p.rotation.set(-.25,0,rz); } }
+  { const zc=20.15, x0=13.2, x1=15.7; sofa(x0,x1,zc,0,3,'cine',null);
+    // the chaise: along the north wall, from the back of the sofa toward the screen
+    const cx0=12.38, cx1=x0, cz0=zc-.475, cz1=21.6; B(cx1-cx0,.36,cz1-cz0,fabricD,(cx0+cx1)/2,.2,(cz0+cz1)/2); B(.24,.5,cz1-cz0,fabric,cx0+.12,.63,(cz0+cz1)/2);
+    B(cx1-cx0-.26,.14,cz1-cz0-.1,fabric,(cx0+cx1)/2+.12,.45,(cz0+cz1)/2+.02); B(cx1-cx0,.6,.2,fabric,(cx0+cx1)/2,.3,cz1-.1);
+    const p=B(.13,.4,.42,pillowM[1],cx0+.32,.74,20.6); p.rotation.set(0,0,.25);
+    OB(x0,x1,zc-.475,zc+.475); OB(cx0,cx1,cz0,cz1); }
+  { const y0=.2, zc=17.55, x0=13.2, x1=15.7;
+    B(4.4,y0,2.1,cab,XC,y0/2,17.05); B(4.4,.02,.04,cabD,XC,y0-.01,18.09);
+    sofa(x0,x1,zc,y0,3,'cine2',18.48); OB(XC-2.2,XC+2.2,16.0,18.1); }
+  // ---- round ottoman with a wooden tray and a bowl
+  { const x=14.45, z=21.72; Cy(.43,.41,.4,fabricD,x,.2,z,32); Cy(.44,.44,.02,fabric,x,.405,z,32); Cy(.2,.2,.02,cab,x,.425,z,24); Cy(.1,.06,.06,black,x,.465,z,20); OB(x-.43,x+.43,z-.43,z+.43); }
+  // ---- two track rails with spots; three lamps that dim when the film starts, a cool glow off the screen
+  const lamps=[];
+  for(const x of [13.55,15.45]){ B(.04,.04,6.4,metal,x,3.3,19.75); for(const z of [17.0,22.5]) Cy(.005,.005,roof(z)-3.3,metal,x,(roof(z)+3.3)/2,z,6);
+    for(const z of [17.4,19.0,20.6,22.2]){ const sp=Cy(.035,.045,.12,metal,x,3.22,z,14); sp.rotation.x=.35*(z<19.8?1:-1); const d=new THREE.Mesh(new THREE.CircleGeometry(.03,14),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffe2b8,emissiveIntensity:1})); d.rotation.x=Math.PI/2; d.position.set(x,3.155,z); scene.add(d); } }
+  for(const z of [17.3,19.8,22.3]){ const l=new THREE.PointLight(0xffdcb0,NIGHT?.95:.42,6.2,2); l.position.set(XC,3.0,z); scene.add(l); lamps.push(l); }
+  const glow=new THREE.PointLight(0xc8d4ff,0,6,2); glow.position.set(XC,SY,Z1-1.3); scene.add(glow);
+  Object.assign(CIN,{scr,scrM,sub,subCv,subTex,SPK,lamps,base:lamps.map(l=>l.intensity),glow,SW,SH}); }
+
+// ---- playing: one <video> for this player; the state everyone shares; panel, full screen, sound from the speakers
+{ const R=CIN, FILMS=(Array.isArray(VRD.films)?VRD.films:[]).filter(f=>f&&String(f.url||'').trim()).map(f=>({title:String(f.title||'').trim()||String(f.url).split('/').pop(),url:String(f.url).trim(),subs:String(f.subs||'').trim()}));
+  const vid=document.createElement('video'); vid.crossOrigin='anonymous'; vid.playsInline=true; vid.preload='auto'; vid.setAttribute('playsinline','');
+  const park=document.createElement('div'); park.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1'; park.append(vid); document.body.append(park);
+  vid.style.cssText='width:100%;height:100%;object-fit:contain;background:#000';
+  const tex=new THREE.VideoTexture(vid); tex.colorSpace=THREE.SRGBColorSpace;
+  // shared state: which film, playing or not, where (seconds) at the moment it was set (by this player's own clock)
+  const S={u:'',ti:'',sb:'',p:false,t:0,at:performance.now(),v:0,id:''}, L={vol:+(localStorage.getItem('cineVol')||.8),subs:localStorage.getItem('cineSubs')!=='0',err:'',loaded:'',cues:[],cue:-1,near:false,want:false,blocked:false,fs:false};
+  const pos=()=>S.t+(S.p?(performance.now()-S.at)/1000:0);
+  const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'cine'},d),to)); }catch{ return false; } };
+  const pack=()=>({o:'st',u:S.u,ti:S.ti,sb:S.sb,p:S.p,t:+pos().toFixed(2),v:S.v,id:S.id});
+  function take(d){ Object.assign(S,{u:d.u||'',ti:d.ti||'',sb:d.sb||'',p:!!d.p&&!!d.u,t:Math.max(0,+d.t||0),at:performance.now(),v:d.v|0,id:d.id||''}); sync(true); refresh(); }
+  function act(ch){ const st=Object.assign(pack(),ch,{v:S.v+1,id:MY_PID}); take(st); send(st); unlockAudio(); }
+  // ---- subtitles (.srt or .vtt): fetched once per film, drawn under the picture and in full screen
+  function parseSubs(txt){ const out=[], ts=s=>{ const m=s.trim().replace(',','.').match(/(?:(\d+):)?(\d+):(\d+(?:\.\d+)?)/); return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3]):NaN; };
+    for(const blk of String(txt).replace(/\r/g,'').split(/\n\s*\n/)){ const ln=blk.split('\n'), i=ln.findIndex(l=>l.includes('-->')); if(i<0) continue; const [a,b]=ln[i].split('-->'), s=ts(a), e=ts(b.split(' ').filter(Boolean)[0]||'');
+      if(isFinite(s)&&isFinite(e)) out.push({s,e,tx:ln.slice(i+1).join('\n').replace(/<[^>]+>/g,'').trim()}); } return out; }
+  function drawSub(tx){ const g=R.subCv.getContext('2d'), W=R.subCv.width, H=R.subCv.height; g.clearRect(0,0,W,H); R.sub.visible=!!tx;
+    if(tx){ g.font='600 62px "Noto Sans TC","Noto Serif TC",sans-serif'; g.textAlign='center'; g.textBaseline='middle'; const lines=tx.split('\n').slice(-2), lh=72, y0=H/2-(lines.length-1)*lh/2;
+      lines.forEach((l,i)=>{ g.lineWidth=10; g.strokeStyle='rgba(0,0,0,.85)'; g.strokeText(l,W/2,y0+i*lh); g.fillStyle='#fff'; g.fillText(l,W/2,y0+i*lh); }); }
+    R.subTex.needsUpdate=true; L.subTx=tx||''; if(fsSub) fsSub.textContent=L.subTx; }
+  // ---- sound: left and right from the two tall speakers, placed in the room; quiet outside the door, silent farther off
+  let ac=null, gm=null, pans=null;
+  function unlockAudio(){ try{ if(!ac){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; ac=new AC(); const src=ac.createMediaElementSource(vid);
+      const up=ac.createGain(); up.channelCount=2; up.channelCountMode='explicit'; up.channelInterpretation='speakers'; const sp=ac.createChannelSplitter(2); gm=ac.createGain(); gm.gain.value=0;
+      src.connect(up); up.connect(sp); pans=['L','R'].map((k,i)=>{ const p=ac.createPanner(); p.panningModel='HRTF'; p.distanceModel='inverse'; p.refDistance=2.2; p.rolloffFactor=1.1; p.maxDistance=40;
+        const s=R.SPK[k]; p.positionX.value=s.x; p.positionY.value=s.y; p.positionZ.value=s.z; sp.connect(p,i); p.connect(gm); return p; }); gm.connect(ac.destination); }
+    if(ac.state==='suspended') ac.resume(); }catch(e){ console.warn(e); } }
+  addEventListener('pointerdown',()=>{ L.blocked=false; if(ac&&ac.state==='suspended') ac.resume(); },{passive:true});
+  // ---- loading a film; this player plays only while near the room, and keeps itself to the shared clock
+  function sync(force){ if(S.u!==L.loaded){ L.loaded=S.u; L.err=''; L.cues=[]; L.cue=-1; drawSub(''); if(S.u){ vid.src=S.u; vid.load(); } else { vid.pause(); vid.removeAttribute('src'); vid.load(); }
+      if(S.sb) fetch(S.sb).then(r=>r.ok?r.text():'').then(t=>{ if(L.loaded===S.u) L.cues=parseSubs(t); }).catch(()=>{}); }
+    if(force&&S.u&&vid.readyState>=1&&L.near){ const p=pos(); if(Math.abs(vid.currentTime-p)>.35) try{ vid.currentTime=Math.min(p,(vid.duration||1e9)-.05); }catch{} } }
+  vid.addEventListener('error',()=>{ if(!S.u) return; L.err=NT('cine.err'); refresh(); toast(L.err,8000); });
+  vid.addEventListener('loadedmetadata',()=>{ sync(true); refresh(); });
+  let corrAt=0;
+  ZL_ANIM.push(dt=>{ dt=dt||.016; const now=performance.now(), mx=ME.x, mz=ME.z;
+    const inRoom=mx>R.x0&&mx<R.x1&&mz>R.z0&&mz<R.z1, dOut=Math.max(R.x0-mx,mx-R.x1,R.z0-mz,mz-R.z1,0);
+    L.near=inRoom||dOut<5||L.fs; const live=!!S.u&&!L.err;
+    L.want=live&&S.p&&L.near&&!(vid.duration&&pos()>=vid.duration-.1);
+    if(L.want&&vid.paused&&!L.blocked&&vid.readyState>=1){ sync(true); const pr=vid.play(); if(pr&&pr.catch) pr.catch(()=>{ L.blocked=true; toast(NT('cine.tap'),6000); }); }
+    if(!L.want&&!vid.paused) vid.pause();
+    if(live&&!S.p&&L.near&&vid.readyState>=1&&Math.abs(vid.currentTime-S.t)>.3&&now-corrAt>400){ corrAt=now; try{ vid.currentTime=Math.min(S.t,(vid.duration||1e9)-.05); }catch{} }
+    if(L.want&&!vid.paused&&vid.readyState>=2&&now-corrAt>500){ corrAt=now; const diff=vid.currentTime-pos();
+      if(Math.abs(diff)>1){ try{ vid.currentTime=pos()+.15; }catch{} vid.playbackRate=1; } else vid.playbackRate=Math.abs(diff)>.1?1-Math.max(-.08,Math.min(.08,diff*.5)):1; }
+    // the picture
+    const show=live&&vid.readyState>=2; if((R.scrM.map===tex)!==show){ R.scrM.map=show?tex:null; R.scrM.color.setHex(show?0xffffff:0x161616); R.scrM.needsUpdate=true; }
+    // subtitles
+    let ci=-1; if(L.subs&&show&&L.cues.length){ const t=vid.currentTime; ci=L.cues.findIndex(c=>t>=c.s&&t<=c.e); } if(ci!==L.cue){ L.cue=ci; drawSub(ci>=0?L.cues[ci].tx:''); }
+    // lights down while it plays, up again when it stops
+    R.dim=(R.dim||0)+(((S.p&&live)?1:0)-(R.dim||0))*Math.min(1,dt*1.2);
+    R.lamps.forEach((l,i)=>l.intensity=R.base[i]*(1-.82*R.dim)); R.glow.intensity=show?.55*R.dim:0;
+    // sound follows where you stand and which way you face
+    if(ac&&gm){ const g=(L.fs?1:inRoom?1:Math.max(0,1-dOut/4)*.3)*L.vol*(vid.paused?0:1); gm.gain.setTargetAtTime(g,ac.currentTime,.12);
+      const Ls=ac.listener, cp=camera.getWorldPosition(new THREE.Vector3()), fw=camera.getWorldDirection(new THREE.Vector3());
+      if(Ls.positionX){ Ls.positionX.value=cp.x; Ls.positionY.value=cp.y; Ls.positionZ.value=cp.z; Ls.forwardX.value=fw.x; Ls.forwardY.value=fw.y; Ls.forwardZ.value=fw.z; Ls.upX.value=0; Ls.upY.value=1; Ls.upZ.value=0; }
+      else if(Ls.setPosition){ Ls.setPosition(cp.x,cp.y,cp.z); Ls.setOrientation(fw.x,fw.y,fw.z,0,1,0); } }
+    else vid.volume=(L.fs||inRoom?1:Math.max(0,1-dOut/4)*.3)*L.vol;
+    if(!ac&&L.want&&!vid.paused) unlockAudio();
+    if(PANEL.el&&!PANEL.el.isConnected) PANEL.el=null; if(PANEL.el&&now-PANEL.t>250){ PANEL.t=now; tickPanel(); } if(fsBar&&L.fs&&now-PANEL.ft>250){ PANEL.ft=now; tickFs(); } });
+  // ---- the panel: the list of films, play/pause, skip, a seek bar, volume, subtitles, full screen
+  const PANEL={el:null,t:0,ft:0}, hms=s=>{ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), mm=Math.floor(s/60)%60, ss=s%60; return (h?h+':'+String(mm).padStart(2,'0'):mm)+':'+String(ss).padStart(2,'0'); };
+  function openCine(){ const btn='style="margin:3px 6px 3px 0"';
+    const body=openPanel(NT('cine.title'),`<p class="meta" id="cnow"></p>
+      <div id="clist" style="display:flex;flex-direction:column;gap:4px;margin:8px 0 12px">${FILMS.length?FILMS.map((f,i)=>`<button class="btn" data-i="${i}" style="text-align:left">${esc(f.title)}</button>`).join(''):`<p class="meta">${esc(NT('cine.none'))}</p>`}</div>
+      <div><button class="btn pri" id="cplay" ${btn}></button><button class="btn" id="cback" ${btn}>${esc(NT('cine.skip',0))}</button><button class="btn" id="cfwd" ${btn}>${esc(NT('cine.skip',1))}</button><button class="btn" id="cstop" ${btn}>${esc(NT('cine.stop'))}</button></div>
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0"><span id="ct0" style="font-size:12px;min-width:44px">0:00</span><input id="cseek" type="range" min="0" max="1000" value="0" style="flex:1"><span id="ct1" style="font-size:12px;min-width:44px">0:00</span></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label style="font-size:13px">${esc(NT('cine.vol'))} <input id="cvol" type="range" min="0" max="100" value="${Math.round(L.vol*100)}" style="vertical-align:middle"></label>
+      <button class="btn" id="csubs"></button><button class="btn" id="cfull">${esc(NT('cine.full',0))}</button></div><p class="meta" id="cerr" style="color:#a8343a"></p>`);
+    PANEL.el=body;
+    body.querySelectorAll('#clist button').forEach(b=>b.onclick=()=>{ const f=FILMS[+b.dataset.i]; act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0}); toast(NT('cine.toast',0)+'《'+f.title+'》'); });
+    body.querySelector('#cplay').onclick=()=>{ if(!S.u){ if(FILMS[0]){ const f=FILMS[0]; act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0}); } return; } L.blocked=false; const end=vid.duration&&pos()>=vid.duration-.2; act({p:!S.p,t:end?0:pos()}); };
+    body.querySelector('#cback').onclick=()=>S.u&&act({t:Math.max(0,pos()-10)});
+    body.querySelector('#cfwd').onclick=()=>S.u&&act({t:Math.min((vid.duration||1e9)-.5,pos()+10)});
+    body.querySelector('#cstop').onclick=()=>S.u&&act({u:'',ti:'',sb:'',p:false,t:0});
+    const sk=body.querySelector('#cseek'); sk.oninput=()=>{ PANEL.drag=true; body.querySelector('#ct0').textContent=hms(sk.value/1000*(vid.duration||0)); };
+    sk.onchange=()=>{ PANEL.drag=false; if(S.u&&vid.duration) act({t:sk.value/1000*vid.duration}); };
+    body.querySelector('#cvol').oninput=e=>{ L.vol=e.target.value/100; try{ localStorage.setItem('cineVol',L.vol); }catch{} };
+    body.querySelector('#csubs').onclick=()=>{ L.subs=!L.subs; try{ localStorage.setItem('cineSubs',L.subs?'1':'0'); }catch{} refresh(); };
+    body.querySelector('#cfull').onclick=()=>{ closePanel(); enterFs(); };
+    unlockAudio(); refresh(); }
+  function tickPanel(){ const b=PANEL.el; if(b&&!b.querySelector('#cseek')) PANEL.el=null; if(!PANEL.el) return; const d=vid.duration||0, p=Math.min(pos(),d||pos());
+    if(!PANEL.drag){ b.querySelector('#ct0').textContent=hms(p); b.querySelector('#cseek').value=d?Math.round(p/d*1000):0; } b.querySelector('#ct1').textContent=hms(d); }
+  function refresh(){ if(PANEL.el&&!PANEL.el.querySelector('#cseek')) PANEL.el=null; const b=PANEL.el; if(b){ b.querySelector('#cnow').textContent=S.u?(NT('cine.now',S.p?0:1)+'《'+S.ti+'》'):NT('cine.idle');
+      b.querySelector('#cplay').textContent=NT('cine.play',S.u&&S.p?1:0); b.querySelector('#csubs').textContent=NT('cine.subs',L.subs?0:1); b.querySelector('#cerr').textContent=L.err;
+      b.querySelectorAll('#clist button').forEach(x=>x.classList.toggle('pri',FILMS[+x.dataset.i]&&FILMS[+x.dataset.i].url===S.u)); tickPanel(); }
+    if(fsBar) tickFs(); }
+  // ---- full screen: the same video, filling the window (and the screen where the browser allows it); Esc to come back
+  let fsBox=null, fsSub=null, fsBar=null;
+  function enterFs(){ if(!S.u){ toast(NT('cine.idle')); return; } unlockAudio();
+    if(!fsBox){ fsBox=document.createElement('div'); fsBox.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
+      fsSub=document.createElement('div'); fsSub.style.cssText='position:absolute;left:5%;right:5%;bottom:9%;text-align:center;color:#fff;font:600 clamp(18px,3.2vw,40px)/1.35 "Noto Sans TC","Noto Serif TC",sans-serif;text-shadow:0 0 6px #000,0 0 3px #000;white-space:pre-line;pointer-events:none';
+      fsBar=document.createElement('div'); fsBar.style.cssText='position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:10px;padding:10px 16px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#eee;font-size:13px;transition:opacity .4s';
+      fsBar.innerHTML=`<button class="btn" data-a="play"></button><span data-a="t0">0:00</span><input data-a="seek" type="range" min="0" max="1000" value="0" style="flex:1"><span data-a="t1">0:00</span><button class="btn" data-a="exit">${esc(NT('cine.full',1))}</button>`;
+      fsBox.append(fsSub,fsBar); document.body.append(fsBox);
+      const q=a=>fsBar.querySelector(`[data-a="${a}"]`);
+      q('play').onclick=()=>{ L.blocked=false; const end=vid.duration&&pos()>=vid.duration-.2; act({p:!S.p,t:end?0:pos()}); };
+      q('seek').oninput=()=>{ PANEL.fdrag=true; }; q('seek').onchange=()=>{ PANEL.fdrag=false; if(vid.duration) act({t:q('seek').value/1000*vid.duration}); };
+      q('exit').onclick=exitFs; let hideT=0; fsBox.addEventListener('pointermove',()=>{ fsBar.style.opacity=1; clearTimeout(hideT); hideT=setTimeout(()=>{ if(L.fs) fsBar.style.opacity=0; },2800); });
+      fsBox.addEventListener('dblclick',e=>{ if(e.target===vid) exitFs(); });
+      document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement&&L.fs) exitFs(); });
+      addEventListener('keydown',e=>{ if(!L.fs) return; if(e.key==='Escape'){ e.preventDefault(); exitFs(); } else if(e.key===' '){ e.preventDefault(); q('play').click(); } e.stopImmediatePropagation(); },true); }
+    if(document.pointerLockElement) document.exitPointerLock(); fsBox.insertBefore(vid,fsSub); fsSub.textContent=L.subTx||''; fsBox.style.display='block'; L.fs=true; fsBar.style.opacity=1;
+    try{ fsBox.requestFullscreen&&fsBox.requestFullscreen().catch(()=>{}); }catch{} tickFs(); }
+  function exitFs(){ if(!L.fs) return; L.fs=false; fsBox.style.display='none'; park.append(vid); if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
+  function tickFs(){ if(!fsBar) return; const q=a=>fsBar.querySelector(`[data-a="${a}"]`), d=vid.duration||0, p=Math.min(pos(),d||pos());
+    q('play').textContent=NT('cine.play',S.p?1:0); q('t0').textContent=hms(p); q('t1').textContent=hms(d); if(!PANEL.fdrag) q('seek').value=d?Math.round(p/d*1000):0; }
+  // ---- the network: others' choices, and handing the state over to someone who has just come in
+  const snapFor=new Map();
+  window.__cineHello=()=>send({o:'hi'});
+  window.__cineRecv=(d,from)=>{ if(!d||d.k!=='cine') return;
+    if(d.o==='hi'){ if(!S.u) return; const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].filter(i=>i!==from).concat(MY_PID).sort(), rank=Math.max(0,ids.indexOf(MY_PID));
+      clearTimeout(snapFor.get(from)); snapFor.set(from,setTimeout(()=>{ snapFor.delete(from); send(Object.assign(pack(),{for:from}),from); },150+rank*400+Math.random()*120)); return; }
+    if(d.o==='st'){ if(d.for&&snapFor.has(d.for)){ clearTimeout(snapFor.get(d.for)); snapFor.delete(d.for); } if(d.for&&d.for!==MY_PID) return;
+      if((d.v|0)>S.v||((d.v|0)===S.v&&String(d.id||'')>S.id)){ const was=S.u, wasP=S.p; take(d); if(!d.for&&(S.u!==was||S.p!==wasP)&&L.near) toast(S.u?(NT('cine.toast',S.p?0:1)+'《'+S.ti+'》'):NT('cine.idle'),3500); } } };
+  window.__cineAct=u=>{ if(u.type==='cinescreen') openCine(); return true; };
+  window.__cine={S,L,FILMS,vid,openCine,enterFs,exitFs,act,pos};
 }
 // steam over the noodle pots and smoke from the chimney: a few soft sprites each
 { const sm=new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX});

@@ -28,6 +28,8 @@
 
 - 線上書齋第二進西廂南間是教室（`vr/vr-house.js` 的「二進西廂南間：教室」與「教室：黑板、投影、多人同步」兩段）：黑板與投影透過多人伺服器的 `{t:'b'}` 轉送（`_vrserver/src/index.js` 的 relay），伺服器不存任何內容，新進的人由在場的人把黑板交給他。PDF 用 pdf.js、PPTX 用 JSZip 從 jsDelivr 載入；按鈕文字在 `_data/vr.yml` › npc 的 `cls.*`。
 
+- 線上書齋 12 號房（二進西廂北間）是電影院（`vr/vr-house.js` 的「12 號房（二進西廂北間）：電影院」段）：銀幕在西牆白色粉牆上，片單在 `_data/vr.yml` 的 `films`（title、url、subs），影片檔放在齋主的 Cloudflare R2（儲存庫不放影片；R2 需設 CORS 允許 https://hakkiuchay.space 的 GET/HEAD 與 Range 標頭，否則 3D 銀幕無法播放）。誰都能選片、播放、暫停、快轉，經多人伺服器的 `{t:'b', d:{k:'cine'}}` 轉送；各人以自己的時鐘對時、自動修正誤差，新進的人由在場者交接目前狀態。離開房間約 5 公尺外就暫停解碼，回來自動追上。全螢幕用同一個 video 元素。按鈕文字在 `_data/vr.yml` › npc 的 `cine.*`。
+
 - `vr/look.js`：線上書齋門口的扮相目錄（衣著、帽冠、面飾、隨身、髮型、氣質、顏色）與左側預覽圖；3D 人物在 `vr/vr-house.js` 的 `buildFigure()`。新增扮相要兩邊都加，名稱另加進 `_data/vr.yml` 的 `look`。門口按「進門」才開始載入 3D，載入小故事在 `_data/vr.yml` 的 `loading`；門口文字由 `vr/gate.json` 讀取。
 
 - `_vrserver/`：線上書齋的多人伺服器（Cloudflare Worker＋Durable Objects，專案名 hakkiuchay-vr），作用同 `server.py`：一房一台、位置與語音經伺服器轉送。放在 khoguanlun@gmail.com 的 Cloudflare 帳號（子網域 hakkiuchay.workers.dev），已連 GitHub：推上 main 後 Cloudflare 自動以 `_vrserver` 為根目錄重新發布。網址 wss://hakkiuchay-vr.hakkiuchay.workers.dev 填在 `vr/config.js` 的 `ws`；`ws` 空白時書齋改用 Supabase。

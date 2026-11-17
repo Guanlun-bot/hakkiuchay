@@ -28,7 +28,7 @@
 
 - 線上書齋第二進西廂南間是教室（`vr/vr-house.js` 的「二進西廂南間：教室」與「教室：黑板、投影、多人同步」兩段）：黑板與投影透過多人伺服器的 `{t:'b'}` 轉送（`_vrserver/src/index.js` 的 relay），伺服器不存任何內容，新進的人由在場的人把黑板交給他。PDF 用 pdf.js、PPTX 用 JSZip 從 jsDelivr 載入；按鈕文字在 `_data/vr.yml` › npc 的 `cls.*`。
 
-- 線上書齋 12 號房（二進西廂北間）是電影院（`vr/vr-house.js` 的「12 號房（二進西廂北間）：電影院」段）：銀幕在西牆白色粉牆上，片單在 `_data/vr.yml` 的 `films`（title、url、subs），影片檔放在齋主的 Cloudflare R2（儲存庫不放影片；R2 需設 CORS 允許 https://hakkiuchay.space 的 GET/HEAD 與 Range 標頭，否則 3D 銀幕無法播放）。誰都能選片、播放、暫停、快轉，經多人伺服器的 `{t:'b', d:{k:'cine'}}` 轉送；各人以自己的時鐘對時、自動修正誤差，新進的人由在場者交接目前狀態。離開房間約 5 公尺外就暫停解碼，回來自動追上。全螢幕用同一個 video 元素。按鈕文字在 `_data/vr.yml` › npc 的 `cine.*`。
+- 線上書齋 12 號房（二進西廂北間）是電影院（`vr/vr-house.js` 的「12 號房（二進西廂北間）：電影院」段；尺寸與台座高度在檔頭附近的 `CIN`，`floorY()` 依它抬高台座與踏階）：布面牆、全黑銀幕牆與寬黑框、平頂星空、滿鋪地毯；兩側天花板邊框藏燈帶與小孔燈（牆上的扇形光暈是貼圖）；前排三人沙發與深胡桃小几，45 公分台座加一整排踏階，台座上 ㄇ 字沙發與玻璃門小冰箱（飲料名稱在 npc 的 `cine.drinks`，拿在手上會經 presence 的 `bt` 讓別人看到）；紅絨布幕在有片時拉開；東牆窗加檜木窗門，只能從房內開關。片單在 `_data/vr.yml` 的 `films`（title、url、subs），影片放齋主的 Cloudflare R2（R2 需設 CORS 允許 https://hakkiuchay.space 的 GET/HEAD 與 Range 標頭）。片子、播放進度、燈光場景（迎賓、映前、放映、中場、夜場）與亮度、窗門都經多人伺服器的 `{t:'b', d:{k:'cine'}}` 同步，新進的人由在場者交接；音量各人自己的。進房間時右下角有小面板（L 收合），門邊牆上有燈光開關。電影院與教室通明間的門是歐式對開木門（`addEuroDoor`，鍵 `dcine`、`dcls`，沒有門閂，內外都能開關，狀態跟其他門一樣同步）；電影院門關上時外面聽不到聲音。按鈕文字在 npc 的 `cine.*`、`edoor.msg`。
 
 - `vr/look.js`：線上書齋門口的扮相目錄（衣著、帽冠、面飾、隨身、髮型、氣質、顏色）與左側預覽圖；3D 人物在 `vr/vr-house.js` 的 `buildFigure()`。新增扮相要兩邊都加，名稱另加進 `_data/vr.yml` 的 `look`。門口按「進門」才開始載入 3D，載入小故事在 `_data/vr.yml` 的 `loading`；門口文字由 `vr/gate.json` 讀取。
 

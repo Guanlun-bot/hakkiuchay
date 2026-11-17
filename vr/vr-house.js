@@ -1586,8 +1586,8 @@ function doorState(key){ let best=myDoors[key]?{o:myDoors[key][0],at:myDoors[key
   return best?best.o:true; }
 function toggleDoor(key){ const d=DOORS[key]; if(!d) return; const open=!d.open;
   // don't shut someone out of sight: you can bar the door only from the inside
-  if(!open && !(d.inside?d.inside(ME):zoneOf(ME)===key)){ toast('門閂在門內，要從屋裡才能關門上閂。'); return; }
-  myDoors={...myDoors,[key]:[open?1:0,Date.now()]}; pushPresence(); d.open=open; knock(); toast(open?'拔起門閂，開門。':'關上門，插上門閂。'); }
+  if(!open && !d.euro && !(d.inside?d.inside(ME):zoneOf(ME)===key)){ toast('門閂在門內，要從屋裡才能關門上閂。'); return; }
+  myDoors={...myDoors,[key]:[open?1:0,Date.now()]}; pushPresence(); d.open=open; knock(); toast(d.euro?NT('edoor.msg',open?0:1):(open?'拔起門閂，開門。':'關上門，插上門閂。')); }
 function knock(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const t=actx.currentTime; for(const [f,dt] of [[140,0],[95,.35]]){ const o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(.0001,t+dt); g.gain.exponentialRampToValueAtTime(.25,t+dt+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dt+.25); o.connect(g).connect(actx.destination); o.start(t+dt); o.stop(t+dt+.3); } }catch{} }
 function cuckooCall(n){ try{ if(!actx) return; for(let i=0;i<n;i++){ for(const [f,dt] of [[698.5,0],[587.3,.32]]){ const o=actx.createOscillator(), gn=actx.createGain(), t=actx.currentTime+i*1.0+dt; o.type='triangle'; o.frequency.value=f; gn.gain.setValueAtTime(.0001,t); gn.gain.exponentialRampToValueAtTime(.09,t+.03); gn.gain.exponentialRampToValueAtTime(.0001,t+.26); o.connect(gn).connect(actx.destination); o.start(t); o.stop(t+.3); } } }catch{} }
 const BEANS=[['耶加雪菲','衣索比亞・淺焙・花香柑橘'],['阿里山','臺灣・中淺焙・蜂蜜烏龍'],['肯亞 AA','淺中焙・莓果酸甜'],['哥倫比亞','中焙・焦糖堅果'],['巴西喜拉朵','中深焙・可可榛果'],['曼特寧','印尼・深焙・草本黑巧克力']];
@@ -1840,7 +1840,11 @@ JR.u=(JR.tat.z1-16.05)/8; JR.tat.x0=JR.tat.x1-4*JR.u; JR.tat.z0=JR.tat.z1-8*JR.u
 const TATAMI={x0:JR.dama.x1, x1:ZP.left, z0:16.05, z1:ZP.back, h:JR.rise};
 // 二進西廂南間 (the schoolroom): the teacher's platform along the west wall
 const CLS_PLAT={x0:22.32,x1:26.96,z0:21.7,z1:23.6,h:.15}, CLS_ROOM={}, CLS_LAP={};
-function floorY(x,z){ if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
+// 12 號房 電影院: the room, the riser (45 cm, to z 17.6) and its one step (22.5 cm, to z 17.9), the flat ceiling; the drinks in the fridge
+const CIN={x0:12.24,x1:16.88,z0:15.6,z1:23.6,xc:14.56,rz:17.6,sz:17.9,rh:.45,sh:.225,ceil:3.4,
+  DRINK:[{c:0x8a5a2b,k:'can'},{c:0x5a3a1c,k:'bottle',glass:true,cap:0xc8a040},{c:0x3a1f14,k:'can'},{c:0x7fb6d8,k:'bottle',glass:true,cap:0x2a6ad0},{c:0xc9952e,k:'bottle',glass:true,cap:0xe0e0e0},
+    {c:0x9fb54a,k:'bottle',glass:true,cap:0x3f8a3a},{c:0xf0961e,k:'box'},{c:0xb7c98a,k:'can'},{c:0xf2eee4,k:'box'},{c:0xd8eef8,k:'bottle',glass:true,cap:0x3a7ad0}]};
+function floorY(x,z){ if(x>CIN.x0&&x<CIN.x1&&z>CIN.z0&&z<CIN.sz) return z<CIN.rz?CIN.rh:CIN.sh; if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
 const SHOJI={open:true,k:1,leaves:[]};
 function zlBlocked(x,z){ return false; }
 const IRS=ZP.irori, IY=JR.rise;
@@ -3589,7 +3593,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['cinescreen','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['cinescreen','cinefridge','cineswitch','cineshutter','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3603,7 +3607,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
   case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
-  case 'cinescreen': if(window.__cineAct) window.__cineAct(u); break;
+  case 'cinescreen': case 'cinefridge': case 'cineswitch': case 'cineshutter': if(window.__cineAct) window.__cineAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
@@ -3803,7 +3807,7 @@ function tryPunchCharacter(){
   myHit={to:hit.k,kx:+kx.toFixed(2),kz:+kz.toFixed(2),at:Date.now()};
   pushPresence(true);
 }
-function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),vx:+(ME.vx||0).toFixed(2),vz:+(ME.vz||0).toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sk:mySmokeType,em:myEmote,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0,lt:myLight,ht:myHit}; }
+function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),vx:+(ME.vx||0).toFixed(2),vz:+(ME.vz||0).toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sk:mySmokeType,em:myEmote,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0,lt:myLight,ht:myHit,bt:(window.__cineBt??-1)}; }
 function pushPresence(force){ if(!room) return; const o=presenceObj(); const k=JSON.stringify(o); if(!force&&k===lastSent) return; lastSent=k; room.presence(o).catch(()=>{}); }
 function str(v,n){ return typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').slice(0,n):''; }
 function num(v,d=0){ return typeof v==='number'&&isFinite(v)?v:d; }
@@ -4770,14 +4774,14 @@ function step(dt){
   if(punchCooldown>0) punchCooldown=Math.max(0,punchCooldown-dt);
   if(punchAnimTimer>0) punchAnimTimer=Math.max(0,punchAnimTimer-dt);
   {
-    const holdingDrink=myDrink>=0&&ME.seat<0, holdingSnack=mySnack>=0&&ME.seat<0, holdingSmoke=mySmoke>0;
-    const showHand=VIEW.mode==='walk'&&!VIEW.thirdPerson&&!renderer.xr.isPresenting&&(holdingDrink||holdingSnack||holdingSmoke||punchAnimTimer>0);
+    const holdingBottle=window.__cineBt>=0, holdingDrink=myDrink>=0&&ME.seat<0&&!holdingBottle, holdingSnack=mySnack>=0&&ME.seat<0&&!holdingBottle, holdingSmoke=mySmoke>0;
+    const showHand=VIEW.mode==='walk'&&!VIEW.thirdPerson&&!renderer.xr.isPresenting&&(holdingBottle||holdingDrink||holdingSnack||holdingSmoke||punchAnimTimer>0);
     fpHands.g.visible=showHand;
     if(showHand){
       fpHands.cup.visible=holdingDrink;
       fpHands.snack.visible=holdingSnack&&!holdingDrink;
       const sipAge=mySip?(Date.now()-mySip.a)/1000:99;
-      const sipT=(holdingDrink&&sipAge>=0&&sipAge<1.4)?Math.sin((sipAge/1.4)*Math.PI):0;
+      const sipT=holdingBottle?(CIN.sipT||0):(holdingDrink&&sipAge>=0&&sipAge<1.4)?Math.sin((sipAge/1.4)*Math.PI):0;
       const pT=punchAnimTimer>0?Math.sin((1-punchAnimTimer/0.22)*Math.PI):0;
       const bobY=Math.sin((ME.walkBob||0)*2)*(isMoving?0.015:0.003);
       const bobX=Math.cos(ME.walkBob||0)*(isMoving?0.01:0.002);
@@ -5074,9 +5078,12 @@ await __yield(0.9);
    Every line can be changed in the back office (_data/vr.yml › npc); these are the defaults. */
 const NPC_DYN=[];
 const NPC_TXT={
-  'cine.seat':['電影院沙發','電影院後排'],'cine.label':['看電影',''],'cine.hello':['在沙發坐下。點銀幕選片、播放。',''],'cine.status':['在電影院看電影',''],'cine.title':['電影院',''],
+  'cine.seat':['電影院沙發','電影院後排'],'cine.label':['看電影',''],'cine.hello':['在沙發坐下。點銀幕選片、播放。',''],'cine.status':['在電影院看電影',''],'cine.title':['電影院','片單'],
   'cine.none':['片單還是空的：請在後台「電影院片單」加入影片。',''],'cine.now':['正在放映','暫停中'],'cine.idle':['目前沒有放映。',''],'cine.play':['播放','暫停'],'cine.skip':['倒退 10 秒','快轉 10 秒'],
   'cine.stop':['停止放映',''],'cine.vol':['音量',''],'cine.subs':['字幕：開','字幕：關'],'cine.full':['全螢幕','離開全螢幕'],'cine.toast':['開始放映','暫停放映'],
+  'cine.light':['燈光',''],'cine.mute':['靜音','取消靜音'],'cine.scenes':['迎賓,映前,放映,中場,夜場',''],'cine.fridge':['小冰箱',''],
+  'cine.drinks':['冬瓜茶,麥仔茶,沙士,彈珠汽水,烏龍茶,綠茶,柳橙汁,蘆筍汁,豆漿,礦泉水',''],'cine.take':['從冰箱拿了一瓶','喝完了。'],'cine.sip':['喝一口','放回去'],
+  'cine.shutter':['關上窗門。','打開窗門。'],'cine.shout':['窗門要從電影院裡面開關。',''],'edoor.msg':['推開門。','把門帶上。'],
   'cine.err':['影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。',''],'cine.tap':['點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。',''],
   'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
   'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
@@ -5484,8 +5491,8 @@ Object.assign(NP,{noodle:{x:45.62,z:1.78},hob:{x:45.62,z:-2.72},sink:{x:45.62,z:
 // click texts: back office (_data/vr.yml › texts) first, these when it is blank
 for(const [key,title,body] of [
   ['cinescreen','電影院銀幕','點銀幕打開片單：選片、播放、暫停、快轉、全螢幕。誰按都算，在電影院的人看到的都一樣。'],
-  ['cinespk','音響','銀幕兩側一對落地喇叭，矮櫃裡是中置喇叭和重低音，兩側牆上四顆環繞喇叭。影片的左聲道從北邊、右聲道從南邊出來，走出房間聲音就漸漸聽不到。'],
-  ['cinecab','矮櫃','銀幕下的長矮櫃，中間兩格是喇叭的布面，兩側收著影片和遙控器。'],
+  ['cinespk','音響','銀幕兩側一對落地喇叭，中置喇叭和重低音藏在銀幕後面，兩側牆上四顆環繞喇叭。影片的左聲道從北邊、右聲道從南邊出來；門關上，外面就聽不到。'],
+  ['cinetable','小几','深胡桃木的長方小几，兩個杯墊。冰箱在後排台座的角落。'],
   ['clsshelf','矮書櫃','窗下的矮書櫃，線裝書平放成疊，幾個藍布書套，櫃頂擱著三卷書畫。'],
   ['clsdesk','課桌','雙人課桌，桌下有放書的隔板，兩側有掛書包的銅鉤。點椅子坐下。'],
   ['clstdesk','講桌','講台中間的長講桌。點筆電開投影，點黑板寫字。'],
@@ -6559,97 +6566,203 @@ SEAT_KIND.clst={eye:1.27,pitch:-.3,front:false,sink:-.27,get label(){ return NT(
   window.__cls={ST,PJ,LZ,openBoard,openProj,close,apply,show,boardText};
 }
 // ------------------------------------------------------------ 12 號房（二進西廂北間）：電影院
-// A small home theatre: the screen fills the white plaster of the west (back) wall, a tall speaker on each side of it and a
-// low cabinet under it with the centre speaker; light wooden slats along the north wall carry the surround speakers;
-// a fabric L-sofa with a round ottoman in front, a second sofa on a low riser behind; a rug, curtains at the court window,
-// two track rails of spots that dim while a film plays. The films are files the master keeps on Cloudflare R2 and lists
-// in the back office (_data/vr.yml › films). Everyone may choose, play, pause and skip; what one does goes to everyone in
-// the house (through the house server's relay, as with the classroom), and a newcomer is handed the current state by
-// someone already here. Each player keeps time against their own clock and corrects drift by itself.
-const CIN={x0:12.24,x1:16.88,z0:15.6,z1:23.6,xc:14.5};
-SEAT_KIND.cine={eye:1.02,pitch:.18,front:true,sink:-.44,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
-SEAT_KIND.cine2={eye:1.22,pitch:.12,front:true,sink:-.24,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
-{ const {x0:X0,x1:X1,z0:Z0,z1:Z1,xc:XC}=CIN, m=(c,r=.9,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},o));
-  const roof=z=>5.88-.5*Math.abs(z-19.6)-.06;
-  const fabric=m(0x9a8a76,.97), fabricD=m(0x857563,.97), pillowM=[m(0x7d6c5a,.97),m(0xb3a38c,.97),m(0x8f7d68,.97)], black=m(0x1b1a19,.6), grille=m(0x262524,.95), cone=m(0x3a3936,.5,{metalness:.3}),
-    slat=WD_HHL.V, slatBack=m(0x2b241e,.9), cab=WD_HHD.H, cabD=WD_HHD.V, rug=m(0xcdbfa7,1), curtain=m(0x6f6253,.98), metal=m(0x1e1e1f,.5,{metalness:.4});
-  const B=(w,h,d,mt,x,y,z,pk=null)=>{ const o=box(w,h,d,mt,x,y,z,scene,pk); o.castShadow=true; o.receiveShadow=true; return o; };
-  const Cy=(r1,r2,h,mt,x,y,z,seg=16)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),mt); o.position.set(x,y,z); o.castShadow=true; scene.add(o); return o; };
-  // ---- rug
-  { const r=new THREE.Mesh(new THREE.PlaneGeometry(4.0,4.5),rug); r.rotation.x=-Math.PI/2; r.position.set(XC,.006,20.75); r.receiveShadow=true; r.userData={type:'floor'}; scene.add(r); pickables.push(r); }
-  // ---- the screen in the white of the back wall: a thin black frame, the picture, and a strip for subtitles over its foot
-  const SW=3.6, SH=SW*9/16, SY=.98+SH/2, SZ=Z1-.035;
-  B(SW+.1,SH+.1,.04,black,XC,SY,Z1-.02);
-  const scrM=new THREE.MeshBasicMaterial({color:0x161616,toneMapped:false}), scr=new THREE.Mesh(new THREE.PlaneGeometry(SW,SH),scrM);
-  scr.rotation.y=Math.PI; scr.position.set(XC,SY,SZ-.005); scr.userData={type:'cinescreen'}; scene.add(scr); pickables.push(scr);
+// The room as one dark, quiet box once inside: warm grey-brown fabric on the walls, the screen wall all black with a
+// wide velvet frame round the screen, a flat dark ceiling with a field of tiny stars, wall-to-wall carpet. A soffit runs
+// along each long wall with a warm cove light in its edge and pin lights under it that throw scallops down the fabric.
+// Seats are centred on the screen: a three-seat sofa with a walnut coffee table in front at floor level; a stepped riser
+// (45 cm, one 22.5 cm step the width of the room, lit nosings) behind with a U of sofa on it, and a small glass-door
+// fridge of soft drinks in its corner. Red velvet curtains open when a film is loaded and close when it stops. Hinoki
+// shutters close the court window from inside. Light scenes and level are shared by everyone in the house; volume is
+// each player's own. The films are files the master keeps on Cloudflare R2 and lists in the back office
+// (_data/vr.yml › films); choices travel through the house server's relay ({t:'b', d:{k:'cine'}}).
+SEAT_KIND.cine={eye:1.02,pitch:.16,front:true,sink:-.44,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
+SEAT_KIND.cine2={eye:1.02+CIN.rh,pitch:.06,front:true,sink:-.44+CIN.rh,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
+{ const {x0:X0,x1:X1,z0:Z0,z1:Z1,xc:XC,rz:RZ,sz:SZ,rh:RH,sh:SH,ceil:CEIL}=CIN, m=(c,r=.9,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},o));
+  const noiseTex=(base,dots,seed,rep)=>{ const t=ctex(256,256,(g,w,h)=>{ g.fillStyle=base; g.fillRect(0,0,w,h); let s=seed; const r=()=>((s=s*16807%2147483647)/2147483647);
+      for(let i=0;i<5200;i++){ g.fillStyle=dots[i%dots.length]; const d=.6+r()*1.6; g.fillRect(r()*w,r()*h,d,d); } }); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep,rep); return t; };
+  const fabric=m(0xffffff,.97,{map:noiseTex('#8b7e6f',['rgba(60,50,40,.18)','rgba(200,190,170,.14)'],11,6)});
+  const carpet=m(0xffffff,1,{map:noiseTex('#5b524a',['rgba(30,26,22,.3)','rgba(140,118,92,.2)','rgba(170,130,80,.1)'],23,9)});
+  const black=m(0x121212,.95), velvet=m(0x050505,1), ceilM=m(0x23201d,.95), nosing=m(0x1a1918,.6),
+    sofaM=m(0x6c848d,.96), sofaD=m(0x5d727a,.96), pillowM=[m(0xe8dcc4,.97),m(0xc9a548,.95)], legM=WD_WALD.V, walnut=WD_WAL.H, walnutV=WD_WAL.V, metal=m(0x1e1e1f,.45,{metalness:.5}), brass=m(0xb5945b,.32,{metalness:.8});
+  const B=(w,h,d,mt,x,y,z,pk=null,par=scene)=>{ const o=box(w,h,d,mt,x,y,z,par,pk); o.castShadow=true; o.receiveShadow=true; return o; };
+  const Cy=(r1,r2,h,mt,x,y,z,seg=16,par=scene)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),mt); o.position.set(x,y,z); o.castShadow=true; par.add(o); return o; };
+  // a box with rounded edges (cushions, arms, table top): a rounded rectangle extruded with a bevel
+  function rbox(w,h,d,r,mt,x,y,z,par=scene,pk=null){ r=Math.min(r,w/2-.005,h/2-.005,d/2-.005); const s=new THREE.Shape(), a=w/2-r, b=h/2-r;
+    s.moveTo(-a,-h/2); s.lineTo(a,-h/2); s.quadraticCurveTo(w/2,-h/2,w/2,-b); s.lineTo(w/2,b); s.quadraticCurveTo(w/2,h/2,a,h/2); s.lineTo(-a,h/2); s.quadraticCurveTo(-w/2,h/2,-w/2,b); s.lineTo(-w/2,-b); s.quadraticCurveTo(-w/2,-h/2,-a,-h/2);
+    const g=new THREE.ExtrudeGeometry(s,{depth:Math.max(.001,d-2*r),bevelEnabled:true,bevelThickness:r,bevelSize:r*.92,bevelSegments:3,curveSegments:5}); g.translate(0,0,-(d-2*r)/2);
+    const o=new THREE.Mesh(g,mt); o.position.set(x,y,z); o.castShadow=true; o.receiveShadow=true; par.add(o); if(pk){ o.userData=pk; pickables.push(o); } return o; }
+  // a flat panel on a wall with holes (u along the wall, v up), placed at a distance in front of it
+  function wallPanel(mt,ax,at,nrm,u0,u1,v0,v1,holes=[]){ const s=new THREE.Shape(); s.moveTo(u0,v0); s.lineTo(u1,v0); s.lineTo(u1,v1); s.lineTo(u0,v1); s.closePath();
+    for(const h of holes){ const p=new THREE.Path(); h.forEach(([a,b],k)=>k?p.lineTo(a,b):p.moveTo(a,b)); p.closePath(); s.holes.push(p); }
+    const g=new THREE.ShapeGeometry(s), uv=g.attributes.uv, pos=g.attributes.position; for(let i=0;i<pos.count;i++) uv.setXY(i,pos.getX(i)/1.6,pos.getY(i)/1.6);
+    const o=new THREE.Mesh(g,mt); o.receiveShadow=true; scene.add(o);
+    if(ax==='x'){ o.position.set(at,0,0); o.rotation.y=-Math.PI/2; } else o.position.set(0,0,at);   // u along +z on the x walls, along +x on the z walls
+    if(mt.side!==THREE.DoubleSide){ mt.side=THREE.DoubleSide; mt.needsUpdate=true; } return o; }
+  const oct=(cu,cv,r)=>[...Array(8)].map((_,k)=>{ const a=Math.PI/8+k*Math.PI/4; return [cu+Math.cos(a)*r,cv+Math.sin(a)*r]; });
+  const rect=(u0,u1,v0,v1)=>[[u0,v0],[u1,v0],[u1,v1],[u0,v1]];
+  // ---- walls: fabric on three, black on the screen wall; slim dark skirting
+  wallPanel(fabric,'x',X0+.012,1,Z0,Z1,0,CEIL);
+  wallPanel(fabric,'x',X1-.012,-1,Z0,Z1,0,CEIL,[rect(19.1,20.7,0,2.52),oct(17.85,1.55,.52),oct(21.95,1.55,.52)]);
+  wallPanel(fabric,'z',Z0+.012,1,X0,X1,0,CEIL,[rect(13.88,15.12,.98,2.47)]);
+  wallPanel(black,'z',Z1-.012,-1,X0,X1,0,CEIL);
+  for(const [x,z0,z1] of [[X0+.03,Z0,Z1],[X1-.03,Z0,19.1],[X1-.03,20.7,Z1]]) B(.03,.1,z1-z0,black,x,.05,(z0+z1)/2);
+  B(X1-X0,.1,.03,black,XC,.05,Z0+.03);
+  // ---- carpet everywhere, the riser and its step carpeted too, with dark nosings and a warm strip under each
+  { const fl=new THREE.Mesh(new THREE.PlaneGeometry(X1-X0,Z1-Z0),carpet); fl.rotation.x=-Math.PI/2; fl.position.set(XC,.008,(Z0+Z1)/2); fl.receiveShadow=true; fl.userData={type:'floor'}; scene.add(fl); pickables.push(fl);
+    B(X1-X0,RH,RZ-Z0,carpet,XC,RH/2,(Z0+RZ)/2,{type:'floor'}); B(X1-X0,SH,SZ-RZ,carpet,XC,SH/2,(RZ+SZ)/2,{type:'floor'});
+    const led=new THREE.MeshStandardMaterial({color:0x2a2018,emissive:0xffc88a,emissiveIntensity:1.6});
+    for(const [z,y] of [[RZ,RH],[SZ,SH]]){ B(X1-X0,.03,.05,nosing,XC,y-.012,z-.02); B(X1-X0-.02,.012,.006,led,XC,y-.05,z+.004); }
+    CIN.stepLed=led; }
+  // ---- flat dark ceiling, soffits along the long walls with the cove light, pin lights and the scallops they throw
+  { const c=new THREE.Mesh(new THREE.PlaneGeometry(X1-X0,Z1-Z0),ceilM); c.rotation.x=Math.PI/2; c.position.set(XC,CEIL,(Z0+Z1)/2); scene.add(c);
+    const SW=.34, SD=.24, cove=new THREE.MeshBasicMaterial({color:0xffd9b0,toneMapped:false});
+    const glowT=ctex(64,256,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,w,0); gr.addColorStop(0,'rgba(255,255,255,.9)'); gr.addColorStop(.25,'rgba(255,255,255,.35)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
+    const glowM=new THREE.MeshBasicMaterial({map:glowT,color:0xffd9b0,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+    // a scallop: a hot spot right under the pin light, a soft cone widening down the wall, a curved upper edge
+    const scT=ctex(256,512,(g,w,h)=>{ const im=g.createImageData(w,h), d=im.data, ss=(a,b,x)=>{ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); };
+      for(let j=0;j<h;j++) for(let i=0;i<w;i++){ const u=(i+.5)/w*2-1, v=(j+.5)/h, hw=.12+.88*Math.pow(v,.62), v0=.03+.3*u*u;
+        let a=(1-ss(.55,1,Math.abs(u)/hw))*ss(v0,v0+.07,v)*Math.pow(1-v,1.25)*.85; a+=Math.exp(-(u*u*60+(v-.035)*(v-.035)*900))*.9; const k=(j*w+i)*4; d[k]=d[k+1]=d[k+2]=255; d[k+3]=Math.min(255,a*255); }
+      g.putImageData(im,0,0); });
+    const scM=new THREE.MeshBasicMaterial({map:scT,color:0xffd2a0,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+    const pinM=new THREE.MeshBasicMaterial({color:0xfff0dc,toneMapped:false}), scallops=[], lights=[];
+    for(const s of [-1,1]){ const xw=s<0?X0:X1, xi=xw-s*SW;
+      B(SW,SD,Z1-Z0,ceilM,xw-s*SW/2,CEIL-SD/2,(Z0+Z1)/2);
+      B(.016,.016,Z1-Z0-.04,cove,xi+s*.008,CEIL-SD+.012,(Z0+Z1)/2);                                    // the lit strip on the soffit's edge
+      const gl=new THREE.Mesh(new THREE.PlaneGeometry(.7,Z1-Z0),glowM); gl.rotation.set(Math.PI/2,0,s<0?0:Math.PI); gl.position.set(xi-s*.35,CEIL-.004,(Z0+Z1)/2); scene.add(gl);
+      const gf=new THREE.Mesh(new THREE.PlaneGeometry(.22,Z1-Z0),glowM); gf.rotation.set(0,s<0?Math.PI/2:-Math.PI/2,Math.PI/2); gf.position.set(xi-s*.002,CEIL-SD/2,(Z0+Z1)/2); scene.add(gf);
+      for(const z of [16.5,18.2,21.3,22.8]){ const p=new THREE.Mesh(new THREE.CircleGeometry(.022,14),pinM); p.rotation.x=Math.PI/2; p.position.set(xw-s*SW*.45,CEIL-SD-.002,z); scene.add(p);
+        const top=CEIL-SD-.02, H=2.5, w=1.05, sc=new THREE.Mesh(new THREE.PlaneGeometry(w,H),scM); sc.position.set(xw-s*.026,top-H/2,z); sc.rotation.y=s<0?Math.PI/2:-Math.PI/2; scene.add(sc); scallops.push({sc,pin:p}); }
+      for(const z of [17.4,21.8]){ const l=new THREE.PointLight(0xffd2a0,0,6.5,2); l.position.set(xw-s*.55,2.6,z); scene.add(l); lights.push(l); } }
+    // stars: three sets that twinkle out of step
+    const dotT=ctex(32,32,(g,w,h)=>{ const gr=g.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.35,'rgba(255,255,255,.6)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
+    const stars=[]; let sd=97; const rr=()=>((sd=sd*16807%2147483647)/2147483647);
+    for(let k=0;k<3;k++){ const P=[]; for(let i=0;i<170;i++) P.push(X0+SW+.05+rr()*(X1-X0-2*SW-.1),CEIL-.006,Z0+.05+rr()*(Z1-Z0-.1));
+      const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+      const pm=new THREE.PointsMaterial({map:dotT,color:k===1?0xfff4e0:0xe8f0ff,size:.035+k*.008,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true});
+      const pts=new THREE.Points(g,pm); pts.frustumCulled=false; scene.add(pts); stars.push(pm); }
+    Object.assign(CIN,{cove,glowM,scM,scallops,lights,stars,pinM}); }
+  // ---- the screen: a wide black velvet frame, the picture, a strip for subtitles; a pelmet and red velvet curtains
+  const SWd=3.6, SHt=SWd*9/16, SY=1.1+SHt/2, SZz=Z1-.03;
+  B(SWd+.32,SHt+.32,.03,velvet,XC,SY,Z1-.025);
+  const scrM=new THREE.MeshBasicMaterial({color:0x161616,toneMapped:false}), scr=new THREE.Mesh(new THREE.PlaneGeometry(SWd,SHt),scrM);
+  scr.rotation.y=Math.PI; scr.position.set(XC,SY,SZz-.012); scr.userData={type:'cinescreen'}; scene.add(scr); pickables.push(scr);
   const subCv=document.createElement('canvas'); subCv.width=1600; subCv.height=200; const subTex=new THREE.CanvasTexture(subCv); subTex.colorSpace=THREE.SRGBColorSpace;
-  const sub=new THREE.Mesh(new THREE.PlaneGeometry(SW*.9,SW*.9/8),new THREE.MeshBasicMaterial({map:subTex,transparent:true,toneMapped:false,depthWrite:false}));
-  sub.rotation.y=Math.PI; sub.position.set(XC,SY-SH/2+SW*.9/16+.06,SZ-.012); sub.visible=false; scene.add(sub);
-  // ---- low cabinet under the screen: four doors, the centre speaker and the subwoofer behind cloth in the middle bays
-  { const x0=XC-1.75, x1=XC+1.75, d=.38, h=.48, z=Z1-d/2-.01, pk={type:'cinecab'};
-    B(x1-x0,h-.08,d,cab,XC,.08+(h-.08)/2,z,pk); B(x1-x0+.03,.03,d+.02,cab,XC,h+.015,z,pk); B(x1-x0-.06,.08,d-.06,black,XC,.04,z);
-    const bw=(x1-x0)/4; for(let i=0;i<4;i++){ const bx=x0+bw*(i+.5), fz=z-d/2-.004;
-      if(i===1||i===2){ B(bw-.03,h-.16,.01,grille,bx,.08+(h-.08)/2,fz,{type:'cinespk'}); }
-      else { B(bw-.03,h-.16,.012,cabD,bx,.08+(h-.08)/2,fz,pk); B(.012,.12,.012,metal,bx+(i<2?bw/2-.06:-(bw/2-.06)),.08+(h-.08)/2,fz-.012); } }
-    OB(x0,x1,Z1-d-.02,Z1); }
-  // ---- two tall speakers either side of the screen, and four small ones on the side walls
-  const SPK={L:{x:XC-2.02,y:1.1,z:Z1-.25},R:{x:XC+2.02,y:1.1,z:Z1-.25}};
-  for(const k of ['L','R']){ const s=SPK[k], pk={type:'cinespk'}, w=.26, d=.32, h=1.12;
-    B(w,h-.04,d,black,s.x,.04+(h-.04)/2,s.z,pk); for(const sx of [-1,1]) for(const sz of [-1,1]) Cy(.018,.018,.04,metal,s.x+sx*(w/2-.03),.02,s.z+sz*(d/2-.03),8);
-    const fz=s.z-d/2-.004; B(w-.03,h-.12,.01,grille,s.x,.06+(h-.04)/2,fz,pk);
-    for(const [yy,r] of [[h-.16,.035],[h-.4,.085],[h-.66,.085]]){ const c=Cy(r,r,.012,cone,s.x,yy,fz-.008,20); c.rotation.x=Math.PI/2; } }
-  function wallSpk(x,z,y,nx){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=nx>0?Math.PI/2:-Math.PI/2; scene.add(g);
-    const b=box(.22,.32,.16,black,0,0,.08,g,{type:'cinespk'}); b.castShadow=true; box(.19,.29,.008,grille,0,0,.162,g,{type:'cinespk'}); box(.04,.04,.06,metal,0,0,-.02,g); }
-  // ---- light wooden slats over the brick of the north wall (the colour of the doors), with the speakers on them
-  { const x=X0+.012, zs=Z0+.12, ze=Z1-.12, H=3.3; B(.016,H,ze-zs,slatBack,x+.008,H/2,(zs+ze)/2);
-    for(let z=zs+.04;z<ze-.02;z+=.1) B(.026,H,.048,slat,x+.03,H/2,z);
-    wallSpk(X0+.06,22.75,2.15,1); wallSpk(X0+.06,16.9,2.3,1); }
-  wallSpk(X1-.005,23.05,2.15,-1); wallSpk(X1-.005,16.35,2.3,-1);
-  // ---- curtains at the court window, gathered to the sides, on a dark rod
-  { const z=Z0+.08, top=2.78; B(2.6,.03,.03,metal,XC,top+.06,z+.02);
-    for(const s of [-1,1]) for(let i=0;i<6;i++){ const p=B(.11,top-.04,.05,curtain,XC+s*(.92+i*.085),(top-.04)/2+.02,z+.03+(i%2)*.035); p.receiveShadow=true; } }
-  // ---- sofas: an L in front (three seats and a chaise toward the screen on the north side), three seats on a riser behind
-  function sofa(x0,x1,zc,y0,n,kind,ap){ const W=x1-x0, D=.95, zb=zc-D/2, pk=[];
-    B(W,.36,D,fabricD,(x0+x1)/2,y0+.2,zc); B(W,.5,.24,fabric,(x0+x1)/2,y0+.38+.25,zb+.12);
-    for(const ax of [x0+.1,x1-.1]) B(.2,.6,D,fabric,ax,y0+.3,zc);
-    const sw=(W-.4)/n; for(let i=0;i<n;i++){ const sx=x0+.2+sw*(i+.5);
-      const c=B(sw-.02,.14,D-.3,fabric,sx,y0+.45,zc+.1); const si=addSeat(sx,zc+.08,Math.PI,kind,NT('cine.seat',kind==='cine2'?1:0)); c.userData={type:'seat',si}; pickables.push(c);
-      if(ap) SEATS[si].ap={x:sx,z:ap};
-      const bc=B(sw-.04,.4,.14,fabric,sx,y0+.68,zb+.3); bc.rotation.x=-.12; bc.userData={type:'seat',si}; pickables.push(bc); }
-    for(const [px,pi,rz] of [[x0+.38,0,.18],[x1-.38,1,-.2],[(x0+x1)/2+.25,2,.08]]){ const p=B(.42,.4,.13,pillowM[pi],px,y0+.74,zb+.4); p.rotation.set(-.25,0,rz); } }
-  { const zc=20.15, x0=13.2, x1=15.7; sofa(x0,x1,zc,0,3,'cine',null);
-    // the chaise: along the north wall, from the back of the sofa toward the screen
-    const cx0=12.38, cx1=x0, cz0=zc-.475, cz1=21.6; B(cx1-cx0,.36,cz1-cz0,fabricD,(cx0+cx1)/2,.2,(cz0+cz1)/2); B(.24,.5,cz1-cz0,fabric,cx0+.12,.63,(cz0+cz1)/2);
-    B(cx1-cx0-.26,.14,cz1-cz0-.1,fabric,(cx0+cx1)/2+.12,.45,(cz0+cz1)/2+.02); B(cx1-cx0,.6,.2,fabric,(cx0+cx1)/2,.3,cz1-.1);
-    const p=B(.13,.4,.42,pillowM[1],cx0+.32,.74,20.6); p.rotation.set(0,0,.25);
-    OB(x0,x1,zc-.475,zc+.475); OB(cx0,cx1,cz0,cz1); }
-  { const y0=.2, zc=17.55, x0=13.2, x1=15.7;
-    B(4.4,y0,2.1,cab,XC,y0/2,17.05); B(4.4,.02,.04,cabD,XC,y0-.01,18.09);
-    sofa(x0,x1,zc,y0,3,'cine2',18.48); OB(XC-2.2,XC+2.2,16.0,18.1); }
-  // ---- round ottoman with a wooden tray and a bowl
-  { const x=14.45, z=21.72; Cy(.43,.41,.4,fabricD,x,.2,z,32); Cy(.44,.44,.02,fabric,x,.405,z,32); Cy(.2,.2,.02,cab,x,.425,z,24); Cy(.1,.06,.06,black,x,.465,z,20); OB(x-.43,x+.43,z-.43,z+.43); }
-  // ---- two track rails with spots; three lamps that dim when the film starts, a cool glow off the screen
-  const lamps=[];
-  for(const x of [13.55,15.45]){ B(.04,.04,6.4,metal,x,3.3,19.75); for(const z of [17.0,22.5]) Cy(.005,.005,roof(z)-3.3,metal,x,(roof(z)+3.3)/2,z,6);
-    for(const z of [17.4,19.0,20.6,22.2]){ const sp=Cy(.035,.045,.12,metal,x,3.22,z,14); sp.rotation.x=.35*(z<19.8?1:-1); const d=new THREE.Mesh(new THREE.CircleGeometry(.03,14),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffe2b8,emissiveIntensity:1})); d.rotation.x=Math.PI/2; d.position.set(x,3.155,z); scene.add(d); } }
-  for(const z of [17.3,19.8,22.3]){ const l=new THREE.PointLight(0xffdcb0,NIGHT?.95:.42,6.2,2); l.position.set(XC,3.0,z); scene.add(l); lamps.push(l); }
-  const glow=new THREE.PointLight(0xc8d4ff,0,6,2); glow.position.set(XC,SY,Z1-1.3); scene.add(glow);
-  Object.assign(CIN,{scr,scrM,sub,subCv,subTex,SPK,lamps,base:lamps.map(l=>l.intensity),glow,SW,SH}); }
+  const sub=new THREE.Mesh(new THREE.PlaneGeometry(SWd*.9,SWd*.9/8),new THREE.MeshBasicMaterial({map:subTex,transparent:true,toneMapped:false,depthWrite:false}));
+  sub.rotation.y=Math.PI; sub.position.set(XC,SY-SHt/2+SWd*.9/16+.06,SZz-.02); sub.visible=false; scene.add(sub);
+  B(X1-X0,.24,.3,velvet,XC,CEIL-.12,Z1-.15);
+  const curtM=new THREE.MeshPhysicalMaterial({color:0x6a0f15,roughness:.78,sheen:1,sheenRoughness:.45,sheenColor:new THREE.Color(0xd06070),side:THREE.DoubleSide});
+  const CH=CEIL-.26, CZ=Z1-.2, half=(X1-X0)/2, curt=[];
+  { const g=new THREE.PlaneGeometry(1,CH-.03,64,1), p=g.attributes.position; for(let i=0;i<p.count;i++){ const u=p.getX(i)+.5; p.setX(i,u); p.setZ(i,Math.sin(u*Math.PI*2*13)*.045); } g.computeVertexNormals(); g.translate(0,(CH-.03)/2+.02,0);
+    for(const s of [-1,1]){ const c=new THREE.Mesh(g,curtM); c.position.set(s<0?X0+.02:X1-.02,0,CZ); c.scale.x=s<0?half:-half; c.castShadow=true; c.receiveShadow=true; c.userData={type:'cinescreen'}; scene.add(c); pickables.push(c); curt.push(c); } }
+  // ---- two tall speakers in front of the gathered curtains; four small ones on the side walls (the centre is behind the screen)
+  const SPK={L:{x:XC-1.98,y:1.1,z:Z1-.48},R:{x:XC+1.98,y:1.1,z:Z1-.48}};
+  for(const k of ['L','R']){ const s=SPK[k], pk={type:'cinespk'}, w=.26, d=.32, h=1.12, y0=0;
+    B(w,h-.04,d,black,s.x,y0+.04+(h-.04)/2,s.z,pk); for(const sx of [-1,1]) for(const sz of [-1,1]) Cy(.018,.018,.04,metal,s.x+sx*(w/2-.03),y0+.02,s.z+sz*(d/2-.03),8);
+    const fz=s.z-d/2-.004; B(w-.03,h-.12,.01,m(0x1c1c1c,.95),s.x,y0+.06+(h-.04)/2,fz,pk);
+    for(const [yy,r] of [[h-.16,.035],[h-.4,.085],[h-.66,.085]]){ const c=Cy(r,r,.012,m(0x2e2d2b,.5,{metalness:.3}),s.x,y0+yy,fz-.008,20); c.rotation.x=Math.PI/2; } }
+  for(const [x,z,nx] of [[X0+.02,17.35,1],[X0+.02,22.05,1],[X1-.02,17.3,-1],[X1-.02,22.6,-1]]){ const g=new THREE.Group(); g.position.set(x,2.35,z); g.rotation.y=nx>0?Math.PI/2:-Math.PI/2; scene.add(g);
+    B(.22,.32,.15,black,0,0,.075,{type:'cinespk'},g); B(.19,.29,.008,m(0x1c1c1c,.95),0,0,.152,{type:'cinespk'},g); }
+  // ---- sofas in 藍鼠 with 練色 and 芥子 pillows, rounded, on short walnut feet. Local frame: front toward the screen (+z).
+  function sofaPart(par,w,d,{back=true,armL=true,armR=true,seats=1,yaw=0}={}){ const H0=.09;
+    for(const sx of [-1,1]) for(const sz of [-1,1]) Cy(.022,.016,H0,legM,sx*(w/2-.07),H0/2,sz*(d/2-.08),10,par);
+    rbox(w,.26,d,.05,sofaD,0,H0+.13,0,par);
+    const inL=armL?.2:0, inR=armR?.2:0, sw=(w-inL-inR)/seats, bk=back?.24:0;
+    for(let i=0;i<seats;i++){ const x=-w/2+inL+sw*(i+.5); rbox(sw-.015,.15,d-bk-.02,.06,sofaM,x,H0+.33,bk/2,par);
+      if(back){ const c=rbox(sw-.03,.46,.2,.08,sofaM,x,H0+.62,-d/2+bk+.06,par); c.rotation.x=-.16; } }
+    if(back) rbox(w,.56,.2,.06,sofaD,0,H0+.5,-d/2+.1,par);
+    if(armL) rbox(.2,.56,d,.07,sofaD,-w/2+.1,H0+.3,0,par); if(armR) rbox(.2,.56,d,.07,sofaD,w/2-.1,H0+.3,0,par); }
+  function pillow(par,x,y,z,ci,rz){ const p=rbox(.42,.4,.13,.06,pillowM[ci],x,y,z,par); p.rotation.set(-.32,0,rz); }
+  const seatPick=(par,si)=>{ par.traverse(o=>{ if(o.isMesh&&!o.userData.type){ o.userData={type:'seat',si}; pickables.push(o); } }); };
+  // front: three seats, centred, the walnut table in front
+  { const W=2.6, D=.95, zc=18.775, g=new THREE.Group(); g.position.set(XC,0,zc); scene.add(g); sofaPart(g,W,D,{seats:3});
+    pillow(g,-W/2+.42,.72,-D/2+.42,0,.14); pillow(g,W/2-.42,.72,-D/2+.42,1,-.14);
+    const sis=[-1,0,1].map(i=>{ const si=addSeat(XC+i*.733,zc+.06,Math.PI,'cine',NT('cine.seat',0)); SEATS[si].ap={x:XC+i*.733,z:19.47}; return si; });
+    g.children.forEach(o=>{ const lx=o.position.x, i=lx<-.4?0:lx>.4?2:1; if(o.isMesh){ o.userData={type:'seat',si:sis[i]}; pickables.push(o); } });
+    OB(XC-W/2,XC+W/2,zc-D/2,zc+D/2); }
+  { const x=XC, z=20.025, w=1.2, d=.45, h=.4, pk={type:'cinetable'};
+    rbox(w,.04,d,.012,walnut,x,h-.02,z,scene,pk); B(w-.12,.018,d-.1,walnut,x,.12,z,pk);
+    for(const sx of [-1,1]) for(const sz of [-1,1]){ const l=Cy(.022,.014,h-.04,walnutV,x+sx*(w/2-.07),(h-.04)/2,z+sz*(d/2-.06),10); l.rotation.z=sx*.04; }
+    for(const dx of [-.3,.3]) Cy(.045,.045,.006,m(0x3a3a3a,.7),x+dx,h+.003,z,20);
+    OB(x-w/2,x+w/2,z-d/2,z+d/2); }
+  // on the riser: a U, four seats facing the screen across the back, the two end ones with a chaise run forward
+  { const y0=RH, W=3.4, xL=XC-W/2, zb=15.7, D=.85, CL=.8, sw=W/4, g=new THREE.Group(); g.position.set(XC,y0,zb+D/2); scene.add(g);
+    sofaPart(g,W,D,{seats:4});
+    for(const s of [-1,1]){ const c=new THREE.Group(); c.position.set(s*(W/2-sw/2),0,D/2+CL/2); g.add(c); sofaPart(c,sw,CL,{back:false,armL:s<0,armR:s>0,seats:1}); }
+    pillow(g,-W/2+.42,.72,-D/2+.42,1,.14); pillow(g,W/2-.42,.72,-D/2+.42,0,-.14); pillow(g,-.22,.72,-D/2+.4,0,.06);
+    const sis=[0,1,2,3].map(i=>{ const x=xL+sw*(i+.5), si=addSeat(x,zb+D/2+.06,Math.PI,'cine2',NT('cine.seat',1)); SEATS[si].ap=(i===0||i===3)?{x,z:17.72}:{x,z:17.08}; return si; });
+    g.traverse(o=>{ if(!o.isMesh) return; const wp=o.getWorldPosition(new THREE.Vector3()); const i=Math.max(0,Math.min(3,Math.floor((wp.x-xL)/sw))); o.userData={type:'seat',si:sis[i]}; pickables.push(o); });
+    OB(xL,xL+W,zb,zb+D); OB(xL,xL+sw,zb+D,zb+D+CL); OB(xL+W-sw,xL+W,zb+D,zb+D+CL); }
+  // ---- the fridge: glass door, a cool light inside, soft drinks on three shelves (no alcohol)
+  { const x=16.6, z=15.97, w=.48, d=.5, h=.85, y0=RH, pk={type:'cinefridge'}, g=new THREE.Group(); g.position.set(x,y0,z); scene.add(g);
+    B(w,h,d,m(0x1a1a1b,.5,{metalness:.3}),0,h/2,0,pk,g); B(w-.06,h-.08,.01,m(0xeef5fb,.4,{emissive:0xd8ecff,emissiveIntensity:.9}),0,h/2,-d/2+.06,pk,g);
+    const inner=m(0x2a2d30,.6); for(const y of [.06,.31,.56]) B(w-.06,.008,d-.12,m(0xcfe3ee,.1,{transparent:true,opacity:.5}),0,y,.0,pk,g);
+    const DR=CIN.DRINK; let k=0;
+    for(const [row,y] of [[0,.065],[1,.315],[2,.565]]) for(let i=0;i<4&&k<DR.length;i++,k++){ const dr=DR[k], bx=-w/2+.075+i*.11, bz=-.02+((i+row)%2)*.06;
+      const mt=m(dr.c,dr.glass?.15:.55,dr.glass?{transparent:true,opacity:.75,metalness:.1}:{}), tall=dr.k==='bottle'?.2:dr.k==='box'?.15:.122;
+      if(dr.k==='box') B(.06,tall,.045,mt,bx,y+tall/2,bz,pk,g);
+      else { Cy(dr.k==='bottle'?.026:.03,dr.k==='bottle'?.026:.03,tall,mt,bx,y+tall/2,bz,14,g).userData=pk; if(dr.k==='bottle'){ Cy(.011,.024,.05,mt,bx,y+tall+.025,bz,12,g); Cy(.012,.012,.016,m(dr.cap||0xdddddd,.4),bx,y+tall+.058,bz,12,g); } else Cy(.024,.03,.008,m(0xb8b8b8,.3,{metalness:.8}),bx,y+tall+.004,bz,14,g); } }
+    const gl=B(w-.02,h-.04,.012,new THREE.MeshPhysicalMaterial({color:0xbfd3df,roughness:.05,transparent:true,opacity:.22,metalness:.1}),0,h/2,d/2+.006,pk,g);
+    B(.018,h*.6,.03,m(0xc0c4c8,.25,{metalness:.9}),w/2-.05,h/2,d/2+.03,pk,g);
+    const fl=new THREE.PointLight(0xd8ecff,.35,1.6,2); fl.position.set(0,h*.6,d/2+.15); g.add(fl);
+    g.children.forEach(o=>{ if(o.isMesh&&!o.userData.type){ o.userData=pk; pickables.push(o); } });
+    OB(x-w/2,x+w/2,z-d/2,z+d/2); }
+  // ---- hinoki shutters on the court window, two leaves closed from inside
+  { const T2=new THREE.TextureLoader().load('hinoki-grain.jpg'); T2.colorSpace=THREE.SRGBColorSpace; T2.wrapS=T2.wrapT=THREE.RepeatWrapping;
+    const hk=new THREE.MeshStandardMaterial({map:T2,color:0xd6c8b4,roughness:.5}), hkD=new THREE.MeshStandardMaterial({map:T2,color:0xb8a68c,roughness:.5}), pk={type:'cineshutter'}, leaves=[];
+    const y0=.98, H=1.5, Wl=.62, z=Z0+.075;
+    for(const s of [-1,1]){ const hx=s<0?13.88:15.12, pv=new THREE.Group(); pv.position.set(hx,y0,z); scene.add(pv);
+      const lx=-s*Wl/2; B(Wl,H,.032,hk,lx,H/2,0,pk,pv);
+      for(const [yy,hh] of [[.05,.1],[H-.05,.1],[H*.42,.08]]) B(Wl,hh,.012,hkD,lx,yy,.022,pk,pv);
+      for(const xx of [.04,Wl-.04]) B(.08,H,.012,hkD,-s*xx,H/2,.022,pk,pv);
+      for(let i=1;i<6;i++) B(.012,H*.42-.1,.01,hkD,-s*(i*Wl/6),.1+(H*.42-.1)/2,.026,pk,pv);   // narrow battens below the rail, as in the bath house
+      const kn=Cy(.012,.012,.03,brass,-s*(Wl-.06),H*.5,.04,12,pv); kn.rotation.x=Math.PI/2;
+      leaves.push({pv,s}); }
+    CIN.shut={leaves,k:0}; }
+  // ---- a light switch plate inside the door
+  { const g=new THREE.Group(); g.position.set(X1-.02,1.25,18.75); g.rotation.y=-Math.PI/2; scene.add(g); const pk={type:'cineswitch'};
+    B(.12,.2,.012,brass,0,0,.006,pk,g); for(let i=0;i<5;i++){ const b=Cy(.009,.009,.012,m(0xf4efe4,.4),0,.06-i*.03,.016,12,g); b.rotation.x=Math.PI/2; b.userData=pk; pickables.push(b); } }
+  Object.assign(CIN,{scr,scrM,sub,subCv,subTex,SPK,curt,curtK:0,glow:null,SW:SWd,SH:SHt,SY}); ZL_DYN.push(scr,sub,...curt,...CIN.shut.leaves.map(l=>l.pv));
+  { const glow=new THREE.PointLight(0xc8d4ff,0,9,1.6); glow.position.set(XC,SY-.2,Z1-1.4); scene.add(glow); const glow2=new THREE.PointLight(0xc8d4ff,0,6,2); glow2.position.set(XC,2.6,20.2); scene.add(glow2); CIN.glow=glow; CIN.glow2=glow2; } }
 
-// ---- playing: one <video> for this player; the state everyone shares; panel, full screen, sound from the speakers
+// ---- European panel doors for the cinema and the classroom (into the 明間 between them): walnut, two raised panels a
+//      side, brass levers, no bar; anyone may open or close them, from either side; the state is shared like every door
+function addEuroDoor(key,x,z,rot,half,h,wallT){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
+  const pick={type:'door',key}, zi=-(wallT/2+.03), lw=half-.008, lh=h-.06, leaves=[], wood=WD_WAL.V, woodH=WD_WAL.H, dk=WD_WALD.V,
+    brassM=new THREE.MeshStandardMaterial({color:0xb5945b,metalness:.8,roughness:.32});
+  for(const side of [-1,1]){ const pv=new THREE.Group(); pv.position.set(side*half,0,zi); g.add(pv); const cx=-side*lw/2, t=.045;
+    box(lw,lh,t,wood,cx,lh/2+.03,0,pv,pick);
+    for(const fz of [-1,1]) for(const [y0,y1] of [[.2,.92],[1.1,lh-.12]]){ const pw=lw-.24, ph=y1-y0, cy=(y0+y1)/2+.03, zz=fz*(t/2+.006);
+      box(pw,ph,.012,woodH,cx,cy,zz,pv,pick);                                                     // the raised field
+      for(const [w2,h2,dx,dy] of [[pw+.06,.03,0,ph/2+.015],[pw+.06,.03,0,-ph/2-.015],[.03,ph,pw/2+.015,0],[.03,ph,-pw/2-.015,0]]) box(w2,h2,.018,dk,cx+dx,cy+dy,zz,pv,pick); }   // its moulding
+    for(const fz of [-1,1]){ const hx=-side*(lw-.07), hz=fz*(t/2+.012);
+      const rose=new THREE.Mesh(new THREE.CylinderGeometry(.026,.026,.01,18),brassM); rose.rotation.x=Math.PI/2; rose.position.set(hx,1.02,hz); pv.add(rose);
+      const lev=new THREE.Mesh(new THREE.BoxGeometry(.12,.016,.016),brassM); lev.position.set(hx+side*.055,1.02,hz+fz*.022); pv.add(lev);
+      const neck=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.025,10),brassM); neck.rotation.x=Math.PI/2; neck.position.set(hx,1.02,hz+fz*.012); pv.add(neck); }
+    leaves.push({pv,side}); }
+  DOORS[key]={leaves,bar:null,open:true,k:1,barK:0,euro:true,pose(d){ d.barK=0; for(const {pv,side} of d.leaves) pv.rotation.y=-side*(Math.PI/2-.08)*d.k; }};
+  DOORS[key].pose(DOORS[key]); DOOR_BLOCKS.push({key,x0:x-.15,x1:x+.15,z0:z-half,z1:z+half}); }
+addEuroDoor('dcine',19.6-ZR.wallX,(ZR.door.z0+ZR.door.z1)/2,-Math.PI/2,(ZR.door.z1-ZR.door.z0)/2,ZR.door.h,ZR.wallT);
+addEuroDoor('dcls',19.6+ZR.wallX,(ZR.door.z0+ZR.door.z1)/2,Math.PI/2,(ZR.door.z1-ZR.door.z0)/2,ZR.door.h,ZR.wallT);
+
+// ---- playing, lights, the hand-held bottle, the in-room panel, and keeping everyone in step
 { const R=CIN, FILMS=(Array.isArray(VRD.films)?VRD.films:[]).filter(f=>f&&String(f.url||'').trim()).map(f=>({title:String(f.title||'').trim()||String(f.url).split('/').pop(),url:String(f.url).trim(),subs:String(f.subs||'').trim()}));
   const vid=document.createElement('video'); vid.crossOrigin='anonymous'; vid.playsInline=true; vid.preload='auto'; vid.setAttribute('playsinline','');
   const park=document.createElement('div'); park.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;overflow:hidden;z-index:-1'; park.append(vid); document.body.append(park);
   vid.style.cssText='width:100%;height:100%;object-fit:contain;background:#000';
   const tex=new THREE.VideoTexture(vid); tex.colorSpace=THREE.SRGBColorSpace;
-  // shared state: which film, playing or not, where (seconds) at the moment it was set (by this player's own clock)
-  const S={u:'',ti:'',sb:'',p:false,t:0,at:performance.now(),v:0,id:''}, L={vol:+(localStorage.getItem('cineVol')||.8),subs:localStorage.getItem('cineSubs')!=='0',err:'',loaded:'',cues:[],cue:-1,near:false,want:false,blocked:false,fs:false};
+  const SCENES=['welcome','pre','film','inter','night'], LOOK={
+    welcome:{cove:0xffd9b0,ci:1,sc:1,pt:1,st:0}, pre:{cove:0xff9a40,ci:.6,sc:.45,pt:.38,st:.35}, film:{cove:0xff8a30,ci:.05,sc:0,pt:.02,st:1},
+    inter:{cove:0xffa050,ci:.38,sc:.25,pt:.25,st:.5}, night:{cove:0x3a5cff,ci:.5,sc:.06,pt:.05,st:1} };
+  // shared: the film (u,ti,sb), playing, where, and the room (lt scene, lv level, sh shutters closed); v orders the changes
+  const S={u:'',ti:'',sb:'',p:false,t:0,at:performance.now(),lt:'welcome',lv:1,sh:false,v:0,id:''};
+  const L={vol:+(localStorage.getItem('cineVol')||.8),mute:false,subs:localStorage.getItem('cineSubs')!=='0',err:'',loaded:'',cues:[],cue:-1,near:false,inRoom:false,want:false,blocked:false,fs:false,hud:localStorage.getItem('cineHud')!=='0'};
   const pos=()=>S.t+(S.p?(performance.now()-S.at)/1000:0);
   const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'cine'},d),to)); }catch{ return false; } };
-  const pack=()=>({o:'st',u:S.u,ti:S.ti,sb:S.sb,p:S.p,t:+pos().toFixed(2),v:S.v,id:S.id});
-  function take(d){ Object.assign(S,{u:d.u||'',ti:d.ti||'',sb:d.sb||'',p:!!d.p&&!!d.u,t:Math.max(0,+d.t||0),at:performance.now(),v:d.v|0,id:d.id||''}); sync(true); refresh(); }
+  const pack=()=>({o:'st',u:S.u,ti:S.ti,sb:S.sb,p:S.p,t:+pos().toFixed(2),lt:S.lt,lv:S.lv,sh:S.sh,v:S.v,id:S.id});
+  function take(d){ Object.assign(S,{u:d.u||'',ti:d.ti||'',sb:d.sb||'',p:!!d.p&&!!d.u,t:Math.max(0,+d.t||0),at:performance.now(),lt:SCENES.includes(d.lt)?d.lt:'welcome',lv:Math.max(0,Math.min(1,d.lv??1)),sh:!!d.sh,v:d.v|0,id:d.id||''}); sync(true); refresh(); }
   function act(ch){ const st=Object.assign(pack(),ch,{v:S.v+1,id:MY_PID}); take(st); send(st); unlockAudio(); }
-  // ---- subtitles (.srt or .vtt): fetched once per film, drawn under the picture and in full screen
+  const play=on=>{ L.blocked=false; const end=vid.duration&&pos()>=vid.duration-.2; act({p:on,t:end?0:pos(),lt:on?'film':'pre',lv:1}); };
+  // ---- subtitles (.srt or .vtt)
   function parseSubs(txt){ const out=[], ts=s=>{ const m=s.trim().replace(',','.').match(/(?:(\d+):)?(\d+):(\d+(?:\.\d+)?)/); return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3]):NaN; };
     for(const blk of String(txt).replace(/\r/g,'').split(/\n\s*\n/)){ const ln=blk.split('\n'), i=ln.findIndex(l=>l.includes('-->')); if(i<0) continue; const [a,b]=ln[i].split('-->'), s=ts(a), e=ts(b.split(' ').filter(Boolean)[0]||'');
       if(isFinite(s)&&isFinite(e)) out.push({s,e,tx:ln.slice(i+1).join('\n').replace(/<[^>]+>/g,'').trim()}); } return out; }
@@ -6657,73 +6770,128 @@ SEAT_KIND.cine2={eye:1.22,pitch:.12,front:true,sink:-.24,get label(){ return NT(
     if(tx){ g.font='600 62px "Noto Sans TC","Noto Serif TC",sans-serif'; g.textAlign='center'; g.textBaseline='middle'; const lines=tx.split('\n').slice(-2), lh=72, y0=H/2-(lines.length-1)*lh/2;
       lines.forEach((l,i)=>{ g.lineWidth=10; g.strokeStyle='rgba(0,0,0,.85)'; g.strokeText(l,W/2,y0+i*lh); g.fillStyle='#fff'; g.fillText(l,W/2,y0+i*lh); }); }
     R.subTex.needsUpdate=true; L.subTx=tx||''; if(fsSub) fsSub.textContent=L.subTx; }
-  // ---- sound: left and right from the two tall speakers, placed in the room; quiet outside the door, silent farther off
-  let ac=null, gm=null, pans=null;
+  // ---- sound from the two tall speakers; quieter just outside an open door, nothing through a shut one
+  let ac=null, gm=null;
   function unlockAudio(){ try{ if(!ac){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; ac=new AC(); const src=ac.createMediaElementSource(vid);
       const up=ac.createGain(); up.channelCount=2; up.channelCountMode='explicit'; up.channelInterpretation='speakers'; const sp=ac.createChannelSplitter(2); gm=ac.createGain(); gm.gain.value=0;
-      src.connect(up); up.connect(sp); pans=['L','R'].map((k,i)=>{ const p=ac.createPanner(); p.panningModel='HRTF'; p.distanceModel='inverse'; p.refDistance=2.2; p.rolloffFactor=1.1; p.maxDistance=40;
-        const s=R.SPK[k]; p.positionX.value=s.x; p.positionY.value=s.y; p.positionZ.value=s.z; sp.connect(p,i); p.connect(gm); return p; }); gm.connect(ac.destination); }
+      src.connect(up); up.connect(sp); ['L','R'].forEach((k,i)=>{ const p=ac.createPanner(); p.panningModel='HRTF'; p.distanceModel='inverse'; p.refDistance=2.2; p.rolloffFactor=1.1; p.maxDistance=40;
+        const s=R.SPK[k]; p.positionX.value=s.x; p.positionY.value=s.y; p.positionZ.value=s.z; sp.connect(p,i); p.connect(gm); }); gm.connect(ac.destination); }
     if(ac.state==='suspended') ac.resume(); }catch(e){ console.warn(e); } }
   addEventListener('pointerdown',()=>{ L.blocked=false; if(ac&&ac.state==='suspended') ac.resume(); },{passive:true});
-  // ---- loading a film; this player plays only while near the room, and keeps itself to the shared clock
   function sync(force){ if(S.u!==L.loaded){ L.loaded=S.u; L.err=''; L.cues=[]; L.cue=-1; drawSub(''); if(S.u){ vid.src=S.u; vid.load(); } else { vid.pause(); vid.removeAttribute('src'); vid.load(); }
       if(S.sb) fetch(S.sb).then(r=>r.ok?r.text():'').then(t=>{ if(L.loaded===S.u) L.cues=parseSubs(t); }).catch(()=>{}); }
     if(force&&S.u&&vid.readyState>=1&&L.near){ const p=pos(); if(Math.abs(vid.currentTime-p)>.35) try{ vid.currentTime=Math.min(p,(vid.duration||1e9)-.05); }catch{} } }
   vid.addEventListener('error',()=>{ if(!S.u) return; L.err=NT('cine.err'); refresh(); toast(L.err,8000); });
   vid.addEventListener('loadedmetadata',()=>{ sync(true); refresh(); });
-  let corrAt=0;
-  ZL_ANIM.push(dt=>{ dt=dt||.016; const now=performance.now(), mx=ME.x, mz=ME.z;
+  // ---- the colour of the picture, read a few times a second, lights the room
+  const amb=document.createElement('canvas'); amb.width=amb.height=4; const ambX=amb.getContext('2d',{willReadFrequently:true}); let ambAt=0, ambOK=true; const AMB=new THREE.Color(0xc8d4ff); let ambL=0;
+  // ---- the bottle in your hand (first person) and in others' hands
+  const DR=CIN.DRINK, names=()=>String(NT('cine.drinks')).split(/[,，、]/).map(s=>s.trim());
+  const bottleOf=i=>{ const d=DR[i]||DR[0], g=new THREE.Group(), mt=new THREE.MeshStandardMaterial({color:d.c,roughness:d.glass?.15:.5,transparent:!!d.glass,opacity:d.glass?.8:1});
+    if(d.k==='box'){ const b=new THREE.Mesh(new THREE.BoxGeometry(.06,.15,.045),mt); b.position.y=.075; g.add(b); }
+    else { const h=d.k==='bottle'?.2:.122, r=d.k==='bottle'?.026:.03, b=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,14),mt); b.position.y=h/2; g.add(b);
+      if(d.k==='bottle'){ const n=new THREE.Mesh(new THREE.CylinderGeometry(.011,.024,.05,12),mt); n.position.y=h+.025; g.add(n); } } return g; };
+  let fpB=null, fpIdx=-1, sipAt=0, sips=0; window.__cineBt=-1;
+  function takeDrink(i){ window.__cineBt=i; sips=5; try{ pushPresence(); }catch{} toast(NT('cine.take',0)+'《'+(names()[i]||'')+'》',3000); refresh(); }
+  function sip(){ if(window.__cineBt<0) return; sipAt=performance.now(); if(--sips<=0){ setTimeout(()=>{ window.__cineBt=-1; try{ pushPresence(); }catch{} toast(NT('cine.take',1),2500); refresh(); },1400); } }
+  function putBack(){ window.__cineBt=-1; try{ pushPresence(); }catch{} refresh(); }
+  // ---- the main loop
+  let corrAt=0; const tmpC=new THREE.Color(), cur={cove:new THREE.Color(0xffd9b0),ci:1,sc:1,pt:1,st:0,amb:0};
+  let lastT=performance.now();
+  ZL_ANIM.push(()=>{ const now=performance.now(), dt=Math.min(.25,(now-lastT)/1000); lastT=now; const mx=ME.x, mz=ME.z, door=DOORS.dcine;
     const inRoom=mx>R.x0&&mx<R.x1&&mz>R.z0&&mz<R.z1, dOut=Math.max(R.x0-mx,mx-R.x1,R.z0-mz,mz-R.z1,0);
-    L.near=inRoom||dOut<5||L.fs; const live=!!S.u&&!L.err;
+    L.inRoom=inRoom; L.near=inRoom||dOut<5||L.fs; const live=!!S.u&&!L.err;
     L.want=live&&S.p&&L.near&&!(vid.duration&&pos()>=vid.duration-.1);
     if(L.want&&vid.paused&&!L.blocked&&vid.readyState>=1){ sync(true); const pr=vid.play(); if(pr&&pr.catch) pr.catch(()=>{ L.blocked=true; toast(NT('cine.tap'),6000); }); }
     if(!L.want&&!vid.paused) vid.pause();
     if(live&&!S.p&&L.near&&vid.readyState>=1&&Math.abs(vid.currentTime-S.t)>.3&&now-corrAt>400){ corrAt=now; try{ vid.currentTime=Math.min(S.t,(vid.duration||1e9)-.05); }catch{} }
     if(L.want&&!vid.paused&&vid.readyState>=2&&now-corrAt>500){ corrAt=now; const diff=vid.currentTime-pos();
       if(Math.abs(diff)>1){ try{ vid.currentTime=pos()+.15; }catch{} vid.playbackRate=1; } else vid.playbackRate=Math.abs(diff)>.1?1-Math.max(-.08,Math.min(.08,diff*.5)):1; }
-    // the picture
     const show=live&&vid.readyState>=2; if((R.scrM.map===tex)!==show){ R.scrM.map=show?tex:null; R.scrM.color.setHex(show?0xffffff:0x161616); R.scrM.needsUpdate=true; }
-    // subtitles
     let ci=-1; if(L.subs&&show&&L.cues.length){ const t=vid.currentTime; ci=L.cues.findIndex(c=>t>=c.s&&t<=c.e); } if(ci!==L.cue){ L.cue=ci; drawSub(ci>=0?L.cues[ci].tx:''); }
-    // lights down while it plays, up again when it stops
-    R.dim=(R.dim||0)+(((S.p&&live)?1:0)-(R.dim||0))*Math.min(1,dt*1.2);
-    R.lamps.forEach((l,i)=>l.intensity=R.base[i]*(1-.82*R.dim)); R.glow.intensity=show?.55*R.dim:0;
-    // sound follows where you stand and which way you face
-    if(ac&&gm){ const g=(L.fs?1:inRoom?1:Math.max(0,1-dOut/4)*.3)*L.vol*(vid.paused?0:1); gm.gain.setTargetAtTime(g,ac.currentTime,.12);
+    // curtains: open while a film is loaded
+    R.curtK+=((S.u?1:0)-R.curtK)*Math.min(1,dt*.9); const half=(R.x1-R.x0)/2, w=half-(half-.3)*R.curtK; R.curt[0].scale.x=w; R.curt[1].scale.x=-w;
+    // lights: ease toward the scene, scaled by the level
+    const lk=LOOK[S.lt]||LOOK.welcome, f=Math.min(1,dt*1.6), lv=S.lv;
+    cur.cove.lerp(tmpC.setHex(lk.cove),f); for(const k of ['ci','sc','pt','st']) cur[k]+=(lk[k]*(k==='st'?1:lv)-cur[k])*f;
+    R.cove.color.copy(cur.cove).multiplyScalar(Math.max(.03,cur.ci)); R.glowM.color.copy(cur.cove).multiplyScalar(cur.ci*.9);
+    R.scM.color.setHex(0xffd2a0).multiplyScalar(cur.sc); R.pinM.color.setHex(0xfff0dc).multiplyScalar(.08+.92*cur.sc);
+    R.lights.forEach(l=>{ l.intensity=1.1*cur.pt+.25*cur.ci; l.color.copy(cur.cove).lerp(tmpC.setHex(0xffd2a0),.6); });
+    const tw=now/1000; R.stars.forEach((m,k)=>{ m.opacity=cur.st*(.55+.45*Math.sin(tw*(.7+k*.37)+k*2.1)); });
+    R.stepLed.emissiveIntensity=.9+.7*(1-cur.pt);
+    // the picture's own light
+    if(show&&!vid.paused&&ambOK&&now-ambAt>140){ ambAt=now; try{ ambX.drawImage(vid,0,0,4,4); const d=ambX.getImageData(0,0,4,4).data; let r=0,g=0,b=0; for(let i=0;i<64;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; }
+        AMB.setRGB(r/4080,g/4080,b/4080); ambL=Math.max(.05,(r+g+b)/12240); }catch{ ambOK=false; } }
+    cur.amb+=((show?(ambOK?ambL:.4):0)-cur.amb)*Math.min(1,dt*6);
+    R.glow.color.copy(AMB); R.glow.intensity=2.2*cur.amb; R.glow2.color.copy(AMB); R.glow2.intensity=.9*cur.amb;
+    // shutters
+    const sk=R.shut; sk.k+=((S.sh?1:0)-sk.k)*Math.min(1,dt*2.2); sk.leaves.forEach(({pv,s})=>{ pv.rotation.y=s<0?-(Math.PI-.12)*(1-sk.k):(Math.PI-.12)*(1-sk.k); });
+    // sound
+    const shut=door&&!door.open, g=(L.mute?0:1)*(L.fs?1:inRoom?1:shut?0:Math.max(0,1-dOut/4)*.3)*L.vol*(vid.paused?0:1);
+    if(ac&&gm){ gm.gain.setTargetAtTime(g,ac.currentTime,.12);
       const Ls=ac.listener, cp=camera.getWorldPosition(new THREE.Vector3()), fw=camera.getWorldDirection(new THREE.Vector3());
       if(Ls.positionX){ Ls.positionX.value=cp.x; Ls.positionY.value=cp.y; Ls.positionZ.value=cp.z; Ls.forwardX.value=fw.x; Ls.forwardY.value=fw.y; Ls.forwardZ.value=fw.z; Ls.upX.value=0; Ls.upY.value=1; Ls.upZ.value=0; }
       else if(Ls.setPosition){ Ls.setPosition(cp.x,cp.y,cp.z); Ls.setOrientation(fw.x,fw.y,fw.z,0,1,0); } }
-    else vid.volume=(L.fs||inRoom?1:Math.max(0,1-dOut/4)*.3)*L.vol;
+    else vid.volume=Math.min(1,g);
     if(!ac&&L.want&&!vid.paused) unlockAudio();
-    if(PANEL.el&&!PANEL.el.isConnected) PANEL.el=null; if(PANEL.el&&now-PANEL.t>250){ PANEL.t=now; tickPanel(); } if(fsBar&&L.fs&&now-PANEL.ft>250){ PANEL.ft=now; tickFs(); } });
-  // ---- the panel: the list of films, play/pause, skip, a seek bar, volume, subtitles, full screen
+    // the bottle: in my hand, and in the hands of others who hold one
+    const bi=window.__cineBt; if(bi!==fpIdx){ if(fpB){ fpB.parent&&fpB.parent.remove(fpB); fpB=null; } fpIdx=bi; if(bi>=0){ fpB=bottleOf(bi); fpB.position.set(0,.0,-.06); fpB.rotation.x=-.2; fpHands.rh.add(fpB); } }
+    if(fpB){ const a=(now-sipAt)/1400; R.sipT=a>=0&&a<1?Math.sin(a*Math.PI):0; }
+    for(const [,o] of others){ const want=o.p&&o.p.bt>=0?o.p.bt|0:-1; if(o.av.btI!==want){ if(o.av.bt){ o.av.g.remove(o.av.bt); o.av.bt=null; } o.av.btI=want; if(want>=0){ o.av.bt=bottleOf(want); o.av.bt.position.set(.24,.86,-.1); o.av.g.add(o.av.bt); } } }
+    // the in-room panel
+    if(hud){ const on=inRoom&&VIEW.mode==='walk'; if(hud.on!==on){ hud.on=on; hud.el.style.display=on?'block':'none'; } if(on&&now-hud.t>300){ hud.t=now; hudSync(); } }
+    if(PANEL.el&&now-PANEL.t>250){ PANEL.t=now; tickPanel(); } if(fsBar&&L.fs&&now-PANEL.ft>250){ PANEL.ft=now; tickFs(); } });
+  // ---- the in-room panel (bottom right): volume (yours), light (everyone's), the films, the bottle
+  const hud={el:document.createElement('div'),on:false,t:0}; hud.el.id='cinehud';
+  { const st=document.createElement('style'); st.textContent='#cinehud button:not([data-h=fold]){border:1px solid #d2c8b8;background:#fffdf8;color:#3f3a39;border-radius:3px;font-family:var(--f);cursor:pointer}#cinehud button:not([data-h=fold]):hover{background:#f6f1e6}#cinehud input[type=range]{accent-color:#6c848d}'; document.head.append(st); }
+  hud.el.style.cssText='position:fixed;right:14px;bottom:76px;z-index:15;display:none;background:rgba(241,239,232,.94);color:#3f3a39;border:1px solid #d3cec3;border-radius:4px;padding:8px 10px;font:12px/1.6 var(--f);width:236px;pointer-events:auto;box-shadow:0 2px 10px rgba(0,0,0,.18)';
+  hud.el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><b data-h="title"></b><button data-h="fold" style="border:0;background:none;font:12px var(--f);color:#6e6866;cursor:pointer"></button></div>
+    <div data-h="body"><div style="display:flex;align-items:center;gap:6px;margin-top:4px"><span data-h="vl" style="min-width:30px"></span><input data-h="vol" type="range" min="0" max="100" style="flex:1"><button data-h="mute" style="font-size:11px;padding:1px 6px"></button></div>
+    <div style="display:flex;align-items:center;gap:6px"><span data-h="ll" style="min-width:30px"></span><input data-h="lv" type="range" min="0" max="100" style="flex:1"></div>
+    <div data-h="sc" style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0"></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap"><button data-h="films" style="font-size:11px;padding:1px 8px"></button><button data-h="sip" style="font-size:11px;padding:1px 8px"></button><button data-h="back" style="font-size:11px;padding:1px 8px"></button></div></div>`;
+  document.body.append(hud.el); hud.el.addEventListener('pointerdown',e=>e.stopPropagation()); hud.el.addEventListener('wheel',e=>e.stopPropagation());
+  const H=k=>hud.el.querySelector(`[data-h="${k}"]`), scNames=()=>String(NT('cine.scenes')).split(/[,，、]/).map(s=>s.trim());
+  SCENES.forEach((k,i)=>{ const b=document.createElement('button'); b.style.cssText='font-size:11px;padding:1px 7px'; b.dataset.s=k; b.onclick=()=>act({lt:k,lv:1}); H('sc').append(b); });
+  H('vol').oninput=e=>{ L.vol=e.target.value/100; L.mute=false; try{ localStorage.setItem('cineVol',L.vol); }catch{} hudSync(); };
+  H('mute').onclick=()=>{ L.mute=!L.mute; hudSync(); };
+  let lvT=0; H('lv').oninput=e=>{ const v=e.target.value/100; S.lv=v; clearTimeout(lvT); lvT=setTimeout(()=>act({lv:v}),180); };
+  H('films').onclick=()=>openCine(); H('sip').onclick=()=>sip(); H('back').onclick=()=>putBack();
+  H('fold').onclick=()=>{ L.hud=!L.hud; try{ localStorage.setItem('cineHud',L.hud?'1':'0'); }catch{} hudSync(); };
+  addEventListener('keydown',e=>{ if(!L.inRoom||e.repeat||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; if(e.key.toLowerCase()==='l'){ e.preventDefault(); H('fold').click(); } });
+  function hudSync(){ H('title').textContent=NT('cine.title'); H('fold').textContent=L.hud?'－':'＋'; H('body').style.display=L.hud?'block':'none';
+    H('vl').textContent=NT('cine.vol'); if(document.activeElement!==H('vol')) H('vol').value=Math.round(L.vol*100); H('mute').textContent=NT('cine.mute',L.mute?1:0);
+    H('ll').textContent=NT('cine.light'); if(document.activeElement!==H('lv')) H('lv').value=Math.round(S.lv*100);
+    const nm=scNames(); H('sc').querySelectorAll('button').forEach((b,i)=>{ b.textContent=nm[i]||b.dataset.s; b.style.background=b.dataset.s===S.lt?'#3f3a39':''; b.style.color=b.dataset.s===S.lt?'#f1efe8':''; });
+    H('films').textContent=NT('cine.title',1)||NT('cine.title'); const has=window.__cineBt>=0; H('sip').style.display=H('back').style.display=has?'':'none'; H('sip').textContent=NT('cine.sip',0); H('back').textContent=NT('cine.sip',1); }
+  // ---- the main panel: films, play/pause, skip, seek, volume, subtitles, full screen
   const PANEL={el:null,t:0,ft:0}, hms=s=>{ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), mm=Math.floor(s/60)%60, ss=s%60; return (h?h+':'+String(mm).padStart(2,'0'):mm)+':'+String(ss).padStart(2,'0'); };
   function openCine(){ const btn='style="margin:3px 6px 3px 0"';
     const body=openPanel(NT('cine.title'),`<p class="meta" id="cnow"></p>
       <div id="clist" style="display:flex;flex-direction:column;gap:4px;margin:8px 0 12px">${FILMS.length?FILMS.map((f,i)=>`<button class="btn" data-i="${i}" style="text-align:left">${esc(f.title)}</button>`).join(''):`<p class="meta">${esc(NT('cine.none'))}</p>`}</div>
       <div><button class="btn pri" id="cplay" ${btn}></button><button class="btn" id="cback" ${btn}>${esc(NT('cine.skip',0))}</button><button class="btn" id="cfwd" ${btn}>${esc(NT('cine.skip',1))}</button><button class="btn" id="cstop" ${btn}>${esc(NT('cine.stop'))}</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin:10px 0"><span id="ct0" style="font-size:12px;min-width:44px">0:00</span><input id="cseek" type="range" min="0" max="1000" value="0" style="flex:1"><span id="ct1" style="font-size:12px;min-width:44px">0:00</span></div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label style="font-size:13px">${esc(NT('cine.vol'))} <input id="cvol" type="range" min="0" max="100" value="${Math.round(L.vol*100)}" style="vertical-align:middle"></label>
-      <button class="btn" id="csubs"></button><button class="btn" id="cfull">${esc(NT('cine.full',0))}</button></div><p class="meta" id="cerr" style="color:#a8343a"></p>`);
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn" id="csubs"></button><button class="btn" id="cfull">${esc(NT('cine.full',0))}</button></div><p class="meta" id="cerr" style="color:#a8343a"></p>`);
     PANEL.el=body;
-    body.querySelectorAll('#clist button').forEach(b=>b.onclick=()=>{ const f=FILMS[+b.dataset.i]; act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0}); toast(NT('cine.toast',0)+'《'+f.title+'》'); });
-    body.querySelector('#cplay').onclick=()=>{ if(!S.u){ if(FILMS[0]){ const f=FILMS[0]; act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0}); } return; } L.blocked=false; const end=vid.duration&&pos()>=vid.duration-.2; act({p:!S.p,t:end?0:pos()}); };
+    body.querySelectorAll('#clist button').forEach(b=>b.onclick=()=>{ const f=FILMS[+b.dataset.i]; act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0,lt:'film',lv:1}); toast(NT('cine.toast',0)+'《'+f.title+'》'); });
+    body.querySelector('#cplay').onclick=()=>{ if(!S.u){ if(FILMS[0]){ const f=FILMS[0]; act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0,lt:'film',lv:1}); } return; } play(!S.p); };
     body.querySelector('#cback').onclick=()=>S.u&&act({t:Math.max(0,pos()-10)});
     body.querySelector('#cfwd').onclick=()=>S.u&&act({t:Math.min((vid.duration||1e9)-.5,pos()+10)});
-    body.querySelector('#cstop').onclick=()=>S.u&&act({u:'',ti:'',sb:'',p:false,t:0});
+    body.querySelector('#cstop').onclick=()=>S.u&&act({u:'',ti:'',sb:'',p:false,t:0,lt:'welcome',lv:1});
     const sk=body.querySelector('#cseek'); sk.oninput=()=>{ PANEL.drag=true; body.querySelector('#ct0').textContent=hms(sk.value/1000*(vid.duration||0)); };
     sk.onchange=()=>{ PANEL.drag=false; if(S.u&&vid.duration) act({t:sk.value/1000*vid.duration}); };
-    body.querySelector('#cvol').oninput=e=>{ L.vol=e.target.value/100; try{ localStorage.setItem('cineVol',L.vol); }catch{} };
     body.querySelector('#csubs').onclick=()=>{ L.subs=!L.subs; try{ localStorage.setItem('cineSubs',L.subs?'1':'0'); }catch{} refresh(); };
     body.querySelector('#cfull').onclick=()=>{ closePanel(); enterFs(); };
     unlockAudio(); refresh(); }
+  function openFridge(){ const nm=names(); const body=openPanel(NT('cine.fridge',0),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">${DR.map((d,i)=>`<button class="btn" data-d="${i}" style="text-align:left"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:#${d.c.toString(16).padStart(6,'0')}"></span>${esc(nm[i]||'')}</button>`).join('')}</div>`);
+    body.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{ takeDrink(+b.dataset.d); closePanel(); }); }
   function tickPanel(){ const b=PANEL.el; if(b&&!b.querySelector('#cseek')) PANEL.el=null; if(!PANEL.el) return; const d=vid.duration||0, p=Math.min(pos(),d||pos());
     if(!PANEL.drag){ b.querySelector('#ct0').textContent=hms(p); b.querySelector('#cseek').value=d?Math.round(p/d*1000):0; } b.querySelector('#ct1').textContent=hms(d); }
   function refresh(){ if(PANEL.el&&!PANEL.el.querySelector('#cseek')) PANEL.el=null; const b=PANEL.el; if(b){ b.querySelector('#cnow').textContent=S.u?(NT('cine.now',S.p?0:1)+'《'+S.ti+'》'):NT('cine.idle');
       b.querySelector('#cplay').textContent=NT('cine.play',S.u&&S.p?1:0); b.querySelector('#csubs').textContent=NT('cine.subs',L.subs?0:1); b.querySelector('#cerr').textContent=L.err;
       b.querySelectorAll('#clist button').forEach(x=>x.classList.toggle('pri',FILMS[+x.dataset.i]&&FILMS[+x.dataset.i].url===S.u)); tickPanel(); }
-    if(fsBar) tickFs(); }
-  // ---- full screen: the same video, filling the window (and the screen where the browser allows it); Esc to come back
+    if(fsBar) tickFs(); if(hud.on) hudSync(); }
+  // ---- full screen: the same video, filling the window; Esc to come back
   let fsBox=null, fsSub=null, fsBar=null;
   function enterFs(){ if(!S.u){ toast(NT('cine.idle')); return; } unlockAudio();
     if(!fsBox){ fsBox=document.createElement('div'); fsBox.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
@@ -6732,7 +6900,7 @@ SEAT_KIND.cine2={eye:1.22,pitch:.12,front:true,sink:-.24,get label(){ return NT(
       fsBar.innerHTML=`<button class="btn" data-a="play"></button><span data-a="t0">0:00</span><input data-a="seek" type="range" min="0" max="1000" value="0" style="flex:1"><span data-a="t1">0:00</span><button class="btn" data-a="exit">${esc(NT('cine.full',1))}</button>`;
       fsBox.append(fsSub,fsBar); document.body.append(fsBox);
       const q=a=>fsBar.querySelector(`[data-a="${a}"]`);
-      q('play').onclick=()=>{ L.blocked=false; const end=vid.duration&&pos()>=vid.duration-.2; act({p:!S.p,t:end?0:pos()}); };
+      q('play').onclick=()=>play(!S.p);
       q('seek').oninput=()=>{ PANEL.fdrag=true; }; q('seek').onchange=()=>{ PANEL.fdrag=false; if(vid.duration) act({t:q('seek').value/1000*vid.duration}); };
       q('exit').onclick=exitFs; let hideT=0; fsBox.addEventListener('pointermove',()=>{ fsBar.style.opacity=1; clearTimeout(hideT); hideT=setTimeout(()=>{ if(L.fs) fsBar.style.opacity=0; },2800); });
       fsBox.addEventListener('dblclick',e=>{ if(e.target===vid) exitFs(); });
@@ -6747,12 +6915,16 @@ SEAT_KIND.cine2={eye:1.22,pitch:.12,front:true,sink:-.24,get label(){ return NT(
   const snapFor=new Map();
   window.__cineHello=()=>send({o:'hi'});
   window.__cineRecv=(d,from)=>{ if(!d||d.k!=='cine') return;
-    if(d.o==='hi'){ if(!S.u) return; const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].filter(i=>i!==from).concat(MY_PID).sort(), rank=Math.max(0,ids.indexOf(MY_PID));
+    if(d.o==='hi'){ if(S.v===0) return; const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].filter(i=>i!==from).concat(MY_PID).sort(), rank=Math.max(0,ids.indexOf(MY_PID));
       clearTimeout(snapFor.get(from)); snapFor.set(from,setTimeout(()=>{ snapFor.delete(from); send(Object.assign(pack(),{for:from}),from); },150+rank*400+Math.random()*120)); return; }
     if(d.o==='st'){ if(d.for&&snapFor.has(d.for)){ clearTimeout(snapFor.get(d.for)); snapFor.delete(d.for); } if(d.for&&d.for!==MY_PID) return;
       if((d.v|0)>S.v||((d.v|0)===S.v&&String(d.id||'')>S.id)){ const was=S.u, wasP=S.p; take(d); if(!d.for&&(S.u!==was||S.p!==wasP)&&L.near) toast(S.u?(NT('cine.toast',S.p?0:1)+'《'+S.ti+'》'):NT('cine.idle'),3500); } } };
-  window.__cineAct=u=>{ if(u.type==='cinescreen') openCine(); return true; };
-  window.__cine={S,L,FILMS,vid,openCine,enterFs,exitFs,act,pos};
+  window.__cineAct=u=>{ if(u.type==='cinescreen') openCine();
+    else if(u.type==='cinefridge') openFridge();
+    else if(u.type==='cineswitch'){ const i=(SCENES.indexOf(S.lt)+1)%SCENES.length; act({lt:SCENES[i],lv:1}); toast(NT('cine.light')+'：'+(scNames()[i]||SCENES[i]),2000); }
+    else if(u.type==='cineshutter'){ if(!L.inRoom){ toast(NT('cine.shout')); return true; } act({sh:!S.sh}); toast(NT('cine.shutter',S.sh?0:1),2000); }
+    return true; };
+  window.__cine={S,L,FILMS,vid,openCine,openFridge,enterFs,exitFs,act,pos,play,takeDrink,sip,putBack};
 }
 // steam over the noodle pots and smoke from the chimney: a few soft sprites each
 { const sm=new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX});

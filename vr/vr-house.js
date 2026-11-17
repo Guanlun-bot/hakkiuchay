@@ -294,7 +294,8 @@ const stoneCourse=std(stonePaving,4,1,{color:0xa69d90});
 function facadePanel(left,right,bottom,top,z,material,parent=mainHall){
   box(right-left,top-bottom,.30,material,(left+right)/2,(bottom+top)/2,z,parent,BLOCK);
 }
-function windowBay(left,right,center,width,z,low,high,parent=mainHall){
+const WINDOWS=[];   // every square and octagonal window, for the bamboo blinds (buildBlinds)
+function windowBay(left,right,center,width,z,low,high,parent=mainHall){ WINDOWS.push({k:'sq',parent,cx:center,z,w:width,y0:low,y1:high});
   const lo=center-width/2,hi=center+width/2;
   facadePanel(left,right,0,.78,z,stoneCourse,parent);
   for(const [a,b,y0,y1] of [[left,lo,.78,3.26],[hi,right,.78,3.26],[lo,hi,.78,low],[lo,hi,high,3.26]]){
@@ -1810,7 +1811,7 @@ function partition(x){ const TW=ZR.wallT, D=ZR.door, segs=[[ZP.front,D.z0],[D.z1
       // wooden frame and a simple bagua lattice: an inner octagon tied to the frame by eight spokes
       const ring=(ro,ri,dep,mat)=>{ const s2=new THREE.Shape(); oct(ro).forEach(([a,b],k)=>k?s2.lineTo(a,b):s2.moveTo(a,b)); s2.closePath(); const hh=new THREE.Path(); oct(ri).forEach(([a,b],k)=>k?hh.lineTo(a,b):hh.moveTo(a,b)); hh.closePath(); s2.holes.push(hh);
         const g=new THREE.ExtrudeGeometry(s2,{depth:dep,bevelEnabled:false}); g.translate(0,0,-dep/2); const r=new THREE.Mesh(g,mat); r.rotation.y=-Math.PI/2; r.position.set(x,0,19.6); PP.add(r); };
-      ring(W.r+.07,W.r-.03,TW+.06,darkWood);
+      ring(W.r+.07,W.r-.03,TW+.06,darkWood); WINDOWS.push({k:'oct',parent:PP,x,y:W.y,z:W.z,r:W.r-.035});
       const lat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:.6}); ring(.17,.14,.04,lat);
       for(let k=0;k<8;k++){ const a=k*Math.PI/4, r0=.155, r1=W.r-.02, L2=r1-r0, mz=(r0+r1)/2;
         const b=box(.035,.025,L2,lat,x,W.y+Math.sin(a)*mz,W.z+Math.cos(a)*mz,PP); b.rotation.x=-a; } }
@@ -3593,7 +3594,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['cinescreen','cinefridge','cineswitch','cineshutter','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['blind','cinescreen','cinefridge','cineswitch','cineshutter','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3607,6 +3608,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
   case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
+  case 'blind': window.__blindAct?.(u); break;
   case 'cinescreen': case 'cinefridge': case 'cineswitch': case 'cineshutter': if(window.__cineAct) window.__cineAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
@@ -3943,7 +3945,7 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
   ch.on('presence',{event:'sync'},()=>{ const st=ch.presenceState(); here=new Set(Object.keys(st));
     for(const k of here){ const m=st[k][st[k].length-1]; if(m&&m.p){ take(k,m.t,m.p,false); const v=peers.get(k); if(v) v.slow=Date.now(); } }
     for(const k of [...peers.keys()]) if(!here.has(k)&&Date.now()-peers.get(k).heard>8000) peers.delete(k); soon(); });
-  ch.on('broadcast',{event:'b'},msg=>{ const m=msg&&(msg.payload||msg); if(!m||m.from===MY_PID||(m.to&&m.to!==MY_PID)||!m.d) return; try{ window.__clsRecv?.(m.d,m.from); window.__cineRecv?.(m.d,m.from); }catch(err){ console.warn(err); } });
+  ch.on('broadcast',{event:'b'},msg=>{ const m=msg&&(msg.payload||msg); if(!m||m.from===MY_PID||(m.to&&m.to!==MY_PID)||!m.d) return; try{ window.__clsRecv?.(m.d,m.from); window.__cineRecv?.(m.d,m.from); window.__blindRecv?.(m.d,m.from); }catch(err){ console.warn(err); } });
   NET.bcast=(d,to)=>{ try{ ch.send({type:'broadcast',event:'b',payload:{from:MY_PID,to:to||'',d}}); return true; }catch{ return false; } };
   ch.on('broadcast',{event:'s'},msg=>{ const m=msg&&(msg.payload||msg); if(!m) return; take(m.k,m.t,m.p,true); soon(); if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
   const moving=(a,b)=>{ if(!a||!b) return false; const x={...a}, y={...b}; for(const f of ['x','z','r']){ delete x[f]; delete y[f]; } return JSON.stringify(x)===JSON.stringify(y); };
@@ -3953,7 +3955,7 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
     if(!trackT) trackT=setTimeout(track,Math.max(0,1500-(Date.now()-trackAt))); }
   NET.st='連線中';
   try { await new Promise((res,rej)=>{ const to=setTimeout(()=>{ NET.st='連線逾時'; rej(new Error('timeout')); },15000);
-    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); setTimeout(()=>{ window.__clsHello?.(); window.__cineHello?.(); },600); }
+    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); setTimeout(()=>{ window.__clsHello?.(); window.__cineHello?.(); window.__blindHello?.(); },600); }
       else { ready=false; stopVoice(); NET.errs++; renderPeople(); if(heartbeat) lose(); } }); }); } catch(error){ dead=true; try{ await sb.removeChannel(ch); }catch{} sb.realtime.disconnect(); throw error; }
   // A channel that drops (phone asleep, wifi switch, server restart) is not always rejoined by the library, and someone stuck on
   // a dead channel sees nobody and is seen by nobody. So on any drop, or if nothing has been heard from the server for a while,
@@ -4169,7 +4171,7 @@ async function cfRoom(){
     else if(m.t==='u'&&m.id&&m.id!==me){ const v=peers.get(m.id)||{p:{}}; if(m.p&&typeof m.p==='object') v.p=m.p; v.micActive=!!m.mic; v.speaking=!!m.sp; v.fast=Date.now(); peers.set(m.id,v);
       if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
     else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); }
-    else if(m.t==='b'&&m.id&&m.id!==me&&m.d){ try{ window.__clsRecv?.(m.d,m.id); window.__cineRecv?.(m.d,m.id); }catch(err){ console.warn(err); } } }
+    else if(m.t==='b'&&m.id&&m.id!==me&&m.d){ try{ window.__clsRecv?.(m.d,m.id); window.__cineRecv?.(m.d,m.id); window.__blindRecv?.(m.d,m.id); }catch(err){ console.warn(err); } } }
   // ten times a second: what changed, plus any voice; when nothing changes, a heartbeat every 2.5 s
   function tick(){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8);
     const st={...cur,vc:micEnabled}, k=JSON.stringify(st), changed=k!==lastKey;
@@ -4182,7 +4184,7 @@ async function cfRoom(){
       // a busy page (the house just built, a slow phone) can hold the 'open' event back past the timer: an opened or still
       // connecting socket gets more time instead of being given up
       let waits=0; const sock=ws, check=()=>{ if(wsOpen||sock!==ws) return; if(sock.readyState===1||(sock.readyState===0&&waits++<2)){ to=setTimeout(check,3500); return; } try{ sock.close(); }catch{} fin(false); }; let to=setTimeout(check,first?6000:5000);
-      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); setTimeout(()=>{ window.__clsHello?.(); window.__cineHello?.(); },400); };
+      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); setTimeout(()=>{ window.__clsHello?.(); window.__cineHello?.(); window.__blindHello?.(); },400); };
       sock.onmessage=e=>{ if(sock===ws) onMsg(e); };
       sock.onclose=ev=>{ if(sock!==ws) return; clearTimeout(to); const was=wsOpen; wsOpen=false; fin(false); if(closed||(first&&!was)) return;
         NET.st='重新連線中'; NET.errs++; renderPeople(); later(); };
@@ -4995,7 +4997,7 @@ function cutWindow(g,wx,wz,width,y0,y1){ g.updateMatrixWorld(true); const L=g.wo
   for(const [z0,z1] of [[-4.3,a],[b,4.3]]) if(z1-z0>.01){ box(.3,.9,z1-z0,brick,x,.45,(z0+z1)/2,g,BLOCK); box(.3,2.78,z1-z0,white,x,2.29,(z0+z1)/2,g,BLOCK); }
   box(.3,.9,width,brick,x,.45,L.z,g,BLOCK); box(.3,y0-.9,width,white,x,(y0+.9)/2,L.z,g,BLOCK); box(.3,3.68-y1,width,white,x,(y1+3.68)/2,L.z,g,BLOCK);
   return g.localToWorld(new THREE.Vector3(x,0,L.z)); }
-function bambooWindow(wx,wz,nx,w,y0,y1){ const g=new THREE.Group(); g.position.set(wx,0,wz); g.rotation.y=Math.atan2(nx,0)||0; scene.add(g);
+function bambooWindow(wx,wz,nx,w,y0,y1){ const g=new THREE.Group(); g.position.set(wx,0,wz); g.rotation.y=Math.atan2(nx,0)||0; scene.add(g); WINDOWS.push({k:'sq',parent:g,cx:0,z:0,w,y0,y1});
   const h=y1-y0, D=.38, sd=stone;
   // scrolled band: a flat bar with a raised middle panel and ends that roll over, extruded through the wall
   function band(yBase,up){ const s=new THREE.Shape(), hw=w/2+.32, t=.16, pw=w*.34, ph=.1, sg=up?1:-1;
@@ -5083,7 +5085,7 @@ const NPC_TXT={
   'cine.stop':['停止放映',''],'cine.vol':['音量',''],'cine.subs':['字幕：開','字幕：關'],'cine.full':['全螢幕','離開全螢幕'],'cine.toast':['開始放映','暫停放映'],
   'cine.light':['燈光',''],'cine.mute':['靜音','取消靜音'],'cine.scenes':['迎賓,映前,放映,中場,夜場',''],'cine.fridge':['小冰箱',''],
   'cine.drinks':['冬瓜茶,麥仔茶,沙士,彈珠汽水,烏龍茶,綠茶,柳橙汁,蘆筍汁,豆漿,礦泉水',''],'cine.take':['從冰箱拿了一瓶','喝完了。'],'cine.sip':['喝一口','放回去'],
-  'cine.shutter':['關上窗門。','打開窗門。'],'cine.shout':['窗門要從電影院裡面開關。',''],'edoor.msg':['推開門。','把門帶上。'],
+  'cine.shutter':['關上窗門。','打開窗門。'],'cine.shout':['窗門要從電影院裡面開關。',''],'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],
   'cine.err':['影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。',''],'cine.tap':['點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。',''],
   'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
   'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
@@ -6630,7 +6632,7 @@ SEAT_KIND.cine2={eye:1.02+CIN.rh,pitch:.06,front:true,sink:-.44+CIN.rh,get label
       B(.016,.016,Z1-Z0-.04,cove,xi+s*.008,CEIL-SD+.012,(Z0+Z1)/2);                                    // the lit strip on the soffit's edge
       const gl=new THREE.Mesh(new THREE.PlaneGeometry(.7,Z1-Z0),glowM); gl.rotation.set(Math.PI/2,0,s<0?0:Math.PI); gl.position.set(xi-s*.35,CEIL-.004,(Z0+Z1)/2); scene.add(gl);
       const gf=new THREE.Mesh(new THREE.PlaneGeometry(.22,Z1-Z0),glowM); gf.rotation.set(0,s<0?Math.PI/2:-Math.PI/2,Math.PI/2); gf.position.set(xi-s*.002,CEIL-SD/2,(Z0+Z1)/2); scene.add(gf);
-      for(const z of [16.5,18.2,21.3,22.8]){ const p=new THREE.Mesh(new THREE.CircleGeometry(.022,14),pinM); p.rotation.x=Math.PI/2; p.position.set(xw-s*SW*.45,CEIL-SD-.002,z); scene.add(p);
+      for(const z of s<0?[16.5,18.2,21.3,23.1]:[16.5,23.1]){ const p=new THREE.Mesh(new THREE.CircleGeometry(.022,14),pinM);   // none over the door or the octagonal windows p.rotation.x=Math.PI/2; p.position.set(xw-s*SW*.45,CEIL-SD-.002,z); scene.add(p);
         const top=CEIL-SD-.02, H=2.5, w=1.05, sc=new THREE.Mesh(new THREE.PlaneGeometry(w,H),scM); sc.position.set(xw-s*.026,top-H/2,z); sc.rotation.y=s<0?Math.PI/2:-Math.PI/2; scene.add(sc); scallops.push({sc,pin:p}); }
       for(const z of [17.4,21.8]){ const l=new THREE.PointLight(0xffd2a0,0,6.5,2); l.position.set(xw-s*.55,2.6,z); scene.add(l); lights.push(l); } }
     // stars: three sets that twinkle out of step
@@ -7103,6 +7105,74 @@ function dineText(){ const S=mealState(), T=S.T, nm=nextMeal(); let h=`<p style=
   h+=`<p style="line-height:2"><b>${esc(NT('dine.today'))}</b></p>`+['b','l','d','n'].map(k=>`<p style="line-height:1.9;margin:.2em 0">${esc(NT('meal.'+k))}　${hhmm(MEALS.find(m=>m.k===k).at)}<br>${esc(menuOf(T.dow,k))}</p>`).join('');
   showText(NT('dine.title'),h); }
 
+/* ================= 竹簾：every octagonal and square window gets a fitted bamboo roll blind =================
+   Smoked bamboo (煤竹) split fine, five cotton cords, a persimmon-brown (柿渋茶) binding round the edge, cut to the
+   window's own outline (the octagon too) and hung inside the frame so it is seen, and worked, from both sides. It rolls
+   up from the bottom: the roll rides up the window and is as long as the window is wide at that height, and at the top it
+   tucks under a short cloth head. Windows that have been walled up or lined over (the toilets, the bath) are left out;
+   the cinema's court window has its own shutters. All start rolled up; who lowers or raises one is shared with everyone
+   in the house, and the two octagons between the cinema and its 明間 come down by themselves while a film plays. */
+const BLINDS=[];
+function buildBlinds(){ try{
+  const slatT=ctex(128,512,(g,w,h)=>{ g.clearRect(0,0,w,h); let s=7; const r=()=>((s=s*16807%2147483647)/2147483647);
+      for(let y=0;y<h;y+=8){ const v=(r()-.5)*18; g.fillStyle=`rgb(${128+v|0},${88+v*.7|0},${54+v*.5|0})`; g.fillRect(0,y,w,6); g.fillStyle='rgba(255,230,190,.18)'; g.fillRect(0,y,w,1); g.fillStyle='rgba(30,18,10,.5)'; g.fillRect(0,y+5,w,1);
+        if(r()<.25){ g.fillStyle='rgba(40,24,12,.5)'; g.fillRect(r()*w,y+1,2+r()*3,4); } }                       // a node now and then
+      g.fillStyle='rgba(222,212,190,.95)'; for(const f of [.1,.3,.5,.7,.9]) g.fillRect(f*w-1,0,2,h); },{color:true});   // the cords
+  slatT.wrapS=slatT.wrapT=THREE.RepeatWrapping;
+  const bindM=new THREE.MeshStandardMaterial({color:0x7a4a2a,roughness:.85}), rollM=new THREE.MeshStandardMaterial({color:0x4f321d,roughness:.6}), headM=new THREE.MeshStandardMaterial({color:0x6e4226,roughness:.9});
+  scene.updateMatrixWorld(true);
+  const solids=[]; scene.traverse(o=>{ if(o.isMesh&&o.visible&&!o.userData.blind) solids.push(o); });
+  const rc=new THREE.Raycaster(), UP=new THREE.Vector3(0,1,0);
+  const oct=r=>[...Array(8)].map((_,k)=>{ const a=Math.PI/8+k*Math.PI/4; return [Math.cos(a)*r,Math.sin(a)*r]; });
+  for(const W of WINDOWS){ const P=W.parent; P.updateMatrixWorld(true); const q=P.getWorldQuaternion(new THREE.Quaternion()), ws=P.getWorldScale(new THREE.Vector3());
+    let c, u, n, half, H, chord, outline, off, samples=[];
+    if(W.k==='oct'){ c=P.localToWorld(new THREE.Vector3(W.x,W.y,W.z)); u=new THREE.Vector3(0,0,1).applyQuaternion(q); n=new THREE.Vector3(1,0,0).applyQuaternion(q); const R=W.r, a=R*Math.cos(Math.PI/8), sd=2*R*Math.sin(Math.PI/8);
+      H=2*a; half=a; outline=oct(R); off=.06; chord=t=>{ const at=Math.abs(t); return 2*Math.max(sd/2,at<=sd/2?a:a-(at-sd/2)); };
+      for(let k=0;k<8;k++){ const ang=Math.PI/8+k*Math.PI/4; samples.push([Math.cos(ang)*.32,Math.sin(ang)*.32]); } }
+    else { c=P.localToWorld(new THREE.Vector3(W.cx,(W.y0+W.y1)/2,W.z)); u=new THREE.Vector3(1,0,0).applyQuaternion(q); n=new THREE.Vector3(0,0,1).applyQuaternion(q); const WW=W.w*Math.abs(ws.x), w=WW-.02; H=(W.y1-W.y0)*Math.abs(ws.y)-.02; half=H/2;
+      outline=[[-w/2,-H/2],[w/2,-H/2],[w/2,H/2],[-w/2,H/2]]; off=-.11; chord=()=>w; const bars=Math.max(4,Math.round(W.w/.22));
+      for(let i=0;i<bars;i++) samples.push([-WW/2+(i+.5)*WW/bars,0]); }
+    u=new THREE.Vector3().crossVectors(UP,n).normalize();   // across, so that (across, up, out) is a proper rotation
+    if(Math.hypot(c.x-14.5,c.z-15.6)<.6) continue;                                            // the cinema's court window: shutters
+    // walled up or lined over? look through the opening from both sides
+    let blocked=0; for(const [du,dv] of samples){ for(const s of [1,-1]){ const o=c.clone().addScaledVector(u,du).addScaledVector(UP,dv).addScaledVector(n,s*.7);
+        rc.set(o,n.clone().multiplyScalar(-s)); rc.far=1.0; if(rc.intersectObjects(solids,false).length){ blocked++; break; } } }
+    if(blocked>=Math.ceil(samples.length*.6)) continue;
+    // the blind in its own frame: x across, y up, z out of the wall
+    const g=new THREE.Group(); g.position.copy(c).addScaledVector(n,off); g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(u,UP,n)); scene.add(g);
+    const i=BLINDS.length, pk={type:'blind',i,blind:true}, plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+    const tex=slatT.clone(); tex.needsUpdate=true; tex.repeat.set(1,H/.4);
+    const sm=new THREE.MeshStandardMaterial({map:tex,alphaTest:.5,side:THREE.DoubleSide,roughness:.72,clippingPlanes:[plane]}), bm=bindM.clone(); bm.clippingPlanes=[plane];
+    const sh=new THREE.Shape(); outline.forEach(([a,b],k)=>k?sh.lineTo(a,b):sh.moveTo(a,b)); sh.closePath();
+    const sg=new THREE.ShapeGeometry(sh), pa=sg.attributes.position, ua=sg.attributes.uv; for(let k=0;k<pa.count;k++) ua.setXY(k,(pa.getX(k)/(2*half)+.5),(pa.getY(k)+half)/H);
+    const slats=new THREE.Mesh(sg,sm); slats.userData=pk; g.add(slats); pickables.push(slats);
+    for(let k=0;k<outline.length;k++){ const [x0,y0]=outline[k], [x1,y1]=outline[(k+1)%outline.length], L=Math.hypot(x1-x0,y1-y0);
+      const e=new THREE.Mesh(new THREE.BoxGeometry(L+.02,.024,.012),bm); e.position.set((x0+x1)/2,(y0+y1)/2,.003); e.rotation.z=Math.atan2(y1-y0,x1-x0); e.userData=pk; g.add(e); pickables.push(e); }
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,18),rollM); roll.rotation.z=Math.PI/2; roll.userData=pk; g.add(roll); pickables.push(roll);
+    const top=half, tw=chord(top-.001); const head=new THREE.Mesh(new THREE.BoxGeometry(tw+.05,.075,.06),headM); head.position.set(0,top-.02,.03); head.userData=pk; g.add(head); pickables.push(head);
+    BLINDS.push({g,plane,roll,slats,top,H,chord,k:0,on:0,v:0,id:'',cine:Math.abs(c.x-(19.6-ZR.wallX))<.3&&c.z>15.6&&c.z<23.6});
+    ZL_DYN.push(g); }
+  }catch(e){ console.warn('blinds',e); } }
+{ const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'blind'},d),to)); }catch{ return false; } };
+  let lastT=performance.now(); const wp=new THREE.Vector3();
+  ZL_ANIM.push(()=>{ if(!BLINDS.length) return; const now=performance.now(), dt=Math.min(.25,(now-lastT)/1000); lastT=now; const film=!!(window.__cine&&window.__cine.S.p);
+    for(const b of BLINDS){ const want=b.cine&&film?1:b.on; if(b.k===want&&b.ok) continue; b.ok=true;
+      b.k+=Math.sign(want-b.k)*Math.min(Math.abs(want-b.k),dt*.5);
+      const yb=b.top-b.k*b.H, r=.012+.028*(1-b.k), len=Math.max(.02,b.chord(Math.min(b.top-.001,Math.max(-b.top+.001,yb))));
+      b.roll.position.set(0,yb,.01+r*.6); b.roll.scale.set(r,len,r);
+      b.g.updateMatrixWorld(true); wp.set(0,yb,0); b.g.localToWorld(wp); b.plane.constant=-wp.y; b.slats.visible=b.k>.005; } });
+  window.__blindAct=u=>{ const b=BLINDS[u.i]; if(!b) return; b.on=b.on?0:1; b.v++; b.id=MY_PID; b.ok=false; send({o:'set',i:u.i,on:b.on,v:b.v,id:b.id}); toast(NT('blind.msg',b.on?0:1),2000); };
+  const snapFor=new Map();
+  window.__blindHello=()=>send({o:'hi'});
+  window.__blindRecv=(d,from)=>{ if(!d||d.k!=='blind') return;
+    if(d.o==='hi'){ const list=BLINDS.map((b,i)=>b.v?[i,b.on,b.v,b.id]:null).filter(Boolean); if(!list.length) return;
+      const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].filter(i=>i!==from).concat(MY_PID).sort(), rank=Math.max(0,ids.indexOf(MY_PID));
+      clearTimeout(snapFor.get(from)); snapFor.set(from,setTimeout(()=>{ snapFor.delete(from); send({o:'all',for:from,list},from); },200+rank*400+Math.random()*120)); return; }
+    const put=(i,on,v,id)=>{ const b=BLINDS[i]; if(!b) return; if(v>b.v||(v===b.v&&String(id||'')>b.id)){ b.on=on?1:0; b.v=v; b.id=id||''; b.ok=false; } };
+    if(d.o==='set') put(d.i|0,d.on,d.v|0,d.id);
+    else if(d.o==='all'){ if(d.for&&snapFor.has(d.for)){ clearTimeout(snapFor.get(d.for)); snapFor.delete(d.for); } if(d.for&&d.for!==MY_PID) return; for(const [i,on,v,id] of d.list||[]) put(i|0,on,v|0,id); } };
+}
+
 function optimizeScene(){
   try{
   scene.updateMatrixWorld(true);
@@ -7156,6 +7226,7 @@ renderPeople();
 $('#bPlan').onclick=()=>setView('plan'); $('#bSmoke').onclick=()=>toggleSmoke(); $('#bThird').onclick=()=>toggleThirdPerson(); $('#bEntry').onclick=()=>setView('entry');
 $('#pzIn').onclick=()=>planZoom(.8); $('#pzOut').onclick=()=>planZoom(1.25); $('#pTop').onclick=()=>{ VIEW.theta=Math.PI/2; VIEW.phi=.001; }; $('#pWalk').onclick=()=>setView('walk');
 if(location.hash==='#plan') setTimeout(()=>setView('plan'),50); if(location.hash==='#entry') setTimeout(()=>setView('entry'),50);
+buildBlinds();
 (async()=>{
   const sample=new Set(); for(const b of BOOKS){ for(const ch of b[0]) sample.add(ch); for(const ch of (b[1]||'').slice(0,6)) sample.add(ch); } for(const p of POSTS) for(const ch of p.title) sample.add(ch);
   for(const s of [D.quote,'自反軒拈花記大樹跤知了間獺祭魚書庫總類哲學與心理學宗教自然應用社會科學歷史語文地理藝術一二三四五六七八九十月日',HOU.yu,HOU.term,HOU.hou]) for(const ch of s) sample.add(ch);

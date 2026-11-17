@@ -971,6 +971,10 @@ npc:
     when: "電影院與教室的歐式木門（甲：開；乙：關）"
     a: "推開門。"
     b: "把門帶上。"
+  - key: blind.msg
+    when: "八卦窗與方窗的竹簾（甲：放下；乙：捲起）"
+    a: "放下竹簾。"
+    b: "捲起竹簾。"
   - key: cine.err
     when: "影片載入失敗時"
     a: "影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。"

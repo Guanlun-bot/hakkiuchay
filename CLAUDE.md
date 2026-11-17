@@ -30,6 +30,8 @@
 
 - 線上書齋 12 號房（二進西廂北間）是電影院（`vr/vr-house.js` 的「12 號房（二進西廂北間）：電影院」段；尺寸與台座高度在檔頭附近的 `CIN`，`floorY()` 依它抬高台座與踏階）：布面牆、全黑銀幕牆與寬黑框、平頂星空、滿鋪地毯；兩側天花板邊框藏燈帶與小孔燈（牆上的扇形光暈是貼圖）；前排三人沙發與深胡桃小几，45 公分台座加一整排踏階，台座上 ㄇ 字沙發與玻璃門小冰箱（飲料名稱在 npc 的 `cine.drinks`，拿在手上會經 presence 的 `bt` 讓別人看到）；紅絨布幕在有片時拉開；東牆窗加檜木窗門，只能從房內開關。片單在 `_data/vr.yml` 的 `films`（title、url、subs），影片放齋主的 Cloudflare R2（R2 需設 CORS 允許 https://hakkiuchay.space 的 GET/HEAD 與 Range 標頭）。片子、播放進度、燈光場景（迎賓、映前、放映、中場、夜場）與亮度、窗門都經多人伺服器的 `{t:'b', d:{k:'cine'}}` 同步，新進的人由在場者交接；音量各人自己的。進房間時右下角有小面板（L 收合），門邊牆上有燈光開關。電影院與教室通明間的門是歐式對開木門（`addEuroDoor`，鍵 `dcine`、`dcls`，沒有門閂，內外都能開關，狀態跟其他門一樣同步）；電影院門關上時外面聽不到聲音。按鈕文字在 npc 的 `cine.*`、`edoor.msg`。
 
+- 線上書齋全宅的八卦窗與方窗都有竹簾（`vr/vr-house.js` 的「竹簾」段，`buildBlinds()`）：建窗時 `windowBay()`、`partition()` 的八卦窗、`bambooWindow()` 會把窗記進 `WINDOWS`，場景蓋完後逐窗做一面照窗形裁切的煤竹簾（柿渋茶滾邊），掛在窗框裡、兩側都看得到也都能點。從下往上捲，捲軸長度跟著窗在那個高度的寬度。被封起來或包了牆板的窗（廁所、浴室）用射線檢查自動略過；電影院朝院子的窗有檜木窗門，不掛。開關狀態經多人伺服器 `{t:'b', d:{k:'blind'}}` 同步，新進的人由在場者交接；電影院與明間之間的兩扇八卦窗在放映時自動放下。提示文字在 npc 的 `blind.msg`。新增窗戶若不是用上面三個函式建的，要自己 `WINDOWS.push(...)`。
+
 - `vr/look.js`：線上書齋門口的扮相目錄（衣著、帽冠、面飾、隨身、髮型、氣質、顏色）與左側預覽圖；3D 人物在 `vr/vr-house.js` 的 `buildFigure()`。新增扮相要兩邊都加，名稱另加進 `_data/vr.yml` 的 `look`。門口按「進門」才開始載入 3D，載入小故事在 `_data/vr.yml` 的 `loading`；門口文字由 `vr/gate.json` 讀取。
 
 - `_vrserver/`：線上書齋的多人伺服器（Cloudflare Worker＋Durable Objects，專案名 hakkiuchay-vr），作用同 `server.py`：一房一台、位置與語音經伺服器轉送。放在 khoguanlun@gmail.com 的 Cloudflare 帳號（子網域 hakkiuchay.workers.dev），已連 GitHub：推上 main 後 Cloudflare 自動以 `_vrserver` 為根目錄重新發布。網址 wss://hakkiuchay-vr.hakkiuchay.workers.dev 填在 `vr/config.js` 的 `ws`；`ws` 空白時書齋改用 Supabase。

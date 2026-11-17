@@ -1405,7 +1405,7 @@ const SEAT_KIND={
   taishi:{eye:1.18,pitch:-.08,front:true, sink:-.38,label:'小坐',hello:'在太師椅坐下。',status:()=>'在明間坐著'},
   luohan:{eye:1.12,pitch:-.1, front:true, sink:-.42,label:'小憩',hello:'在羅漢床上坐下。牆上的月琴和殼仔弦可以點來調弦。',status:()=>'在羅漢床上'},
   modern:{eye:1.15,pitch:-.3, front:false,sink:-.42,label:'品茗',hello:'在當代茶席坐下。點提梁壺或紫砂壺，點爐泡一壺茶。',status:()=>'在當代茶席'+teaStatus('modern')},
-  bath:  {eye:.86, pitch:-.05,front:true, sink:-.66,fz:.04,label:'泡湯',hello:'泡進檜木浴缸。',status:()=>'在浴室'},
+  bath:  {eye:.9,  pitch:-.05,front:true, sink:-.62,fz:.04,label:'泡湯',hello:'泡進檜木浴缸。',status:()=>'在浴室'},
   sauna: {eye:1.14,pitch:-.05,front:true, sink:-.40,label:'烤箱',hello:'在烤箱坐下。',status:()=>'在浴室'},
   sauna2:{eye:1.59,pitch:-.12,front:true, sink:.05,label:'烤箱',hello:'在烤箱上層坐下。',status:()=>'在浴室'},
   wc:    {eye:1.1, pitch:-.05,front:true, sink:-.42,label:'如廁',hello:'坐下了，門已關上。',status:()=>'在廁所'},
@@ -5458,7 +5458,7 @@ if(NS.cake.st===4||NS.cake.st===5){ npcPlace(NPC.chun,NP.prep); }
    carries the dishes in, calls everyone, and they eat for twenty minutes; then he washes up. Menu and words: back office. */
 const DINE={x:39.2,z:-2.5,r:.72,top:.77,bo:1.05,bl:1.65,bh:.46};
 const KIT={x0:41.92,x1:46.56,z0:-4.0,z1:4.0, run:{x0:45.94,z0:-3.58,z1:2.66}, tall:{z0:2.7,z1:3.98}};
-const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}, KFIRE={on:false,fl:[]}, KNOOD={on:false,bub:[]}, KBASIN={on:false}, WC={doors:[],seats:[],slides:[],spout:{on:false},incense:[],vases:[],mirror:null}, BATH={seats:[],sseats:[],steam:[],door:null,sdoor:null,shower:null,water:null,pour:null,wash:false}; var KITCHEN_STRIP=null; const NOODLE_STEAM={at:null,s:[]};
+const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}, KFIRE={on:false,fl:[]}, KNOOD={on:false,bub:[]}, KBASIN={on:false}, WC={doors:[],seats:[],slides:[],spout:{on:false},incense:[],vases:[],mirror:null}, BATH={seats:[],sseats:[],steam:[],door:null,sdoor:null,shower:null,water:null,pour:null,mist:null,tray:null,wash:false}; var KITCHEN_STRIP=null; const NOODLE_STEAM={at:null,s:[]};
 Object.assign(NP,{noodle:{x:45.62,z:1.78},hob:{x:45.62,z:-2.72},sink:{x:45.62,z:-.05},pass:{x:45.62,z:-1.6},dineDoor:{x:41.25,z:-.3},tableDrop:{x:40.62,z:-1.3}});
 // click texts: back office (_data/vr.yml › texts) first, these when it is blank
 for(const [key,title,body] of [
@@ -5469,9 +5469,9 @@ for(const [key,title,body] of [
   ['krice','米缸','有木蓋的陶米缸，量米的竹筒擱在蓋上。'],
   ['kjar','水缸','老灶旁的陶水缸，水瓢浮在上面。'],
   ['dscreen','屏風・趙孟頫《雙松平遠圖》','四扇屏風，擋在通往廁所的門前。畫取自元・趙孟頫《雙松平遠圖》：近處兩株松樹、亂石，遠處平遠的山水。原作為手卷，紐約大都會藝術博物館藏（開放資料），這裡裁取松樹與遠山一段。'],
-  ['bathin','浴室','從明間進來先到玄關脫鞋，左右掀簾進脫衣間；玻璃門後是浴室：檜木浴缸、洗い場、淋浴間、烤箱。'],
-  ['bathtub','檜木浴缸','2.4 × 1.4 公尺的方形檜木浴缸，檜木湯口不停注入熱水。走到浴缸前的木踏板按 E（或點浴缸旁）就能泡進去。'],
-  ['bathsauna','烤箱','檜木內裝的芬蘭式烤箱，上下兩層長凳、一座放滿石頭的烤爐，牆上有溫度計和沙漏。走進去按 E 坐下。'],
+  ['bathin','浴室','從明間掀開暖簾進玄關脫鞋，左轉進脫衣間：洗臉台、置物櫃、淋浴間；玻璃門後是浴室：大檜木浴缸、洗い場、烤箱。'],
+  ['bathtub','檜木浴缸','2.7 × 2.75 公尺的大檜木浴缸，竹管不停注入熱水，水面浮著一張放清酒的小木盤，缸裡靠走道那側有一階石凳。走到缸邊對著水按 E（或點水面）就能泡進去，按方向鍵起身。'],
+  ['bathsauna','烤箱','整間檜木的烤箱：條板地、上下兩層長凳，烤爐藏在角落的格柵下，牆上一對半圓壁燈、溫度計和沙漏。走進去對著長凳按 E 坐下。'],
   ['wcf','女廁','米白牆、淺米色大地磚、淺橡木門，兩間到頂的隔間各一座免治馬桶。點拉門、隔間門開關，點馬桶或遙控器掀蓋、沖水。'],
   ['wcm','男廁','米白牆、淺米色大地磚、淺橡木門，一間小便斗、一間免治馬桶，都是到頂的隔間。'],
   ['wcvase','竹花入','一截竹筒掛在牆上，只插一枝：冬梅、春桃、夏荷、秋芒，照臺北的月份自動換。'],
@@ -5498,7 +5498,7 @@ const MEAL_TXT={
   'menu.n':['素陽春麵加蛋，配兩碟小菜','麵線，配兩碟小菜'],
   'wc.f':['女',''],'wc.m':['男',''],
   'act.fire':['生火','熄火'],'act.gas':['點火','關火'],'act.tap':['開水','關水'],'act.noodle':['煮麵爐加熱','煮麵爐關掉'],'act.basin':['開水','關水'],
-  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'bath.seat':['浴缸',''],'bath.noren':['湯',''],'sauna.seat':['烤箱',''],'bath.hello':['泡進檜木浴缸。',''],'sauna.hello':['在烤箱坐下，沙漏開始走。',''],'bath.status':['在浴室',''],'act.shower':['淋浴出水','淋浴關水'],'act.wash':['水龍頭打開','水龍頭關上'],'act.bdoor':['玻璃門拉開','玻璃門關上'],'act.sdoor':['烤箱門打開','烤箱門關上'],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
+  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'bath.seat':['浴缸',''],'sauna.seat':['烤箱',''],'bath.hello':['泡進檜木浴缸。',''],'sauna.hello':['在烤箱坐下，沙漏開始走。',''],'bath.status':['在浴室',''],'act.shower':['淋浴出水','淋浴關水'],'act.wash':['水龍頭打開','水龍頭關上'],'act.bdoor':['玻璃門拉開','玻璃門關上'],'act.sdoor':['烤箱門打開','烤箱門關上'],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
   'cal.head':['學鳩齋',''],'cal.foot':['學鳩齋','hakkiuchay.space'],
   'dine.title':['飯桌',''],'dine.intro':['圓桌配四條長凳，一條坐三人。開飯時空位都可以坐，按 E 或點長凳入座。',''],
   'dine.next':['下一餐：{餐}　{時間}',''],'dine.now':['正在吃{餐}',''],'dine.today':['今日菜單',''],
@@ -5944,122 +5944,137 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       if(k) for(const y of [.4,1.4]) B(.012,.06,.02,brass,0,y,0,g);
       const ex=hx+PW*Math.cos(a), ez=hz+PW*Math.sin(a); OB(Math.min(hx,ex),Math.max(hx,ex),Math.min(hz,ez)-.04,Math.max(hz,ez)+.04); hx=ex; hz=ez; } }
   // ------------------------------------------------------------ 西廂南間：浴室
-  // From the west 明間 through the side door: a small entrance (玄關) of stone where shoes come off, a solid wall ahead and
-  // curtained openings to either side; the changing room around it (oak floor, hinoki walls, a wash basin, baskets, benches);
-  // a glass wall with a sliding door; beyond it, in the manner of a Japanese hinoki bath: grey-green stone below, hinoki
-  // boards above and overhead, a large square hinoki tub under the window with a hinoki spout pouring into it and a slatted
-  // hinoki platform before it, a washing place with a stool and a bucket, a glass shower at the court end, a hinoki sauna
-  // at the far end with two tiers of benches and a stove of stones.
-  { const X0=41.92, X1=46.56, Z0=15.6, Z1=23.6, CYb=2.9, xv=43.12, xg=44.32, zv0=18.9, zv1=20.9, dzc=19.9;
-    // hinoki from a photograph of the wood: boards for walls and ceilings, plain grain for the cabinets and the tub
-    const hinokiT=new THREE.TextureLoader().load('hinoki-boards.jpg'); hinokiT.colorSpace=THREE.SRGBColorSpace; hinokiT.anisotropy=MAXANI;
+  // From the west 明間 through the side door and a plain linen noren with the hot-spring mark: a small entrance where shoes
+  // come off, a solid wall ahead and one curtained opening to the left; the changing room around it (hinoki floor and walls,
+  // a wash basin with a back-lit mirror and a towel basket, a block of numbered lockers, a plain bench); at its far end a
+  // shower behind glass with a slate floor, a square rain head flush in the ceiling and a sliding glass door; through the
+  // glass partition the bath: a very large hinoki tub under the window with a bamboo spout, a submerged stone step and a
+  // floating tray, a washing place under the bamboo window, and a hinoki sauna with two tiers of benches. Hinoki everywhere
+  // but the shower floor; warm hidden light; two layers of steam.
+  { const X0=41.92, X1=46.56, Z0=15.6, Z1=23.6, CYb=2.9, xv=43.12, xg=43.7, zv0=18.9, zv1=20.9, dzc=19.9, SZ=21.4;
+    const hinokiT=new THREE.TextureLoader().load('hinoki-boards.jpg'); hinokiT.colorSpace=THREE.SRGBColorSpace; hinokiT.anisotropy=MAXANI; hinokiT.wrapS=hinokiT.wrapT=THREE.RepeatWrapping;
     const grainT=new THREE.TextureLoader().load('hinoki-grain.jpg'); grainT.colorSpace=THREE.SRGBColorSpace; grainT.anisotropy=MAXANI; grainT.wrapS=grainT.wrapT=THREE.RepeatWrapping;
-    const hgrain=mat(0xffffff,.55,{map:grainT});
-    hinokiT.wrapS=hinokiT.wrapT=THREE.RepeatWrapping;
-    const hk=(ru,rv)=>{ const t=hinokiT.clone(); t.needsUpdate=true; t.repeat.set(ru*2,1); return mat(0xffffff,.58,{map:t}); };   // one board length per wall height, so no joints across
-    const izu=mat(0xffffff,.85,{map:textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#7f877d'; g.fillRect(0,0,w,h); let s4=17; const r=()=>((s4=s4*16807%2147483647)/2147483647); for(let i=0;i<4000;i++){ g.fillStyle=r()<.5?`rgba(160,170,155,${r()*.25})`:`rgba(60,66,60,${r()*.25})`; g.fillRect(r()*w,r()*h,1+r()*2.5,1+r()*2.5); } g.strokeStyle='rgba(70,75,70,.6)'; g.lineWidth=2; for(const y of [0,128]) { g.beginPath(); g.moveTo(0,y); g.lineTo(w,y); g.stroke(); } g.beginPath(); g.moveTo(90,0); g.lineTo(90,128); g.moveTo(200,128); g.lineTo(200,256); g.stroke(); })});
-    const stoneFloor=mat(0xffffff,.8,{map:izu.map.clone()}); stoneFloor.map.wrapS=stoneFloor.map.wrapT=THREE.RepeatWrapping; stoneFloor.map.repeat.set(4,8); stoneFloor.map.needsUpdate=true;
-    const oakF=mat(0xffffff,.55,{map:textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#c9a678'; g.fillRect(0,0,w,h); for(let i=0;i<w;i+=32){ g.fillStyle=`rgba(${190+(i*7)%30},${150+(i*5)%25},${100+(i*3)%20},.6)`; g.fillRect(i+1,0,30,h); g.fillStyle='rgba(90,60,30,.45)'; g.fillRect(i,0,1.2,h); g.fillRect(i,(i*37)%h,32,1.2); } })}); oakF.map.wrapS=oakF.map.wrapT=THREE.RepeatWrapping; oakF.map.repeat.set(4,6);
-    const glassM=mat(0xdfe9ec,.05,{transparent:true,opacity:.22,metalness:.2,depthWrite:false}), frosted=mat(0xe9eef0,.4,{transparent:true,opacity:.85,emissive:0xdfe6e8,emissiveIntensity:.35}), alu=mat(0x5a5c5e,.4,{metalness:.5});
+    const hgrain=mat(0xffffff,.5,{map:grainT});
+    const hk=(ru,rv=1)=>{ const t=hinokiT.clone(); t.needsUpdate=true; t.repeat.set(ru*2,rv); return mat(0xffffff,.5,{map:t}); };
+    const hkF=(ru,rv)=>{ const t=hinokiT.clone(); t.needsUpdate=true; t.repeat.set(ru,rv); t.rotation=Math.PI/2; t.center.set(.5,.5); return mat(0xffffff,.48,{map:t}); };
+    const slate=mat(0xffffff,.8,{map:textCanvas(256,256,(g,w,h)=>{ g.fillStyle='#4f5356'; g.fillRect(0,0,w,h); let s4=17; const r=()=>((s4=s4*16807%2147483647)/2147483647); for(let i=0;i<5000;i++){ g.fillStyle=r()<.5?`rgba(120,126,130,${r()*.22})`:`rgba(25,28,30,${r()*.25})`; g.fillRect(r()*w,r()*h,1+r()*2.5,1+r()*2.5); } g.strokeStyle='rgba(20,22,24,.7)'; g.lineWidth=2; for(const y of [0,128]){ g.beginPath(); g.moveTo(0,y); g.lineTo(w,y); g.stroke(); } g.beginPath(); g.moveTo(90,0); g.lineTo(90,128); g.moveTo(200,128); g.lineTo(200,256); g.stroke(); })});
+    slate.map.wrapS=slate.map.wrapT=THREE.RepeatWrapping;
+    const glassM=mat(0xdfe9ec,.05,{transparent:true,opacity:.2,metalness:.2,depthWrite:false}), alu=mat(0x5a5c5e,.4,{metalness:.5}), brushed=mat(0xb9bcbe,.25,{metalness:.85}), copper=mat(0xb0683a,.35,{metalness:.8}), ledM=mat(0xfff0d6,.6,{emissive:0xffd2a0,emissiveIntensity:1.1});
     const face=(ax,at,a,b,n,y0,y1,m)=>{ const L0=b-a; if(L0<.01||y1-y0<.01) return; const t=.03; if(ax==='x') B(t,y1-y0,L0,m,at+n*t/2,(y0+y1)/2,(a+b)/2); else B(L0,y1-y0,t,m,(a+b)/2,(y0+y1)/2,at+n*t/2); };
-    const DADO=.6;
-    // floors: stone in the entrance and the bath, oak boards in the changing room
-    const fl=(x0,x1,z0,z1,m,ru,rv)=>{ const p=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),m); p.rotation.x=-Math.PI/2; p.position.set((x0+x1)/2,.009,(z0+z1)/2); scene.add(p); p.userData={type:'floor'}; pickables.push(p); };
-    fl(X0,xv,zv0,zv1,stoneFloor); fl(X0,xg,Z0,zv0,oakF); fl(X0,xg,zv1,Z1,oakF); fl(xv,xg,zv0,zv1,oakF); fl(xg,X1,Z0,Z1,stoneFloor);
-    B(xv-X0,.1,.04,hgrain,(X0+xv)/2,.05,zv0+.02); B(xv-X0,.1,.04,hgrain,(X0+xv)/2,.05,zv1-.02);
-    // ceilings: hinoki boards
-    B(X1-X0,.03,Z1-Z0,hk((X1-X0)/1.0,(Z1-Z0)/1.0),(X0+X1)/2,CYb+.015,(Z0+Z1)/2);
-    // the room's own walls clad inside: changing room in hinoki to the ceiling; the bath half grey-green stone to 0.6 m, hinoki above
-    const cladX=(at,n,a,b,wet)=>{ for(const [s0,s1] of [[a,b]]){ if(wet){ face('x',at,s0,s1,n,0,DADO,izu); face('x',at,s0,s1,n,DADO,CYb,hk((s1-s0)/1,(CYb-DADO)/1)); } else face('x',at,s0,s1,n,0,CYb,hk((s1-s0)/1,CYb/1)); } };
-    const cladZ=(at,n,a,b,wet,hole)=>{ const segs=hole?[[a,hole[0]],[hole[1],b]]:[[a,b]]; for(const [s0,s1] of segs){ if(wet){ face('z',at,s0,s1,n,0,DADO,izu); face('z',at,s0,s1,n,DADO,CYb,hk((s1-s0)/1,(CYb-DADO)/1)); } else face('z',at,s0,s1,n,0,CYb,hk((s1-s0)/1,CYb/1)); }
-      if(hole){ const [h0,h1,y0,y1]=hole; if(wet){ face('z',at,h0,h1,n,0,Math.min(DADO,y0),izu); if(y0>DADO) face('z',at,h0,h1,n,DADO,y0,hk(1,1)); } else face('z',at,h0,h1,n,0,y0,hk(1,1)); face('z',at,h0,h1,n,y1,CYb,hk(1,.4)); } };
-    // north wall (the partition, with the door), the front wall (its window), the back wall, the south wall (the bamboo window)
-    face('x',X0,Z0,19.1,1,0,CYb,hk(3.5,2.9)); face('x',X0,20.7,Z1,1,0,CYb,hk(2.9,2.9)); face('x',X0,19.1,20.7,1,2.48,CYb,hk(1.6,.4));
-    cladZ(Z0,1,X0,xg,false,[43.85,44.32,.97,2.42]); cladZ(Z0,1,xg,X1,true,[xg,44.82,.97,2.42]); cladZ(Z1,-1,X0,xg,false); cladZ(Z1,-1,xg,X1,true);
-    for(const [a,b] of [[Z0,18.8],[20.4,Z1]]) cladX(X1,-1,a,b,true); face('x',X1,18.8,20.4,-1,0,DADO,izu); face('x',X1,18.8,20.4,-1,DADO,1.25,hk(1.6,.65)); face('x',X1,18.8,20.4,-1,2.85,CYb,hk(1.6,.05));
-    // frosted glass inside both windows
-    plane(44.82-43.85,1.45,frosted,(43.85+44.82)/2,1.695,Z0+.035,0); plane(1.6,1.35,frosted,X1-.035,2.175,19.6,-Math.PI/2);
-    // ---- the entrance: a stone floor, a step, a shoe cabinet against the solid wall ahead, curtains at the side openings
-    { const wall=(ax,at,a,b,y1=CYb,t=.1,m=hk(1,2.9))=>{ if(ax==='x'){ B(t,y1,b-a,m,at,y1/2,(a+b)/2); OB(at-t/2,at+t/2,a,b); } else { B(b-a,y1,t,m,(a+b)/2,y1/2,at); OB(a,b,at-t/2,at+t/2); } };
-      wall('x',xv,zv0,zv1,CYb,.1,hk(2,2.9)); const op0=42.2;
-      for(const z of [zv0,zv1]){ wall('z',z,X0,op0,CYb,.1,hk(.5,2.9)); B(xv-op0,CYb-2.1,.1,hk(.7,.8),(op0+xv)/2,(2.1+CYb)/2,z); for(const xx of [op0,xv-.05]) B(.04,2.1,.12,hgrain,xx,1.05,z);
-        for(const s of [0,1]){ const p=plane((xv-op0)/2-.01,1.25,mat(0xffffff,.95,{side:THREE.DoubleSide,map:textCanvas(96,256,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle='rgba(160,140,110,.07)'; g.fillRect(0,y,w,1); } g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,8); g.font=F('600',40); g.textAlign='center'; g.fillText(s?'湯':'',w/2,h*.35); })}),op0+(xv-op0)*(.25+s*.5),2.1-.625,z,0); p.userData={type:'block'}; } }
-      // a long linen curtain in the doorway from the 明間, 湯 on it
-      { const nm=mat(0xffffff,.95,{side:THREE.DoubleSide,map:textCanvas(256,384,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle=`rgba(160,140,110,${y%4?.05:.09})`; g.fillRect(0,y,w,1); }
-          g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,10); g.fillRect(0,h-6,w,6); g.fillStyle='#6a4e36'; g.font=F('600',96); g.textAlign='center'; g.textBaseline='middle'; g.fillText(NT('bath.noren'),w*.75,h*.3); })});
-        const w2=(20.6-19.2)/2; for(const s2 of [0,1]){ const p2=new THREE.Mesh(new THREE.PlaneGeometry(w2-.01,1.45),nm.clone()); p2.material.map=nm.map.clone(); p2.material.map.needsUpdate=true; p2.material.map.repeat.set(.5,1); p2.material.map.offset.set(s2*.5,0);
-          p2.position.set(41.76,2.44-.725,19.2+w2*(s2+.5)); p2.rotation.y=-Math.PI/2; scene.add(p2); p2.userData={type:'block'}; }
-        const rod=C(.01,.01,1.5,hgrain,41.76,2.45,19.9,scene,8); rod.rotation.x=Math.PI/2; }
-      // the shoe step; slippers waiting
-      B(xv-X0-.15,.12,zv1-zv0-.2,hk(1,.3),(X0+xv)/2+.2,.06,(zv0+zv1)/2,scene,{type:'bathin'});
-      for(let i=0;i<3;i++) for(const s of [-1,1]){ const sl=B(.1,.025,.25,mat(0x8a7a5a,.8),42.3+i*.22+s*.055,.14,20.35,scene); } }
-    // ---- the changing room: a wash basin and mirror at the court end, basket shelves and towels at the far end, benches
-    { const vz0=15.7, vz1=17.3; B(.55,.82,vz1-vz0,hgrain,X0+.3,.41,(vz0+vz1)/2,scene,{type:'bathin'}); B(.58,.04,vz1-vz0+.02,mat(0xf1ebe0,.4),X0+.3,.84,(vz0+vz1)/2);
-      L([[0,-.1],[.14,-.1],[.19,-.02],[.2,0]],porcelain,X0+.32,.86,16.5); const tp=C(.012,.012,.18,steel,X0+.08,.95,16.5,scene,10); const ar=C(.01,.01,.14,steel,X0+.15,1.03,16.5,scene,10); ar.rotation.z=Math.PI/2;
-      plane(1.2,.8,mat(0xeef2f4,.05,{metalness:.8}),X0+.04,1.55,16.5,Math.PI/2); B(.02,.84,1.24,hgrain,X0+.03,1.55,16.5);
-      L([[0,0],[.03,0],[.035,.12],[.012,.16]],mat(0xf4f2ee,.3),X0+.15,.86,16.0); OB(X0,X0+.6,vz0,vz1);
-      // baskets on open shelves, towels folded on top
-      const sz0=21.3, sz1=23.4; B(.5,1.6,sz1-sz0,hgrain,X0+.27,.8,(sz0+sz1)/2,scene,{type:'bathin'}); OB(X0,X0+.55,sz0,sz1);
-      for(const y of [.35,.85,1.35]) for(let i=0;i<3;i++){ const bz=sz0+.35+i*.7; L([[.0,0],[.2,0],[.24,.25]],mat(0xb8955a,.85,{side:THREE.DoubleSide}),X0+.4,y-.22,bz).scale.set(1,1,1.2); }
-      for(let i=0;i<4;i++) B(.36,.05,.5,mat(0xf6f3ee,.95),X0+.3,1.62+i*.05,22.35);
-      for(const [a,b] of [[16.4,18.6],[21.2,23.2]]){ B(.36,.05,b-a,hk(1,.2),xg-.3,.44,(a+b)/2,scene,{type:'bathin'}); for(const z of [a+.15,b-.15]) B(.3,.42,.05,hgrain,xg-.3,.21,z); OB(xg-.48,xg-.12,a,b); } }
-    // ---- the glass wall with a sliding door
+    const wall=(ax,at,a,b,y1=CYb,t=.1,m=hk(1,1))=>{ if(ax==='x'){ B(t,y1,b-a,m,at,y1/2,(a+b)/2); OB(at-t/2,at+t/2,a,b); } else { B(b-a,y1,t,m,(a+b)/2,y1/2,at); OB(a,b,at-t/2,at+t/2); } };
+    // ---- floors: hinoki boards everywhere, slate only in the shower; a stone threshold between them
+    const fl=(x0,x1,z0,z1,m)=>{ const p=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),m); p.rotation.x=-Math.PI/2; p.position.set((x0+x1)/2,.009,(z0+z1)/2); scene.add(p); p.userData={type:'floor'}; pickables.push(p); };
+    fl(X0,xg,Z0,SZ+.2,hkF((xg-X0)*1.6,(SZ+.2-Z0)/1.2)); fl(xg,X1,Z0,Z1,hkF((X1-xg)*1.6,(Z1-Z0)/1.2)); { const sm=slate.clone(); sm.map=slate.map.clone(); sm.map.repeat.set(2,2); sm.map.needsUpdate=true; fl(X0,xg,SZ+.2,Z1,sm); }
+    B(xg-X0,.02,.08,stone,(X0+xg)/2,.012,SZ+.2);
+    B(X1-X0,.03,Z1-Z0,hk((X1-X0)/1,(Z1-Z0)/2.9),(X0+X1)/2,CYb+.015,(Z0+Z1)/2);
+    // ---- the room's walls clad in hinoki; a hidden warm strip along the top of every wall
+    face('x',X0,Z0,19.1,1,0,CYb,hk(3.5,1)); face('x',X0,20.7,Z1,1,0,CYb,hk(2.9,1)); face('x',X0,19.1,20.7,1,2.48,CYb,hk(1.6,.15));
+    const win=[43.85,44.82,.97,2.42]; face('z',Z0,X0,win[0],1,0,CYb,hk(2,1)); face('z',Z0,win[1],X1,1,0,CYb,hk(1.8,1)); face('z',Z0,win[0],win[1],1,0,win[2],hk(1,.34)); face('z',Z0,win[0],win[1],1,win[3],CYb,hk(1,.17));
+    face('z',Z1,X0,X1,-1,0,CYb,hk(4.6,1));
+    for(const [a,b] of [[Z0,18.8],[20.4,Z1]]) face('x',X1,a,b,-1,0,CYb,hk((b-a)/1,1)); face('x',X1,18.8,20.4,-1,0,1.25,hk(1.6,.43)); face('x',X1,18.8,20.4,-1,2.85,CYb,hk(1.6,.02));
+    for(const [x0,x1,z0,z1] of [[X0+.04,xg-.04,Z0+.04,Z1-.04],[xg+.04,X1-.04,Z0+.04,Z1-.04]]){ B(x1-x0,.015,.02,ledM,(x0+x1)/2,CYb-.05,z0); B(x1-x0,.015,.02,ledM,(x0+x1)/2,CYb-.05,z1); B(.02,.015,z1-z0,ledM,x0,CYb-.05,(z0+z1)/2); B(.02,.015,z1-z0,ledM,x1,CYb-.05,(z0+z1)/2); }
+    // the noren at the door from the 明間: plain linen with the hot-spring mark, no words
+    const norenTex=(withMark)=>textCanvas(256,384,(g,w,h)=>{ g.fillStyle='#e7dcc8'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle=`rgba(160,140,110,${y%4?.05:.09})`; g.fillRect(0,y,w,1); } for(let x=0;x<w;x+=3){ g.fillStyle='rgba(255,255,255,.05)'; g.fillRect(x,0,1,h); }
+      g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,10); g.fillRect(0,h-6,w,6);
+      if(withMark){ g.strokeStyle='#223a64'; g.lineCap='round'; g.lineWidth=14; g.beginPath(); g.ellipse(w/2,h*.56,64,20,0,0,Math.PI*2); g.stroke(); for(let i=-1;i<=1;i++){ const x=w/2+i*34; g.lineWidth=11; g.beginPath(); g.moveTo(x,h*.5); g.bezierCurveTo(x-14,h*.44,x+14,h*.38,x,h*.32); g.bezierCurveTo(x-12,h*.27,x+6,h*.23,x+2,h*.2); g.stroke(); } } });
+    { const nm=mat(0xffffff,.9,{side:THREE.DoubleSide,map:norenTex(true)}); const w2=(20.6-19.2)/2;
+      for(const s2 of [0,1]){ const m2=nm.clone(); m2.map=nm.map.clone(); m2.map.needsUpdate=true; m2.map.repeat.set(.5,1); m2.map.offset.set(s2*.5,0); const p2=new THREE.Mesh(new THREE.PlaneGeometry(w2-.01,1.45),m2); p2.position.set(41.76,2.44-.725,19.2+w2*(s2+.5)); p2.rotation.y=-Math.PI/2; scene.add(p2); p2.userData={type:'block'}; }
+      C(.01,.01,1.5,hgrain,41.76,2.45,19.9,scene,8).rotation.x=Math.PI/2; }
+    // ---- the entrance: hinoki step, slippers, a wall ahead, one opening (to the left as you come in) with a plain curtain
+    { wall('x',xv,zv0,zv1,CYb,.1,hk(2,1)); wall('z',zv1,X0,xv,CYb,.1,hk(1.2,1));
+      const op0=42.15; wall('z',zv0,X0,op0,CYb,.1,hk(.3,1)); B(xv-op0,CYb-2.1,.1,hk(.6,.28),(op0+xv)/2,(2.1+CYb)/2,zv0); for(const xx of [op0,xv-.05]) B(.04,2.1,.12,hgrain,xx,1.05,zv0);
+      const cm=mat(0xffffff,.9,{side:THREE.DoubleSide,map:norenTex(false)}); for(const s of [0,1]){ const p=plane((xv-op0)/2-.01,1.2,cm,op0+(xv-op0)*(.25+s*.5),2.1-.6,zv0,0); p.userData={type:'block'}; }
+      B(xv-X0-.15,.12,zv1-zv0-.2,hkF(1,1),(X0+xv)/2+.2,.06,dzc,scene,{type:'bathin'});
+      for(let i=0;i<3;i++) for(const s of [-1,1]) B(.1,.025,.25,mat(0x8a7a5a,.8),42.3+i*.22+s*.055,.14,20.35); }
+    // ---- the changing room: basin with a back-lit mirror and a towel basket, the lockers beside it, a plain bench
+    { const vz0=15.7, vz1=16.9; B(.5,.05,vz1-vz0,hgrain,X0+.28,.82,(vz0+vz1)/2,scene,{type:'bathin'}); for(const z of [vz0+.06,vz1-.06]) B(.46,.8,.04,hgrain,X0+.28,.4,z); OB(X0,X0+.55,vz0,vz1);
+      L([[0,-.1],[.14,-.1],[.19,-.02],[.2,0]],porcelain,X0+.3,.85,16.3); C(.012,.012,.18,steel,X0+.07,.94,16.3,scene,10); C(.01,.01,.14,steel,X0+.14,1.02,16.3,scene,10).rotation.z=Math.PI/2;
+      B(.02,.84,1.1,ledM,X0+.025,1.55,16.3); plane(1.0,.74,mat(0xeef2f4,.05,{metalness:.8}),X0+.04,1.55,16.3,Math.PI/2);
+      L([[0,0],[.03,0],[.035,.12],[.012,.16]],mat(0xf4f2ee,.3),X0+.15,.85,15.95);
+      L([[0,0],[.17,0],[.2,.28],[.21,.3]],mat(0xb8955a,.85,{side:THREE.DoubleSide}),X0+.28,.0,16.3); for(let i=0;i<3;i++) B(.26,.04,.2,mat(0xf6f3ee,.95),X0+.28,.33+i*.045,16.3);
+      // lockers: three columns, four rows, numbered brass tags, a keyhole in each door
+      const lz0=17.1, lz1=18.7, LH=1.8, LD=.42, cols=3, rows=4, lt={type:'bathin'};
+      B(LD,LH,lz1-lz0,hgrain,X0+LD/2,LH/2,(lz0+lz1)/2,scene,lt); OB(X0,X0+LD,lz0,lz1);
+      const doorTex=textCanvas(384,512,(g,w,h)=>{ g.fillStyle='#d9b98d'; g.fillRect(0,0,w,h); let s5=23; const r=()=>((s5=s5*16807%2147483647)/2147483647);
+        for(let i=0;i<60;i++){ g.strokeStyle=`rgba(150,105,60,${.05+r()*.1})`; g.lineWidth=.6+r()*1.4; const y=r()*h; g.beginPath(); g.moveTo(0,y); g.bezierCurveTo(w*.3,y+(r()-.5)*12,w*.7,y+(r()-.5)*12,w,y+(r()-.5)*8); g.stroke(); }
+        const cw=w/cols, ch=h/rows; g.strokeStyle='#7a5a38'; g.lineWidth=3; for(let c=0;c<=cols;c++){ g.beginPath(); g.moveTo(c*cw,0); g.lineTo(c*cw,h); g.stroke(); } for(let rr=0;rr<=rows;rr++){ g.beginPath(); g.moveTo(0,rr*ch); g.lineTo(w,rr*ch); g.stroke(); }
+        let n=1; for(let rr=0;rr<rows;rr++) for(let c=0;c<cols;c++){ const x=c*cw+cw/2, y=rr*ch+ch/2; g.fillStyle='#b5945b'; g.beginPath(); g.arc(x,y-12,15,0,Math.PI*2); g.fill(); g.fillStyle='#3a2a18'; g.font='700 16px sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(String(n++),x,y-12); g.fillStyle='#2a2320'; g.beginPath(); g.arc(x,y+16,3.5,0,Math.PI*2); g.fill(); g.fillRect(x-1.2,y+16,2.4,7); } });
+      plane(lz1-lz0-.02,LH-.02,mat(0xffffff,.5,{map:doorTex}),X0+LD+.002,LH/2,(lz0+lz1)/2,Math.PI/2,scene,lt);
+      // a plain bench of raw wood by the shower
+      B(.9,.05,.34,hgrain,42.55,.44,21.2,scene,{type:'bathin'}); for(const x of [42.2,42.9]) B(.05,.42,.3,hgrain,x,.21,21.2); OB(42.1,43.0,21.03,21.37); }
+    // ---- the shower at the far end of the changing room: a glass front with a sliding door left half open, slate floor,
+    //      a square rain head flush in the ceiling, a dial, a bottle rack, a stool and a copper-banded bucket
+    { const gz=SZ+.2, dw=.8; B(xg-X0-dw,2.2,.012,glassM,X0+(xg-X0-dw)/2,1.1,gz); B(xg-X0,.05,.05,alu,(X0+xg)/2,2.2,gz); B(xg-X0,.03,.05,alu,(X0+xg)/2,.015,gz); OB(X0,xg-dw,gz-.03,gz+.03);
+      B(xg-X0,CYb-2.2,.1,hk(1.8,.25),(X0+xg)/2,(2.2+CYb)/2,gz);
+      const sd=B(dw-.04,2.16,.012,glassM,xg-dw-.02,1.1,gz+.03); B(.025,.36,.025,alu,xg-dw+.08,1.05,gz+.055);   // the door, slid aside, nothing to bump into
+      const hd=B(.26,.012,.26,brushed,42.8,CYb-.006,22.6,scene,{type:'bathshower'}); const rimM=mat(0xffffff,.3,{emissive:0xdfe8ec,emissiveIntensity:.3}); for(let i=0;i<5;i++) for(let j=0;j<5;j++) C(.006,.006,.004,rimM,42.8-.1+i*.05,CYb-.014,22.6-.1+j*.05,scene,6);
+      C(.045,.045,.02,brushed,X0+.012,1.1,22.6,scene,20,{type:'bathshower'}).rotation.z=Math.PI/2; B(.012,.006,.03,mat(0x2a2a2a,.4),X0+.03,1.1,22.6,scene,{type:'bathshower'});
+      B(.03,.03,.5,brushed,X0+.03,1.35,22.1); for(let i=0;i<3;i++) C(.03,.03,.16,mat([0xf2efe8,0xc9d9c4,0x2f3a34][i],.3),X0+.07,1.45,21.95+i*.14,scene,12);
+      B(.3,.24,.22,hgrain,42.5,.12,23.25); L([[0,0],[.12,0],[.13,.2],[.135,.21]],hgrain,43.0,0,23.3,scene); for(const y of [.05,.16]){ const b=new THREE.Mesh(new THREE.TorusGeometry(.13,.005,5,24),copper); b.rotation.x=Math.PI/2; b.position.set(43.0,y,23.3); scene.add(b); }
+      const rain=[]; for(let i=0;i<40;i++){ const d=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.12,3),mat(0xeaf4f8,.05,{transparent:true,opacity:.55})); d.visible=false; scene.add(d); rain.push({d,x:42.8+(Math.random()-.5)*.24,z:22.6+(Math.random()-.5)*.24,ph:Math.random()}); MEAL_DYN.push(d); }
+      const fog=[]; for(let i=0;i<6;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX})); scene.add(s); fog.push({s,ph:i/6}); MEAL_DYN.push(s); }
+      BATH.shower={on:false,rain,fog}; }
+    // ---- the glass partition with its sliding door
     { const dz0=19.45, dz1=20.35; for(const [a,b] of [[Z0,dz0],[dz1,Z1]]){ B(.012,2.2,b-a,glassM,xg,1.1,(a+b)/2); B(.05,.05,b-a,alu,xg,2.2,(a+b)/2); B(.05,.03,b-a,alu,xg,.015,(a+b)/2); OB(xg-.03,xg+.03,a,b); }
-      B(.05,CYb-2.2,Z1-Z0,hk(8,.7),xg,(2.2+CYb)/2,(Z0+Z1)/2);
+      B(.05,CYb-2.2,Z1-Z0,hk(8,.25),xg,(2.2+CYb)/2,(Z0+Z1)/2);
       const sd=new THREE.Group(); sd.position.set(xg+.035,0,(dz0+dz1)/2); scene.add(sd); B(.012,2.18,dz1-dz0,glassM,0,1.1,0,sd,{type:'bathdoor'}); B(.03,.4,.03,alu,.02,1.05,(dz1-dz0)/2-.08,sd,{type:'bathdoor'});
       BATH.door={g:sd,z0:(dz0+dz1)/2,open:false}; MEAL_DYN.push(sd); }
-    // ---- the shower at the court end: glass on two sides, a rain head, a hand shower, a niche of bottles
-    { const sz=17.2; B(X1-xg-.6,2.0,.012,glassM,(xg+X1+.6)/2,1.0,sz); B(X1-xg-.6,.04,.04,alu,(xg+X1+.6)/2,2.0,sz); OB(xg+.6,X1,sz-.03,sz+.03);
-      const tag={type:'bathshower'}; C(.12,.12,.02,steel,45.6,2.25,16.3,scene,24,tag); C(.01,.01,.35,steel,45.6,2.43,16.3,scene,8); const arm=C(.01,.01,.9,steel,46.1,2.42,16.3,scene,8); arm.rotation.z=Math.PI/2;
-      B(.02,.7,.03,steel,X1-.04,1.3,16.0,scene,tag); C(.025,.02,.18,steel,X1-.08,1.55,16.0,scene,10,tag).rotation.z=.4; B(.06,.12,.06,steel,X1-.05,1.0,16.6,scene,tag);
-      B(.05,.3,.5,izu,X1-.04,1.2,16.9); for(let i=0;i<3;i++) C(.03,.03,.16,mat([0xf2efe8,0xc9d9c4,0x2f3a34][i],.3),X1-.1,1.13,16.75+i*.12,scene,12);
-      const rain=[]; for(let i=0;i<40;i++){ const d=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.12,3),mat(0xeaf4f8,.05,{transparent:true,opacity:.55})); d.visible=false; scene.add(d); rain.push({d,x:45.6+(Math.random()-.5)*.2,z:16.3+(Math.random()-.5)*.2,ph:Math.random()}); MEAL_DYN.push(d); }
-      BATH.shower={on:false,rain}; }
-    // ---- the washing place: a low stool, a hinoki bucket, a tap and hand shower low on the wall
-    { const wz=17.8, tag={type:'bathwash'}; B(.3,.25,.25,hk(.4,.3),X1-.55,.125,wz,scene,tag); L([[0,0],[.12,0],[.13,.2],[.135,.21]],hk(1,.3),X1-.85,0,wz+.05,scene,tag);
-      C(.02,.02,.1,steel,X1-.05,.55,wz,scene,10,tag).rotation.z=Math.PI/2; for(const s of [-1,1]) C(.018,.018,.04,steel,X1-.05,.62,wz+s*.08,scene,10,tag).rotation.z=Math.PI/2; B(.02,.5,.03,steel,X1-.04,1.0,wz+.25); C(.022,.018,.16,steel,X1-.08,1.2,wz+.25,scene,10,tag).rotation.z=.4;
-      OB(X1-.75,X1,wz-.2,wz+.2); }
-    // ---- the hinoki tub: 2.4 by 1.4, under the window; a hinoki spout box pouring hot water; a slatted platform before it
-    { const tx0=X1-1.42, tx1=X1-.02, tz0=18.4, tz1=20.8, TH=.62, tw=.07, tag={type:'bathtub'};
+    // ---- the great tub: 2.7 by 2.75 under the window, hinoki, a warm strip under the rim, a submerged stone step on the
+    //      walkway side, a bamboo spout from the south wall at the far end, a floating tray; three places to soak
+    { const tx0=xg+.12, tx1=X1-.04, tz0=Z0+.04, tz1=18.4, TH=.62, tw=.08, WY=TH-.07, tag={type:'bathtub'};
       const side=(w,d,x,z)=>B(w,TH,d,hgrain,x,TH/2,z,scene,tag);
       side(tx1-tx0,tw,(tx0+tx1)/2,tz0+tw/2); side(tx1-tx0,tw,(tx0+tx1)/2,tz1-tw/2); side(tw,tz1-tz0-2*tw,tx0+tw/2,(tz0+tz1)/2); side(tw,tz1-tz0-2*tw,tx1-tw/2,(tz0+tz1)/2);
-      for(const [w,d,x,z] of [[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz0+tw/2],[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz1-tw/2],[tw+.02,tz1-tz0,tx0+tw/2,(tz0+tz1)/2],[tw+.02,tz1-tz0,tx1-tw/2,(tz0+tz1)/2]]) B(w,.02,d,hk(2,.1),x,TH+.01,z);
-      for(const y of [.1,.52]) B(.012,.04,tz1-tz0+.01,hgrain,tx0-.005,y,(tz0+tz1)/2);
-      B(tx1-tx0-2*tw,.04,tz1-tz0-2*tw,hk(2,3),(tx0+tx1)/2,.06,(tz0+tz1)/2);
-      const wat=new THREE.Mesh(new THREE.PlaneGeometry(tx1-tx0-2*tw,tz1-tz0-2*tw),new THREE.MeshStandardMaterial({color:0x9fbcbc,roughness:.05,metalness:.1,transparent:true,opacity:.62})); wat.rotation.x=-Math.PI/2; wat.position.set((tx0+tx1)/2,TH-.07,(tz0+tz1)/2); scene.add(wat); BATH.water=wat;
+      for(const [w,d,x,z] of [[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz0+tw/2],[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz1-tw/2],[tw+.02,tz1-tz0,tx0+tw/2,(tz0+tz1)/2],[tw+.02,tz1-tz0,tx1-tw/2,(tz0+tz1)/2]]) B(w,.02,d,hk(2,.05),x,TH+.01,z);
+      B(.02,.012,tz1-tz0-.1,ledM,tx0-.012,.08,(tz0+tz1)/2); B(tx1-tx0-.1,.012,.02,ledM,(tx0+tx1)/2,.08,tz1+.012);
+      B(tx1-tx0-2*tw,.04,tz1-tz0-2*tw,hk(2,2),(tx0+tx1)/2,.06,(tz0+tz1)/2);
+      const stoneStep=B(tx1-tx0-2*tw-.1,.28,.4,stone,(tx0+tx1)/2,.08+.14,tz1-tw-.22);
+      const wat=new THREE.Mesh(new THREE.PlaneGeometry(tx1-tx0-2*tw,tz1-tz0-2*tw),new THREE.MeshStandardMaterial({color:0x9fbcbc,roughness:.04,metalness:.1,transparent:true,opacity:.6})); wat.rotation.x=-Math.PI/2; wat.position.set((tx0+tx1)/2,WY,(tz0+tz1)/2); scene.add(wat); BATH.water=wat;
+      const mist=new THREE.Mesh(new THREE.PlaneGeometry(tx1-tx0-.3,tz1-tz0-.3),new THREE.MeshBasicMaterial({map:SOFT_TEX,transparent:true,opacity:.22,depthWrite:false,color:0xffffff})); mist.rotation.x=-Math.PI/2; mist.position.set((tx0+tx1)/2,WY+.1,(tz0+tz1)/2); scene.add(mist); BATH.mist=mist; MEAL_DYN.push(mist);
       OB(tx0,tx1,tz0,tz1);
-      // the spout: a hinoki box on a post at the window end, a lip that pours
-      const sx=X1-.2, sz=tz0-.06; B(.18,.82,.18,hk(.4,1),sx,.41,sz-.06); B(.22,.08,.22,hk(.4,.2),sx,.86,sz-.06); const lip=B(.1,.05,.24,hk(.3,.2),sx,.66,sz+.12); lip.rotation.x=-.12;
-      const pour=new THREE.Mesh(new THREE.CylinderGeometry(.03,.05,.13,10,1,true),new THREE.MeshStandardMaterial({color:0xeaf4f8,roughness:.05,transparent:true,opacity:.7,emissive:0x8aa8b8,emissiveIntensity:.25})); pour.position.set(sx,.6,sz+.24); pour.scale.z=.5; scene.add(pour); MEAL_DYN.push(pour);
-      const rip=[]; for(let k=0;k<4;k++){ const r=new THREE.Mesh(new THREE.RingGeometry(.05,.06,28),new THREE.MeshBasicMaterial({color:0xf2f8fa,transparent:true,opacity:0,depthWrite:false})); r.rotation.x=-Math.PI/2; r.position.set(sx,TH-.068,sz+.26); scene.add(r); rip.push(r); MEAL_DYN.push(r); }
-      BATH.pour={pour,rip};
-      // the slatted platform
-      for(let i=0;i<9;i++) B(.62,.03,.08,hk(.6,.1),tx0-.36,.03,tz0+.05+i*.29);
-      for(const z of [tz0+.1,tz1-.1]) B(.6,.02,.05,hgrain,tx0-.36,.01,z);
-      // three places to soak, along the tub, facing the room
-      for(const z of [18.9,19.6,20.3]){ const si=addSeat(tx1-.45,z,Math.PI/2,'bath',NT('bath.seat')); SEATS[si].ap={x:tx0-.4,z}; BATH.seats.push(si); }
-      // a hinoki bucket and dipper on the rim
-      L([[0,0],[.1,0],[.11,.16],[.115,.17]],hk(1,.3),tx0+.2,TH+.02,tz1-.25,scene,tag); const dp=C(.008,.008,.3,hk(.3,1),tx0+.32,TH+.08,tz1-.4,scene,6); dp.rotation.z=1.3; }
-    // ---- the sauna at the far end: hinoki inside and out, a glass door, two tiers of benches, a stove of stones, a thermometer and an hourglass
-    { const sz0=21.4, tag={type:'bathsauna'}, dX0=xg+.25, dX1=xg+.95;
-      for(const [a,b] of [[xg,dX0],[dX1,X1]]){ B(b-a,CYb-.3,.1,hk((b-a)/.5,2),(a+b)/2,(CYb-.3)/2,sz0,scene,tag); OB(a,b,sz0-.05,sz0+.05); }
-      B(dX1-dX0,CYb-.3-2.05,.1,hk(1,.5),(dX0+dX1)/2,(2.05+CYb-.3)/2,sz0); B(X1-xg,.3,.1,hk(4,.3),(xg+X1)/2,CYb-.15,sz0);
-      const sdr=new THREE.Group(); sdr.position.set(dX0,0,sz0-.06); scene.add(sdr); B(dX1-dX0-.02,2.02,.03,mat(0xc8a46c,.2,{transparent:true,opacity:.45}),(dX1-dX0)/2,1.02,0,sdr,{type:'bathsdoor'}); for(const [w,h,x,y] of [[.04,2.02,.02,1.01],[.04,2.02,dX1-dX0-.04,1.01],[dX1-dX0,.04,(dX1-dX0)/2,.02],[dX1-dX0,.04,(dX1-dX0)/2,2.02]]) B(w,h,.04,hk(.2,1),x,y,0,sdr,{type:'bathsdoor'}); B(.03,.3,.03,hk(.1,.4),dX1-dX0-.1,1.05,-.04,sdr);
+      // a bamboo spout from the south wall at the far end
+      const sy=1.0, sz=tz1-.3; const pipe=C(.026,.026,.7,bamboo,X1-.35,sy,sz,scene,12,tag); pipe.rotation.z=Math.PI/2; for(const x of [X1-.08,X1-.4]){ const n=new THREE.Mesh(new THREE.TorusGeometry(.027,.005,5,12),bambooDk); n.rotation.y=Math.PI/2; n.position.set(x,sy,sz); scene.add(n); }
+      const tip=C(.02,.025,.1,bamboo,X1-.72,sy-.05,sz,scene,12,tag); tip.rotation.z=.5;
+      const pour=new THREE.Mesh(new THREE.CylinderGeometry(.018,.03,sy-.08-WY,10,1,true),new THREE.MeshStandardMaterial({color:0xeaf4f8,roughness:.05,transparent:true,opacity:.7,emissive:0x8aa8b8,emissiveIntensity:.25})); pour.position.set(X1-.76,(sy-.08+WY)/2,sz); scene.add(pour); MEAL_DYN.push(pour);
+      const rip=[]; for(let k=0;k<4;k++){ const r=new THREE.Mesh(new THREE.RingGeometry(.05,.06,28),new THREE.MeshBasicMaterial({color:0xf2f8fa,transparent:true,opacity:0,depthWrite:false})); r.rotation.x=-Math.PI/2; r.position.set(X1-.76,WY+.002,sz); scene.add(r); rip.push(r); MEAL_DYN.push(r); }
+      BATH.pour={pour,rip,x:X1-.76,z:sz};
+      // the floating tray with a small sake set
+      const tray=new THREE.Group(); tray.position.set(tx0+.7,WY+.01,tz0+.7); scene.add(tray); B(.34,.03,.26,hgrain,0,0,0,tray); for(const [x,z] of [[-.12,-.08],[-.12,.08],[.12,-.08],[.12,.08]]) B(.03,.05,.03,hgrain,x,.025,z,tray);
+      L([[0,0],[.035,0],[.045,.08],[.03,.12],[.015,.14]],porcelain,-.06,.015,0,tray); for(let i=0;i<2;i++) L([[0,0],[.02,0],[.025,.035]],porcelain,.08,.015,-.05+i*.1,tray); BATH.tray=tray; MEAL_DYN.push(tray);
+      // one warm light over the water
+      const tl=new THREE.PointLight(0xffd8a8,.7,4.5,2); tl.position.set((tx0+tx1)/2,2.2,(tz0+tz1)/2); scene.add(tl);
+      // three places to soak along the walkway end, facing the window; the whole tub is the thing you click to get in
+      for(const x of [tx0+.55,(tx0+tx1)/2,tx1-.55]){ const si=addSeat(x,tz1-.5,0,'bath',NT('bath.seat')); SEATS[si].ap={x,z:tz1+.5}; BATH.seats.push(si); }
+      for(const o of [wat,stoneStep]){ o.userData={type:'seat',si:BATH.seats[1]}; pickables.push(o); }
+      // slats on the walkway, the washing place under the bamboo window
+      for(let i=0;i<10;i++) B(X1-xg-.2,.025,.07,hk(2,.05),(xg+X1)/2,.02,tz1+.12+i*.28);
+      const wz=19.6, wt={type:'bathwash'}; B(.3,.25,.25,hgrain,X1-.55,.125,wz,scene,wt); L([[0,0],[.12,0],[.13,.2],[.135,.21]],hgrain,X1-.85,0,wz+.35,scene,wt); for(const y of [.05,.16]){ const b=new THREE.Mesh(new THREE.TorusGeometry(.13,.005,5,24),copper); b.rotation.x=Math.PI/2; b.position.set(X1-.85,y,wz+.35); scene.add(b); }
+      C(.02,.02,.1,steel,X1-.05,.55,wz,scene,10,wt).rotation.z=Math.PI/2; for(const s of [-1,1]) C(.018,.018,.04,steel,X1-.05,.62,wz+s*.08,scene,10,wt).rotation.z=Math.PI/2;
+      OB(X1-.75,X1,wz-.2,wz+.5); }
+    // ---- the sauna: hinoki inside and out, slatted floor, an upper bench along the back wall and a lower one along the back
+    //      and the south wall, the stove hidden under a slatted grate, two half-dome lamps, a vent in the ceiling, a door with
+    //      a tall strip of glass; a thermometer and an hourglass by the door
+    { const tag={type:'bathsauna'}, dX0=xg+.25, dX1=xg+.95;
+      for(const [a,b] of [[xg,dX0],[dX1,X1]]) wall('z',SZ,a,b,CYb,.1,hk((b-a)/.5,1)); B(dX1-dX0,CYb-2.05,.1,hk(1,.3),(dX0+dX1)/2,(2.05+CYb)/2,SZ);
+      for(const xx of [dX0,dX1]) B(.05,2.05,.12,hgrain,xx,1.025,SZ); B(dX1-dX0+.05,.05,.12,hgrain,(dX0+dX1)/2,2.05,SZ);
+      const sdr=new THREE.Group(); sdr.position.set(dX0,0,SZ-.06); scene.add(sdr); const dw=dX1-dX0; B(dw-.02,2.0,.035,hgrain,dw/2,1.0,0,sdr,{type:'bathsdoor'}); B(.18,1.5,.04,mat(0xc8a46c,.2,{transparent:true,opacity:.4}),dw/2+.12,1.1,0,sdr,{type:'bathsdoor'}); B(.03,.3,.03,hgrain,dw-.1,1.05,-.04,sdr);
       BATH.sdoor={g:sdr,open:false}; MEAL_DYN.push(sdr);
-      for(const [a,b] of [[sz0+.05,Z1]]){ B(.03,CYb,b-a,hk(2,2.9),xg+.015,CYb/2,(a+b)/2); }
-      B(X1-xg-.5,.06,.5,hk(3,.3),(xg+.5+X1)/2,.45,Z1-.75); B(X1-xg-.5,.06,.5,hk(3,.3),(xg+.5+X1)/2,.9,Z1-.27); B(X1-xg-.5,.45,.05,hk(3,.4),(xg+.5+X1)/2,.66,Z1-.52);
-      OB(xg+.45,X1,Z1-1.02,Z1);
-      const hx=xg+.3, hz=Z1-.35; B(.4,.6,.4,mat(0x2a2a2a,.5,{metalness:.5}),hx,.3,hz,scene,tag); for(let i=0;i<22;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(.05,6,5),mat(i%3?0x5a5652:0x777068,.8)); st.scale.y=.7; st.position.set(hx+((i*37)%7/7-.5)*.3,.63+(i%3)*.04,hz+((i*53)%9/9-.5)*.3); scene.add(st); }
-      const glow=new THREE.PointLight(0xff9a50,.6,2.2,2); glow.position.set(hx,.8,hz); scene.add(glow); OB(hx-.24,hx+.24,hz-.24,hz+.24);
-      L([[0,0],[.08,0],[.09,.14]],hk(1,.3),hx+.32,0,hz-.3,scene); C(.006,.006,.3,hk(.2,1),hx+.38,.2,hz-.3,scene,6).rotation.z=.6;
-      B(.02,.22,.12,hgrain,X1-.02,1.5,sz0+.35); const th=new THREE.Mesh(new THREE.CircleGeometry(.05,20),mat(0xf4efe4,.5)); th.position.set(X1-.032,1.55,sz0+.35); th.rotation.y=-Math.PI/2; scene.add(th);
-      const hg=new THREE.Group(); hg.position.set(X1-.04,1.2,sz0+.35); scene.add(hg); for(const y of [-.06,.06]) L([[0,0],[.02,.0],[.0,.05]],mat(0xe8eef0,.1,{transparent:true,opacity:.5}),0,y>0?y-.05:y,0,hg).scale.y=y>0?-1:1;
-      for(const [z,kind] of [[Z1-.75,'sauna'],[Z1-.27,'sauna2']]) for(const x of [xg+1.0,xg+1.7]){ const si=addSeat(x,z,0,kind,NT('sauna.seat')); SEATS[si].ap={x,z:sz0+.45}; BATH.sseats.push(si); }
-      const sl=new THREE.PointLight(0xffc48a,.5,2.6,2); sl.position.set((xg+X1)/2,2.2,(sz0+Z1)/2); scene.add(sl); }
-    // ---- light: soft and warm, a glow along the ceiling edge, the windows
-    for(const [lx,lz,pi] of [[42.6,17.2,.45],[42.6,22.2,.45],[45.2,17.8,.4],[45.0,19.6,.5]]){ const pl=new THREE.PointLight(0xffe2bc,pi,4.2,2); pl.position.set(lx,CYb-.25,lz); scene.add(pl); const d=new THREE.Mesh(new THREE.CircleGeometry(.05,16),mat(0xffffff,.3,{emissive:0xffe6c4,emissiveIntensity:.7})); d.rotation.x=Math.PI/2; d.position.set(lx,CYb-.002,lz); scene.add(d); }
-    // steam over the tub
-    for(let i=0;i<10;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX})); scene.add(s); BATH.steam.push({s,ph:i/10}); MEAL_DYN.push(s); }
+      for(let i=0;i<12;i++) B(X1-xg-.1,.02,.1,hk(2,.07),(xg+X1)/2,.03,SZ+.15+i*.18);
+      const sx0=xg+.1, sx1=X1-.03; B(sx1-sx0,.06,.5,hgrain,(sx0+sx1)/2,.9,Z1-.28,scene,tag); B(sx1-sx0,.06,.5,hgrain,(sx0+sx1)/2,.45,Z1-.78,scene,tag); B(sx1-sx0,.42,.04,hgrain,(sx0+sx1)/2,.66,Z1-.53); B(sx1-sx0,.42,.04,hgrain,(sx0+sx1)/2,.22,Z1-1.03);
+      B(.5,.06,Z1-1.05-SZ-.8,hgrain,sx1-.25,.45,(SZ+.8+Z1-1.05)/2,scene,tag); B(.04,.42,Z1-1.05-SZ-.8,hgrain,sx1-.5,.22,(SZ+.8+Z1-1.05)/2);
+      for(let i=0;i<7;i++){ B(.45,.012,.03,hgrain,sx1-.25,.93,Z1-.5+i*.03); } for(let i=0;i<6;i++) B(.016,.4,.016,hgrain,sx0+.3+i*.08,.22,Z1-1.03-.025);
+      OB(sx0,sx1,Z1-1.05,Z1); OB(sx1-.5,sx1,SZ+.8,Z1-1.05);
+      // the stove hidden under a slatted grate in the corner by the glass wall; its glow through the slats
+      const gx=X1-.3, gz=SZ+.42; B(.5,.5,.5,mat(0x2a2a2a,.6),gx,.25,gz); for(let i=0;i<7;i++) B(.5,.03,.03,hgrain,gx,.52,gz-.21+i*.07); const sg=new THREE.PointLight(0xff9a50,.5,2.0,2); sg.position.set(gx,.6,gz); scene.add(sg); OB(gx-.27,gx+.27,gz-.27,gz+.27);
+      for(const [x,z] of [[xg+.08,SZ+.8],[X1-.08,SZ+.8]]){ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.09,14,10,0,Math.PI),mat(0xfff4e4,.5,{emissive:0xffd9a8,emissiveIntensity:.9,side:THREE.DoubleSide})); lamp.rotation.y=x<45?Math.PI/2:-Math.PI/2; lamp.position.set(x,2.25,z); scene.add(lamp); }
+      B(.3,.012,.3,mat(0x3a3028,.6),(xg+X1)/2,CYb-.006,SZ+.6); for(let i=0;i<6;i++) B(.3,.004,.02,hgrain,(xg+X1)/2,CYb-.012,SZ+.47+i*.05);
+      B(.02,.22,.12,hgrain,X1-.02,1.5,SZ+.35); const th=new THREE.Mesh(new THREE.CircleGeometry(.05,20),mat(0xf4efe4,.5)); th.position.set(X1-.032,1.55,SZ+.35); th.rotation.y=-Math.PI/2; scene.add(th);
+      const hg=new THREE.Group(); hg.position.set(X1-.04,1.2,SZ+.35); scene.add(hg); for(const y of [-.06,.06]) L([[0,0],[.02,.0],[.0,.05]],mat(0xe8eef0,.1,{transparent:true,opacity:.5}),0,y>0?y-.05:y,0,hg).scale.y=y>0?-1:1;
+      for(const [x,z,kind] of [[xg+.6,Z1-.78,'sauna'],[xg+1.3,Z1-.78,'sauna'],[xg+.6,Z1-.28,'sauna2'],[xg+1.3,Z1-.28,'sauna2'],[sx1-.25,SZ+1.1,'sauna']]){ const si=addSeat(x,z,kind==='sauna'&&z<Z1-.5&&x>sx1-.5?Math.PI/2:0,kind,NT('sauna.seat')); SEATS[si].ap=x>sx1-.5?{x:sx1-.95,z}:{x,z:Z1-1.5}; BATH.sseats.push(si);
+        const hit=new THREE.Mesh(new THREE.BoxGeometry(.5,.08,.46),new THREE.MeshBasicMaterial({visible:false})); hit.position.set(x,kind==='sauna2'?.95:.5,z); hit.userData={type:'seat',si}; scene.add(hit); pickables.push(hit); MEAL_DYN.push(hit); }
+      const sl=new THREE.PointLight(0xffc48a,.45,2.8,2); sl.position.set((xg+X1)/2,2.3,(SZ+Z1)/2); scene.add(sl); }
+    // ---- one soft light in the changing room; steam particles for the tub and the spout
+    { const pl=new THREE.PointLight(0xffe2bc,.5,5,2); pl.position.set(42.8,CYb-.3,18.0); scene.add(pl); }
+    for(let i=0;i<40;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX})); scene.add(s); BATH.steam.push({s,ph:i/40,x:(Math.random()-.5),z:(Math.random()-.5),spout:i>=30}); MEAL_DYN.push(s); }
   }
 
   // ------------------------------------------------------------ what is on the table
@@ -6215,15 +6230,20 @@ const WCMUSIC=(()=>{ let ac=null, out=null, t0=0, nextAt=0, vol=0, step=0;
   return {tick}; })();
 ZL_ANIM.push(dt=>WCMUSIC.tick(dt||.016));
 ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*6), B0=BATH; if(!B0.door) return;
-  // sliding glass door opens when you come near it (or when clicked), the sauna door swings
-  const near=Math.abs(ME.x-44.32)<.9&&Math.abs(ME.z-19.9)<.8; const dOpen=B0.door.open||near; B0.door.g.position.z+=((B0.door.z0+(dOpen?.88:0))-B0.door.g.position.z)*k;
-  const sNear=Math.abs(ME.z-21.4)<.8&&ME.x>44.4&&ME.x<45.5; B0.sdoor.g.rotation.y+=(((B0.sdoor.open||sNear)?1.4:0)-B0.sdoor.g.rotation.y)*k;
-  // hot water pours from the spout; rings spread; steam rises; the surface shimmers
-  B0.pour.pour.scale.x=1+Math.sin(w*30)*.08; B0.pour.rip.forEach((r,i)=>{ const ph=(w*.6+i/4)%1; r.scale.setScalar(1+ph*6); r.material.opacity=(1-ph)*.45; });
-  const inBath=ME.seat>=0&&BATH.seats.includes(ME.seat); B0.steam.forEach((S,i)=>{ const ph=(w*.12+S.ph)%1; S.s.position.set(45.85+Math.sin(i*2.1+w*.2)*.45,.58+ph*1.4,19.6+Math.cos(i*1.7+w*.15)*.9); S.s.material.opacity=(1-ph)*Math.min(1,ph*5)*(inBath?.32:.18); S.s.scale.setScalar(.4+ph*.9); });
-  B0.water.material.opacity=.6+Math.sin(w*2)*.03;
-  // the shower
-  const sh=B0.shower; for(const R of sh.rain){ R.d.visible=sh.on; if(sh.on){ const ph=(w*2.2+R.ph)%1; R.d.position.set(R.x,2.2-ph*2.1,R.z); } } });
+  // the glass door slides open as you come near (or when clicked); the sauna door swings
+  const near=Math.abs(ME.x-43.7)<.9&&Math.abs(ME.z-19.9)<.8; const dOpen=B0.door.open||near; B0.door.g.position.z+=((B0.door.z0+(dOpen?.88:0))-B0.door.g.position.z)*k;
+  const sNear=Math.abs(ME.z-21.4)<.8&&ME.x>43.9&&ME.x<44.8; B0.sdoor.g.rotation.y+=(((B0.sdoor.open||sNear)?1.4:0)-B0.sdoor.g.rotation.y)*k;
+  // the spout pours, rings spread, the surface shimmers, the mist drifts, the tray bobs
+  B0.pour.pour.scale.x=B0.pour.pour.scale.z=1+Math.sin(w*30)*.08; B0.pour.rip.forEach((r,i)=>{ const ph=(w*.6+i/4)%1; r.scale.setScalar(1+ph*7); r.material.opacity=(1-ph)*.45; });
+  B0.water.material.opacity=.58+Math.sin(w*2)*.03; B0.mist.position.y=.56+Math.sin(w*.7)*.03; B0.mist.rotation.z=w*.03; B0.mist.material.opacity=.18+Math.sin(w*.5)*.05;
+  B0.tray.position.y=.56+Math.sin(w*1.1)*.012; B0.tray.rotation.x=Math.sin(w*.9)*.025; B0.tray.rotation.z=Math.cos(w*.7)*.02;
+  // steam: thirty sprites rise from the water, ten from where the spout falls
+  const inBath=ME.seat>=0&&BATH.seats.includes(ME.seat), base=inBath?.3:.17;
+  B0.steam.forEach((S,i)=>{ const ph=(w*.14+S.ph)%1; if(S.spout) S.s.position.set(B0.pour.x+Math.sin(i*2.1+w*.6)*.12,.6+ph*1.1,B0.pour.z+Math.cos(i*1.7+w*.5)*.12); else S.s.position.set(45.17+S.x*2.3+Math.sin(i*2.1+w*.2)*.15,.6+ph*1.5,17.0+S.z*2.3+Math.cos(i*1.7+w*.15)*.15);
+    S.s.material.opacity=(1-ph)*Math.min(1,ph*5)*base; S.s.scale.setScalar((S.spout?.25:.4)+ph*.8); });
+  // the shower: rain from the square head, a little fog on the floor
+  const sh=B0.shower; for(const R of sh.rain){ R.d.visible=sh.on; if(sh.on){ const ph=(w*2.2+R.ph)%1; R.d.position.set(R.x,2.85-ph*2.7,R.z); } }
+  sh.fog.forEach((F,i)=>{ const ph=(w*.2+F.ph)%1; F.s.position.set(42.8+Math.sin(i*2+w*.3)*.4,.15+ph*.6,22.6+Math.cos(i*1.6+w*.25)*.4); F.s.material.opacity=sh.on?(1-ph)*.18*Math.min(1,ph*4):0; F.s.scale.setScalar(.5+ph*.6); }); });
 { const smk=[]; const sm=new THREE.SpriteMaterial({color:0xe8e4dc,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX});
   for(const I of WC.incense) for(let k=0;k<4;k++){ const s=new THREE.Sprite(sm.clone()); s.scale.set(.05,.05,1); scene.add(s); smk.push({s,I,ph:k/4}); NPC_DYN.push(s); }
   ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*6);

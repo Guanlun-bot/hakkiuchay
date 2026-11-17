@@ -5085,7 +5085,7 @@ const NPC_TXT={
   'cine.stop':['停止放映',''],'cine.vol':['音量',''],'cine.subs':['字幕：開','字幕：關'],'cine.full':['全螢幕','離開全螢幕'],'cine.toast':['開始放映','暫停放映'],
   'cine.light':['燈光',''],'cine.mute':['靜音','取消靜音'],'cine.scenes':['迎賓,映前,放映,中場,夜場',''],'cine.fridge':['小冰箱',''],
   'cine.drinks':['冬瓜茶,麥仔茶,沙士,彈珠汽水,烏龍茶,綠茶,柳橙汁,蘆筍汁,豆漿,礦泉水',''],'cine.take':['從冰箱拿了一瓶','喝完了。'],'cine.sip':['喝一口','放回去'],
-  'cine.shutter':['關上窗門。','打開窗門。'],'cine.shout':['窗門要從電影院裡面開關。',''],'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],
+  'cine.shutter':['關上窗門。','打開窗門。'],'cine.shout':['窗門要從電影院裡面開關。',''],'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],'blind.npc':['天亮了，玉姨和阿財一扇一扇把竹簾捲起來。','夜深了，玉姨和阿財一扇一扇把竹簾放下來。'],
   'cine.err':['影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。',''],'cine.tap':['點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。',''],
   'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
   'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
@@ -6009,9 +6009,14 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     fl(X0,xg,Z0,Z1,hkF((xg-X0)*1.6,(Z1-Z0)/1.2)); fl(xg,X1,Z0,SZ,stoneM((X1-xg)/1.2,(SZ-Z0)/1.2)); fl(xg,X1,SZ,Z1,hkF((X1-xg)*1.6,(Z1-SZ)/1.2));
     B(.1,.02,SZ-Z0,stone,xg+.05,.012,(Z0+SZ)/2);
     B(X1-X0,.03,Z1-Z0,hk((X1-X0)/1,(Z1-Z0)/2.9),(X0+X1)/2,CYb+.015,(Z0+Z1)/2);
-    // ---- the walls, clad thickly in hinoki so nothing of the old window frames shows through; the front window is sealed
-    face('x',X0,Z0,19.1,1,0,CYb,hk(3.5,1)); face('x',X0,20.7,Z1,1,0,CYb,hk(2.9,1)); face('x',X0,19.1,20.7,1,2.48,CYb,hk(1.6,.15));
-    face('z',Z0,X0,X1,1,0,CYb,hk(4.6,1)); face('z',Z1,X0,X1,-1,0,CYb,hk(4.6,1));
+    // ---- the walls, clad thickly in hinoki; the front window and the octagon toward the 明間 are open again, each cased in
+    //      hinoki round its opening and fitted with a bamboo blind like every other window
+    const OZ0=17.25, OZ1=18.45, OY0=.95, OY1=2.15, FX0=43.7, FX1=44.9, FY0=.99, FY1=2.42;
+    face('x',X0,Z0,OZ0,1,0,CYb,hk(1.4,1)); face('x',X0,OZ1,19.1,1,0,CYb,hk(.6,1)); face('x',X0,OZ0,OZ1,1,0,OY0,hk(.9,.3)); face('x',X0,OZ0,OZ1,1,OY1,CYb,hk(.9,.25));
+    face('z',Z0,X0,FX0,1,0,CYb,hk(1.6,1)); face('z',Z0,FX1,X1,1,0,CYb,hk(1.6,1)); face('z',Z0,FX0,FX1,1,0,FY0,hk(1,.35)); face('z',Z0,FX0,FX1,1,FY1,CYb,hk(1,.15));
+    for(const [w,h,z,y] of [[OZ1-OZ0+.1,.05,(OZ0+OZ1)/2,OY0-.025],[OZ1-OZ0+.1,.05,(OZ0+OZ1)/2,OY1+.025],[.05,OY1-OY0,OZ0-.025,(OY0+OY1)/2],[.05,OY1-OY0,OZ1+.025,(OY0+OY1)/2]]) B(.03,h,w,hgrain,X0i+.015,y,z);
+    for(const [w,h,x,y] of [[FX1-FX0+.1,.05,(FX0+FX1)/2,FY0-.025],[FX1-FX0+.1,.05,(FX0+FX1)/2,FY1+.025],[.05,FY1-FY0,FX0-.025,(FY0+FY1)/2],[.05,FY1-FY0,FX1+.025,(FY0+FY1)/2]]) B(w,h,.03,hgrain,x,y,Z0i+.015); face('x',X0,20.7,Z1,1,0,CYb,hk(2.9,1)); face('x',X0,19.1,20.7,1,2.48,CYb,hk(1.6,.15));
+    face('z',Z1,X0,X1,-1,0,CYb,hk(4.6,1));
     const wz0=19.0, wz1=20.2, wy0=1.5, wy1=2.75;   // the bamboo window, kept: its opening lined and cased in hinoki
     face('x',X1,Z0,wz0,-1,0,CYb,hk(3.4,1)); face('x',X1,wz1,Z1,-1,0,CYb,hk(3.4,1)); face('x',X1,wz0,wz1,-1,0,wy0,hk(1.2,.5)); face('x',X1,wz0,wz1,-1,wy1,CYb,hk(1.2,.05));
     for(const [w,h,z,y] of [[wz1-wz0+.16,.07,(wz0+wz1)/2,wy0-.035],[wz1-wz0+.16,.07,(wz0+wz1)/2,wy1+.035],[.07,wy1-wy0,wz0-.035,(wy0+wy1)/2],[.07,wy1-wy0,wz1+.035,(wy0+wy1)/2]]) B(.04,h,w,hgrain,X1i-.02,y,z);
@@ -7107,7 +7112,8 @@ function dineText(){ const S=mealState(), T=S.T, nm=nextMeal(); let h=`<p style=
 
 /* ================= 竹簾：every octagonal and square window gets a fitted bamboo roll blind =================
    Smoked bamboo (煤竹) split fine, five cotton cords, a persimmon-brown (柿渋茶) binding round the edge, cut to the
-   window's own outline (the octagon too) and hung inside the frame so it is seen, and worked, from both sides. It rolls
+   window's own outline (the octagon too) and hung in the frame (outer windows on the outside, octagons on the 明間 side),
+   seen and worked from both sides. It rolls
    up from the bottom: the roll rides up the window and is as long as the window is wide at that height, and at the top it
    tucks under a short cloth head. Windows that have been walled up or lined over (the toilets, the bath) are left out;
    the cinema's court window has its own shutters. All start rolled up; who lowers or raises one is shared with everyone
@@ -7132,7 +7138,15 @@ function buildBlinds(){ try{
     else { c=P.localToWorld(new THREE.Vector3(W.cx,(W.y0+W.y1)/2,W.z)); u=new THREE.Vector3(1,0,0).applyQuaternion(q); n=new THREE.Vector3(0,0,1).applyQuaternion(q); const WW=W.w*Math.abs(ws.x), w=WW-.02; H=(W.y1-W.y0)*Math.abs(ws.y)-.02; half=H/2;
       outline=[[-w/2,-H/2],[w/2,-H/2],[w/2,H/2],[-w/2,H/2]]; off=-.11; chord=()=>w; const bars=Math.max(4,Math.round(W.w/.22));
       for(let i=0;i<bars;i++) samples.push([-WW/2+(i+.5)*WW/bars,0]); }
-    u=new THREE.Vector3().crossVectors(UP,n).normalize();   // across, so that (across, up, out) is a proper rotation
+    // which side holds the roll: a square window's is the inside of the house (toward the building's middle, or failing
+    // that the side with a roof over it); an
+    // octagon's, in a partition between the 明間 and a 北間/南間, is the 北間/南間 (away from the wing's middle, local x 0).
+    // n points there; the slats hang just on that side of the bars or lattice, and look the same from both sides.
+    if(W.k==='oct'){ if((W.x||0)<0) n.negate(); }
+    else if(Math.abs(W.z)>.5){ if(W.z>0) n.negate(); }   // a wall of a whole building: the inside is toward its middle (local z 0)
+    else { const roofed=s=>{ rc.set(c.clone().addScaledVector(n,s*2.4),UP); rc.far=9; return rc.intersectObjects(solids,false).length>0; }; if(roofed(-1)&&!roofed(1)) n.negate(); }
+    off=W.k==='oct'?.05:.12;
+    u=new THREE.Vector3().crossVectors(UP,n).normalize();   // across, so that (across, up, toward the roll's side) is a proper rotation
     if(Math.hypot(c.x-14.5,c.z-15.6)<.6) continue;                                            // the cinema's court window: shutters
     // walled up or lined over? look through the opening from both sides
     let blocked=0; for(const [du,dv] of samples){ for(const s of [1,-1]){ const o=c.clone().addScaledVector(u,du).addScaledVector(UP,dv).addScaledVector(n,s*.7);
@@ -7142,35 +7156,41 @@ function buildBlinds(){ try{
     const g=new THREE.Group(); g.position.copy(c).addScaledVector(n,off); g.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(u,UP,n)); scene.add(g);
     const i=BLINDS.length, pk={type:'blind',i,blind:true}, plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
     const tex=slatT.clone(); tex.needsUpdate=true; tex.repeat.set(1,H/.4);
-    const sm=new THREE.MeshStandardMaterial({map:tex,alphaTest:.5,side:THREE.DoubleSide,roughness:.72,clippingPlanes:[plane]}), bm=bindM.clone(); bm.clippingPlanes=[plane];
+    const sm=new THREE.MeshStandardMaterial({map:tex,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:.32,alphaTest:.5,side:THREE.DoubleSide,roughness:.72,clippingPlanes:[plane]})   /* a little of its own colour, so it reads the same from the shaded side */, bm=bindM.clone(); bm.clippingPlanes=[plane];
     const sh=new THREE.Shape(); outline.forEach(([a,b],k)=>k?sh.lineTo(a,b):sh.moveTo(a,b)); sh.closePath();
     const sg=new THREE.ShapeGeometry(sh), pa=sg.attributes.position, ua=sg.attributes.uv; for(let k=0;k<pa.count;k++) ua.setXY(k,(pa.getX(k)/(2*half)+.5),(pa.getY(k)+half)/H);
     const slats=new THREE.Mesh(sg,sm); slats.userData=pk; g.add(slats); pickables.push(slats);
     for(let k=0;k<outline.length;k++){ const [x0,y0]=outline[k], [x1,y1]=outline[(k+1)%outline.length], L=Math.hypot(x1-x0,y1-y0);
-      const e=new THREE.Mesh(new THREE.BoxGeometry(L+.02,.024,.012),bm); e.position.set((x0+x1)/2,(y0+y1)/2,.003); e.rotation.z=Math.atan2(y1-y0,x1-x0); e.userData=pk; g.add(e); pickables.push(e); }
+      const e=new THREE.Mesh(new THREE.BoxGeometry(L+.02,.024,.012),bm); e.position.set((x0+x1)/2,(y0+y1)/2,0); e.rotation.z=Math.atan2(y1-y0,x1-x0); e.userData=pk; g.add(e); pickables.push(e); }
     const roll=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,18),rollM); roll.rotation.z=Math.PI/2; roll.userData=pk; g.add(roll); pickables.push(roll);
-    const top=half, tw=chord(top-.001); const head=new THREE.Mesh(new THREE.BoxGeometry(tw+.05,.075,.06),headM); head.position.set(0,top-.02,.03); head.userData=pk; g.add(head); pickables.push(head);
-    BLINDS.push({g,plane,roll,slats,top,H,chord,k:0,on:0,v:0,id:'',cine:Math.abs(c.x-(19.6-ZR.wallX))<.3&&c.z>15.6&&c.z<23.6});
+    const top=half, tw=chord(top-.001); const head=new THREE.Mesh(new THREE.BoxGeometry(tw+.05,.075,.05),headM); head.position.set(0,top-.02,.035); head.userData=pk; g.add(head); pickables.push(head);
+    BLINDS.push({g,plane,roll,slats,top,H,chord,k:0,on:0,v:0,id:'',at:0,cine:Math.abs(c.x-(19.6-ZR.wallX))<.3&&c.z>15.6&&c.z<23.6});
     ZL_DYN.push(g); }
   }catch(e){ console.warn('blinds',e); } }
 { const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'blind'},d),to)); }catch{ return false; } };
+  // the household's round: at 05:00 (Taipei) they roll every blind up, at midnight they let every one down, one window
+  // after another (a few seconds apart, in the order the windows were built). Someone's own choice holds until the next round.
+  const STEP=3000, HOUR=3600e3, tpH=t=>(((t/HOUR+8)%24)+24)%24;
+  const sched=(i,t)=>{ const tt=t-i*STEP, h=tpH(tt); return {down:h<5?1:0,since:t-((h<5?h:h-5)*HOUR)}; };
+  let lastRound=null;
   let lastT=performance.now(); const wp=new THREE.Vector3();
-  ZL_ANIM.push(()=>{ if(!BLINDS.length) return; const now=performance.now(), dt=Math.min(.25,(now-lastT)/1000); lastT=now; const film=!!(window.__cine&&window.__cine.S.p);
-    for(const b of BLINDS){ const want=b.cine&&film?1:b.on; if(b.k===want&&b.ok) continue; b.ok=true;
+  ZL_ANIM.push(()=>{ if(!BLINDS.length) return; const now=performance.now(), dt=Math.min(.25,(now-lastT)/1000); lastT=now; const film=!!(window.__cine&&window.__cine.S.p), wall=Date.now();
+    const round=tpH(wall)<5?'down':'up'; if(lastRound&&round!==lastRound&&window.__entered) toast(NT('blind.npc',round==='up'?0:1),6000); lastRound=round;
+    for(const [i,b] of BLINDS.entries()){ const S=sched(i,wall), base=b.v&&b.at>S.since?b.on:S.down, want=b.cine&&film?1:base; if(b.k===want&&b.ok) continue; b.ok=true;
       b.k+=Math.sign(want-b.k)*Math.min(Math.abs(want-b.k),dt*.5);
       const yb=b.top-b.k*b.H, r=.012+.028*(1-b.k), len=Math.max(.02,b.chord(Math.min(b.top-.001,Math.max(-b.top+.001,yb))));
-      b.roll.position.set(0,yb,.01+r*.6); b.roll.scale.set(r,len,r);
+      b.roll.position.set(0,yb,.012+r); b.roll.scale.set(r,len,r);
       b.g.updateMatrixWorld(true); wp.set(0,yb,0); b.g.localToWorld(wp); b.plane.constant=-wp.y; b.slats.visible=b.k>.005; } });
-  window.__blindAct=u=>{ const b=BLINDS[u.i]; if(!b) return; b.on=b.on?0:1; b.v++; b.id=MY_PID; b.ok=false; send({o:'set',i:u.i,on:b.on,v:b.v,id:b.id}); toast(NT('blind.msg',b.on?0:1),2000); };
+  window.__blindAct=u=>{ const b=BLINDS[u.i]; if(!b) return; const S=sched(u.i,Date.now()), cur=b.v&&b.at>S.since?b.on:S.down; b.on=cur?0:1; b.v++; b.id=MY_PID; b.at=Date.now(); b.ok=false; send({o:'set',i:u.i,on:b.on,v:b.v,id:b.id,at:b.at}); toast(NT('blind.msg',b.on?0:1),2000); };
   const snapFor=new Map();
   window.__blindHello=()=>send({o:'hi'});
   window.__blindRecv=(d,from)=>{ if(!d||d.k!=='blind') return;
-    if(d.o==='hi'){ const list=BLINDS.map((b,i)=>b.v?[i,b.on,b.v,b.id]:null).filter(Boolean); if(!list.length) return;
+    if(d.o==='hi'){ const list=BLINDS.map((b,i)=>b.v?[i,b.on,b.v,b.id,b.at]:null).filter(Boolean); if(!list.length) return;
       const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].filter(i=>i!==from).concat(MY_PID).sort(), rank=Math.max(0,ids.indexOf(MY_PID));
       clearTimeout(snapFor.get(from)); snapFor.set(from,setTimeout(()=>{ snapFor.delete(from); send({o:'all',for:from,list},from); },200+rank*400+Math.random()*120)); return; }
-    const put=(i,on,v,id)=>{ const b=BLINDS[i]; if(!b) return; if(v>b.v||(v===b.v&&String(id||'')>b.id)){ b.on=on?1:0; b.v=v; b.id=id||''; b.ok=false; } };
-    if(d.o==='set') put(d.i|0,d.on,d.v|0,d.id);
-    else if(d.o==='all'){ if(d.for&&snapFor.has(d.for)){ clearTimeout(snapFor.get(d.for)); snapFor.delete(d.for); } if(d.for&&d.for!==MY_PID) return; for(const [i,on,v,id] of d.list||[]) put(i|0,on,v|0,id); } };
+    const put=(i,on,v,id,at)=>{ const b=BLINDS[i]; if(!b) return; if(v>b.v||(v===b.v&&String(id||'')>b.id)){ b.on=on?1:0; b.v=v; b.id=id||''; b.at=+at||Date.now(); b.ok=false; } };
+    if(d.o==='set') put(d.i|0,d.on,d.v|0,d.id,d.at);
+    else if(d.o==='all'){ if(d.for&&snapFor.has(d.for)){ clearTimeout(snapFor.get(d.for)); snapFor.delete(d.for); } if(d.for&&d.for!==MY_PID) return; for(const [i,on,v,id,at] of d.list||[]) put(i|0,on,v|0,id,at); } };
 }
 
 function optimizeScene(){

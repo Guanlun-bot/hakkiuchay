@@ -350,6 +350,8 @@ function matchingRange(x,z,rotation){
     if(mesh.userData.type==='floor'||mesh.userData.type==='block') pickables.push(mesh);
   });
   scene.add(range);
+  // the copy has the hall's own windows too (those by the entrance): list them for the blinds with the copy as parent
+  for(const W of WINDOWS.filter(W=>W.parent===mainHall)) WINDOWS.push(Object.assign({},W,{parent:range}));
   return range;
 }
 const oppositeWing=matchingRange(0,2*courtAxis,Math.PI);
@@ -3504,7 +3506,7 @@ function standUp(){ if(ME.seat<0) return; const s=SEATS[ME.seat]; ME.seat=-1; co
 function goTo(x,z,{faceTo=null,after=null}={}){ if(ME.seat>=0) standUp(); if(!walkable(x,z)){ // nudge toward nearest walkable
     let best=null; for(let r=0.2;r<1.6&&!best;r+=0.2) for(let a=0;a<6.28;a+=0.4){ const xx=x+Math.cos(a)*r, zz=z+Math.sin(a)*r; if(walkable(xx,zz)){best={x:xx,z:zz};break;} } if(!best) return; x=best.x; z=best.z; }
   ME.path=route({x:ME.x,z:ME.z},{x,z}); ME.faceTo=faceTo; ME.afterArrive=after; }
-function sit(si){ const s=SEATS[si]; if(occupied(si)){ toast('這個位子有人坐了'); return; }
+function sit(si){ const s=SEATS[si]; if(occupied(si)&&!(window.__npcYield&&window.__npcYield(si))){ toast('這個位子有人坐了'); return; }
   const approach=seatApproach(s);
   goTo(approach.x,approach.z,{after:()=>{ ME.seat=si; const P=seatPlace(s); ME.x=P.x; ME.z=P.z; ME.yaw=s.yaw; ME.pitch=SEAT_KIND[s.kind].pitch; setTimerButtons(s.kind); $('#timer').classList.remove('hide'); updateTimerUI(); pushPresence();
     toast(SEAT_KIND[s.kind].hello); }}); }
@@ -3596,7 +3598,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['blind','alarm','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['blind','alarm','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3608,7 +3610,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'hou': showText(`${HOU.term}・${HOU.hou}`,`<p style="font-size:22px;letter-spacing:.2em;margin:6px 0 14px">${esc(HOU.yu)}</p><p class="meta">七十二候，五日一候。今天是${esc(HOU.term)}${esc(HOU.hou)}。書齋的時節依臺北時間更新；天色也跟著日出日落（06:00～18:00 為白天）。</p>`); break;
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
-  case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
+  case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathlatch': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
   case 'blind': window.__blindAct?.(u); break;
   case 'alarm': toast(String(NT('alarm.msg')).replace('{now}',hhmm(taipeiNow().min)).replace('{wake}',hhmm(DAY.wake)),4000); break;
@@ -5033,17 +5035,17 @@ const BEDS=[], STANDS=[], NPC_DYN_PRE=[];
 { const frame=new THREE.MeshStandardMaterial({map:T.cypress,bumpMap:T.cypressBump,bumpScale:.8,roughness:.55}), dark=new THREE.MeshStandardMaterial({map:T.cypressDark,bumpMap:T.cypressBump,bumpScale:.8,roughness:.55}),
     cloth=new THREE.MeshStandardMaterial({color:0xefe8da,roughness:.95}), quilt=[0x6b7f95,0x8a5a4a,0x5f7a62,0x9a8460].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.9})),
     brass=new THREE.MeshStandardMaterial({color:0xb5945b,metalness:.8,roughness:.32});
-  const L=2.02, W=1.52;   // double beds
+  const BL=2.02, BW=1.52;   // double beds
   // one bed in its own group: local −z is the foot, the head board at z=+L/2
-  function bed(x,z,yaw,qi){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
+  function bed(x,z,yaw,qi,W=BW,L=BL,cx=34.1){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
     for(const sx of [-1,1]) for(const sz of [-1,1]){ const h=sz>0?1.02:.62; cylinder(.032,.032,h,dark,sx*(W/2-.03),h/2,sz*(L/2-.03),g); const k=new THREE.Mesh(new THREE.SphereGeometry(.042,12,8),dark); k.position.set(sx*(W/2-.03),h+.02,sz*(L/2-.03)); g.add(k); }
     box(W-.06,.12,L-.06,frame,0,.33,0,g);                                       // rails
     box(W-.06,.6,.035,frame,0,.66,L/2-.03,g); box(W-.2,.42,.012,dark,0,.68,L/2-.05,g);   // head board with a sunk panel
     box(W-.06,.26,.035,frame,0,.47,-(L/2-.03),g);                              // foot board
     box(W-.12,.14,L-.14,cloth,0,.46,0,g);                                       // mattress
-    box(.62,.1,.34,cloth,0,.58,L/2-.28,g);     // pillow
+    box(Math.min(.62,W-.3),.1,.34,cloth,0,.58,L/2-.28,g);     // pillow
     const fq=box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
-    const sq=box(W-.14,.3,1.72,quilt[qi%4],0,.68,-.12,g); sq.visible=false; BEDS.push({x,z,yaw,fq,sq}); NPC_DYN_PRE.push(fq,sq);
+    const sq=box(W-.14,.3,L-.3,quilt[qi%4],0,.68,-.12,g); sq.visible=false; BEDS.push({x,z,yaw,fq,sq,W,L,cx}); NPC_DYN_PRE.push(fq,sq);
     OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
   // a bedside cabinet with framed panels: top with a moulded edge, a drawer and a door each in a raised frame, brass pulls, short tapered legs
   function stand(x,z,yaw,W2=.46){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
@@ -5069,10 +5071,23 @@ const BEDS=[], STANDS=[], NPC_DYN_PRE=[];
   // against the front wall (the one with the window) and the back wall: a bed along each side wall (the end wall and
   // the partition), heads to the wall, and between them one long cabinet that both beds can reach. Room 22 (west
   // wing): front face z≈15.6, back z≈23.6, end wall x≈31.72, partition x≈36.48; room 26 mirrors it about the axis.
-  let qi=0; const xa=31.72+W/2+.02, xb=36.48-W/2-.02, cab=(xb-xa)-W-.12;
+  let qi=0; const xa=31.72+BW/2+.02, xb=36.48-BW/2-.02, cab=(xb-xa)-BW-.12, L=BL;
   for(const [front,back] of [[15.6,23.6],[4.0,-4.0]]){ const s=Math.sign(back-front);
     for(const [wallZ,toward] of [[front,s],[back,-s]]){ const zc=wallZ+toward*(L/2+.02), yaw=toward>0?Math.PI:0;
-      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++); stand((xa+xb)/2,wallZ+toward*.22,yaw,cab); STANDS.push({x:(xa+xb)/2,z:wallZ+toward*.22,yaw,cab,beds:[BEDS.length-2,BEDS.length-1],room:front>9?22:26}); } } }
+      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++); stand((xa+xb)/2,wallZ+toward*.22,yaw,cab); STANDS.push({x:(xa+xb)/2,z:wallZ+toward*.22,yaw,cab,beds:[BEDS.length-2,BEDS.length-1],room:front>9?22:26}); } }
+  // the two pages' room, in the east 前過水 (x 27.24–31.56, the door at the 過廳 end): two small beds, heads to the far
+  // wall along each side, a cabinet between them with their lamps and clock; a chest at each foot, a little writing
+  // desk and a row of pegs by the door half, which is left clear
+  { const cx=29.4, zw=-4.0, kw=.95, kl=1.95, xa=27.39+.06+kw/2, xb=31.41-.06-kw/2, zc=zw+.02+kl/2;
+    bed(xa,zc,Math.PI,1,kw,kl,cx); bed(xb,zc,Math.PI,3,kw,kl,cx); stand(cx,zw+.2,Math.PI,.62); STANDS.push({x:cx,z:zw+.2,yaw:Math.PI,cab:.62,beds:[BEDS.length-2,BEDS.length-1],room:'kids'});
+    for(const x of [xa,xb]){ box(.62,.38,.42,frame,x,.19,zc+kl/2+.26); box(.64,.025,.44,dark,x,.39,zc+kl/2+.26); for(const sx of [-1,1]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.02,.004,6,14),brass); r.position.set(x+sx*.2,.26,zc+kl/2+.48); scene.add(r); } OB(x-.31,x+.31,zc+kl/2+.05,zc+kl/2+.47); }
+    // the writing desk against the west wall, a stool, brush rest, inkstone and a paper weight; a lamp on its corner
+    const dz=2.3; box(.5,.04,1.0,frame,27.39+.27,.72,dz); for(const ex of [-1,1]) for(const ez of [-1,1]) box(.04,.7,.04,dark,27.39+.27+ex*.2,.35,dz+ez*.45);
+    box(.2,.016,.13,new THREE.MeshStandardMaterial({color:0x1d1c1b,roughness:.45}),27.39+.3,.748,dz-.25); box(.3,.004,.22,new THREE.MeshStandardMaterial({color:0xefe6cf,roughness:.9}),27.39+.27,.742,dz+.1);
+    box(.32,.04,.32,frame,27.39+.75,.42,dz); for(const ex of [-1,1]) for(const ez of [-1,1]) box(.035,.4,.035,dark,27.39+.75+ex*.12,.2,dz+ez*.12); OB(27.39,27.39+.55,dz-.5,dz+.5);
+    // a row of pegs on the east wall by the door, a cap and a short coat on two of them
+    box(.03,.06,1.4,dark,31.41-.02,1.6,2.6); for(let k=0;k<5;k++){ const pg=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.1,8),dark); pg.rotation.z=Math.PI/2; pg.position.set(31.41-.08,1.6,2.0+k*.3); scene.add(pg); }
+    box(.06,.5,.34,new THREE.MeshStandardMaterial({color:0x6d7f97,roughness:.9}),31.41-.1,1.33,2.3); box(.06,.46,.32,new THREE.MeshStandardMaterial({color:0xb59a5e,roughness:.9}),31.41-.1,1.35,2.9); } }
 await __yield(0.9);
 /* ================= 宅中人物（NPC）=================
    Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
@@ -5090,7 +5105,7 @@ const NPC_TXT={
   'cine.stop':['停止放映',''],'cine.vol':['音量',''],'cine.subs':['字幕：開','字幕：關'],'cine.full':['全螢幕','離開全螢幕'],'cine.toast':['開始放映','暫停放映'],
   'cine.light':['燈光',''],'cine.stars':['星空：開','星空：關'],'cine.mute':['靜音','取消靜音'],'cine.scenes':['迎賓,映前,放映,中場,夜場',''],'cine.fridge':['小冰箱',''],
   'cine.drinks':['冬瓜茶,麥仔茶,沙士,彈珠汽水,烏龍茶,綠茶,柳橙汁,蘆筍汁,豆漿,礦泉水',''],'cine.take':['從冰箱拿了一瓶','喝完了。'],'cine.sip':['喝一口','放回去'],
-  'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],'day.times':['05:00,22:40,23:20,24:00','傭人作息（臺北時間，逗號分開）：起床、女生洗澡、男生洗澡、熄燈'],'staff.sleep':['睡著了。','睡得正熟，別吵醒。'],'staff.bath':['在洗澡呢，晚點再說。','泡得正舒服。'],'alarm.msg':['鬧鐘：現在 {now}，明早 {wake} 響。',''],'alarm.ring':['鈴——鬧鐘響了，起床了。',''],'sauna.hud':['烤箱',''],'sauna.remind':['已經烤十二分鐘了，出去喝口水、沖一下再進來吧。',''],'bath.sign':['女湯','男湯'],'bath.sign0':['湯',''],'blind.npc':['天亮了，玉姨（東側）和阿財（西側）走一圈，一扇一扇把竹簾捲起來。','熄燈了，玉姨和阿財走一圈，一扇一扇把竹簾放下來。'],
+  'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],'who.li':["Sri Rahayu（斯莉・拉哈尤）", "阿莉"],'who.he':["Nguyễn Thị Thu Hà（阮氏秋荷）", "阿荷"],'who.fu':["江萬福", "阿福"],'who.lai':["楊來", "阿來"],'boss.name':["許原綸", ""],'boss.title':["頭家", "客人"],'kids.times':["05:30,21:30", ""],'plan.li':["05:00 禮拜、05:20 收衣、06:00 洗衣、07:30 摺衣、09:00 縫補、10:30 補毛巾、12:30 禮拜、12:45 休息、13:30 摺衣、15:30 禮拜、15:45 收衣、17:40 禮拜、18:30 幫忙茶具、20:00 禮拜、20:20 聊天", ""],'plan.he':["05:00 掃地、07:30 擦拭、09:30 掃三進、12:30 聊天、13:30 浴室、15:30 幫廚、18:30 補衣、19:30 乘涼、20:30 聊天", ""],'plan.fu':["05:30 磨墨、06:30 茶室、07:30 撣塵、09:30 茶室、10:30 撣塵、12:30 午睡、13:30 上課、16:30 整理書房、18:30 溫書、20:30 梳洗", ""],'plan.lai':["05:30 掃院、06:30 茶室、07:30 跑腿、08:30 茶室、10:00 跑腿、11:00 掃院、12:30 午睡、13:30 上課、16:30 掃院、17:15 收茶具、18:30 溫書、20:30 梳洗", ""],'li.talk':["{稱呼}，Selamat pagi！有要洗的衣服，放在門口的籃子就好。", "{稱呼}好。今天太陽好，衣服很快就乾。"],'li.home':["我家在日惹附近的村子，門口有一棵大芒果樹。弟弟妹妹都在讀中學，我每個月寄錢回去。", "我們那裡雨季很長，下起雨來像倒水一樣。想家的時候，我就寫信。"],'li.wash':["有啊，{稱呼}換下來的我都會收。床單我每個禮拜換一次。", "毛巾洗好了，浴室那邊我等一下就補。"],'li.pray':["（阿莉輕聲說）等我一下，禮拜完就來。", "（她比了個「等一下」的手勢，繼續禮拜。）"],'he.hi':["Xin chào！{稱呼}你又來偷懶喔？", "{稱呼}你今天的衣服好好看……是玉姨幫你挑的吧？"],'he.talk':["{稱呼}，什麼事？我地板還沒擦完喔。", "{稱呼}叫我？我在忙啦——好啦好啦，你說。"],'he.t1':["阿荷，剛剛你說要去「擦廁所」，是要去「查廁所」吧？", "笑她說錯字"],'he.r1':["哎呀！是擦啦擦啦！……好像兩個都對？（她自己先笑出來）", "你中文那麼好，那你說越南話給我聽啊。說 cảm ơn，說說看！"],'he.t2':["你剛剛唱的是哪首？怎麼聽起來像貓在叫。", "笑她唱歌走音"],'he.r2':["這是我們家鄉的歌，你不懂啦！（她故意唱得更大聲）", "那你唱一首啊，唱完我們來比。（她雙手抱胸等著）"],'he.t3':["（你把她口袋裡的抹布抽走。）", "搶她的抹布"],'he.r3':["還我！地板還沒擦完，等一下玉姨會唸我！", "好啊，你拿去，那這條走廊就給你擦。（她拍拍手就走了）"],'he.t4':["（你故意踩過她剛擦好的地方。）", "踩髒她擦好的地"],'he.r4':["我剛擦好的！（她瞪你一眼，又蹲下去重擦）", "你再這樣，我晚上就把你的茶泡得很苦。"],'he.t5':["阿花，過來一下。", "叫錯她的名字"],'he.r5':["我是阿荷！荷花的荷！不是花！", "好的，阿……阿什麼？阿傻？（她故意叫錯回來）"],'he.chat':["我妹妹今年考高中，我要存錢讓她讀書。以後我回去開一間小裁縫店。", "阿春姊教我寫中文，我現在會寫「荷」了，你看！"],'he.chatL':["閒聊", ""],'he.angry':["不跟你玩了！我去找阿春姊！", ""],'chun.defend':["{稱呼}，你又欺負阿荷了是不是？人家小姑娘做事很認真的。", "阿荷別理他。{稱呼}，你再鬧，晚上的點心就沒有了喔。"],'he.hum':["（阿荷坐在廊下，輕輕哼著家鄉的歌。）", ""],'fu.talk':["{稱呼}好。我在撣書架上的灰，這幾本線裝書我都排好了。", "{稱呼}，墨磨好了，要寫字隨時可以。"],'fu.book':["在讀《論語》，許總管說每天要背一章。今天是「學而時習之」。", "在臨帖，寫的是〈九成宮〉。我的「之」字總是寫不好。"],'fu.bookL':["在讀什麼書？", ""],'lai.talk':["{稱呼}！你要喝茶嗎？我跑得很快喔！", "{稱呼}，我問你喔，月亮為什麼會跟著人走？"],'lai.what':["許總管叫我去送東西，我一下就回來！", "我在掃院子，葉子掃不完，風一吹又掉下來。"],'lai.whatL':["你在做什麼？", ""],'lai.ask':["{稱呼}，一百減掉三十七是多少？……六十三！我算對了吧！", "{稱呼}，台北到台南要走幾天？坐火車呢？"],'lai.askL':["考考我", ""],'fu.call':["{稱呼}，來了！", "（揉著眼睛）{稱呼}……來了……"],'lai.call':["{稱呼}，來了！", "（打著呵欠）{稱呼}，我來了……"],'fu.bye':["是，{稱呼}。", ""],'lai.bye':["是，{稱呼}！我回去了。", ""],'fu.hi':["{稱呼}回來了！", ""],'lai.hi':["{稱呼}回來啦！要不要喝茶？", ""],'yu.boss':["頭家轉來啊！", "頭家轉來啊，外頭熱吧？"],'lai.teaL':["叫阿來泡茶", ""],'lai.teaGo':["好，我去跟阿春姊拿茶！", ""],'lai.tea':["{稱呼}，茶來了，小心燙。", ""],'kid.callL':["喚{名}", "讓{名}回去"],'kid.wait':["我們在外面等{稱呼}。", ""],'xu.call':["阿來，去把這個送到前面。", ""],'day.times':['05:00,22:40,23:20,24:00','傭人作息（臺北時間，逗號分開）：起床、女生洗澡、男生洗澡、熄燈'],'staff.sleep':['睡著了。','睡得正熟，別吵醒。'],'staff.bath':['在洗澡呢，晚點再說。','泡得正舒服。'],'alarm.msg':['鬧鐘：現在 {now}，明早 {wake} 響。',''],'alarm.ring':['鈴——鬧鐘響了，起床了。',''],'sauna.hud':['烤箱',''],'sauna.bolt':['門栓拉上了，燈慢慢亮起來，暖黃的光照滿整間。','門栓拉開了。'],'sauna.lock':['門從裡面栓住了。','門栓在裡面。'],'sauna.busy':['裡面有人在烤，等他們出來吧。',''],'sauna.remind':['已經烤十二分鐘了，出去喝口水、沖一下再進來吧。',''],'bath.sign':['女湯','男湯'],'bath.sign0':['湯',''],'blind.npc':['天亮了，玉姨（東側）和阿財（西側）走一圈，一扇一扇把竹簾捲起來。','熄燈了，玉姨和阿財走一圈，一扇一扇把竹簾放下來。'],
   'cine.err':['影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。',''],'cine.tap':['點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。',''],
   'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
   'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
@@ -5251,20 +5266,30 @@ function npcFigure(o){ const g=new THREE.Group(), F=new THREE.Group(); g.add(F);
   for(const sx of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.011,6,5),hair); e.scale.set(1,.7,.5); e.position.set(sx*.037,.01,-.096); head.add(e); }
   if(o.hat){ extra.push(C(.24,.24,.012,m(0xc8b27a),0,.11,0,head,20)); extra.push(C(.11,.115,.08,m(0xc8b27a),0,.15,0,head,16)); }
   const htow=B(.15,.035,.11,towelM,0,.115,.0,head); htow.visible=false;
+  // a headscarf (kept on at work, put away with the clothes for the bath): a hood open at the face and a drape over the neck
+  if(o.hijab){ const hm=new THREE.MeshStandardMaterial({color:o.hijab,roughness:.9,side:THREE.DoubleSide}); const hood=new THREE.Mesh(new THREE.SphereGeometry(.122,18,12,0,Math.PI*2,0,2.1),hm); hood.rotation.x=Math.PI/2; hood.position.set(0,.01,.01); head.add(hood); extra.push(hood);
+    extra.push(C(.09,.19,.24,hm,0,1.38,.01,F,16)); }
+  // a single long plait down the back
+  if(o.braid){ const br=C(.024,.016,.5,hair,0,-.34,.16,head,8); br.rotation.x=.18; }
   // arms (shoulder pivots), sleeves to the wrist
   const arms=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); p.position.set(sx*(sh+.035),1.37,0); F.add(p); C(.046,.05,.48,top,0,-.24,0,p); S(.036,skin,0,-.5,0,p); arms.push(p); }
-  F.scale.set(o.thin?.92:o.wide?1.08:1,H,o.thin?.92:1);
+  const Wd=o.w||1; F.scale.set((o.thin?.92:o.wide?1.08:1)*Wd,H,(o.thin?.92:1)*Wd);
   g.userData.parts={F,legs,shoes,arms,head,body,extra,towel,htow,mats:{top,low,shoe},cols:{top:top.color.clone(),low:low.color.clone(),shoe:shoe.color.clone()},skin}; return g; }
 // the bath look: clothes off (skin where the 衫 and trousers were, bare feet), the towel on; 'soak' moves it to the head
 function npcBathLook(n,mode){ const P=n.g.userData.parts; if(n.look===mode) return; n.look=mode; const bare=!!mode;
   for(const k of ['top','low','shoe']) P.mats[k].color.copy(bare?P.skin.color:P.cols[k]);
   for(const e of P.extra) e.visible=!bare; P.towel.visible=mode==='towel'; P.htow.visible=mode==='soak'; if(n.toolG) n.toolG.visible=!bare&&!n.seated; if(n.shears) n.shears.visible=!bare&&!n.seated; }
 // tools held in the hands (on the arm pivots) and on the shoulder
+let _soft0=null; const SOFT_TEX0=()=>_soft0||(_soft0=textCanvas(64,64,(g,w,h)=>{ const r=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2); r.addColorStop(0,'rgba(255,255,255,1)'); r.addColorStop(.45,'rgba(255,255,255,.5)'); r.addColorStop(1,'rgba(255,255,255,0)'); g.clearRect(0,0,w,h); g.fillStyle=r; g.fillRect(0,0,w,h); }));
 function npcTool(kind){ const g=new THREE.Group(), wd=new THREE.MeshStandardMaterial({map:T.wood,color:0x8a6a48,roughness:.8}), bam=new THREE.MeshStandardMaterial({color:0xb59a5e,roughness:.75});
   const C=(r1,r2,h,mt,x,y,z,s=10)=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,s),mt); k.position.set(x,y,z); g.add(k); return k; };
   if(kind==='book'){ box(.15,.2,.02,new THREE.MeshStandardMaterial({color:0x5a4632,roughness:.8}),0,0,0,g); box(.14,.19,.012,new THREE.MeshStandardMaterial({color:0xe9e0cc}),0,0,-.012,g); }
   if(kind==='broom'){ C(.014,.014,1.15,wd,0,0,0,6); const b=new THREE.Mesh(new THREE.ConeGeometry(.12,.38,10,1,true),bam); b.position.y=-.72; b.material.side=THREE.DoubleSide; g.add(b); }
   if(kind==='tray'){ box(.42,.025,.28,wd,0,0,0,g); }
+  if(kind==='duster'){ C(.011,.011,.42,new THREE.MeshStandardMaterial({color:0x5a3a24,roughness:.5}),0,0,0,8); const h=new THREE.Mesh(new THREE.ConeGeometry(.05,.42,10,1,true),new THREE.MeshStandardMaterial({color:0xefe8da,roughness:1,side:THREE.DoubleSide})); h.rotation.x=Math.PI; h.position.y=-.4; g.add(h); }
+  if(kind==='lantern'){ C(.006,.006,.3,new THREE.MeshStandardMaterial({color:0x5a3a24}),0,.12,0,6); const sh=new THREE.Mesh(new THREE.SphereGeometry(.075,14,10),new THREE.MeshStandardMaterial({color:0xfff0d0,roughness:.9,emissive:0xffa040,emissiveIntensity:1.4})); sh.scale.y=1.25; sh.position.y=-.1; g.add(sh);
+    for(const y of [-.005,-.195]) C(.04,.04,.015,new THREE.MeshStandardMaterial({color:0x2a2018}),0,y,0,10);
+    const gl=new THREE.Sprite(new THREE.SpriteMaterial({map:SOFT_TEX0(),color:0xffb050,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending})); gl.scale.set(.7,.7,1); gl.position.y=-.1; g.add(gl); }
   if(kind==='can'){ C(.08,.09,.2,new THREE.MeshStandardMaterial({color:0x6a7173,metalness:.4,roughness:.5}),0,0,0); const sp=C(.012,.018,.28,new THREE.MeshStandardMaterial({color:0x6a7173,metalness:.4}),0,.04,-.16,6); sp.rotation.x=1.0; }
   if(kind==='shears'){ for(const a of [-.2,.2]){ const s=box(.01,.16,.02,new THREE.MeshStandardMaterial({color:0x9a9fa0,metalness:.6,roughness:.4}),0,-.06,0,g); s.rotation.z=a; } }
   if(kind==='pole'){ const p=C(.022,.022,1.6,bam,0,0,0,6); p.rotation.z=Math.PI/2; g.userData.loads=[]; for(const sx of [-1,1]){ const L=new THREE.Group(); L.position.set(sx*.74,-.05,0); g.add(L); g.userData.loads.push(L); } }
@@ -5280,14 +5305,22 @@ const NPCS=[
   {id:'shui', look:{top:0x75857f,low:0x4d4a44,dark:1,hat:1}, home:NP.garden, tool:'can'},
   {id:'huo', look:{top:0xcfc6b2,low:0x3c3732,apron:0x4a3424,wide:1}, home:NP.stove, tool:null},
   {id:'cai', look:{top:0x857a68,low:0x5a5246,waistcloth:0x6b5a44,dark:1}, home:NP.woodpile, tool:'pole'},
+  // added: 阿莉 (from Java) does the washing, 阿荷 (from Nam Định) the cleaning; the pages 阿福 and 阿來
+  {id:'li', look:{fem:1,top:0x34506e,low:0x3a3734,hair:0x1d1a17,bun:'low',hijab:0xe6dfcb,h:.98}, home:{x:44.2,z:6.4}, tool:null},
+  {id:'he', look:{fem:1,top:0xb39a7c,low:0x4a4038,hair:0x16130f,braid:1,thin:1,h:1.0}, home:{x:36.2,z:5.3}, tool:'broom'},
+  {id:'fu', look:{top:0x6d7f97,low:0x262422,hair:0x1a1714,thin:1,h:.8,w:.86,kid:1}, home:{x:3,z:1}, tool:'duster'},
+  {id:'lai', look:{top:0xb59a5e,low:0x3a332c,hair:0x1a1714,dark:1,h:.76,w:.88,kid:1}, home:{x:0,z:2.8}, tool:'broom'},
 ];
 const NPC={};
 for(const d of NPCS){ const g=npcFigure(d.look); scene.add(g); NPC_DYN.push(g);
-  const n={...d,g,x:d.home.x,z:d.home.z,yaw:0,path:[],speed:1.05,act:'idle',t:0,walkPh:Math.random()*6,talk:0,said:{},near:false,task:null,wait:0};
+  const n={...d,g,x:d.home.x,z:d.home.z,yaw:0,path:[],speed:1.05,act:'idle',t:0,walkPh:Math.random()*6,talk:0,said:{},near:false,task:null,wait:0,sSi:-1};
   g.traverse(o=>{ if(o.isMesh) o.userData={type:'npc',id:d.id}; });
   // a generous invisible body to click on
   const hit=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,1.75,8),new THREE.MeshBasicMaterial({visible:false})); hit.position.y=.88; hit.userData={type:'npc',id:d.id}; g.add(hit); pickables.push(hit);
   const P=g.userData.parts;
+  if(d.tool==='duster'){ n.toolG=npcTool('duster'); n.toolG.position.set(0,-.5,-.05); n.toolG.rotation.x=.5; P.arms[1].add(n.toolG); }
+  if(d.id==='lai'){ n.lantern=npcTool('lantern'); n.lantern.position.set(0,-.48,-.08); P.arms[0].add(n.lantern); n.lantern.visible=false; }
+  n.kid=!!d.look.kid; n.hh=d.look.h||1;
   if(d.tool==='broom'){ n.toolG=npcTool('broom'); n.toolG.position.set(.0,-.55,-.06); n.toolG.rotation.x=.35; P.arms[1].add(n.toolG); }
   if(d.tool==='book'){ n.toolG=npcTool('book'); n.toolG.position.set(.02,-.5,-.08); n.toolG.rotation.x=-1.2; P.arms[0].add(n.toolG); }
   if(d.tool==='tray'){ n.toolG=npcTool('tray'); P.F.add(n.toolG); n.toolG.position.set(0,1.02,-.36); n.toolG.visible=false; }
@@ -5321,7 +5354,7 @@ function npcChoices(id,list){ boxFor=list.length?id:null; npcBox.innerHTML=''; l
     b.onclick=e=>{ e.stopPropagation(); closeChoices(); fn(); }; npcBox.append(b); }); npcBox.style.display=list.length?'flex':'none'; npcBox._list=list; }
 function closeChoices(){ npcBox.style.display='none'; boxFor=null; npcBox._list=null; }
 addEventListener('keydown',e=>{ if(!npcBox._list||e.target.tagName==='INPUT') return; const k=Number(e.key); if(k>=1&&k<=npcBox._list.length){ e.preventDefault(); e.stopImmediatePropagation(); const f=npcBox._list[k-1][1]; closeChoices(); f(); } else if(e.key==='Escape') closeChoices(); },true);
-function npcBookList(){ closeChoices(); openPanel(NT('ui.book'),'<table style="border-collapse:collapse;line-height:2">'+NPCS.map(d=>`<tr><td style="padding-right:1.2em">${esc(npcName(d.id))}</td><td style="padding-right:1.2em">${esc(npcFull(d.id))}</td><td class="meta">${esc(NT('zone.'+({yu:'gate',xu:'porch',chun:'prep',shui:'garden',huo:'kitchen',cai:'well'})[d.id]))}</td></tr>`).join('')+'</table>'); }
+function npcBookList(){ closeChoices(); openPanel(NT('ui.book'),'<table style="border-collapse:collapse;line-height:2">'+NPCS.map(d=>`<tr><td style="padding-right:1.2em">${esc(npcName(d.id))}</td><td style="padding-right:1.2em">${esc(npcFull(d.id))}</td><td class="meta">${esc(NT('zone.'+({yu:'gate',xu:'porch',chun:'prep',shui:'garden',huo:'kitchen',cai:'well',li:'well',he:'porch',fu:'tearoom',lai:'tearoom'})[d.id]))}</td></tr>`).join('')+'</table>'); }
 
 // ---- where someone is, for the steward
 function whereIs(id){ const n=NPC[id]; const z=npcZone(n); if(!z) return null; return {稱呼:npcName(id),工作區:NT('zone.'+z,0),方向提示:NT('zone.'+z,1)}; }
@@ -5378,7 +5411,8 @@ const near=(n,r)=>Math.hypot(ME.x-n.x,ME.z-n.z)<r;
 let teaArriveAt=performance.now()+45000;
 
 /* ---- talking ---- */
-function npcTalk(id){ const n=NPC[id]; if(!n||!n.g.visible) return; if(n.lie){ toast(NT('staff.sleep',Math.random()<.5?0:1),3000); return; } if(n.look||n.pose==='ssit'){ npcSay(id,NT('staff.bath',n.look==='soak'?1:0)); return; } n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
+function npcTalk(id){ const n=NPC[id]; if(!n||!n.g.visible) return; if(n.lie&&!n.follow){ toast(NT('staff.sleep',Math.random()<.5?0:1),3000); return; } if(n.look||n.pose==='ssit'){ npcSay(id,NT('staff.bath',n.look==='soak'?1:0)); return; }
+  n.talk=performance.now()+9000; npcFace(n,ME); if(window.__npcTalk2&&window.__npcTalk2(id)) return; n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
   const c=NS.cake.st, say=k=>npcSay(id,npcLine(k)), VRm=renderer.xr.isPresenting;
   if(id==='yu'){ if(NS.tea.st==='arrived') return say('yu.tea'); if(raining()) return say('yu.rain'); if(n.act==='sweep') return say('yu.sweep'); if(!NS.first){ NS.first=true; npcSave(); return say('yu.first'); } return say('yu.again'); }
   if(id==='xu'){ if(!NS.talked.xu){ NS.talked.xu=true; npcSave(); say('xu.first'); }
@@ -5412,6 +5446,7 @@ document.body.append(npcHint);
 let hintFor=null;
 addEventListener('keydown',e=>{ if(e.key.toLowerCase()!=='e'||e.repeat||!hintFor||e.target.tagName==='INPUT'||panel.classList.contains('open')) return; e.preventDefault(); e.stopImmediatePropagation(); npcTalk(hintFor); },true);
 function npcProximity(n,dist,now){ if(n.lie||n.look||n.pose||n.tl) return;
+  if(n.id==='yu'||n.id==='he'){ const inR=dist<(n.id==='yu'?4.2:2.2); if(inR&&!n.near&&now>(n.lastAuto||0)+30000&&window.__npcNear&&window.__npcNear(n,now)){ n.near=true; n.lastAuto=now; return; } }
   // proximity lines: once on entering range, again only after leaving it and thirty seconds
   const inR=dist<(n.id==='yu'?4.2:2.2); if(!inR){ n.near=false; return; } if(n.near) return; n.near=true;
   if(now<autoMute||now<(n.lastAuto||0)+30000||now<n.talk) return; let k=null;
@@ -5444,9 +5479,9 @@ function tickNPC(dt){ if(!window.__entered) return; const now=performance.now(),
     else if(talking&&!n.lie&&!n.pose){ const want=Math.atan2(-(ME.x-n.x),-(ME.z-n.z)); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*4); }
     else if(n.act==='walk'&&n.path.length&&now>n.wait){ const t=n.path[0], dx=t.x-n.x, dz=t.z-n.z, d=Math.hypot(dx,dz);
       // someone in the way, close and ahead: stop and let them by
-      const ahead=dist<.9&&((ME.x-n.x)*dx+(ME.z-n.z)*dz)>0;
+      const ahead=!n.follow&&dist<.9&&((ME.x-n.x)*dx+(ME.z-n.z)*dz)>0;
       if(ahead&&(n.blockT=(n.blockT||0)+.7)<2.2){ n.wait=now+700; }
-      else { if(!ahead) n.blockT=0; const sp=n.speed*(n.carry?.85:1)*dt; const want=Math.atan2(-dx,-dz); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*6);
+      else { if(!ahead) n.blockT=0; const sp=(n.follow||n.errand?1.75:n.speed)*(n.carry?.85:1)*dt; const want=Math.atan2(-dx,-dz); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*6);
         if(d<=sp){ n.x=t.x; n.z=t.z; n.path.shift(); if(!n.path.length) npcArrived(n); }
         else { const nx=n.x+dx/d*sp, nz=n.z+dz/d*sp; if(walkable(nx,nz)||!walkable(n.x,n.z)){ n.x=nx; n.z=nz; n.stuck=0; } else { n.stuck=(n.stuck||0)+dt; if(n.stuck>3){ n.stuck=0; const g=n.goal; if(g) npcGo(n,g,n.then); } } } } }
     else if(n.act!=='walk'&&!n.lead&&nowMs>(n.busyUntil||0)){ const f=n.next; n.next=null; if(f) f(); else npcPlan(n); }
@@ -5528,7 +5563,7 @@ for(const [key,title,body] of [
   ['bathrest','休息區','泡完、烤完擦乾後在這裡穿衣、休息。後牆是整面置物櫃。出去就從玄關右邊的門簾。'],
   ['bathin','浴室','從明間掀開「湯」字暖簾進玄關脫鞋，暖簾旁的木牌寫著現在是男湯、女湯還是一般的「湯」。左轉是脫衣間：落地的檜木洗手櫃（下面兩層放毛巾）和背光鏡；右轉是休息區，整面牆的置物櫃。玄關後面的走道通往玻璃門，門後是浴缸、洗身處和烤箱。燈都藏在天花板邊的檜木擋板後，晚上會亮一些。暖簾的「湯」字用教育部隸書。'],
   ['bathtub','檜木浴缸','大檜木浴缸，靠在前牆的窗下，角落一支檜木湯口把熱水沿木槽倒進來；缸裡四個位子，兩兩相對，靠走道那側有一階石凳，水面浮著小木盤，瓷壺裡裝的是冷水。水光淡淡映在牆上和天花板。對著水按 E（或點水面）泡進去，按方向鍵起身。'],
-  ['bathsauna','烤箱','整間檜木的遠紅外線烤箱：條板地、上下兩層長凳，牆上四片紅外線板。進去把門關上，板子會慢慢發出暗紅的光，大約兩分鐘升到五十五度左右；門邊的溫度計看得到溫度，右下角也會顯示溫度和時間，十二分鐘時提醒你出來休息。'],
+  ['bathsauna','烤箱','整間檜木的烤箱：條板地、上下兩層長凳。進去後點門內側的木門栓把門栓上，天花板的燈會慢慢亮成強烈的暖黃光，照滿整間，眼前也蒙上一層暖色，大約兩分鐘升到五十五度左右；門邊的溫度計和右下角都看得到溫度與時間，十二分鐘時提醒你出來休息。有人在裡面時，門上的細窗會透出黃光。'],
   ['wcf','女廁','米白牆、淺米色大地磚、淺橡木門，兩間到頂的隔間各一座免治馬桶。點拉門、隔間門開關，點馬桶或遙控器掀蓋、沖水。'],
   ['wcm','男廁','米白牆、淺米色大地磚、淺橡木門，一間小便斗、一間免治馬桶，都是到頂的隔間。'],
   ['wcvase','竹花入','一截竹筒掛在牆上，只插一枝：冬梅、春桃、夏荷、秋芒，照臺北的月份自動換。'],
@@ -5546,7 +5581,7 @@ const MEAL_TXT={
   'meal.times':['07:00,12:00,18:00,22:00','三餐與宵夜的開飯時間（臺北時間，逗號分開）'],
   'meal.b':['早餐',''],'meal.l':['午餐',''],'meal.d':['晚餐',''],'meal.n':['宵夜',''],
   'menu.1.b':['地瓜粥、荷包蛋、醬瓜、豆腐乳、油條、燙菠菜',''],'menu.1.l':['麻醬麵、燙青菜、滷蛋豆干、紅油抄手、味噌湯',''],'menu.1.d':['白飯、香菇素滷、炒高麗菜、菜脯蛋、枸杞炒山藥、涼拌木耳、蘿蔔湯',''],
-  'menu.2.b':['饅頭與花捲、豆漿、蔥蛋、涼拌小黃瓜、麵筋、醃紅蘿蔔',''],'menu.2.l':['切仔麵、燙地瓜葉、滷海帶、炸豆包、蛋花湯',''],'menu.2.d':['白飯、三杯杏鮑菇、番茄炒蛋、炒地瓜葉、白菜滷、涼拌豆皮、玉米濃湯',''],
+  'menu.2.b':['饅頭與花捲、豆漿、菜脯蛋、涼拌小黃瓜、麵筋、醃紅蘿蔔',''],'menu.2.l':['切仔麵、燙地瓜葉、滷海帶、炸豆包、蛋花湯',''],'menu.2.d':['白飯、三杯杏鮑菇、番茄炒蛋、炒地瓜葉、白菜滷、涼拌豆皮、玉米濃湯',''],
   'menu.3.b':['白粥、花瓜、鹹鴨蛋、素鬆、炒青江菜、豆腐乳',''],'menu.3.l':['番茄蛋麵、燙青菜、滷豆干、涼拌干絲、小菜三碟',''],'menu.3.d':['白飯、紅燒豆腐、蒸蛋、炒空心菜、彩椒炒玉米筍、滷香菇、冬瓜湯',''],
   'menu.4.b':['菜包與芋頭包、鮮奶、茶葉蛋、醬菜、蘿蔔乾',''],'menu.4.l':['炒米粉、香菇羹、燙青菜、滷蛋、醬瓜',''],'menu.4.d':['白飯、素瓜仔肉、炒小白菜、南瓜燒、滷豆干海帶、涼拌番茄、竹筍湯',''],
   'menu.5.b':['地瓜粥、土豆麵筋、醃蘿蔔、炒蛋、燙秋葵、豆腐乳',''],'menu.5.l':['番茄紅燒素麵、燙青菜、滷味拼盤、泡菜',''],'menu.5.d':['白飯、麻婆豆腐、炒豆芽、九層塔煎蛋、乾煸四季豆、紅燒烤麩、金針湯',''],
@@ -6146,11 +6181,11 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       side(tx1-tx0,tw,(tx0+tx1)/2,tz0+tw/2,1); side(tx1-tx0,tw,(tx0+tx1)/2,tz1-tw/2,2); side(tw,tz1-tz0-2*tw,tx0+tw/2,(tz0+tz1)/2,3); side(tw,tz1-tz0-2*tw,tx1-tw/2,(tz0+tz1)/2,4);
       for(const [w,d,x,z] of [[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz0+tw/2],[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz1-tw/2],[tw+.02,tz1-tz0,tx0+tw/2,(tz0+tz1)/2],[tw+.02,tz1-tz0,tx1-tw/2,(tz0+tz1)/2]]) B(w,.02,d,hgrain,x,TH+.01,z);
       const rimM=mat(0xfff0d6,.6,{emissive:0xffb070,emissiveIntensity:.45}); BATH.rim=rimM; B(.02,.012,tz1-tz0-.1,rimM,tx0-.012,.07,(tz0+tz1)/2); B(tx1-tx0-.1,.012,.02,rimM,(tx0+tx1)/2,.07,tz1+.012);
-      // light off the water: faint moving caustics on the front wall over the tub, the side wall and the ceiling
+      // light off the water: faint moving caustics on the side wall over the tub and the ceiling (not the front wall: its window)
       { const cv=document.createElement('canvas'); cv.width=cv.height=256; const cT=new THREE.CanvasTexture(cv); cT.wrapS=cT.wrapT=THREE.RepeatWrapping;
         const cM=new THREE.MeshBasicMaterial({map:cT,color:0xffe2b8,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false});
         const fade=textCanvas(64,64,(g,w,h)=>{ const r=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2); r.addColorStop(0,'#fff'); r.addColorStop(.6,'#bbb'); r.addColorStop(1,'#000'); g.fillStyle=r; g.fillRect(0,0,w,h); }); cM.alphaMap=fade;
-        const qs=[]; for(const [w,h,x,y,z,rx,ry] of [[tx1-tx0,1.1,(tx0+tx1)/2,WY+.75,Z0i+.004,0,0],[tz1-tz0,1.1,X1i-.004,WY+.75,(tz0+tz1)/2,0,-Math.PI/2],[tx1-tx0,tz1-tz0,(tx0+tx1)/2,CYb-.006,(tz0+tz1)/2,Math.PI/2,0]]){
+        const qs=[]; for(const [w,h,x,y,z,rx,ry] of [[tz1-tz0,1.1,X1i-.004,WY+.75,(tz0+tz1)/2,0,-Math.PI/2],[tx1-tx0,tz1-tz0,(tx0+tx1)/2,CYb-.006,(tz0+tz1)/2,Math.PI/2,0]]){
           const q=new THREE.Mesh(new THREE.PlaneGeometry(w,h),cM); q.rotation.set(rx,ry,0); q.position.set(x,y,z); scene.add(q); qs.push(q); MEAL_DYN.push(q); }
         BATH.caust={cv,cT,cM,t:0}; }
       B(tx1-tx0-2*tw,.04,tz1-tz0-2*tw,hk(2,2),(tx0+tx1)/2,.06,(tz0+tz1)/2);
@@ -6202,21 +6237,21 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     { const tag={type:'bathsauna'}, dX0=xg+.25, dX1=xg+.95;
       for(const [a,b] of [[xg+.05,dX0],[dX1,X1i]]) wall('z',SZ,a,b,CYb,.1,hk((b-a)/.5,1)); B(dX1-dX0,CYb-2.05,.1,hk(1,.3),(dX0+dX1)/2,(2.05+CYb)/2,SZ);
       for(const xx of [dX0,dX1]) B(.05,2.05,.12,hgrain,xx,1.025,SZ); B(dX1-dX0+.05,.05,.12,hgrain,(dX0+dX1)/2,2.05,SZ);
-      const sdr=new THREE.Group(); sdr.position.set(dX0,0,SZ-.06); scene.add(sdr); const dw=dX1-dX0; B(dw-.02,2.0,.035,hgrain,dw/2,1.0,0,sdr,{type:'bathsdoor'}); B(.16,1.5,.04,mat(0xc8a46c,.2,{transparent:true,opacity:.4}),dw/2+.12,1.1,0,sdr,{type:'bathsdoor'}); B(.03,.3,.03,hgrain,dw-.1,1.05,-.04,sdr);
-      BATH.sdoor={g:sdr,open:false,x0:dX0,x1:dX1,z:SZ}; MEAL_DYN.push(sdr);
+      const sdr=new THREE.Group(); sdr.position.set(dX0,0,SZ-.06); scene.add(sdr); const dw=dX1-dX0; B(dw-.02,2.0,.035,hgrain,dw/2,1.0,0,sdr,{type:'bathsdoor'}); const slitM=mat(0xc8a46c,.2,{transparent:true,opacity:.4,emissive:0xffa030,emissiveIntensity:0}); B(.16,1.5,.04,slitM,dw/2+.12,1.1,0,sdr,{type:'bathsdoor'}); B(.03,.3,.03,hgrain,dw-.1,1.05,-.04,sdr);
+      // a hinoki bolt on the inside: slide it across and the door stays shut, the lamps come up
+      B(.14,.035,.03,hgrain,dw-.17,1.25,.035,sdr,{type:'bathlatch'}); B(.03,.07,.025,hgrain,dw-.08,1.25,.03,sdr,{type:'bathlatch'});
+      BATH.sdoor={g:sdr,open:false,locked:false,x0:dX0,x1:dX1,z:SZ,slitM}; MEAL_DYN.push(sdr);
       for(let i=0;i<12;i++) B(X1i-xg-.1,.02,.1,hk(2,.07),(xg+X1i)/2,.03,SZ+.15+i*.18);
       const sx0=xg+.1, sx1=X1i-.02; B(sx1-sx0,.06,.5,hgrain,(sx0+sx1)/2,.9,Z1i-.27,scene,tag); B(sx1-sx0,.06,.5,hgrain,(sx0+sx1)/2,.45,Z1i-.77,scene,tag); B(sx1-sx0,.42,.04,hgrain,(sx0+sx1)/2,.66,Z1i-.52); B(sx1-sx0,.42,.04,hgrain,(sx0+sx1)/2,.22,Z1i-1.02);
       B(.5,.06,Z1i-1.04-SZ-.8,hgrain,sx1-.25,.45,(SZ+.8+Z1i-1.04)/2,scene,tag); B(.04,.42,Z1i-1.04-SZ-.8,hgrain,sx1-.5,.22,(SZ+.8+Z1i-1.04)/2);
       for(let i=0;i<6;i++) B(.016,.4,.016,hgrain,sx0+.3+i*.08,.22,Z1i-1.045);
       OB(sx0,sx1,Z1i-1.04,Z1i); OB(sx1-.5,sx1,SZ+.8,Z1i-1.04);
-      // far-infrared panels, flush in the hinoki: dark until the door is shut on someone, then a deep red glow
-      { const irM=mat(0x2a1a14,.5,{emissive:0xb83a18,emissiveIntensity:0}), frM=mat(0x5a4030,.6), pk={type:'bathsauna'};
-        const panel=(w,h,x,y,z,ry)=>{ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry; scene.add(g); box(w+.05,h+.05,.02,frM,0,0,0,g); const f=box(w,h,.012,irM,0,0,.012,g); f.userData=pk; pickables.push(f);
-          for(let i=1;i<6;i++) box(.004,h-.04,.004,mat(0x3a2418,.6),-w/2+i*w/6,0,.02,g); };
-        panel(.9,.55,(xg+X1i)/2-.55,1.62,Z1i-.012,Math.PI); panel(.9,.55,(xg+X1i)/2+.55,1.62,Z1i-.012,Math.PI); panel(.55,.9,xg+.062,1.2,SZ+.75,Math.PI/2); panel(.55,.9,X1i-.012,1.25,SZ+.5,-Math.PI/2);
-        const rl=new THREE.PointLight(0xff4a1a,0,3.2,2); rl.position.set((xg+X1i)/2,1.4,(SZ+Z1i)/2); scene.add(rl);
-        BATH.sauna={irM,rl,T:28,x0:xg+.05,x1:X1i,z0:SZ+.05,z1:Z1i,since:0,reminded:false}; }
-      for(const [x,z] of [[xg+.1,SZ+.8],[X1i-.02,SZ+.8]]){ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.09,14,10,0,Math.PI),mat(0xfff4e4,.5,{emissive:0xffd9a8,emissiveIntensity:.9,side:THREE.DoubleSide})); lamp.rotation.y=x<45?Math.PI/2:-Math.PI/2; lamp.position.set(x,2.25,z); scene.add(lamp); }
+      // the heat: bolt the door and the room fills with strong warm amber light, like an infrared cabin
+      { const rl=new THREE.PointLight(0xffa23a,0,4.6,1.6); rl.position.set((xg+X1i)/2,2.2,(SZ+Z1i)/2); scene.add(rl);
+        const rl2=new THREE.PointLight(0xff9a30,0,3.4,1.8); rl2.position.set((xg+X1i)/2,1.0,Z1i-.6); scene.add(rl2);
+        BATH.sauna={rl,rl2,T:28,x0:xg+.05,x1:X1i,z0:SZ+.05,z1:Z1i,since:0,reminded:false,k:0}; }
+      const lampM=mat(0xfff4e4,.5,{emissive:0xffd9a8,emissiveIntensity:.9,side:THREE.DoubleSide}); BATH.sauna.lampM=lampM;
+      for(const [x,z] of [[xg+.1,SZ+.8],[X1i-.02,SZ+.8]]){ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.09,14,10,0,Math.PI),lampM); lamp.rotation.y=x<45?Math.PI/2:-Math.PI/2; lamp.position.set(x,2.25,z); scene.add(lamp); }
       B(.3,.012,.3,mat(0x3a3028,.6),(xg+X1i)/2,CYb-.006,SZ+.6); for(let i=0;i<6;i++) B(.3,.004,.02,hgrain,(xg+X1i)/2,CYb-.012,SZ+.47+i*.05);
       // the thermometer by the door shows the heat
       { const cv=document.createElement('canvas'); cv.width=128; cv.height=200; const tT=new THREE.CanvasTexture(cv); tT.colorSpace=THREE.SRGBColorSpace;
@@ -7020,11 +7055,14 @@ window.__mealPlan=n=>{ const M=mealState();
    each takes a basin from their room, changes at the lockers (towel on), washes at a station, soaks in the tub (four
    places, two facing two), sometimes sits in the sauna, dresses and goes back. The women go first, then the men.
    All of it is worked out from the clock, so everyone in the house sees the same; blinds are shared over the network. */
-const STAFF={bed:{xu:0,shui:1,huo:2,cai:3,yu:4,chun:5},round:{yu:'e',cai:'w'},R:null};
+const STAFF={bed:{xu:0,shui:1,huo:2,cai:3,yu:4,chun:5,li:6,he:7,fu:8,lai:9},round:{yu:'e',cai:'w'},R:null};
+// the pages keep shorter hours (back office kids.times: getting up, lights out)
+const KIDS=(()=>{ const t=String(NT('kids.times')).split(/[,，、\s]+/).map(s=>{ const m=/^(\d{1,2})[:：](\d{2})$/.exec(s.trim()); return m?+m[1]*60+ +m[2]:null; }); return {wake:t[0]??330,sleep:t[1]??1290}; })();
+const kidAsleep=m=>m<KIDS.wake||m>=KIDS.sleep;
 const minsSince=(m,s)=>((m-s)%1440+1440)%1440;
 const tpMin=t=>((t/60000+480)%1440+1440)%1440, wallNow=()=>Date.now()+MEAL_SHIFT*60000;
-const bedOf=n=>BEDS[STAFF.bed[n.id]], bedIn=b=>Math.sign(34.1-b.x)||1;
-const bedAp=b=>({x:b.x+bedIn(b)*1.16,z:b.z});
+const bedOf=n=>BEDS[STAFF.bed[n.id]], bedIn=b=>Math.sign(b.cx-b.x)||1;
+const bedAp=b=>({x:b.x+bedIn(b)*(b.W/2+.38),z:b.z});
 function npcStand(n,p){ n.pose=null; n.sSi=-1; n.inSauna=false; n.lie=false; n.atBed=false; if(p) npcPlace(n,p); }
 // the two rounds: from the bed, each blind on their side in turn (nearest next), a few seconds at each
 function staffRoutes(){ if(STAFF.R) return STAFF.R; try{ if(!BLINDS.length||!BEDS.length) return null; }catch{ return null; } const SPD=1.05, DW=3500, R={};
@@ -7049,16 +7087,16 @@ function staffTL(n,dt){ const T=n.tl, r=T.r, e=Date.now()-T.start; if(e>=r.total
   n.x=a.x+(b.x-a.x)*f; n.z=a.z+(b.z-a.z)*f; const still=b.dwell||(Math.hypot(b.x-a.x,b.z-a.z)<.01);
   if(still){ n.act='blind'; if(b.face) npcFace(n,b.face); } else { n.act='walk'; const want=Math.atan2(-(b.x-a.x),-(b.z-a.z)); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*6); } }
 // lying down and getting up
-function goLie(n,now){ const b=bedOf(n); if(!b) return; const lie=()=>{ npcStand(n,null); n.lie=true; n.atBed=true; n.yaw=b.yaw; n.x=b.x+Math.sin(b.yaw)*-.79; n.z=b.z+Math.cos(b.yaw)*-.79; n.path=[]; n.act='lie'; n.busyUntil=Date.now()+30000; };
+function goLie(n,now){ const b=bedOf(n); if(!b) return; const lie=()=>{ npcStand(n,null); n.lie=true; n.atBed=true; n.yaw=b.yaw; const lz=b.L/2-.1-1.7*(n.hh||1); n.x=b.x+Math.sin(b.yaw)*lz; n.z=b.z+Math.cos(b.yaw)*lz; n.path=[]; n.act='lie'; n.busyUntil=Date.now()+30000; };
   if(now) return lie(); npcGo(n,bedAp(b),()=>lie()); }
-function bedSit(n,until){ const b=bedOf(n); npcGo(n,bedAp(b),m=>{ const s=bedIn(b); npcPlace(m,{x:b.x+s*.62,z:b.z},-s*Math.PI/2); m.pose='bedsit'; m.atBed=true; m.carry=null; m.act='staff'; m.busyUntil=until; }); }
+function bedSit(n,until,pose='bedsit'){ const b=bedOf(n); npcGo(n,bedAp(b),m=>{ const s=bedIn(b); npcPlace(m,{x:b.x+s*(b.W/2-.14),z:b.z},-s*Math.PI/2); m.pose=pose; m.atBed=true; m.carry=null; m.act='staff'; m.busyUntil=until; }); }
 // sitting in one of the bath's places: a stool, the tub, the sauna
 const freeSeat=list=>list.find(si=>si!==ME.seat&&!occupied(si));
 function bathSeat(n,list,pose,until,then){ const si=freeSeat(list); if(si==null){ n.act='idle'; n.st=-1; n.busyUntil=Date.now()+8000; return; } const s=SEATS[si];
   n.sSi=si; npcGo(n,s.ap,m=>{ const back=pose==='wash'?.12:0; npcPlace(m,{x:s.x+Math.sin(s.yaw)*back,z:s.z+Math.cos(s.yaw)*back},s.yaw); m.sSi=si; m.pose=pose; m.act='staff'; m.busyUntil=until; if(then) then(m); }); }
-function lockSpot(n){ const ids=n.look0fem?['yu','chun']:['xu','shui','huo','cai'], k=ids.indexOf(n.id), L=BATH.lockPt; return {x:L.x-.55+k*(1.1/Math.max(1,ids.length-1)),z:L.z}; }
+function lockSpot(n){ const ids=n.look0fem?['yu','chun','li','he']:['xu','shui','huo','cai'], k=Math.max(0,ids.indexOf(n.id)), L=BATH.lockPt; return {x:L.x-.55+k*(1.1/Math.max(1,ids.length-1)),z:L.z}; }
 const hashF=s=>{ let h=7; for(const c of s) h=(h*31+c.charCodeAt(0))%100003; return h/100003; };
-function bathPlan(n,m){ if(!BATH.lockPt) return false; const F=!!n.look0fem, b0=F?DAY.wf:DAY.wm, b1=F?DAY.wm:DAY.sleep, len=b1-b0, prep=b0-10;
+function bathPlan(n,m){ if(!BATH.lockPt||n.kid) return false; const F=!!n.look0fem, b0=F?DAY.wf:DAY.wm, b1=F?DAY.wm:DAY.sleep, len=b1-b0, prep=b0-10;
   if(!(m>=prep&&m<b1)) return false; const T=taipeiNow(), day=T.day+(F?'f':'m'), at=mm=>Date.now()+(mm-m)*60000;
   const tWash=b0+.36*len, tSoak=b0+.7*len, tSauna=b0+.84*len, tDress=b1-4;
   if(n.bday!==day){ n.bday=day; n.wantSauna=hashF(n.id+day)<.55; n.bs=0; n.st=-1;
@@ -7077,7 +7115,8 @@ function bathPlan(n,m){ if(!BATH.lockPt) return false; const F=!!n.look0fem, b0=
     case 5: npcGo(n,lockSpot(n),k=>{ npcFace(k,{x:k.x,z:30}); k.act='undress'; k.busyUntil=Date.now()+20000; k.next=()=>{ npcBathLook(k,null); k.carry='basin'; k.busyUntil=0; }; }); return true;
     case 6: bedSit(n,at(b1)); return true;
     default: bedSit(n,at(b1)); return true; } }
-function staffPlan(n){ if(!BEDS.length||n.lead) return false; const m=taipeiNow().min;
+function staffPlan(n){ if(!BEDS.length||n.lead) return false; if(n.follow||n.errand) return true; const m=taipeiNow().min;
+  if(n.kid) return window.__kidPlan(n,m);
   if(roundOn(n,m)) return true;
   if(asleepAt(m)){ if(n.look) npcBathLook(n,null); n.carry=null;
     if(!n.lie){ const late=minsSince(m,DAY.sleep%1440)>20; goLie(n,late||Math.hypot(ME.x-n.x,ME.z-n.z)>30); } else { n.act='lie'; n.busyUntil=Date.now()+30000; }
@@ -7086,6 +7125,7 @@ function staffPlan(n){ if(!BEDS.length||n.lead) return false; const m=taipeiNow(
   if(bathPlan(n,m)) return true;
   // after their bath and before lights out: sitting on the bed, a lamp on
   const F=!!n.look0fem; if(m>=(F?DAY.wm:DAY.sleep)&&m<1440&&!asleepAt(m)){ if(n.look) npcBathLook(n,null); if(n.pose!=='bedsit') bedSit(n,Date.now()+60000); else n.busyUntil=Date.now()+60000; return true; }
+  if(window.__dayPlan&&window.__hasPlan(n)) return window.__dayPlan(n,m);
   if(n.pose||n.look||n.atBed){ npcBathLook(n,null); const p=n.sSi>=0?SEATS[n.sSi].ap:null; npcStand(n,p); n.carry=n.carry==='basin'?null:n.carry; }
   return false; }
 for(const id in NPC) NPC[id].look0fem=!!NPCS.find(d=>d.id===id).look.fem;
@@ -7100,7 +7140,10 @@ function staffPose(n,P,dt,w){ const g=n.g; g.rotation.order='YXZ';
     case 'wash': P.F.position.y=-.6; legs(1.05); P.arms[0].rotation.x=.9+Math.sin(w*3)*.25; P.arms[1].rotation.x=1.1-Math.sin(w*3)*.25; P.head.rotation.x=.25; break;
     case 'soak': P.F.position.y=-.87; legs(1.25); P.arms[0].rotation.x=P.arms[1].rotation.x=.25; P.head.rotation.x=-.12; break;
     case 'ssit': { const s=SEATS[n.sSi], hi=s&&s.kind==='sauna2'; P.F.position.y=hi?.08:-.37; legs(1.35); P.arms[0].rotation.x=P.arms[1].rotation.x=.55; P.head.rotation.x=.18; break; }
-    case 'bedsit': P.F.position.y=-.33; legs(1.3); P.arms[0].rotation.x=P.arms[1].rotation.x=.5; P.head.rotation.x=.15; break; }
+    case 'bedsit': case 'dsit': P.F.position.y=-.33; legs(1.3); P.arms[0].rotation.x=P.arms[1].rotation.x=.5; P.head.rotation.x=.15; break;
+    case 'mend': P.F.position.y=-.33; legs(1.3); P.arms[0].rotation.x=.95; P.arms[1].rotation.x=.9+Math.sin(w*4)*.15; P.head.rotation.x=.45; break;
+    case 'class': P.F.position.y=-.42*(n.hh||1); legs(1.45); P.arms[0].rotation.x=1.0; P.arms[1].rotation.x=1.05+Math.sin(w*5)*.06; P.head.rotation.x=.35; break;
+    case 'pray': { const ph=(w*.25)%1, bow=ph>.55&&ph<.8; P.F.position.y=-.5*(n.hh||1); legs(1.55); P.arms[0].rotation.x=P.arms[1].rotation.x=bow?.9:.35; P.head.rotation.x=bow?.7:.25; break; } }
   if(n.act==='undress'&&!n.pose){ P.arms[0].rotation.x=1.2+Math.sin(w*2)*.3; P.arms[1].rotation.x=1.0-Math.sin(w*2)*.3; P.head.rotation.x=.3; }
   if(n.carry==='basin'&&!n.pose){ P.arms[0].rotation.x=P.arms[1].rotation.x=.9; } }
 // the basin they carry: a small hinoki tub with soap and a folded cloth
@@ -7134,7 +7177,7 @@ const BEDSIDE={lamps:[],clocks:[]};
     const hd=new THREE.Mesh(new THREE.TorusGeometry(.025,.003,6,16,Math.PI),brassM); hd.position.y=.1; body.add(hd);
     for(const sx of [-1,1]){ const f=new THREE.Mesh(new THREE.CylinderGeometry(.006,.009,.06,8),brassM); f.position.set(sx*.045,.03,0); f.rotation.z=sx*.4; g.add(f); }
     g.traverse(o=>{ if(o.isMesh){ o.userData=pk; pickables.push(o); } });
-    BEDSIDE.clocks.push({g,body,hh,mh,ham,beds:St.beds,x:p.x,z:p.z,rang:'',ring:0}); NPC_DYN.push(g); } }
+    BEDSIDE.clocks.push({g,body,hh,mh,ham,beds:St.beds,x:p.x,z:p.z,rang:'',ring:0,kids:St.room==='kids'}); NPC_DYN.push(g); } }
 function ringBell(x,z){ const d=Math.hypot(ME.x-x,ME.z-z); if(d>9) return; try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const t0=actx.currentTime, v=.12*Math.max(.1,1-d/9), out=actx.createGain(); out.gain.value=v; out.connect(actx.destination);
   for(let k=0;k<64;k++){ const t=t0+k*.075; for(const [f,a] of [[2150,1],[3380,.5],[5200,.25]]){ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=f*(k%2?1.04:1); g.gain.setValueAtTime(a,t); g.gain.exponentialRampToValueAtTime(.001,t+.07); o.connect(g); g.connect(out); o.start(t); o.stop(t+.08); } } }catch{} }
 let staffT=0;
@@ -7143,14 +7186,129 @@ ZL_ANIM.push(dt=>{ if(!window.__entered) return; dt=dt||.016; const w=performanc
   // the quilt spread over a sleeper, folded at the foot otherwise
   const sleeper=bi=>{ for(const id in NPC){ const n=NPC[id]; if(STAFF.bed[id]===bi) return n; } return null; };
   BEDS.forEach((b,bi)=>{ const n=sleeper(bi), on=!!(n&&n.lie); if(b.sq.visible!==on){ b.sq.visible=on; b.fq.visible=!on; } });
-  const quiet=asleepAt(m)&&minsSince(m,DAY.sleep%1440)>=30&&minsSince(DAY.wake,m)>12;
-  for(const L of BEDSIDE.lamps){ const n=sleeper(L.bi), on=!!(n&&n.atBed)&&!quiet; L.k+=((on?1:0)-L.k)*Math.min(1,dt*3); L.shM.emissiveIntensity=L.k*1.4; L.gl.material.opacity=L.k*.42; L.pool.material.opacity=L.k*.5; }
+  const quietA=asleepAt(m)&&minsSince(m,DAY.sleep%1440)>=30&&minsSince(DAY.wake,m)>12, quietK=kidAsleep(m)&&minsSince(m,KIDS.sleep)>=30&&minsSince(KIDS.wake,m)>12;
+  for(const L of BEDSIDE.lamps){ const n=sleeper(L.bi), on=!!(n&&n.atBed&&!n.follow)&&!(n&&n.kid?quietK:quietA)&&!(n&&n.task==='nap'); L.k+=((on?1:0)-L.k)*Math.min(1,dt*3); L.shM.emissiveIntensity=L.k*1.4; L.gl.material.opacity=L.k*.42; L.pool.material.opacity=L.k*.5; }
   staffT+=dt; const tick=staffT>.5; if(tick) staffT=0;
   for(const C of BEDSIDE.clocks){ if(tick){ const hm=m%720; C.hh.rotation.z=-(hm/720)*Math.PI*2; C.mh.rotation.z=-((m%60)/60)*Math.PI*2; }
-    const used=C.beds.some(bi=>sleeper(bi)), el=minsSince(m,DAY.wake)*60;
+    const used=C.beds.some(bi=>sleeper(bi)), el=minsSince(m,C.kids?KIDS.wake:DAY.wake)*60;
     if(used&&el<5&&C.rang!==T.day){ C.rang=T.day; C.ring=5; ringBell(C.x,C.z); if(Math.hypot(ME.x-C.x,ME.z-C.z)<6) toast(NT('alarm.ring'),3000); }
     if(C.ring>0){ C.ring-=dt; C.ham.rotation.z=Math.sin(w*80)*.5; C.body.position.x=Math.sin(w*95)*.003; C.body.rotation.z=Math.sin(w*60)*.04; } else if(C.ham.rotation.z){ C.ham.rotation.z=0; C.body.position.x=0; C.body.rotation.z=0; } } });
 window.__staff={STAFF,BEDS,STANDS,BEDSIDE,staffRoutes,DAY}; window.__staffPlan=staffPlan; window.__staffTL=staffTL; window.__staffPose=staffPose;
+/* ================= 阿莉、阿荷、阿福、阿來：作息、對話、呼喚 =================
+   Each of the four keeps a day written in the back office (plan.li, plan.he, plan.fu, plan.lai: "05:00 禮拜、05:20 收衣…");
+   meals, the women's bath and lights out are the household's. The pages answer only to the master (the name in
+   boss.name): F calls 阿福, R calls 阿來 (or the buttons), again to send them back; they come even from bed, walk a step
+   behind, wait outside the bath and the toilets, sit with you at the pictures, and 阿來 carries a lantern after dark. */
+const isBoss=()=>{ try{ return String(myName||'').trim()===String(NT('boss.name')).trim()&&!!String(NT('boss.name')).trim(); }catch{ return false; } };
+const titleFill=()=>({稱呼:NT('boss.title',isBoss()?0:1)});
+const say2=(id,key)=>npcSay(id,npcLine(key,titleFill()));
+const seatsOf=k=>SEATS.map((s,i)=>s.kind===k?i:-1).filter(i=>i>=0);
+const DPLAN={};
+for(const id of ['li','he','fu','lai']){ DPLAN[id]=String(NT('plan.'+id)).split(/[、,，;；\n]+/).map(x=>{ const m=/(\d{1,2})[:：](\d{2})\s*(.+)/.exec(x.trim()); return m?{at:+m[1]*60+ +m[2],k:m[3].trim()}:null; }).filter(Boolean).sort((a,b)=>a.at-b.at); }
+const planNow=(id,m)=>{ const L=DPLAN[id]; if(!L||!L.length) return null; let cur=L[L.length-1]; for(const e of L) if(e.at<=m) cur=e; return cur.k; };
+window.__hasPlan=n=>!!DPLAN[n.id];
+// where each kind of work is done
+const R26=()=>bedOf(NPC.li), P=(x,z)=>({x,z});
+const TASKS={
+  禮拜:{bed:true,pose:'pray'}, 休息:{bed:true,pose:'bedsit'}, 縫補:{bed:true,pose:'mend'}, 摺衣:{bed:true,pose:'mend'}, 補衣:{bed:true,pose:'mend'}, 梳洗:{bed:true,pose:'bedsit'},
+  午睡:{nap:true},
+  收衣:{spots:[P(33.64,19.6),P(34.56,19.6),P(34.1,0),P(29.4,1.2)],act:'load',dur:20000},
+  洗衣:{spots:[P(44.2,6.4),P(43.5,7.0)],act:'wash',dur:60000,face:P(46,6.4)},
+  補毛巾:{spots:[P(42.9,22.4),P(43.2,18.2)],act:'load',dur:25000},
+  幫忙茶具:{spots:[P(10.4,-2.2)],act:'prep',dur:60000,face:P(10.4,-4.5)},
+  聊天:{dine:true},
+  掃地:{spots:[P(36.2,5.3),P(43.6,5.3),P(43.6,14.25),P(36.2,14.25),P(39.2,9.8)],act:'sweep',dur:40000},
+  擦拭:{spots:[P(22,5.3),P(17,5.3),P(22,14.25),P(20,9.8)],act:'prep',dur:40000},
+  掃三進:{spots:[P(0,5.6),P(3,1),P(-5.5,2.5),P(5.5,2.5)],act:'sweep',dur:40000},
+  浴室:{spots:[P(42.9,22.4),P(44.8,19.6),P(43.2,18.2)],act:'sweep',dur:45000},
+  幫廚:{spots:[()=>NP.sink],act:'wash',dur:60000,face:P(47,-.05)},
+  乘涼:{spots:[P(39.2,13.9)],act:'idle',dur:60000,face:P(39.2,9.8),hum:true},
+  磨墨:{spots:[P(3,1)],act:'write',dur:60000,face:P(3,-1)},
+  撣塵:{spots:[P(5.5,2.5),P(-5.5,2.5),P(6.5,-1),P(-6.5,-1)],act:'sweep',dur:35000},
+  整理書房:{spots:[P(3,1),P(0,2.8),P(-5.5,2.5)],act:'prep',dur:40000},
+  溫書:{spots:[P(0,2.8),P(3,1)],act:'book',dur:60000},
+  茶室:{spots:[P(-6.3,20.7),P(-3,19.9)],act:'sweep',dur:40000},
+  掃院:{spots:[P(39.2,9.8),P(36.2,5.3),P(20,9.8),P(17,5.3)],act:'sweep',dur:35000},
+  收茶具:{spots:[P(-6.3,20.7),P(10.4,-2.2)],act:'load',dur:15000},
+  上課:{cls:true},
+  跑腿:{errand:true} };
+const DINE_SEAT2={li:3,he:5,fu:8,lai:11};
+function seatAt(n,si,pose,until,then){ n.sSi=si; const s=SEATS[si]; npcGo(n,s.ap,m=>{ npcPlace(m,{x:s.x,z:s.z},s.yaw); m.pose=pose; m.act='staff'; m.busyUntil=until; if(then) then(m); }); }
+function leaveSpot(n){ if(n.lie||n.pose||n.sSi>=0||n.atBed){ const p=n.sSi>=0?SEATS[n.sSi].ap:n.atBed||n.lie?bedAp(bedOf(n)):null; npcStand(n,p); } }
+function runTask(n,key,m){ const T=TASKS[key]||TASKS.休息, now=Date.now(); if(n.task!==key){ leaveSpot(n); n.task=key; n.ti=0; }
+  if(T.nap){ if(!n.lie) goLie(n,false); else { n.act='lie'; n.busyUntil=now+30000; } return true; }
+  if(T.bed){ if(n.pose===T.pose&&n.atBed){ n.busyUntil=now+30000; return true; } leaveSpot(n); bedSit(n,now+30000,T.pose); return true; }
+  if(T.dine){ const si=DINE.seats[DINE_SEAT2[n.id]].si; if(n.sSi===si){ n.busyUntil=now+30000; return true; } leaveSpot(n); seatAt(n,si,'dsit',now+30000); return true; }
+  if(T.cls){ if(n.sSi>=0&&SEATS[n.sSi].kind==='cls'){ n.busyUntil=now+30000; return true; } leaveSpot(n); const si=seatsOf('cls').reverse().find(i=>i!==ME.seat&&!occupied(i)); if(si==null){ n.busyUntil=now+15000; return true; } seatAt(n,si,'class',now+30000); return true; }
+  if(T.errand) return errand(n);
+  leaveSpot(n); const sp=T.spots[n.ti++%T.spots.length], p=typeof sp==='function'?sp():sp;
+  npcGo(n,p,k=>{ if(T.face) npcFace(k,T.face); k.act=T.act; k.busyUntil=Date.now()+T.dur*(.8+Math.random()*.4); if(T.hum&&near(k,8)&&Math.random()<.5) npcSay(k.id,NT('he.hum')); });
+  return true; }
+// 許總管 sends 阿來 (or 阿福) off with something: to him, then to the gate, the store or the kitchen, and back to work
+function errand(n){ const xu=NPC.xu, to=[NP.gate,NP.store,NP.kitchenIn,NP.tea][Math.floor(Math.random()*4)];
+  leaveSpot(n); n.errand=true; npcGo(n,{x:xu.x+.7,z:xu.z+.3},k=>{ npcFace(k,xu); npcFace(xu,k); if(near(k,9)) npcSay('xu',NT('xu.call')); k.act='idle'; k.busyUntil=Date.now()+2500;
+    k.next=()=>{ npcGo(k,to,j=>{ j.act='unload'; j.busyUntil=Date.now()+3000; j.next=()=>{ j.errand=false; j.task=null; j.busyUntil=0; }; }); }; });
+  return true; }
+window.__dayPlan=(n,m)=>{ const M=mealState(); if(M.phase==='eat'){ leaveSpot(n); n.task=null; return false; }
+  if(n.seated&&typeof mealStand==='function') mealStand(n);
+  return runTask(n,planNow(n.id,m),m); };
+window.__kidPlan=(n,m)=>{ if(kidAsleep(m)){ if(n.task!=='sleep'){ leaveSpot(n); n.task='sleep'; } if(!n.lie){ const late=minsSince(m,KIDS.sleep)>20&&m>KIDS.sleep-1||m<KIDS.wake; goLie(n,late||Math.hypot(ME.x-n.x,ME.z-n.z)>30); } else { n.act='lie'; n.busyUntil=Date.now()+30000; } return true; }
+  if(n.task==='sleep'){ n.task=null; leaveSpot(n); }
+  return window.__dayPlan(n,m); };
+// meals: the four sit at the free places of the round table
+{ const f0=window.__seatNpc; for(const id in DINE_SEAT2) if(DINE.seats[DINE_SEAT2[id]]) DINE_SEAT[id]=DINE.seats[DINE_SEAT2[id]].si; }
+// ---- calling the pages
+const FOLLOW={last:{x:0,z:0,t:Date.now()}};
+function callKid(id){ if(!isBoss()) return; const n=NPC[id]; if(!n) return;
+  if(n.follow){ n.follow=false; n.errand=false; n.teaRun=false; n.busyUntil=0; n.path=[]; n.act='idle'; if(n.sSi>=0) npcStand(n,SEATS[n.sSi].ap); n.task=null; say2(id,id+'.bye'); renderKidUI(); return; }
+  const woke=!!n.lie; leaveSpot(n); n.next=null; n.then=null; n.errand=false; n.task=null; n.follow=true; n.busyUntil=Infinity; n.carry=null; FOLLOW.last={x:ME.x,z:ME.z,t:Date.now()};
+  npcSay(id,String(NT(id+'.call',woke?1:0)||NT(id+'.call',0)).replace('{稱呼}',titleFill().稱呼)); renderKidUI(); }
+const kidUI=document.createElement('div'); kidUI.style.cssText='position:fixed;left:14px;bottom:132px;display:none;flex-direction:column;gap:5px;z-index:27';
+document.body.append(kidUI);
+function renderKidUI(){ const show=window.__entered&&isBoss(); kidUI.style.display=show?'flex':'none'; if(!show) return;
+  const btn=(label,fn)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=label; b.style.cssText='font:13px "Noto Serif TC",serif;padding:4px 10px;background:#f3ead8e8;color:#2a211a;border:1px solid #8a6a48;border-radius:2px;cursor:pointer;text-align:left'; b.onclick=e=>{ e.stopPropagation(); fn(); }; return b; };
+  kidUI.innerHTML=''; for(const [id,key] of [['fu','F'],['lai','R']]){ const n=NPC[id]; kidUI.append(btn(String(NT('kid.callL',n.follow?1:0)).replace('{名}',npcName(id))+'（'+key+'）',()=>callKid(id))); }
+  const L=NPC.lai; if(L.follow&&ME.seat>=0&&!L.teaRun) kidUI.append(btn(NT('lai.teaL'),teaRun)); }
+setInterval(renderKidUI,1200);
+addEventListener('keydown',e=>{ if(e.repeat||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||panel.classList.contains('open')||!window.__entered||!isBoss()) return; const k=e.key.toLowerCase();
+  if(k==='f'){ e.preventDefault(); callKid('fu'); } else if(k==='r'){ e.preventDefault(); callKid('lai'); } });
+function teaRun(){ const n=NPC.lai; if(!n.follow) return; n.teaRun=true; say2('lai','lai.teaGo'); n.path=[]; npcGo(n,{x:10.4,z:-2.2},k=>{ npcFace(k,{x:10.4,z:-4.5}); k.act='load'; k.busyUntil=Infinity; setTimeout(()=>{ k.carry=null; k.teaBack=true; k.path=[]; },4000); }); renderKidUI(); }
+// where the followers stand: a step behind, one each side; outside the bath or the toilets; at the pictures, on the front sofa
+const inBath=()=>ME.x>41.85&&ME.x<46.6&&ME.z>15.6&&ME.z<23.6, inWC=()=>ME.x>36.62&&ME.x<41.78&&ME.z>20.9&&ME.z<23.6;
+ZL_ANIM.push(dt=>{ if(!window.__entered) return; const now=Date.now(); const ks=['fu','lai'].map(id=>NPC[id]).filter(n=>n.follow);
+  // a lantern for 阿來 after dark while he is with you
+  const L=NPC.lai; if(L.lantern){ const want=!!L.follow&&SKY_DAY<.35; if(L.lantern.visible!==want) L.lantern.visible=want; }
+  if(!ks.length) return;
+  if(Math.hypot(ME.x-FOLLOW.last.x,ME.z-FOLLOW.last.z)>.3||ME.seat>=0&&FOLLOW.seat!==ME.seat){ FOLLOW.last={x:ME.x,z:ME.z,t:now}; FOLLOW.seat=ME.seat; }
+  const away=ME.x>53.4||now-FOLLOW.last.t>30*60000; if(away){ for(const n of ks){ n.follow=true; callKid(n.id); } return; }
+  const fx=-Math.sin(ME.yaw), fz=-Math.cos(ME.yaw), rx=-fz, rz=fx, sk=ME.seat>=0?SEATS[ME.seat]:null, cine=sk&&(sk.kind==='cine'||sk.kind==='cine2');
+  ks.forEach((n,i)=>{ const side=n.id==='fu'?-1:1;
+    if(n.teaRun){ if(n.teaBack&&!n.path.length&&Math.hypot(n.x-ME.x,n.z-ME.z)>1.3){ npcGo(n,{x:ME.x+rx*side*.7,z:ME.z+rz*side*.7},k=>{ k.teaRun=false; k.teaBack=false; k.busyUntil=Infinity; npcFace(k,ME); say2('lai','lai.tea'); }); } else if(n.teaBack&&Math.hypot(n.x-ME.x,n.z-ME.z)<=1.3){ n.teaRun=false; n.teaBack=false; say2('lai','lai.tea'); } return; }
+    if(cine){ if(n.sSi<0){ const si=seatsOf('cine').find(j=>j!==ME.seat&&!occupied(j)); if(si!=null) seatAt(n,si,'bedsit',Infinity); } return; }
+    if(n.sSi>=0&&!cine){ npcStand(n,SEATS[n.sSi].ap); }
+    let t; if(inBath()) t={x:40.9,z:19.0+i*.6}; else if(inWC()) t={x:38.9+i*.6,z:20.3}; else t={x:ME.x-fx*1.1+rx*side*.45,z:ME.z-fz*1.1+rz*side*.45};
+    if((inBath()||inWC())&&!n.waitSaid){ n.waitSaid=true; if(i===0) say2(n.id,'kid.wait'); } if(!inBath()&&!inWC()) n.waitSaid=false;
+    if(!walkable(t.x,t.z)) t={x:ME.x-fx*.9,z:ME.z-fz*.9};
+    const d=Math.hypot(n.x-t.x,n.z-t.z), moved=!n.fT||Math.hypot(n.fT.x-t.x,n.fT.z-t.z)>.7;
+    if(d>.6&&(moved||!n.path.length)){ n.fT=t; npcGo(n,t,k=>{ k.act='idle'; k.busyUntil=Infinity; }); }
+    else if(d<=.6&&!n.path.length){ n.act='idle'; if(ME.seat>=0||d<.3) npcFace(n,ME); } n.busyUntil=Infinity; }); });
+// a seat the master wants in class: the page moves to another
+window.__npcYield=si=>{ for(const id of ['fu','lai']){ const n=NPC[id]; if(n.sSi===si&&!n.follow){ const alt=seatsOf(SEATS[si].kind).find(j=>j!==si&&j!==ME.seat&&!occupied(j)); if(alt==null) return false; const s=SEATS[alt]; n.sSi=alt; npcPlace(n,{x:s.x,z:s.z},s.yaw); return true; } } return false; };
+// ---- talking with the four; teasing 阿荷
+function tease(k){ const n=NPC.he, now=Date.now(); if(now-(n.teaseAt||0)>5*60000) n.teaseN=0; n.teaseAt=now; n.teaseN=(n.teaseN||0)+1;
+  const you=NT('he.t'+k,0); if(you) toast(you,2600);
+  if(n.teaseN>=3){ n.teaseN=0; say2('he','he.angry'); leaveSpot(n); n.task=null; n.errand=true; const c=NPC.chun; setTimeout(()=>npcGo(n,{x:c.x+.6,z:c.z+.4},m=>{ npcFace(m,c); npcFace(c,m); say2('chun','chun.defend'); m.act='idle'; m.busyUntil=Date.now()+8000; m.next=()=>{ m.errand=false; m.busyUntil=0; }; }),1800); return; }
+  say2('he','he.r'+k); }
+window.__npcTalk2=id=>{ const n=NPC[id], VRm=renderer.xr.isPresenting;
+  if(id==='li'){ if(n.pose==='pray') return say2('li','li.pray'); say2('li','li.talk'); if(!VRm) npcChoices(id,[['家鄉在哪裡？',()=>say2('li','li.home')],['有衣服要洗',()=>say2('li','li.wash')]]); return true; }
+  if(id==='he'){ say2('he','he.talk'); if(!VRm) npcChoices(id,[1,2,3,4,5].map(k=>[NT('he.t'+k,1),()=>tease(k)]).concat([[NT('he.chatL'),()=>say2('he','he.chat')]])); return true; }
+  if(id==='fu'){ say2('fu',n.follow?'fu.call':'fu.talk'); if(!VRm) npcChoices(id,[[NT('fu.bookL'),()=>say2('fu','fu.book')]]); return true; }
+  if(id==='lai'){ say2('lai','lai.talk'); if(!VRm) npcChoices(id,[[NT('lai.whatL'),()=>say2('lai','lai.what')],[NT('lai.askL'),()=>say2('lai','lai.ask')]]); return true; }
+  return false; };
+// 阿荷 sometimes speaks first when you pass; the master is welcomed home at the gate, and the pages nearby say hello
+window.__npcNear=(n,now)=>{ if(n.id==='he'&&Math.random()<.35){ say2('he','he.hi'); return true; }
+  if(n.id==='yu'&&isBoss()&&!FOLLOW.greeted){ FOLLOW.greeted=true; say2('yu','yu.boss'); for(const id of ['fu','lai']){ const k=NPC[id]; if(!k.follow&&!k.lie&&Math.hypot(k.x-ME.x,k.z-ME.z)<15) setTimeout(()=>say2(id,id+'.hi'),1500); } return true; }
+  return false; };
 
 /* ---- every half second: send people to the table when the meal starts, set the table, the lamp, steam and smoke ---- */
 const MEALRUN={t:1,id:'',called:'',bowl:'',chatAt:0,chatI:0};
@@ -7225,7 +7383,8 @@ ZL_ANIM.push(dt=>WCMUSIC.tick(dt||.016));
 ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*6), B0=BATH; if(!B0.door) return;
   // the glass door slides open as you come near (or when clicked); the sauna door swings
   const D=B0.door, near=Math.abs(ME.x-D.x)<.9&&Math.abs(ME.z-D.zc)<.8; D.g.position.z+=((D.z0+((D.open||near)?.88:0))-D.g.position.z)*k;
-  const S5=B0.sdoor, sNear=Math.abs(ME.z-S5.z)<.8&&ME.x>S5.x0-.1&&ME.x<S5.x1+.1; S5.g.rotation.y+=(((S5.open||sNear)?1.4:0)-S5.g.rotation.y)*k;
+  const S5=B0.sdoor, sNear=Math.abs(ME.z-S5.z)<.8&&ME.x>S5.x0-.1&&ME.x<S5.x1+.1, npcLock=Object.values(NPC).some(n=>n.inSauna);
+  S5.g.rotation.y+=((!S5.locked&&!npcLock&&(S5.open||sNear)?1.4:0)-S5.g.rotation.y)*k;
   // the spout: the sheet streams, foam pulses, rings spread; the surface shimmers, the mist drifts, the tray bobs
   const P=B0.pour; P.tex.offset.y=(P.tex.offset.y+dt*1.6)%1; P.foam.scale.setScalar(1+Math.sin(w*9)*.12); P.rip.forEach((r,i)=>{ const ph=(w*.6+i/4)%1; r.scale.setScalar(1+ph*7); r.material.opacity=(1-ph)*.45; });
   B0.water.material.opacity=.58+Math.sin(w*2)*.03; B0.mist.position.y=.65+Math.sin(w*.7)*.03; B0.mist.rotation.z=w*.03; B0.mist.material.opacity=.17+Math.sin(w*.5)*.05;
@@ -7239,10 +7398,14 @@ ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*
       for(let j=0;j<N;j++) for(let i=0;i<N;i++){ const x=i/N*Math.PI*2, y=j/N*Math.PI*2; let v=0; for(let k=0;k<3;k++){ const a=Math.sin(x*(2+k)+Math.sin(y*(3-k)+k*1.7)*1.3)+Math.sin(y*(2+k)+Math.sin(x*(1+k)+k)*1.4); v+=Math.pow(Math.max(0,1-Math.abs(a)*1.6),3); }
         const c=Math.min(255,v*150), o=(j*N+i)*4; d[o]=d[o+1]=d[o+2]=c; d[o+3]=255; } g.putImageData(im,0,0); Cs.cT.needsUpdate=true; }
     Cs.cT.offset.set(Math.sin(w*.17)*.08+w*.006,Math.cos(w*.13)*.08-w*.009); Cs.cM.opacity=.07+.06*nf+Math.sin(w*.6)*.012; }
-  // the sauna: the door shut on someone inside → the panels glow and the heat climbs to about 55 °C in two minutes
-  const Sa=B0.sauna; if(Sa){ const meIn=ME.x>Sa.x0&&ME.x<Sa.x1&&ME.z>Sa.z0&&ME.z<Sa.z1, npcIn=Object.values(NPC).some(n=>n.inSauna), shut=!(S5.open||sNear), on=shut&&(meIn||npcIn);
-    Sa.T+=((on?55:28)-Sa.T)*Math.min(1,dt/45); const h=Math.max(0,(Sa.T-28)/27); Sa.on=on;
-    Sa.irM.emissiveIntensity+=((on?.2+.55*h:0)-Sa.irM.emissiveIntensity)*Math.min(1,dt*1.5); Sa.rl.intensity=Sa.irM.emissiveIntensity*.7;
+  // the sauna: bolted from inside (or a member of the household in it) → the lamps flood the room with warm amber light
+  //  and the heat climbs to about 55 °C in two minutes; a warm cast comes over your own view as it gets hot
+  const Sa=B0.sauna; if(Sa){ const meIn=ME.x>Sa.x0&&ME.x<Sa.x1&&ME.z>Sa.z0&&ME.z<Sa.z1; if(S5.locked&&!meIn&&Math.hypot(ME.x-(S5.x0+S5.x1)/2,ME.z-S5.z)>1.2) S5.locked=false;
+    const on=(S5.locked&&meIn)||npcLock; Sa.on=on;
+    Sa.T+=((on?55:28)-Sa.T)*Math.min(1,dt/45); const h=Math.max(0,(Sa.T-28)/27); Sa.k+=((on?1:0)-Sa.k)*Math.min(1,dt/6);
+    Sa.rl.intensity=Sa.k*2.6; Sa.rl2.intensity=Sa.k*1.2; if(Sa.lampM){ Sa.lampM.emissive.setHex(Sa.k>.05?0xffa83c:0xffd9a8); Sa.lampM.emissiveIntensity=.9+Sa.k*2.4; } S5.slitM.emissiveIntensity=Sa.k*1.6;
+    if(!Sa.tint){ Sa.tint=document.createElement('div'); Sa.tint.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:5;background:radial-gradient(ellipse at center,rgba(255,176,70,.55),rgba(255,140,30,.8));mix-blend-mode:soft-light;opacity:0;transition:opacity .6s'; document.body.append(Sa.tint); }
+    const tw=meIn?Sa.k*(.35+.55*h):0; if(Math.abs((Sa.tw||0)-tw)>.01){ Sa.tw=tw; Sa.tint.style.opacity=tw.toFixed(2); }
     const Th=B0.therm, tv=Math.round(Sa.T); if(Th&&tv!==Th.last){ Th.last=tv; const g=Th.cv.getContext('2d'); g.fillStyle='#efe6d2'; g.fillRect(0,0,128,200); g.strokeStyle='#6a5038'; g.lineWidth=6; g.strokeRect(3,3,122,194);
       g.fillStyle='#d9cfbd'; g.fillRect(56,22,16,126); g.fillStyle='#b3261e'; const hh=Math.max(4,Math.min(126,(tv-20)/60*126)); g.fillRect(56,148-hh,16,hh); g.beginPath(); g.arc(64,160,17,0,7); g.fill();
       g.fillStyle='#2a2018'; g.font='700 30px "Noto Serif TC",serif'; g.textAlign='center'; g.fillText(tv+'°',64,196-4); Th.tT.needsUpdate=true; }
@@ -7303,7 +7466,8 @@ window.__kitchenAct=u=>{ if(u.type==='kgas'){ const G=KGAS[u.i||0]; G.on=!G.on; 
   if(u.type==='bathshower'){ BATH.shower.on=!BATH.shower.on; toast(NT('act.shower',BATH.shower.on?0:1)); return true; }
   if(u.type==='bathwash'){ BATH.wash=!BATH.wash; toast(NT('act.wash',BATH.wash?0:1)); return true; }
   if(u.type==='bathdoor'){ BATH.door.open=!BATH.door.open; toast(NT('act.bdoor',BATH.door.open?0:1)); return true; }
-  if(u.type==='bathsdoor'){ BATH.sdoor.open=!BATH.sdoor.open; toast(NT('act.sdoor',BATH.sdoor.open?0:1)); return true; }
+  if(u.type==='bathsdoor'){ const D=BATH.sdoor; if(Object.values(NPC).some(n=>n.inSauna)){ toast(NT('sauna.busy')); return true; } if(D.locked){ toast(NT('sauna.lock',0)); return true; } D.open=!D.open; toast(NT('act.sdoor',D.open?0:1)); return true; }
+  if(u.type==='bathlatch'){ const D=BATH.sdoor, Sa=BATH.sauna, meIn=ME.x>Sa.x0&&ME.x<Sa.x1&&ME.z>Sa.z0&&ME.z<Sa.z1; if(!meIn){ toast(NT('sauna.lock',1)); return true; } D.locked=!D.locked; if(D.locked) D.open=false; toast(NT('sauna.bolt',D.locked?0:1)); return true; }
   if(u.type==='wcuri'){ goTo(u.x,23.6-.62,{faceTo:{x:u.x,z:24},after:()=>setTimeout(()=>toast(NT('act.urinal')),3500)}); return true; }
   if(u.type==='wcspout'){ WC.spout.on=!WC.spout.on; toast(NT('act.spout',WC.spout.on?0:1)); return true; } return false; };
 // the calendar page for today in Taipei: 民國 year and 干支, the lunar month and day, the big date, the weekday

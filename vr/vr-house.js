@@ -1838,7 +1838,9 @@ const JR={ dama:{x0:2.72,x1:3.6}, rise:.25, shojiX:4.6, u:.91,
   shojiDoor:{z0:19.14,z1:21.0} };
 JR.u=(JR.tat.z1-16.05)/8; JR.tat.x0=JR.tat.x1-4*JR.u; JR.tat.z0=JR.tat.z1-8*JR.u;   // 4 × 8 units: fifteen mats and a half, with the irori half mat
 const TATAMI={x0:JR.dama.x1, x1:ZP.left, z0:16.05, z1:ZP.back, h:JR.rise};
-function floorY(x,z){ return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
+// 二進西廂南間 (the schoolroom): the teacher's platform along the west wall
+const CLS_PLAT={x0:22.32,x1:26.96,z0:21.7,z1:23.6,h:.15}, CLS_ROOM={}, CLS_LAP={};
+function floorY(x,z){ if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
 const SHOJI={open:true,k:1,leaves:[]};
 function zlBlocked(x,z){ return false; }
 const IRS=ZP.irori, IY=JR.rise;
@@ -3587,7 +3589,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor']);
+const ACTION_TYPES=new Set(['npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3600,6 +3602,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
   case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
+  case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
@@ -3935,6 +3938,8 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
   ch.on('presence',{event:'sync'},()=>{ const st=ch.presenceState(); here=new Set(Object.keys(st));
     for(const k of here){ const m=st[k][st[k].length-1]; if(m&&m.p){ take(k,m.t,m.p,false); const v=peers.get(k); if(v) v.slow=Date.now(); } }
     for(const k of [...peers.keys()]) if(!here.has(k)&&Date.now()-peers.get(k).heard>8000) peers.delete(k); soon(); });
+  ch.on('broadcast',{event:'b'},msg=>{ const m=msg&&(msg.payload||msg); if(!m||m.from===MY_PID||(m.to&&m.to!==MY_PID)||!m.d) return; try{ window.__clsRecv?.(m.d,m.from); }catch(err){ console.warn(err); } });
+  NET.bcast=(d,to)=>{ try{ ch.send({type:'broadcast',event:'b',payload:{from:MY_PID,to:to||'',d}}); return true; }catch{ return false; } };
   ch.on('broadcast',{event:'s'},msg=>{ const m=msg&&(msg.payload||msg); if(!m) return; take(m.k,m.t,m.p,true); soon(); if(m.hi) setTimeout(()=>send(true),Math.random()*400); });
   const moving=(a,b)=>{ if(!a||!b) return false; const x={...a}, y={...b}; for(const f of ['x','z','r']){ delete x[f]; delete y[f]; } return JSON.stringify(x)===JSON.stringify(y); };
   function track(){ trackT=null; if(!ready||!cur) return; const state={...cur,vc:!!mic}; const k=JSON.stringify(state); if(k===tracked) return; trackAt=Date.now(); ch.track({t:trackAt,p:state}).then(result=>{ if(result==='ok') tracked=k; else NET.errs++; }).catch(()=>{NET.errs++;}); }
@@ -3943,7 +3948,7 @@ async function supabaseRoom(){ const C=window.VR_CONFIG; if(!C||!C.url||!C.key){
     if(!trackT) trackT=setTimeout(track,Math.max(0,1500-(Date.now()-trackAt))); }
   NET.st='連線中';
   try { await new Promise((res,rej)=>{ const to=setTimeout(()=>{ NET.st='連線逾時'; rej(new Error('timeout')); },15000);
-    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); }
+    ch.subscribe(st=>{ if(dead) return; NET.st=st; if(st==='SUBSCRIBED'){ clearTimeout(to); ready=true; voiceUI(); tracked=''; track(); send(true,true); renderPeople(); res(); setTimeout(()=>window.__clsHello?.(),600); }
       else { ready=false; stopVoice(); NET.errs++; renderPeople(); if(heartbeat) lose(); } }); }); } catch(error){ dead=true; try{ await sb.removeChannel(ch); }catch{} sb.realtime.disconnect(); throw error; }
   // A channel that drops (phone asleep, wifi switch, server restart) is not always rejoined by the library, and someone stuck on
   // a dead channel sees nobody and is seen by nobody. So on any drop, or if nothing has been heard from the server for a while,
@@ -4158,7 +4163,8 @@ async function cfRoom(){
     if(m.t==='all'){ peers.clear(); for(const q of (m.peers||[])) if(q&&q.id&&q.id!==me) peers.set(q.id,{p:q.p||{},micActive:!!q.mic,speaking:!!q.sp,fast:Date.now()}); emitSoon(); }
     else if(m.t==='u'&&m.id&&m.id!==me){ const v=peers.get(m.id)||{p:{}}; if(m.p&&typeof m.p==='object') v.p=m.p; v.micActive=!!m.mic; v.speaking=!!m.sp; v.fast=Date.now(); peers.set(m.id,v);
       if(Array.isArray(m.v)&&m.v.length) playRemoteVoiceChunks(m.v.map(c=>({sr:c.sr,b64:c.b64,from:m.id}))); emitSoon(); }
-    else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); } }
+    else if(m.t==='bye'&&m.id){ peers.delete(m.id); localVoiceState.ringBuffers.delete(m.id); emitSoon(); }
+    else if(m.t==='b'&&m.id&&m.id!==me&&m.d){ try{ window.__clsRecv?.(m.d,m.id); }catch(err){ console.warn(err); } } }
   // ten times a second: what changed, plus any voice; when nothing changes, a heartbeat every 2.5 s
   function tick(){ if(!wsOpen||!cur||closed) return; const now=Date.now(), voice=outgoingVoiceChunks.splice(0,8);
     const st={...cur,vc:micEnabled}, k=JSON.stringify(st), changed=k!==lastKey;
@@ -4171,7 +4177,7 @@ async function cfRoom(){
       // a busy page (the house just built, a slow phone) can hold the 'open' event back past the timer: an opened or still
       // connecting socket gets more time instead of being given up
       let waits=0; const sock=ws, check=()=>{ if(wsOpen||sock!==ws) return; if(sock.readyState===1||(sock.readyState===0&&waits++<2)){ to=setTimeout(check,3500); return; } try{ sock.close(); }catch{} fin(false); }; let to=setTimeout(check,first?6000:5000);
-      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); };
+      sock.onopen=()=>{ if(sock!==ws) return; clearTimeout(to); wsOpen=true; lastRx=Date.now(); retry=0; clearTimeout(offlineT); NET.st=`房間 ${playRoom}`; lastKey=''; voiceUI(); tick(); fin(true); setTimeout(()=>window.__clsHello?.(),400); };
       sock.onmessage=e=>{ if(sock===ws) onMsg(e); };
       sock.onclose=ev=>{ if(sock!==ws) return; clearTimeout(to); const was=wsOpen; wsOpen=false; fin(false); if(closed||(first&&!was)) return;
         NET.st='重新連線中'; NET.errs++; renderPeople(); later(); };
@@ -4181,6 +4187,8 @@ async function cfRoom(){
     if(!offlineT) offlineT=setTimeout(()=>{ offlineT=null; if(!wsOpen){ peers.clear(); localVoiceState.ringBuffers.clear(); emit(); } },15000); }
   if(!(await connect(true))){ closed=true; throw new Error('vr server unavailable'); }
   NET.peers=peers; voiceUI();
+  // shared things in a room (the schoolroom's blackboard and projection): relayed to the others as they are
+  NET.bcast=(d,to)=>{ if(!wsOpen||!ws||closed) return false; const s=JSON.stringify(to?{t:'b',d,to}:{t:'b',d}); if(s.length>900000) return false; try{ ws.send(s); return true; }catch{ return false; } };
   mpTimer=setInterval(tick,100);
   // every 4 s a ping (the server answers at once); nothing heard for 10 s means the line is dead even if the browser
   // hasn't noticed yet: drop it and open a new one
@@ -4191,7 +4199,7 @@ async function cfRoom(){
 
   function disconnect(){
     if(closed) return; closed=true;
-    if(mpTimer){ clearInterval(mpTimer); mpTimer=null; } clearInterval(keep); clearTimeout(retryT); clearTimeout(offlineT); clearTimeout(emitT);
+    NET.bcast=null; if(mpTimer){ clearInterval(mpTimer); mpTimer=null; } clearInterval(keep); clearTimeout(retryT); clearTimeout(offlineT); clearTimeout(emitT);
     disableVoiceMic(); localVoiceState.ringBuffers.clear();
     if(voiceHud) voiceHud.innerHTML='';
     window.__toggleVoiceMic=null;
@@ -5065,6 +5073,13 @@ await __yield(0.9);
    Every line can be changed in the back office (_data/vr.yml › npc); these are the defaults. */
 const NPC_DYN=[];
 const NPC_TXT={
+  'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
+  'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
+  'cls.undo':['復原','清空'],'cls.clearq':['再按一次清空',''],'cls.cleared':['黑板被擦乾淨了。',''],'cls.load':['貼上圖片',''],'cls.export':['存成圖片','匯出文字'],
+  'cls.notext':['黑板上沒有打字的內容。','文字已下載，也複製到剪貼簿。'],'cls.texthint':['在教室的人都看得到黑板。打字：點黑板上的位置再輸入，Enter 寫上去、Shift+Enter 換行、Esc 取消。大家離開後黑板就清空。',''],
+  'cls.proj':['投影',''],'cls.file':['開啟檔案（PDF、圖片、PPTX）','載入網址'],'cls.nav':['上一頁','下一頁'],'cls.screen':['放下布幕','收起布幕'],'cls.screened':['布幕放下了。','布幕收起來了。'],
+  'cls.laser':['雷射筆','停止投影'],'cls.loading':['讀取中…',''],'cls.err':['這個檔案讀不出來。','舊式 .ppt 無法讀取，請另存成 PDF 或 PPTX。'],'cls.urlerr':['這個網址不讓別的網站讀取，請先下載再開啟。',''],
+  'cls.projhint':['投影的畫面大家都看得到；只有開檔的人能翻頁（← → 也可以）。PPTX 只顯示文字與圖片。勾雷射筆後，在上面的畫面移動滑鼠。',''],'cls.vr':['請在電腦或手機上操作。',''],
   'who.yu':['林玉','玉姨'],'who.xu':['許文欽','許總管'],'who.chun':['陳春','阿春'],'who.shui':['吳水生','水生叔'],'who.huo':['黃金火','火師'],'who.cai':['蔡進財','阿財'],
   'yu.first':['您是來吃茶的？前頭廊下那位是許總管。慢一步，門檻有點高。','頭一回來吧？先到前廊找許總管。門檻高，腳抬一下。'],
   'yu.again':['您又來啦。裡頭請。','我才把門埕掃好。來，這邊走。'],
@@ -5463,6 +5478,9 @@ const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}, KFIRE
 Object.assign(NP,{noodle:{x:45.62,z:1.78},hob:{x:45.62,z:-2.72},sink:{x:45.62,z:-.05},pass:{x:45.62,z:-1.6},dineDoor:{x:41.25,z:-.3},tableDrop:{x:40.62,z:-1.3}});
 // click texts: back office (_data/vr.yml › texts) first, these when it is blank
 for(const [key,title,body] of [
+  ['clsshelf','矮書櫃','窗下的矮書櫃，線裝書平放成疊，幾個藍布書套，櫃頂擱著三卷書畫。'],
+  ['clsdesk','課桌','雙人課桌，桌下有放書的隔板，兩側有掛書包的銅鉤。點椅子坐下。'],
+  ['clstdesk','講桌','講台中間的長講桌。點筆電開投影，點黑板寫字。'],
   ['kstove','大灶','紅磚砌的老灶，兩個灶口：大鼎上疊著竹蒸籠，另一口燒水。灶後的煙囪穿出屋頂，開伙時院子裡看得見煙。'],
   ['kzaojun','司命灶君','灶上方的小龕供著灶君，一年到頭看顧這一家的三餐。年底送神，正月初四再迎回來。'],
   ['knoodle','煮麵爐','嵌在檯面裡的煮麵爐：一池滾水、六個麵篩，長柄掛在後面的橫桿上。開伙時水氣直冒。'],
@@ -6168,6 +6186,369 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     L([[0,0],[.07,0],[.09,.05],[.07,.1],[.03,.11]],mat(0x8a4b32,.35),DINE.x+.38,Y,DINE.z-.2,g); for(let i=0;i<3;i++) L([[0,0],[.022,0],[.032,.04]],porcelain,DINE.x+.3+i*.08,Y,DINE.z-.36,g);
     sets.x=merged(g); sets.x.visible=true; }
   DINE.sets=sets;
+  // ------------------------------------------------------------ 二進西廂南間：教室
+  // A schoolroom along the long axis: the platform, blackboard and roller screen against the solid west wall, the teacher's
+  // desk in the middle of the platform, five double desks in two columns facing it (the door side keeps its front place
+  // free so the doorway stays clear), a low bookcase under the court window, a projector hung from the roof. The blackboard
+  // and the projection are shared by everyone in the house at the time; nothing is kept once everyone has gone.
+  { const X0=CLS_PLAT.x0, X1=CLS_PLAT.x1, Z0=15.6, Z1=CLS_PLAT.z1, XC=(X0+X1)/2, PZ=CLS_PLAT.z0, PH=CLS_PLAT.h;
+    const BW=3.2, BH=1.25, BY0=PH+.95, BY=BY0+BH/2, SW=3.2, SH=1.8, STOP=2.905, SZ=Z1-.155;
+    const roof=z=>5.88-.5*Math.abs(z-19.6)-.06;
+    const wl=WD_WAL, dk=WD_WALD, hd=WD_HHD, metal=mat(0x2b2b2d,.55,{metalness:.35}), felt=mat(0x6c6a66,.95), cream=mat(0xefe6cf,.85), blueCover=mat(0x2f3d57,.8), blueCover2=mat(0x3d4a5e,.8), inkM=mat(0x1d1c1b,.45);
+    // ---- platform: walnut boards, 15 cm, a darker nosing along the front
+    B(X1-X0,PH,Z1-PZ,wl.H,XC,PH/2,(PZ+Z1)/2,scene,{type:'floor'});
+    B(X1-X0,.03,.045,dk.H,XC,PH-.012,PZ+.02);
+    // ---- the blackboard: slate green in a dark walnut frame, a chalk tray below
+    const BCV=document.createElement('canvas'); BCV.width=2048; BCV.height=800;
+    const BG=document.createElement('canvas'); BG.width=2048; BG.height=800;
+    { const g=BG.getContext('2d'); g.fillStyle='#2c3a32'; g.fillRect(0,0,2048,800); let s=11; const r=()=>((s=s*16807%2147483647)/2147483647);
+      for(let i=0;i<46;i++){ const x=r()*2048, y=r()*800, R=80+r()*280, gr=g.createRadialGradient(x,y,0,x,y,R); gr.addColorStop(0,`rgba(222,228,218,${.02+r()*.035})`); gr.addColorStop(1,'rgba(222,228,218,0)'); g.fillStyle=gr; g.fillRect(x-R,y-R,2*R,2*R); }
+      for(let i=0;i<30000;i++){ g.fillStyle=r()<.5?`rgba(255,255,255,${r()*.05})`:`rgba(0,0,0,${r()*.09})`; g.fillRect(r()*2048,r()*800,1+r()*1.6,1+r()*1.6); } }
+    const bx=BCV.getContext('2d'); bx.drawImage(BG,0,0); const bgPat=bx.createPattern(BG,'no-repeat');
+    const boardTex=new THREE.CanvasTexture(BCV); boardTex.colorSpace=THREE.SRGBColorSpace; boardTex.anisotropy=MAXANI;
+    const boardM=new THREE.MeshStandardMaterial({map:boardTex,roughness:.86,emissive:0xffffff,emissiveMap:boardTex,emissiveIntensity:.14});
+    const pkB={type:'clsboard'};
+    const slate=plane(BW,BH,boardM,XC,BY,Z1-.035,Math.PI,scene,pkB); slate.receiveShadow=true; NPC_DYN.push(slate);
+    { const fw=.08, fd=.06, fz=Z1-fd/2;
+      B(BW+2*fw,fw,fd,dk.H,XC,BY0-fw/2,fz,scene,pkB); B(BW+2*fw,fw,fd,dk.H,XC,BY0+BH+fw/2,fz,scene,pkB);
+      B(fw,BH,fd,dk.V,XC-BW/2-fw/2,BY,fz,scene,pkB); B(fw,BH,fd,dk.V,XC+BW/2+fw/2,BY,fz,scene,pkB);
+      const ty=BY0-fw; B(BW+.12,.022,.11,dk.H,XC,ty-.011,Z1-.055,scene,pkB); B(BW+.12,.028,.014,dk.H,XC,ty+.003,Z1-.106,scene,pkB);
+      [[0xf3f0e6,-1.25],[0xf2d36a,-1.16],[0xe07a68,-1.07],[0x86b2de,-.98],[0xf3f0e6,.95]].forEach(([c,dx],i)=>{ const ch=C(.0065,.0065,.075,mat(c,.95),XC+dx,ty+.0065,Z1-.07+(i%2)*.012,scene,8,pkB); ch.rotation.z=Math.PI/2; ch.rotation.y=(i-2)*.12; });
+      B(.13,.026,.05,mat(0xc9a77a,.7),XC+1.2,ty+.024,Z1-.07,scene,pkB); B(.13,.012,.05,felt,XC+1.2,ty+.006,Z1-.07,scene,pkB); }
+    // ---- the roller screen in a walnut box above the board; it comes down over the board, a weighted bar at its foot
+    B(SW+.26,.15,.17,dk.H,XC,STOP+.075,Z1-.085); for(const sx of [-1,1]) B(.03,.17,.19,dk.V,XC+sx*(SW/2+.145),STOP+.075,Z1-.095);
+    const PCV=document.createElement('canvas'); PCV.width=1920; PCV.height=1080; const px=PCV.getContext('2d'); px.fillStyle='#111'; px.fillRect(0,0,1920,1080);
+    const projTex=new THREE.CanvasTexture(PCV); projTex.colorSpace=THREE.SRGBColorSpace; projTex.anisotropy=MAXANI;
+    const scrGeo=new THREE.PlaneGeometry(SW,SH); scrGeo.translate(0,-SH/2,0);
+    const scrM=new THREE.MeshBasicMaterial({color:0xe9e6de}), scr=new THREE.Mesh(scrGeo,scrM); scr.rotation.y=Math.PI; scr.position.set(XC,STOP,SZ); scr.visible=false; scene.add(scr); scr.userData={type:'clsproj'}; pickables.push(scr); NPC_DYN.push(scr);
+    const bar=B(SW+.06,.032,.032,dk.H,XC,STOP-.016,SZ); bar.userData={type:'clsscreen'}; pickables.push(bar); NPC_DYN.push(bar);
+    // ---- the projector, hung from the roof on a rod, and its faint beam
+    const PJZ=20.0, PJY=3.0, lens=new THREE.Vector3(XC,PJY-.01,PJZ+.16);
+    { const pk={type:'clsproj'}, pj=new THREE.Group(); scene.add(pj);
+      B(.3,.1,.27,metal,XC,PJY,PJZ,pj,pk); B(.24,.012,.2,mat(0x3a3a3c,.5,{metalness:.4}),XC,PJY+.056,PJZ,pj);
+      const ln=C(.038,.042,.04,mat(0x111112,.25,{metalness:.5}),lens.x,lens.y,PJZ+.145,pj,20,pk); ln.rotation.x=Math.PI/2;
+      const gl=new THREE.Mesh(new THREE.CircleGeometry(.028,20),mat(0x334455,.1,{metalness:.6})); gl.position.set(lens.x,lens.y,PJZ+.166); pj.add(gl);
+      C(.012,.012,roof(PJZ)-(PJY+.05),metal,XC,(roof(PJZ)+PJY+.05)/2,PJZ,pj,8); B(.12,.01,.12,metal,XC,PJY+.055,PJZ,pj); }
+    const beamG=new THREE.BufferGeometry(); { const L=lens, a=[XC-SW/2,STOP,SZ+.003], b=[XC+SW/2,STOP,SZ+.003], c=[XC+SW/2,STOP-SH,SZ+.003], d=[XC-SW/2,STOP-SH,SZ+.003], l=[L.x,L.y,L.z];
+      beamG.setAttribute('position',new THREE.Float32BufferAttribute([...l,...a,...b, ...l,...b,...c, ...l,...c,...d, ...l,...d,...a],3)); }
+    const beam=new THREE.Mesh(beamG,new THREE.MeshBasicMaterial({color:0xfff3dc,transparent:true,opacity:.045,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending})); beam.visible=false; scene.add(beam); NPC_DYN.push(beam);
+    const laser=new THREE.Mesh(new THREE.PlaneGeometry(.07,.07),new THREE.MeshBasicMaterial({map:SOFT_TEX,color:0xff2a1a,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending})); laser.rotation.y=Math.PI; laser.visible=false; scene.add(laser); NPC_DYN.push(laser);
+    // ---- a brass lever beside the board raises and lowers the screen
+    const lever=new THREE.Group(); lever.position.set(XC+BW/2+.42,PH+1.3,Z1-.03); scene.add(lever); NPC_DYN.push(lever);
+    { const pk={type:'clsscreen'}; B(.11,.24,.024,dk.V,XC+BW/2+.42,PH+1.3,Z1-.012,scene,pk); B(.016,.15,.006,inkM,XC+BW/2+.42,PH+1.3,Z1-.026);
+      const rod=C(.007,.007,.11,brass,0,.055,-.012,lever,8,pk); const kn=new THREE.Mesh(new THREE.SphereGeometry(.018,12,10),brass); kn.position.set(0,.11,-.012); lever.add(kn); kn.userData=pk; pickables.push(kn); }
+    // ---- teacher's desk in the middle of the platform: a long walnut desk with a front panel, drawers on the teacher's side
+    const TDZ=22.33, TW=1.86, TD=.68, TH=PH+.82, TTOP=TH+.0225;
+    { const pk={type:'clstdesk'};
+      B(TW,.045,TD,dk.H,XC,TH,TDZ,scene,pk);
+      for(const sx of [-1,1]){ const cx=XC+sx*(TW/2-.24); B(.44,TH-PH-.06,TD-.06,dk.V,cx,PH+(TH-PH-.06)/2,TDZ,scene,pk);
+        for(const [y,h] of [[PH+.6,.16],[PH+.36,.26]]){ B(.38,h-.03,.012,dk.H,cx,y,TDZ+TD/2-.024); const rg=new THREE.Mesh(new THREE.TorusGeometry(.018,.003,6,14),brass); rg.position.set(cx,y-.01,TDZ+TD/2-.012); scene.add(rg); C(.008,.008,.012,brass,cx,y+.012,TDZ+TD/2-.016,scene,8).rotation.x=Math.PI/2; } }
+      B(TW-.92,.62,.024,dk.H,XC,PH+.46,TDZ-TD/2+.06,scene,pk); B(TW-.92,.06,.03,dk.H,XC,TH-.055,TDZ-TD/2+.03);
+      B(TW-.92,.012,.036,brass,XC,TH-.09,TDZ-TD/2+.03);
+      OB(XC-TW/2,XC+TW/2,TDZ-TD/2,TDZ+TD/2); }
+    // the desk top: books and an open book on the left, brush pot and inkstone, a laptop, the tea things on the right
+    { const T0=TTOP, book=(x,z,w,d,h,m,ry=0)=>{ const b=B(w,h,d,m,x,T0+h/2,z); b.rotation.y=ry; B(w-.008,h*.8,d+.002,cream,x,T0+h/2,z).rotation.y=ry; return b; };
+      let y=0; for(const [h,m,r] of [[.02,blueCover,.02],[.016,blueCover2,-.03],[.022,blueCover,.04],[.015,blueCover2,0]]){ const b=B(.19,h,.27,m,XC-.72,T0+y+h/2,TDZ+.02); b.rotation.y=r; y+=h; }
+      y=0; for(const [h,m,r] of [[.018,blueCover2,-.05],[.02,blueCover,.03]]){ const b=B(.19,h,.27,m,XC-.48,T0+y+h/2,TDZ-.06); b.rotation.y=r; y+=h; }
+      const ob=new THREE.Group(); ob.position.set(XC-.2,T0,TDZ+.1); ob.rotation.y=.08; scene.add(ob);
+      for(const s of [-1,1]){ const pg=B(.17,.008,.25,cream,s*.086,.012,0,ob); pg.rotation.z=-s*.06; } B(.36,.004,.26,blueCover,0,.002,0,ob); B(.2,.012,.022,brass,0,.03,.1,ob);
+      const pot=L([[0,0],[.036,0],[.036,.13],[.033,.13],[.033,.008],[0,.008]],mat(0x6b4a2e,.6),XC-.86,T0,TDZ+.2);
+      for(let i=0;i<4;i++){ const br=C(.004,.0035,.24,mat(0x8a6a3a,.6),XC-.86+Math.cos(i*1.7)*.014,T0+.17,TDZ+.2+Math.sin(i*1.7)*.014,scene,6); br.rotation.set(Math.sin(i)*.12,0,Math.cos(i*2)*.1); }
+      B(.12,.022,.18,inkM,XC-.55,T0+.011,TDZ+.22); B(.09,.006,.06,mat(0x0e0e0e,.2),XC-.55,T0+.023,TDZ+.17);
+      // laptop: keyboard toward the teacher, the lid shows what is being projected
+      const LX=XC+.24, LZ=TDZ+.1; B(.33,.016,.23,mat(0x3b3d40,.35,{metalness:.55}),LX,T0+.008,LZ,scene,{type:'clslaptop'}); B(.29,.002,.11,mat(0x202124,.6),LX,T0+.017,LZ+.03);
+      const lid=new THREE.Group(); lid.position.set(LX,T0+.016,LZ-.112); lid.rotation.x=-.22; scene.add(lid);
+      B(.33,.22,.008,mat(0x3b3d40,.35,{metalness:.55}),0,.11,-.004,lid,{type:'clslaptop'});
+      const lapM=new THREE.MeshBasicMaterial({color:0x1b2026}), lap=plane(.3,.19,lapM,0,.115,.0005,0,lid,{type:'clslaptop'}); NPC_DYN.push(lid);
+      B(.025,.012,.08,mat(0x1c1c1e,.4),LX+.26,T0+.006,LZ+.06,scene,{type:'clslaptop'});
+      // tea: a tray, a zisha pot, three cups; a small box of drawers
+      B(.34,.02,.22,mat(0x5b3a24,.5),XC+.66,T0+.01,TDZ+.08); L([[0,0],[.05,0],[.062,.04],[.05,.08],[.02,.09],[0,.09]],zisha,XC+.6,T0+.02,TDZ+.08);
+      C(.008,.006,.05,zisha,XC+.66,T0+.07,TDZ+.08,scene,6).rotation.z=-1.0;
+      for(let i=0;i<3;i++) L([[0,0],[.018,0],[.026,.035],[.024,.036]],celadonGlaze,XC+.73+(i%2)*.06,T0+.02,TDZ+.02+i*.06);
+      B(.18,.1,.12,mat(0x6e4a2e,.55),XC+.8,T0+.05,TDZ+.24); for(let i=0;i<2;i++) B(.16,.004,.004,brass,XC+.8,T0+.03+i*.045,TDZ+.181);
+      CLS_LAP.m=lapM; }
+    // teacher's armchair between the desk and the board, facing the class
+    const tsi=addSeat(XC,23.06,0,'clst',NT('cls.seat',1)); SEATS[tsi].ap={x:XC+1.25,z:23.06};
+    { const pk={type:'seat',si:tsi}, sy=PH+.47, z=23.06, w=.56, d=.48, bz=z+d/2-.03;
+      B(w,.035,d,hd.H,XC,sy-.017,z,scene,pk);
+      for(const sx of [-1,1]){ B(.04,sy-PH-.03,.04,hd.V,XC+sx*(w/2-.03),PH+(sy-PH-.03)/2,z-d/2+.03,scene,pk); B(.04,sy+.64-PH,.04,hd.V,XC+sx*(w/2-.03),(sy+.64+PH)/2,bz,scene,pk);
+        B(.04,.24,.035,hd.V,XC+sx*(w/2-.03),sy+.12,z-d/2+.03,scene,pk); B(.035,.03,d,hd.H,XC+sx*(w/2-.03),sy+.25,z,scene,pk); }
+      B(w+.12,.045,.05,hd.H,XC,sy+.64,bz,scene,pk); B(.2,.5,.02,hd.V,XC,sy+.33,bz+.005,scene,pk);
+      for(const zz of [z-d/2+.03,bz]) B(w-.06,.03,.025,hd.H,XC,PH+.14,zz); }
+    // ---- the class: double desks in two columns, the door side without a front desk
+    const ROWS=[20.7,19.15,17.6], COLS=[[X0+.42+.725,[1,2]],[X1-.42-.725,[0,1,2]]], DW=1.45, DD=.6, DH=.75;
+    let sd=7; const rr=()=>((sd=sd*16807%2147483647)/2147483647);
+    for(const [cx,rows] of COLS) for(const ri of rows){ const cz=ROWS[ri], pk={type:'clsdesk'};
+      B(DW,.035,DD,wl.H,cx,DH-.0175,cz,scene,pk);
+      for(const sx of [-1,1]){ for(const sz of [-1,1]) B(.05,DH-.035,.05,wl.V,cx+sx*(DW/2-.05),(DH-.035)/2,cz+sz*(DD/2-.05));
+        B(.024,.08,DD-.1,wl.H,cx+sx*(DW/2-.05),DH-.075,cz); B(.03,.03,DD-.1,wl.H,cx+sx*(DW/2-.05),.13,cz);
+        const hk=C(.005,.005,.05,brass,cx+sx*(DW/2+.02),DH-.13,cz-.12,scene,6); hk.rotation.z=Math.PI/2; }
+      B(DW-.1,.08,.024,wl.H,cx,DH-.075,cz+DD/2-.05); B(DW-.1,.03,.03,wl.H,cx,.13,cz+DD/2-.05); B(DW-.12,.016,.27,wl.H,cx,.6,cz+.12);
+      OB(cx-DW/2,cx+DW/2,cz-DD/2,cz+DD/2);
+      for(const sx of [-1,1]){ const x=cx+sx*.36, z=cz-.65, si=addSeat(x,z,Math.PI,'cls',NT('cls.seat',0)); SEATS[si].ap={x,z:z-.32};
+        const sp={type:'seat',si}, sy=.45, w=.42, d=.4, bz=z-d/2+.03;
+        B(w,.03,d,hd.H,x,sy-.015,z,scene,sp);
+        for(const s2 of [-1,1]){ B(.035,sy-.03,.035,hd.V,x+s2*(w/2-.03),(sy-.03)/2,z+d/2-.03,scene,sp); B(.035,sy+.5,.035,hd.V,x+s2*(w/2-.03),(sy+.5)/2,bz,scene,sp); B(.025,.025,d-.06,hd.H,x+s2*(w/2-.03),.16,z); }
+        B(w+.04,.04,.045,hd.H,x,sy+.5,bz,scene,sp); B(.15,.4,.018,hd.V,x,sy+.26,bz-.004,scene,sp); B(w-.06,.025,.02,hd.H,x,.16,z+d/2-.03);
+        // on the desk: a thread-bound book, a pad of paper with a brush, a small inkstone
+        const T=DH, bk=B(.17,.016,.24,rr()<.5?blueCover:blueCover2,x-.12+rr()*.04,T+.008,cz-.06+rr()*.04); bk.rotation.y=(rr()-.5)*.3;
+        if(rr()<.5){ const b2=B(.17,.014,.24,blueCover2,bk.position.x+.01,T+.023,bk.position.z-.01); b2.rotation.y=(rr()-.5)*.4; }
+        const pp=B(.2,.006,.27,cream,x+.1,T+.003,cz-.08); pp.rotation.y=(rr()-.5)*.15;
+        const br=C(.0035,.003,.2,mat(0x8a6a3a,.6),x+.1,T+.01,cz-.08,scene,6); br.rotation.set(Math.PI/2,0,(rr()-.5)*.5);
+        B(.07,.014,.1,inkM,x+.04,T+.007,cz+.15); } }
+    // ---- a low bookcase under the court window: thread-bound books stacked flat, cloth cases, a few scrolls on top
+    { const x0=X0+.4, x1=X1-.4, W=x1-x0, z=Z0+.18, H=.8, pk={type:'clsshelf'};
+      B(W,.03,.37,dk.H,(x0+x1)/2,H-.015,z,scene,pk); B(W,.06,.33,dk.H,(x0+x1)/2,.03,z); B(W,.02,.34,dk.H,(x0+x1)/2,.41,z,scene,pk); B(W,H-.03,.015,dk.H,(x0+x1)/2,(H-.03)/2,Z0+.008);
+      for(let i=0;i<=3;i++) B(.03,H-.03,.35,dk.V,x0+.015+i*(W-.03)/3,(H-.03)/2,z,scene,pk);
+      for(let i=0;i<3;i++) for(const [y0,y1] of [[.06,.4],[.42,H-.03]]){ let cx=x0+.06+i*(W-.03)/3, end=x0+(i+1)*(W-.03)/3-.04;
+        while(cx+.2<end){ if(rr()<.3){ const hh=Math.min(y1-y0-.03,.07+rr()*.06); B(.2,hh,.28,mat(rr()<.5?0x23324a:0x4a3a2a,.85),cx+.1,y0+hh/2,z+.01,scene,pk); }
+          else { let yy=y0; const n=2+Math.floor(rr()*6); for(let k=0;k<n&&yy<y1-.05;k++){ const h=.012+rr()*.01; const b=B(.19,h,.27,rr()<.5?blueCover:blueCover2,cx+.1,yy+h/2,z+.01,scene,pk); b.rotation.y=(rr()-.5)*.08; yy+=h; } }
+          cx+=.23; } }
+      for(let i=0;i<3;i++){ const sc=C(.022+i*.004,.022+i*.004,.5,mat([0xd9cba8,0xc9b48a,0xe2d6b8][i],.85),x0+.6+i*.07,H+.025+i*.0,z-.05+i*.055,scene,14,pk); sc.rotation.z=Math.PI/2; for(const e of [-1,1]) C(.012,.012,.03,mat(0x4a2c1a,.5),x0+.6+i*.07+e*.265,H+.025,z-.05+i*.055,scene,8).rotation.z=Math.PI/2; }
+      OB(x0,x1,Z0,Z0+.36); }
+    // ---- light: two pendant lamps over the desks and one over the platform; dimmed over the platform while projecting
+    const lamps=[];
+    for(const [x,z,y] of [[COLS[0][0],18.4,2.68],[COLS[1][0],18.4,2.68],[XC,22.0,2.75]]){
+      C(.004,.004,roof(z)-y-.18,mat(0x1a1a1a,.6),x,(roof(z)+y+.18)/2,z,scene,6);
+      L([[0,.2],[.03,.2],[.05,.17],[.12,.08],[.17,0],[.165,-.005],[.11,.07],[.04,.15],[0,.16]],mat(0xf2ead8,.6,{side:THREE.DoubleSide,emissive:0xffdcaa,emissiveIntensity:.35}),x,y,z);
+      const bulb=new THREE.Mesh(new THREE.SphereGeometry(.04,12,10),mat(0xfff4dc,.4,{emissive:0xffe2b0,emissiveIntensity:1.4})); bulb.position.set(x,y+.06,z); scene.add(bulb);
+      const l=new THREE.PointLight(0xffd9ac,NIGHT?1.05:.45,6.5,2); l.position.set(x,y-.05,z); scene.add(l); lamps.push(l); }
+    CLS_ROOM.lamps=lamps; CLS_ROOM.base=lamps.map(l=>l.intensity);
+    Object.assign(CLS_ROOM,{BCV,BG,bx,bgPat,boardTex,PCV,px,projTex,scr,scrM,bar,beam,laser,lever,SW,SH,STOP,SZ,XC,lap:CLS_LAP}); }
+}
+// ------------------------------------------------------------ 教室：黑板、投影、多人同步
+// The blackboard is a list of strokes, words and pictures; the projection is one picture at a time. Both go to everyone in
+// the house as they happen (through the house server's relay), and someone already here hands a newcomer what is on the
+// board when they arrive. Nothing is stored anywhere else: when the last person leaves, the board is gone.
+SEAT_KIND.cls={eye:1.12,pitch:-.04,front:false,sink:-.42,get label(){ return NT('cls.label',0); },get hello(){ return NT('cls.hello',0); },status:()=>NT('cls.status',0)};
+SEAT_KIND.clst={eye:1.27,pitch:-.3,front:false,sink:-.27,get label(){ return NT('cls.label',1); },get hello(){ return NT('cls.hello',1); },status:()=>NT('cls.status',1)};
+{ const R=CLS_ROOM, W=2048, H=800, bx=R.bx;
+  const COLORS=['#f3f0e6','#f2d36a','#e7806e','#8db6e0'], WIDTHS=[5,9,16], SIZES=[56,84,124];
+  const list=k=>String(NT(k,0)||'').split(/[,，、]/).map(s=>s.trim());
+  const ST={ops:[],tool:'pen',color:0,width:1,size:1,vert:false,mine:[]}; let seq=0, dirty=false;
+  const uid=()=>MY_PID.slice(0,8)+'-'+(seq++).toString(36)+'-'+Math.random().toString(36).slice(2,6);
+  const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'cls'},d),to)); }catch{ return false; } };
+  const rngOf=s=>{ let h=2166136261; for(const c of String(s)) h=Math.imul(h^c.charCodeAt(0),16777619); return ()=>((h=Math.imul(h^(h>>>15),2246822507)>>>0)/4294967296); };
+  // ---- drawing
+  function seg(op,i){ const p=op.p, x0=p[i-2]/1e4*W, y0=p[i-1]/1e4*H, x1=p[i]/1e4*W, y1=p[i+1]/1e4*H, w=WIDTHS[op.w]||8, r=rngOf(op.id+i), L=Math.hypot(x1-x0,y1-y0);
+    bx.save(); bx.lineCap=bx.lineJoin='round';
+    if(op.e){ bx.strokeStyle=R.bgPat; bx.lineWidth=w*4; bx.beginPath(); bx.moveTo(x0,y0); bx.lineTo(x1,y1); bx.stroke();
+      bx.strokeStyle='rgba(225,230,220,.025)'; bx.lineWidth=w*4.4; bx.stroke(); bx.restore(); return; }
+    bx.strokeStyle=COLORS[op.c]||COLORS[0]; bx.globalAlpha=.72; bx.lineWidth=w*.82; bx.beginPath(); bx.moveTo(x0,y0); bx.lineTo(x1,y1); bx.stroke();
+    bx.globalAlpha=.55; bx.fillStyle=COLORS[op.c]||COLORS[0]; const n=Math.ceil(L*w*.09)+2;
+    for(let k=0;k<n;k++){ const t=r(), a=r()*Math.PI*2, d=r()*w*.62; bx.fillRect(x0+(x1-x0)*t+Math.cos(a)*d,y0+(y1-y0)*t+Math.sin(a)*d,1+r()*1.6,1+r()*1.6); }
+    bx.globalAlpha=1; bx.fillStyle=R.bgPat; const g=Math.ceil(L*w*.05)+1;
+    for(let k=0;k<g;k++){ const t=r(), a=r()*Math.PI*2, d=r()*w*.42; bx.fillRect(x0+(x1-x0)*t+Math.cos(a)*d,y0+(y1-y0)*t+Math.sin(a)*d,1+r()*1.4,1+r()*1.4); }
+    bx.restore(); }
+  function dot(op){ const x=op.p[0]/1e4*W, y=op.p[1]/1e4*H, w=WIDTHS[op.w]||8; bx.save(); bx.fillStyle=op.e?R.bgPat:(COLORS[op.c]||COLORS[0]); bx.globalAlpha=op.e?1:.72; bx.beginPath(); bx.arc(x,y,(op.e?w*2:w*.41),0,Math.PI*2); bx.fill(); bx.restore(); }
+  const FONT='"Kaiti TC","BiauKai","STKaiti","KaiTi","DFKai-SB","TW-Kai","Noto Serif TC",serif';
+  function drawText(op){ const s=SIZES[op.s]||70, x=op.x/1e4*W, y=op.y/1e4*H, lines=String(op.tx||'').split('\n'), tc=document.createElement('canvas'); tc.width=W; tc.height=H; const g=tc.getContext('2d');
+    g.fillStyle=COLORS[op.c]||COLORS[0]; g.font=`${s}px ${FONT}`; g.textBaseline='top'; let x0,x1,y0=y,y1;
+    if(op.v){ lines.forEach((ln,j)=>[...ln].forEach((ch,k)=>g.fillText(ch,x-s-j*s*1.25+(s-g.measureText(ch).width)/2,y+k*s*1.08))); x0=x-lines.length*s*1.25; x1=x; y1=y+Math.max(...lines.map(l=>[...l].length))*s*1.08; }
+    else { lines.forEach((ln,j)=>g.fillText(ln,x,y+j*s*1.3)); x0=x; x1=x+Math.max(...lines.map(l=>g.measureText(l).width)); y1=y+lines.length*s*1.3; }
+    const r=rngOf(op.id), n=Math.min(60000,(x1-x0)*(y1-y0)*.012); g.globalCompositeOperation='destination-out';
+    for(let k=0;k<n;k++){ g.globalAlpha=.3+r()*.6; g.fillRect(x0+r()*(x1-x0),y0+r()*(y1-y0),1+r()*1.8,1+r()*1.8); }
+    bx.save(); bx.globalAlpha=.92; bx.drawImage(tc,0,0); bx.restore(); }
+  const IMG=new Map();
+  function drawImg(op){ let im=IMG.get(op.id); if(!im){ im=new Image(); im.onload=()=>{ im.ok=true; redraw(); }; im.src=op.src; IMG.set(op.id,im); return; } if(!im.ok) return;
+    bx.save(); bx.globalAlpha=op.raster?1:.92; bx.drawImage(im,op.x/1e4*W,op.y/1e4*H,op.w/1e4*W,op.h/1e4*H); bx.restore(); }
+  function drawOp(op){ if(op.t==='s'){ if(op.p.length===2) dot(op); for(let i=2;i<op.p.length;i+=2) seg(op,i); } else if(op.t==='t'){ if(!op.nd) drawText(op); } else if(op.t==='i') drawImg(op); }
+  function redraw(){ bx.drawImage(R.BG,0,0); for(const op of ST.ops) drawOp(op); dirty=true; }
+  const find=id=>ST.ops.find(o=>o.id===id);
+  // ---- changes, wherever they come from
+  function apply(d,from){ if(d.o==='sp'){ let op=find(d.id); if(!op){ op={t:'s',id:d.id,u:d.u,c:d.c|0,w:d.w|0,e:!!d.e,p:[]}; ST.ops.push(op); }
+      const at=op.p.length; for(const v of (Array.isArray(d.p)?d.p:[])) op.p.push(+v||0); if(op.p.length===2&&at===0) dot(op); for(let i=Math.max(2,at);i<op.p.length;i+=2) seg(op,i); dirty=true; return; }
+    if(d.o==='op'&&d.op&&d.op.id&&!find(d.op.id)){ ST.ops.push(d.op); drawOp(d.op); dirty=true; return; }
+    if(d.o==='undo'){ const i=ST.ops.findIndex(o=>o.id===d.id); if(i>=0){ ST.ops.splice(i,1); redraw(); } return; }
+    if(d.o==='clr'){ ST.ops=[]; ST.mine=[]; IMG.clear(); redraw(); if(from) toast(NT('cls.cleared',0)); return; } }
+  window.__clsBoard=()=>({ops:ST.ops.length});
+  // ---- the editor
+  const css=document.createElement('style'); css.textContent=`
+#clsui{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(24,20,16,.5);font-family:"Noto Serif TC",serif}
+#clsui.hide{display:none}
+#clsui .box{background:#f4efe4;color:#2b2621;border:1px solid #cfc6b4;padding:10px 12px 12px;max-width:min(1240px,97vw);width:100%;box-sizing:border-box;max-height:97vh;overflow:auto}
+#clsui .bar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:8px;font-size:13px}
+#clsui .bar .t{font-size:15px;letter-spacing:.15em;margin-right:6px}
+#clsui .bar .sp{flex:1}
+#clsui button,#clsui select,#clsui input[type=text],#clsui input[type=number]{font:inherit;font-size:13px;color:#2b2621;background:#fbf8f1;border:1px solid #cfc6b4;padding:3px 8px;border-radius:2px;cursor:pointer}
+#clsui button.on{background:#2b2621;color:#f4efe4;border-color:#2b2621}
+#clsui button.sw{width:22px;height:22px;padding:0;border-radius:50%;border:2px solid #cfc6b4}
+#clsui button.sw.on{border-color:#2b2621;outline:1px solid #f4efe4;outline-offset:-4px}
+#clsui .grp{display:flex;gap:3px;align-items:center;padding-right:6px;margin-right:2px;border-right:1px solid #e0d8c8}
+#clsui .wrap{position:relative;line-height:0}
+#clsui canvas.main{width:100%;max-width:calc(78vh * 2.56);margin:0 auto;height:auto;touch-action:none;cursor:crosshair;display:block}
+#clsui textarea{position:absolute;background:rgba(30,40,34,.55);border:1px dashed rgba(240,236,226,.6);outline:none;resize:none;line-height:1.3;padding:0 2px;font-family:${FONT};overflow:hidden;min-width:2em;min-height:1.3em}
+#clsui .note{font-size:12px;color:#7a7066;margin-top:6px;line-height:1.6}
+#clsui .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:13px}
+#clsui .row input[type=text]{flex:1;min-width:160px;cursor:text}
+#clsui .pv{position:relative;line-height:0}
+#clsui .pv canvas{width:100%;max-width:calc(58vh * 16 / 9);height:auto;display:block;margin:0 auto}
+#clsui .pv.lz canvas{cursor:none}
+`; document.head.appendChild(css);
+  const ui=document.createElement('div'); ui.id='clsui'; ui.className='hide'; document.body.appendChild(ui);
+  let mode=null, ta=null;
+  const btn=(label,fn,cls='')=>{ const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.onclick=fn; return b; };
+  const grp=(...els)=>{ const g=document.createElement('div'); g.className='grp'; els.forEach(e=>g.append(e)); return g; };
+  function close(){ commitText(); ui.className='hide'; ui.innerHTML=''; mode=null; LZ.on=false; laserSend(null); }
+  function shell(title){ if(document.pointerLockElement) document.exitPointerLock(); ui.className=''; ui.innerHTML=''; const box=document.createElement('div'); box.className='box'; const bar=document.createElement('div'); bar.className='bar';
+    const t=document.createElement('span'); t.className='t'; t.textContent=title; bar.append(t); box.append(bar); ui.append(box); ui.onpointerdown=e=>{ if(e.target===ui) close(); }; return {box,bar}; }
+  // -- blackboard editor
+  function openBoard(){ if(renderer.xr.isPresenting){ toast(NT('cls.vr',0)); return; } mode='board'; const {box,bar}=shell(NT('cls.board',0));
+    const tools=grp(), cols=grp(), wid=grp(), act=grp(), io=grp();
+    const tb={pen:btn(NT('cls.pen',0),()=>setTool('pen')),eraser:btn(NT('cls.pen',1),()=>setTool('eraser')),text:btn(NT('cls.text',0),()=>setTool('text'))};
+    tools.append(tb.pen,tb.eraser,tb.text);
+    const vb=btn(NT('cls.text',1),()=>{ ST.vert=!ST.vert; vb.classList.toggle('on',ST.vert); commitText(); }); vb.classList.toggle('on',ST.vert); tools.append(vb);
+    const cnames=list('cls.colors'); const sws=COLORS.map((c,i)=>{ const b=btn('',()=>{ ST.color=i; sws.forEach((s,k)=>s.classList.toggle('on',k===i)); if(ST.tool==='eraser') setTool('pen'); if(ta) ta.style.color=COLORS[i]; },'sw'); b.style.background=c; b.title=cnames[i]||''; b.classList.toggle('on',i===ST.color); return b; }); cols.append(...sws);
+    const wnames=String(NT('cls.colors',1)).split(/[,，、]/); const wbs=WIDTHS.map((w,i)=>{ const b=btn((wnames[i]||'').trim(),()=>{ ST.width=i; ST.size=i; wbs.forEach((s,k)=>s.classList.toggle('on',k===i)); }); b.classList.toggle('on',i===ST.width); return b; }); wid.append(...wbs);
+    let clrArm=0; const cb=btn(NT('cls.undo',1),()=>{ if(Date.now()-clrArm>3000){ clrArm=Date.now(); cb.textContent=NT('cls.clearq',0); setTimeout(()=>{ if(cb.isConnected) cb.textContent=NT('cls.undo',1); },3000); return; } clrArm=0; cb.textContent=NT('cls.undo',1); apply({o:'clr'}); send({o:'clr'}); });
+    act.append(btn(NT('cls.undo',0),undo),cb);
+    const fi=document.createElement('input'); fi.type='file'; fi.accept='image/*'; fi.hidden=true; fi.onchange=()=>{ const f=fi.files&&fi.files[0]; fi.value=''; if(f) pasteImage(f); };
+    io.append(fi,btn(NT('cls.load',0),()=>fi.click()),btn(NT('cls.export',0),savePng),btn(NT('cls.export',1),saveTxt));
+    const sp=document.createElement('span'); sp.className='sp'; bar.append(tools,cols,wid,act,io,sp,btn(NT('cls.ui',1),close));
+    const wrap=document.createElement('div'); wrap.className='wrap'; R.BCV.className='main'; wrap.append(R.BCV); box.append(wrap);
+    const note=document.createElement('div'); note.className='note'; note.textContent=NT('cls.texthint',0); box.append(note);
+    function setTool(t){ commitText(); ST.tool=t; for(const k in tb) tb[k].classList.toggle('on',k===t); R.BCV.style.cursor=t==='text'?'text':'crosshair'; }
+    setTool(ST.tool);
+    const at=e=>{ const r=R.BCV.getBoundingClientRect(); return [Math.max(0,Math.min(1e4,Math.round((e.clientX-r.left)/r.width*1e4))),Math.max(0,Math.min(1e4,Math.round((e.clientY-r.top)/r.height*1e4)))]; };
+    let cur=null, pend=[], ft=0;
+    const flush=end=>{ if(!cur) return; if(pend.length||end){ send({o:'sp',id:cur.id,u:cur.u,c:cur.c,w:cur.w,e:cur.e?1:0,p:pend,f:end?1:0}); pend=[]; } };
+    R.BCV.onpointerdown=e=>{ e.preventDefault(); if(ST.tool==='text'){ placeText(e); return; } R.BCV.setPointerCapture(e.pointerId);
+      cur={t:'s',id:uid(),u:MY_PID,c:ST.color,w:ST.width,e:ST.tool==='eraser',p:at(e)}; ST.ops.push(cur); ST.mine.push(cur.id); dot(cur); dirty=true; pend=[...cur.p]; ft=performance.now(); };
+    R.BCV.onpointermove=e=>{ if(!cur) return; const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e]; for(const ev of (evs.length?evs:[e])){ const p=at(ev), n=cur.p.length; if(Math.hypot(p[0]-cur.p[n-2],(p[1]-cur.p[n-1])*H/W)<12) continue; cur.p.push(p[0],p[1]); pend.push(p[0],p[1]); seg(cur,cur.p.length-2); } dirty=true;
+      if(performance.now()-ft>70){ ft=performance.now(); flush(false); } };
+    R.BCV.onpointerup=R.BCV.onpointercancel=()=>{ if(!cur) return; flush(true); cur=null; };
+    function placeText(e){ commitText(); const r=R.BCV.getBoundingClientRect(), p=at(e), k=r.width/W, s=SIZES[ST.size];
+      ta=document.createElement('textarea'); ta.dataset.x=p[0]; ta.dataset.y=p[1]; ta.rows=1; ta.style.color=COLORS[ST.color]; ta.style.fontSize=(s*k)+'px';
+      if(ST.vert){ ta.style.writingMode='vertical-rl'; ta.style.left=(e.clientX-r.left-s*k*1.15)+'px'; ta.style.top=(e.clientY-r.top)+'px'; ta.style.height=Math.max(3*s*k,40)+'px'; ta.style.width=(s*k*1.3)+'px'; }
+      else { ta.style.left=(e.clientX-r.left)+'px'; ta.style.top=(e.clientY-r.top)+'px'; ta.style.width=Math.max(5*s*k,120)+'px'; ta.style.height=(s*k*1.35)+'px'; }
+      ta.oninput=()=>{ if(ST.vert){ ta.style.height='auto'; ta.style.height=Math.max(ta.scrollHeight,3*s*k)+'px'; ta.style.width=Math.max(s*k*1.3,ta.scrollWidth)+'px'; } else { ta.style.width='auto'; ta.style.width=Math.max(5*s*k,ta.scrollWidth+8)+'px'; ta.style.height=Math.max(s*k*1.35,ta.scrollHeight)+'px'; } };
+      ta.onblur=()=>setTimeout(commitText,0); wrap.append(ta); setTimeout(()=>ta&&ta.focus(),0); }
+  }
+  function commitText(){ const t=ta; if(!t) return; ta=null; const tx=t.value.replace(/\s+$/,''); t.remove(); if(!tx) return;
+    const s=SIZES[ST.size], x=+t.dataset.x, y=+t.dataset.y, op={t:'t',id:uid(),u:MY_PID,x,y,s:ST.size,c:ST.color,v:ST.vert?1:0,tx:tx.slice(0,2000)};
+    ST.ops.push(op); ST.mine.push(op.id); drawOp(op); dirty=true; send({o:'op',op}); }
+  function undo(){ commitText(); while(ST.mine.length){ const id=ST.mine.pop(); if(find(id)){ apply({o:'undo',id}); send({o:'undo',id}); return; } } }
+  function pasteImage(f){ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ const s=Math.min(1,900/Math.max(im.width,im.height)), c=document.createElement('canvas'); c.width=Math.round(im.width*s); c.height=Math.round(im.height*s); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      const src=c.toDataURL('image/jpeg',.82), maxW=.42*W, maxH=.75*H, k=Math.min(maxW/c.width,maxH/c.height), w=c.width*k, h=c.height*k;
+      const op={t:'i',id:uid(),u:MY_PID,x:Math.round((W-w)/2/W*1e4),y:Math.round((H-h)/2/H*1e4),w:Math.round(w/W*1e4),h:Math.round(h/H*1e4),src};
+      ST.ops.push(op); ST.mine.push(op.id); drawOp(op); send({o:'op',op}); }; im.src=fr.result; }; fr.readAsDataURL(f); }
+  const stamp=()=>{ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`; };
+  const download=(href,name)=>{ const a=document.createElement('a'); a.href=href; a.download=name; document.body.append(a); a.click(); a.remove(); };
+  function savePng(){ commitText(); download(R.BCV.toDataURL('image/png'),`${NT('cls.board',0)}-${stamp()}.png`); }
+  function boardText(){ const ts=ST.ops.filter(o=>o.t==='t'); const hz=ts.filter(o=>!o.v).sort((a,b)=>(a.y-b.y)||(a.x-b.x)), vt=ts.filter(o=>o.v).sort((a,b)=>(b.x-a.x)||(a.y-b.y));
+    return [...hz.map(o=>o.tx),...vt.map(o=>o.tx)].join('\n\n'); }
+  function saveTxt(){ commitText(); const t=boardText(); if(!t){ toast(NT('cls.notext',0)); return; }
+    try{ navigator.clipboard&&navigator.clipboard.writeText(t).catch(()=>{}); }catch{}
+    const u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})); download(u,`${NT('cls.board',0)}-${stamp()}.txt`); setTimeout(()=>URL.revokeObjectURL(u),4000); toast(NT('cls.notext',1)); }
+  // ---- the projector
+  const PJ={down:false,k:0,has:false,page:0,total:0,src:null,busy:false,img:null};
+  const LZ={on:false,x:.5,y:.5,show:false,t:0,remote:null,rt:0};
+  const PDFJS='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/', JSZIP='https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm';
+  function fit(src,sw,sh,bg='#111'){ const c=R.px; c.fillStyle=bg; c.fillRect(0,0,1920,1080); const k=Math.min(1920/sw,1080/sh), w=sw*k, h=sh*k; c.drawImage(src,(1920-w)/2,(1080-h)/2,w,h); R.projTex.needsUpdate=true; }
+  async function loadFile(f,name=''){ const nm=(name||f.name||'').toLowerCase(), ty=f.type||'';
+    if(/\.ppt$/.test(nm)||ty==='application/vnd.ms-powerpoint') throw new Error(NT('cls.err',1));
+    if(/\.pdf$/.test(nm)||ty==='application/pdf'){ const pdfjs=await import(PDFJS+'pdf.min.mjs'); pdfjs.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.mjs';
+      const doc=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;
+      return {total:doc.numPages,render:async n=>{ const pg=await doc.getPage(n), v=pg.getViewport({scale:1}), k=Math.min(1920/v.width,1080/v.height), vp=pg.getViewport({scale:k}), c=document.createElement('canvas'); c.width=Math.round(vp.width); c.height=Math.round(vp.height);
+        const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); await pg.render({canvasContext:g,viewport:vp}).promise; return c; }}; }
+    if(/\.pptx$/.test(nm)||/presentationml/.test(ty)) return pptx(f);
+    if(/^image\//.test(ty)||/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm)){ const bm=await createImageBitmap(f); return {total:1,render:async()=>bm}; }
+    throw new Error(NT('cls.err',0)); }
+  async function pptx(f){ const JSZip=(await import(JSZIP)).default, zip=await JSZip.loadAsync(await f.arrayBuffer());
+    const xml=async p=>{ const z=zip.file(p); return z?new DOMParser().parseFromString(await z.async('string'),'application/xml'):null; };
+    const tag=(n,t)=>n.getElementsByTagName(t), at=(n,a)=>n&&n.getAttribute(a);
+    const pres=await xml('ppt/presentation.xml'); if(!pres) throw new Error(NT('cls.err',0)); const sz=tag(pres,'p:sldSz')[0], SWd=+at(sz,'cx')||12192000, SHd=+at(sz,'cy')||6858000;
+    const rels=async p=>{ const d=await xml(p), m={}; if(d) for(const r of tag(d,'Relationship')) m[at(r,'Id')]=at(r,'Target'); return m; };
+    const pr=await rels('ppt/_rels/presentation.xml.rels'), join=(base,t)=>{ const parts=(base+'/'+t).split('/'), out=[]; for(const s of parts){ if(s==='..') out.pop(); else if(s&&s!=='.') out.push(s); } return out.join('/'); };
+    const slides=[...tag(pres,'p:sldId')].map(e=>join('ppt',pr[at(e,'r:id')]||'')).filter(Boolean);
+    return {total:slides.length,render:async n=>{ const path=slides[n-1], doc=await xml(path), dir=path.replace(/\/[^/]+$/,''), sr=await rels(dir+'/_rels/'+path.split('/').pop()+'.rels');
+      const c=document.createElement('canvas'), k=Math.min(1920/SWd,1080/SHd); c.width=Math.round(SWd*k); c.height=Math.round(SHd*k); const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height);
+      if(!doc) return c; const E=v=>(+v||0)*k;
+      const box=(n,isTitle)=>{ const off=tag(n,'a:off')[0], ext=tag(n,'a:ext')[0]; if(off&&ext) return [E(at(off,'x')),E(at(off,'y')),E(at(ext,'cx')),E(at(ext,'cy'))]; return isTitle?[c.width*.06,c.height*.05,c.width*.88,c.height*.18]:[c.width*.06,c.height*.26,c.width*.88,c.height*.66]; };
+      const tree=tag(doc,'p:spTree')[0]; if(!tree) return c;
+      const walk=async node=>{ for(const n of [...node.children]){ const nm=n.tagName;
+        if(nm==='p:grpSp'){ await walk(n); continue; }
+        if(nm==='p:pic'){ const bl=tag(n,'a:blip')[0], rid=at(bl,'r:embed'), t=rid&&sr[rid]; if(!t) continue; const zf=zip.file(join(dir,t)); if(!zf||/\.(emf|wmf)$/i.test(t)) continue;
+          try{ const bm=await createImageBitmap(await zf.async('blob')); const [x,y,w,h]=box(n); g.drawImage(bm,x,y,w,h); }catch{} continue; }
+        if(nm==='p:sp'){ const ph=tag(n,'p:ph')[0], isTitle=/title|ctrTitle/i.test(at(ph,'type')||''), [x,y,w,h]=box(n,isTitle);
+          const fill=tag(n,'p:spPr')[0]; const sf=fill&&[...fill.children].find(e=>e.tagName==='a:solidFill'); const fc=sf&&tag(sf,'a:srgbClr')[0]; if(fc){ g.fillStyle='#'+at(fc,'val'); g.fillRect(x,y,w,h); }
+          const tb=tag(n,'p:txBody')[0]; if(!tb) continue; let yy=y+6*k*12700/100;
+          for(const p of tag(tb,'a:p')){ const runs=[...tag(p,'a:r')]; const txt=runs.map(r=>(tag(r,'a:t')[0]||{}).textContent||'').join(''); const rp=runs.length?tag(runs[0],'a:rPr')[0]:null; const pt=(+at(rp,'sz')||(isTitle?4000:2400))/100, fs=pt*12700*k;
+            const clr=rp&&tag(rp,'a:srgbClr')[0]; g.fillStyle=clr?'#'+at(clr,'val'):'#222'; g.font=`${at(rp,'b')==='1'?'bold ':''}${fs}px "Noto Sans TC","Noto Serif TC",sans-serif`; g.textBaseline='top';
+            const algn=at(tag(p,'a:pPr')[0],'algn'), lines=[]; let ln='';
+            for(const ch of txt){ if(g.measureText(ln+ch).width>w-8&&ln){ lines.push(ln); ln=ch; } else ln+=ch; } lines.push(ln);
+            for(const l of lines){ const lw=g.measureText(l).width, lx=algn==='ctr'?x+(w-lw)/2:algn==='r'?x+w-lw-4:x+4; if(l) g.fillText(l,lx,yy); yy+=fs*1.25; } yy+=fs*.2; } } } };
+      await walk(tree); return c; }}; }
+  async function show(n){ if(!PJ.src) return; n=Math.max(1,Math.min(PJ.src.total,n)); PJ.busy=true; refreshPanel();
+    try{ const im=await PJ.src.render(n); fit(im,im.width,im.height,'#111'); PJ.page=n; PJ.total=PJ.src.total; PJ.has=true; if(!PJ.down) setDown(true,false);
+      const c=document.createElement('canvas'); c.width=1280; c.height=720; c.getContext('2d').drawImage(R.PCV,0,0,1280,720); PJ.img=c.toDataURL('image/jpeg',.72);
+      send({o:'pj',down:PJ.down,page:PJ.page,total:PJ.total,img:PJ.img}); }
+    catch(e){ toast(NT('cls.err',0)); console.warn(e); }
+    PJ.busy=false; refreshPanel(); }
+  function setDown(v,tell=true){ PJ.down=!!v; if(tell) send({o:'pj',down:PJ.down,page:PJ.page,total:PJ.total}); refreshPanel(); }
+  function stop(){ PJ.src=null; PJ.has=false; PJ.img=null; PJ.page=PJ.total=0; R.px.fillStyle='#111'; R.px.fillRect(0,0,1920,1080); R.projTex.needsUpdate=true; send({o:'pj',down:PJ.down,page:0,total:0,img:''}); refreshPanel(); }
+  function takeProj(d){ if('down' in d) PJ.down=!!d.down; if(typeof d.img==='string'){ if(d.img){ const im=new Image(); im.onload=()=>{ fit(im,im.width,im.height); PJ.has=true; refreshPanel(); }; im.src=d.img; PJ.img=d.img; } else { PJ.has=false; PJ.img=null; PJ.src=null; R.px.fillStyle='#111'; R.px.fillRect(0,0,1920,1080); R.projTex.needsUpdate=true; } }
+    if(d.page!=null){ PJ.page=d.page|0; PJ.total=d.total|0; if(PJ.src&&d.img) PJ.src=null; } refreshPanel(); }
+  let laserAt=0; function laserSend(p){ const now=performance.now(); if(p&&now-laserAt<66) return; laserAt=now; send({o:'lz',p:p?[Math.round(p[0]*1e3),Math.round(p[1]*1e3)]:null}); }
+  let panelRefs=null;
+  function openProj(){ if(renderer.xr.isPresenting){ toast(NT('cls.vr',0)); return; } mode='proj'; const {box,bar}=shell(NT('cls.proj',0));
+    const sp=document.createElement('span'); sp.className='sp'; bar.append(sp,btn(NT('cls.ui',1),close));
+    const r1=document.createElement('div'); r1.className='row'; const fi=document.createElement('input'); fi.type='file'; fi.accept='.pdf,.ppt,.pptx,image/*'; fi.hidden=true;
+    const st=document.createElement('span'); st.className='note'; st.style.margin='0';
+    const load=async(getter)=>{ st.textContent=NT('cls.loading',0); try{ const {f,name}=await getter(); PJ.src=await loadFile(f,name); st.textContent=''; await show(1); }catch(e){ st.textContent=String(e&&e.message||NT('cls.err',0)); } };
+    fi.onchange=()=>{ const f=fi.files&&fi.files[0]; fi.value=''; if(f) load(async()=>({f})); };
+    const url=document.createElement('input'); url.type='text'; url.placeholder='https://…'; url.onkeydown=e=>{ if(e.key==='Enter'&&!e.isComposing) lb.click(); };
+    const lb=btn(NT('cls.file',1),()=>{ const u=url.value.trim(); if(!/^https?:\/\//.test(u)) return; load(async()=>{ let r; try{ r=await fetch(u); }catch{ throw new Error(NT('cls.urlerr',0)); } if(!r.ok) throw new Error(NT('cls.urlerr',0)); const b=await r.blob(); return {f:b,name:u.split(/[?#]/)[0]}; }); });
+    r1.append(fi,btn(NT('cls.file',0),()=>fi.click()),url,lb); box.append(r1);
+    const pv=document.createElement('div'); pv.className='pv'; pv.style.marginTop='8px'; const pc=document.createElement('canvas'); pc.width=960; pc.height=540; pv.append(pc); box.append(pv);
+    const r2=document.createElement('div'); r2.className='row';
+    const prev=btn(NT('cls.nav',0),()=>show(PJ.page-1)), next=btn(NT('cls.nav',1),()=>show(PJ.page+1));
+    const pn=document.createElement('input'); pn.type='number'; pn.min=1; pn.style.width='4.5em'; pn.onchange=()=>show(+pn.value||1); const pt=document.createElement('span');
+    const sb=btn('',()=>setDown(!PJ.down)); const lzl=document.createElement('label'); const lzc=document.createElement('input'); lzc.type='checkbox'; lzc.checked=LZ.on; lzc.onchange=()=>{ LZ.on=lzc.checked; pv.classList.toggle('lz',LZ.on); if(!LZ.on) laserSend(null); }; lzl.append(lzc,' '+NT('cls.laser',0));
+    const off=btn(NT('cls.laser',1),stop);
+    r2.append(prev,pn,pt,next,sb,lzl,off,st); box.append(r2);
+    const note=document.createElement('div'); note.className='note'; note.textContent=NT('cls.projhint',0); box.append(note);
+    pv.onpointermove=e=>{ if(!LZ.on) return; const r=pc.getBoundingClientRect(), p=[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]; LZ.x=p[0]; LZ.y=p[1]; LZ.show=true; LZ.t=performance.now(); laserSend(p); refreshPanel(); };
+    pv.onpointerleave=()=>{ if(LZ.on){ LZ.show=false; laserSend(null); } };
+    panelRefs={pc,prev,next,pn,pt,sb,off}; refreshPanel(); }
+  function refreshPanel(){ const P=panelRefs; if(!P||mode!=='proj'||!P.pc.isConnected) return; const g=P.pc.getContext('2d'); g.drawImage(R.PCV,0,0,960,540);
+    if(LZ.on&&LZ.show){ g.fillStyle='rgba(255,40,30,.9)'; g.beginPath(); g.arc(LZ.x*960,LZ.y*540,6,0,7); g.fill(); }
+    const local=!!PJ.src; P.prev.disabled=!local||PJ.busy||PJ.page<=1; P.next.disabled=!local||PJ.busy||PJ.page>=PJ.total; P.pn.disabled=!local; P.pn.value=PJ.page||''; P.pn.max=PJ.total||1;
+    P.pt.textContent=PJ.total?'/ '+PJ.total:''; P.sb.textContent=NT('cls.screen',PJ.down?1:0); P.off.disabled=!PJ.has; }
+  // ---- keys while a panel is open: none reach the house (no walking off while typing); Esc closes, arrows turn pages
+  addEventListener('keydown',e=>{ if(!mode) return; const inText=e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT');
+    if(e.key==='Escape'){ e.preventDefault(); if(ta&&e.target===ta){ ta.value=''; commitText(); } else close(); }
+    else if(e.target===ta&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){ e.preventDefault(); commitText(); }
+    else if(mode==='proj'&&!inText&&PJ.src&&(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='PageUp'||e.key==='PageDown')){ e.preventDefault(); show(PJ.page+(e.key==='ArrowLeft'||e.key==='PageUp'?-1:1)); }
+    e.stopImmediatePropagation(); },true);
+  addEventListener('keyup',e=>{ if(mode) e.stopImmediatePropagation(); },true);
+  // ---- in the room: the screen rolls, the lever follows it, the beam and the laser dot, the board's texture refreshes
+  ZL_ANIM.push(dt=>{ dt=dt||.016; if(dirty){ R.boardTex.needsUpdate=true; dirty=false; }
+    const want=PJ.down?1:0; PJ.k+=Math.sign(want-PJ.k)*Math.min(Math.abs(want-PJ.k),dt*.55);
+    const k=PJ.k, s=R.scr; s.visible=k>.005; s.scale.y=Math.max(.001,k); R.bar.position.y=R.STOP-R.SH*k-.016;
+    const full=k>.995&&PJ.has; if((s.material.map===R.projTex)!==full){ s.material.map=full?R.projTex:null; s.material.color.setHex(full?0xffffff:0xe9e6de); s.material.needsUpdate=true; }
+    R.beam.visible=full; R.lever.rotation.z+=((PJ.down?-.9:.9)-R.lever.rotation.z)*Math.min(1,dt*8);
+    const lm=R.lap.m, la=PJ.has; if((lm.map===R.projTex)!==la){ lm.map=la?R.projTex:null; lm.color.setHex(la?0xffffff:0x1b2026); lm.needsUpdate=true; }
+    R.lamps[2].intensity=R.base[2]*(full?.5:1);
+    const L2=LZ.on&&LZ.show&&performance.now()-LZ.t<4000?LZ:(LZ.remote&&performance.now()-LZ.rt<4000?LZ.remote:null);
+    R.laser.visible=!!(L2&&full); if(R.laser.visible){ R.laser.position.set(R.XC+R.SW/2-L2.x*R.SW,R.STOP-L2.y*R.SH,R.SZ-.004); R.laser.scale.setScalar(.8+Math.sin(performance.now()/90)*.12); } });
+  // ---- the network: what others do, and handing the board over to someone who has just arrived
+  let helloAt=0, snapFor=new Map();
+  window.__clsHello=()=>{ helloAt=Date.now(); send({o:'hi'}); };
+  window.__clsRecv=(d,from)=>{ if(!d||d.k!=='cls') return;
+    if(d.o==='hi'){ if(!ST.ops.length&&!PJ.has&&!PJ.down) return; const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].filter(i=>i!==from).concat(MY_PID).sort(), rank=Math.max(0,ids.indexOf(MY_PID));
+      clearTimeout(snapFor.get(from)); snapFor.set(from,setTimeout(()=>{ snapFor.delete(from); sendSnap(from); },120+rank*450+Math.random()*150)); return; }
+    if(d.o==='snap'){ if(d.for&&snapFor.has(d.for)){ clearTimeout(snapFor.get(d.for)); snapFor.delete(d.for); } if(d.for!==MY_PID) return;
+      if(Array.isArray(d.ops)){ ST.ops=d.ops.filter(o=>o&&o.id); ST.mine=[]; IMG.clear(); redraw(); } if(d.pj) takeProj(d.pj); return; }
+    if(d.o==='pj'){ takeProj(d); return; }
+    if(d.o==='lz'){ LZ.remote=d.p?{x:d.p[0]/1e3,y:d.p[1]/1e3}:null; LZ.rt=performance.now(); return; }
+    apply(d,from); };
+  function sendSnap(to){ let ops=ST.ops; const pj={down:PJ.down,page:PJ.page,total:PJ.total,img:PJ.img||''};
+    let s=JSON.stringify({ops,pj}); if(s.length>700000){ const c=document.createElement('canvas'); c.width=1600; c.height=625; c.getContext('2d').drawImage(R.BCV,0,0,1600,625);
+      ops=[{t:'i',id:uid(),u:'',raster:1,x:0,y:0,w:1e4,h:1e4,src:c.toDataURL('image/jpeg',.8)},...ST.ops.filter(o=>o.t==='t').map(o=>({...o,nd:1}))]; }
+    send({o:'snap',for:to,ops,pj}); }
+  window.__clsAct=u=>{ if(u.type==='clsboard') openBoard(); else if(u.type==='clslaptop'||u.type==='clsproj') openProj(); else if(u.type==='clsscreen'){ setDown(!PJ.down); toast(NT('cls.screened',PJ.down?0:1)); } return true; };
+  window.__cls={ST,PJ,LZ,openBoard,openProj,close,apply,show,boardText};
 }
 // steam over the noodle pots and smoke from the chimney: a few soft sprites each
 { const sm=new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX});

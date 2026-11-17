@@ -9,11 +9,13 @@
 // 伺服器送：{t:'all', peers:[{id,p,mic,sp}]}  剛連上時的全員名單
 //           {t:'u', id, p?, mic, sp, v?}       某人的更新（含語音片段）
 //           {t:'bye', id}                      某人離開
+// 共用的東西（教室的黑板與投影）：用戶端送 {t:'b', d:{…}, to?}，伺服器原樣轉成 {t:'b', id, d} 給同房其他人（有 to 時只給那一位）。
+// 伺服器不保存任何內容；大家都離開後就什麼都沒有了（新來的人由在場的人把黑板交給他）。
 //
 // 語音另走一條連線（同一個網址加 &voice=1，由瀏覽器背景的 Worker 開，不受 3D 畫面忙碌影響）：
 // 用戶端送 {t:'v', v:[{sr,b64},…]}，伺服器轉 {t:'v', id, v} 給其他人的語音連線（對方沒有語音連線時，改送到他的主連線）。
 
-const MAX_PEERS = 40, MAX_STATE = 12000, MAX_CHUNKS = 8, MAX_CHUNK = 6000, STALE_MS = 20000;
+const MAX_PEERS = 40, MAX_BCAST = 900000, MAX_STATE = 12000, MAX_CHUNKS = 8, MAX_CHUNK = 6000, STALE_MS = 20000;
 const okRoom = s => /^[A-Z0-9-]{1,24}$/.test(s), okId = s => /^[A-Za-z0-9-]{4,64}$/.test(s);
 
 export default {
@@ -94,7 +96,9 @@ export class Room {
     const id = this.idOf(ws); if (!id) return;
     let me = this.peers.get(id);
     if (!me || me.ws !== ws) { if (me) return; me = { ws, p: null, mic: false, sp: false, seen: 0 }; this.peers.set(id, me); }
-    if (typeof data !== 'string' || data.length > MAX_STATE + MAX_CHUNKS * MAX_CHUNK + 500) return;
+    if (typeof data !== 'string' || data.length > MAX_BCAST) return;
+    if (data.startsWith('{"t":"b"')) return this.relay(id, me, data);
+    if (data.length > MAX_STATE + MAX_CHUNKS * MAX_CHUNK + 500) return;
     let m; try { m = JSON.parse(data); } catch { return; }
     if (!m || m.t !== 'u') return;
     const now = Date.now(); me.seen = now;
@@ -108,6 +112,15 @@ export class Room {
     }
     if (me.p) this.send(id, out);
     if (Math.random() < 0.05) this.sweep(now);
+  }
+
+  relay(id, me, data) {
+    let m; try { m = JSON.parse(data); } catch { return; }
+    if (!m || m.t !== 'b' || !m.d || typeof m.d !== 'object') return;
+    me.seen = Date.now();
+    const s = JSON.stringify({ t: 'b', id, d: m.d });
+    if (typeof m.to === 'string' && m.to) { const p = this.peers.get(m.to); if (p) { try { p.ws.send(s); } catch {} } return; }
+    for (const [k, v] of this.peers) if (k !== id) { try { v.ws.send(s); } catch {} }
   }
 
   async webSocketClose(ws, code) { this.drop(ws); try { ws.close(code === 1005 || code === 1006 ? 1000 : code, 'bye'); } catch {} }

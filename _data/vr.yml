@@ -266,7 +266,16 @@ music:
     file: Silent Night - Piano.mp3
 
 # 電影院（12 號房）的片單：影片放在 Cloudflare R2，這裡填標題和網址；字幕檔（.srt 或 .vtt）可留空
-films: []
+films:
+  - title: "月球旅行記（Le Voyage dans la Lune，1902，梅里愛；來源：archive.org）"
+    url: "https://pub-afe8fced79534e7b9e81898ec5067433.r2.dev/Le_voyage_dans_la_lune_A_trip_to_the_moon__Georges_Mlis_1902_512kb.mp4"
+    subs: ""
+  - title: "警察（Cops，1922，巴斯特・基頓）"
+    url: "https://pub-afe8fced79534e7b9e81898ec5067433.r2.dev/Cops-v2.mp4"
+    subs: ""
+  - title: "Merrie Melodies：小狐狸 Foxy（1931）"
+    url: "https://pub-afe8fced79534e7b9e81898ec5067433.r2.dev/omt44458875.mp4"
+    subs: ""
 
 npc:
   - key: who.yu

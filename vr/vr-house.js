@@ -3498,7 +3498,9 @@ function route(a,b){ let pts=[a]; const za=zoneOf(a), zb=zoneOf(b);
     const path=gridPath(from,to); if(path) out.push(...path); else out.push(to); }
   return out.slice(1); }
 function standUp(){ if(ME.seat<0) return; const s=SEATS[ME.seat]; ME.seat=-1; const back=seatApproach(s);
-  ME.x=back.x; ME.z=back.z; if(!walkable(ME.x,ME.z)){ ME.x=s.x; ME.z=s.z+(s.z>0.1?0.75:-0.75); } $('#timer').classList.add('hide'); setFocus('',0); pushPresence(); }
+  ME.x=back.x; ME.z=back.z; if(!walkable(ME.x,ME.z)){ // the nearest open floor round the seat, never through a wall
+    let best=null; for(let r=.2;r<2&&!best;r+=.15) for(let a=0;a<6.28;a+=.3){ const xx=back.x+Math.cos(a)*r, zz=back.z+Math.sin(a)*r; if(walkable(xx,zz)){ best={x:xx,z:zz}; break; } }
+    if(best){ ME.x=best.x; ME.z=best.z; } } $('#timer').classList.add('hide'); setFocus('',0); pushPresence(); }
 function goTo(x,z,{faceTo=null,after=null}={}){ if(ME.seat>=0) standUp(); if(!walkable(x,z)){ // nudge toward nearest walkable
     let best=null; for(let r=0.2;r<1.6&&!best;r+=0.2) for(let a=0;a<6.28;a+=0.4){ const xx=x+Math.cos(a)*r, zz=z+Math.sin(a)*r; if(walkable(xx,zz)){best={x:xx,z:zz};break;} } if(!best) return; x=best.x; z=best.z; }
   ME.path=route({x:ME.x,z:ME.z},{x,z}); ME.faceTo=faceTo; ME.afterArrive=after; }
@@ -3594,7 +3596,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['blind','cinescreen','cinefridge','cineswitch','cineshutter','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['blind','alarm','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3609,7 +3611,8 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'kgas': case 'ktap': case 'kpantry': case 'kfire': case 'knood': case 'kbasin': case 'wcdoor': case 'wcseat': case 'wcspout': case 'wcslide': case 'wcuri': case 'bathshower': case 'bathwash': case 'bathdoor': case 'bathsdoor': if(window.__kitchenAct) window.__kitchenAct(u); break;
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
   case 'blind': window.__blindAct?.(u); break;
-  case 'cinescreen': case 'cinefridge': case 'cineswitch': case 'cineshutter': if(window.__cineAct) window.__cineAct(u); break;
+  case 'alarm': toast(String(NT('alarm.msg')).replace('{now}',hhmm(taipeiNow().min)).replace('{wake}',hhmm(DAY.wake)),4000); break;
+  case 'cinescreen': case 'cinefridge': case 'cineswitch': if(window.__cineAct) window.__cineAct(u); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;
@@ -5022,6 +5025,7 @@ function bambooWindow(wx,wz,nx,w,y0,y1){ const g=new THREE.Group(); g.position.s
 for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w=1.3, y0=1.5, y1=2.8;
   const p=cutWindow(wing,FRONT.cx+7.5,zc,w,y0,y1); if(p) bambooWindow(p.x,p.z,Math.sign(p.x-FRONT.cx),w,y0,y1); }
 
+const BEDS=[], STANDS=[], NPC_DYN_PRE=[];
 /* ================= 22、26 號房（第一進兩廂北間）：各四張木床，兩兩相對，每對中間一個床頭櫃 =================
    The beds stand with their heads against the long front and back walls, two pairs facing each other across the
    room, so the middle of the room and the door to the 明間 stay clear. Wooden single beds in the manner of the 1930s:
@@ -5038,7 +5042,8 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
     box(W-.06,.26,.035,frame,0,.47,-(L/2-.03),g);                              // foot board
     box(W-.12,.14,L-.14,cloth,0,.46,0,g);                                       // mattress
     box(.62,.1,.34,cloth,0,.58,L/2-.28,g);     // pillow
-    box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
+    const fq=box(W-.1,.07,.6,quilt[qi%4],0,.565,-(L/2-.5),g);                          // folded quilt at the foot
+    const sq=box(W-.14,.3,1.72,quilt[qi%4],0,.68,-.12,g); sq.visible=false; BEDS.push({x,z,yaw,fq,sq}); NPC_DYN_PRE.push(fq,sq);
     OB(x-(Math.abs(Math.sin(yaw))>.5?L:W)/2,x+(Math.abs(Math.sin(yaw))>.5?L:W)/2,z-(Math.abs(Math.sin(yaw))>.5?W:L)/2,z+(Math.abs(Math.sin(yaw))>.5?W:L)/2); }
   // a bedside cabinet with framed panels: top with a moulded edge, a drawer and a door each in a raised frame, brass pulls, short tapered legs
   function stand(x,z,yaw,W2=.46){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=yaw; scene.add(g);
@@ -5067,7 +5072,7 @@ for(const [wing,zc] of [[frontWings[0],0],[frontWings[1],2*courtAxis]]){ const w
   let qi=0; const xa=31.72+W/2+.02, xb=36.48-W/2-.02, cab=(xb-xa)-W-.12;
   for(const [front,back] of [[15.6,23.6],[4.0,-4.0]]){ const s=Math.sign(back-front);
     for(const [wallZ,toward] of [[front,s],[back,-s]]){ const zc=wallZ+toward*(L/2+.02), yaw=toward>0?Math.PI:0;
-      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++); stand((xa+xb)/2,wallZ+toward*.22,yaw,cab); } } }
+      bed(xa,zc,yaw,qi++); bed(xb,zc,yaw,qi++); stand((xa+xb)/2,wallZ+toward*.22,yaw,cab); STANDS.push({x:(xa+xb)/2,z:wallZ+toward*.22,yaw,cab,beds:[BEDS.length-2,BEDS.length-1],room:front>9?22:26}); } } }
 await __yield(0.9);
 /* ================= 宅中人物（NPC）=================
    Six members of the household, about 1930, all fictional: the gatekeeper 玉姨 sweeps the forecourt; 許總管 checks his
@@ -5078,14 +5083,14 @@ await __yield(0.9);
    the 甜粿 (waiting for wood → wood in → steaming → out of the steamer → carried to the tea room → served), the tea that
    arrives at the gate and goes to the store.
    Every line can be changed in the back office (_data/vr.yml › npc); these are the defaults. */
-const NPC_DYN=[];
+const NPC_DYN=[...NPC_DYN_PRE];
 const NPC_TXT={
   'cine.seat':['電影院沙發','電影院後排'],'cine.label':['看電影',''],'cine.hello':['在沙發坐下。點銀幕選片、播放。',''],'cine.status':['在電影院看電影',''],'cine.title':['電影院','片單'],
   'cine.none':['片單還是空的：請在後台「電影院片單」加入影片。',''],'cine.now':['正在放映','暫停中'],'cine.idle':['目前沒有放映。',''],'cine.play':['播放','暫停'],'cine.skip':['倒退 10 秒','快轉 10 秒'],
   'cine.stop':['停止放映',''],'cine.vol':['音量',''],'cine.subs':['字幕：開','字幕：關'],'cine.full':['全螢幕','離開全螢幕'],'cine.toast':['開始放映','暫停放映'],
   'cine.light':['燈光',''],'cine.stars':['星空：開','星空：關'],'cine.mute':['靜音','取消靜音'],'cine.scenes':['迎賓,映前,放映,中場,夜場',''],'cine.fridge':['小冰箱',''],
   'cine.drinks':['冬瓜茶,麥仔茶,沙士,彈珠汽水,烏龍茶,綠茶,柳橙汁,蘆筍汁,豆漿,礦泉水',''],'cine.take':['從冰箱拿了一瓶','喝完了。'],'cine.sip':['喝一口','放回去'],
-  'cine.shutter':['關上窗門。','打開窗門。'],'cine.shout':['窗門要從電影院裡面開關。',''],'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],'blind.npc':['天亮了，玉姨和阿財一扇一扇把竹簾捲起來。','夜深了，玉姨和阿財一扇一扇把竹簾放下來。'],
+  'edoor.msg':['推開門。','把門帶上。'],'blind.msg':['放下竹簾。','捲起竹簾。'],'day.times':['05:00,22:40,23:20,24:00','傭人作息（臺北時間，逗號分開）：起床、女生洗澡、男生洗澡、熄燈'],'staff.sleep':['睡著了。','睡得正熟，別吵醒。'],'staff.bath':['在洗澡呢，晚點再說。','泡得正舒服。'],'alarm.msg':['鬧鐘：現在 {now}，明早 {wake} 響。',''],'alarm.ring':['鈴——鬧鐘響了，起床了。',''],'sauna.hud':['烤箱',''],'sauna.remind':['已經烤十二分鐘了，出去喝口水、沖一下再進來吧。',''],'bath.sign':['女湯','男湯'],'bath.sign0':['湯',''],'blind.npc':['天亮了，玉姨（東側）和阿財（西側）走一圈，一扇一扇把竹簾捲起來。','熄燈了，玉姨和阿財走一圈，一扇一扇把竹簾放下來。'],
   'cine.err':['影片載入失敗：請確認網址，以及 Cloudflare R2 的 CORS 已允許 https://hakkiuchay.space 讀取。',''],'cine.tap':['點一下畫面，影片就會開始播放（瀏覽器要先點一下才能出聲）。',''],
   'cls.seat':['教室','講桌'],'cls.label':['上課','講課'],'cls.hello':['在教室坐下，面向黑板。','在講桌後坐下。點筆電開投影。'],'cls.status':['在教室上課','在講台上'],
   'cls.board':['黑板',''],'cls.ui':['','關閉'],'cls.pen':['粉筆','板擦'],'cls.text':['打字','直書'],'cls.colors':['白,黃,紅,藍','細,中,粗'],
@@ -5228,23 +5233,32 @@ function npcFigure(o){ const g=new THREE.Group(), F=new THREE.Group(); g.add(F);
   const B=(w,h,d,mt,x,y,z,p=F)=>{ const k=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mt); k.position.set(x,y,z); k.castShadow=true; p.add(k); return k; };
   const sh=(o.wide?.22:o.fem?.16:.18), waist=o.fem?.15:.17;
   // legs (hip pivots) and trousers
-  const legs=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); p.position.set(sx*.08,.88,0); F.add(p); C(.07,.062,.84,low,0,-.42,0,p); B(.085,.05,.17,shoe,0,-.86,-.03,p); legs.push(p); }
+  const legs=[], shoes=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); p.position.set(sx*.08,.88,0); F.add(p); C(.07,.062,.84,low,0,-.42,0,p); shoes.push(B(.085,.05,.17,shoe,0,-.86,-.03,p)); legs.push(p); }
   // the long top 衫 with the side-fastening front 大襟, a darker hem band
-  const body=C(sh,waist+.02,.62,top,0,1.1,0); C(waist+.025,waist+.03,.06,m(new THREE.Color(o.top).multiplyScalar(.75)),0,.81,0);
-  const lap=B(.02,.3,.01,m(new THREE.Color(o.top).multiplyScalar(.6)),.045,1.27,-(sh-.01)); lap.rotation.z=.55;
-  if(o.apron) B(.3,.62,.02,m(o.apron),0,.86,-(waist+.035));
-  if(o.waistcloth) C(waist+.03,waist+.035,.09,m(o.waistcloth),0,.92,0);
+  const body=C(sh,waist+.02,.62,top,0,1.1,0), extra=[]; extra.push(C(waist+.025,waist+.03,.06,m(new THREE.Color(o.top).multiplyScalar(.75)),0,.81,0));
+  const lap=B(.02,.3,.01,m(new THREE.Color(o.top).multiplyScalar(.6)),.045,1.27,-(sh-.01)); lap.rotation.z=.55; extra.push(lap);
+  if(o.apron) extra.push(B(.3,.62,.02,m(o.apron),0,.86,-(waist+.035)));
+  if(o.waistcloth) extra.push(C(waist+.03,waist+.035,.09,m(o.waistcloth),0,.92,0));
+  // for the bath: a cotton towel wrapped round (the women from under the arms, the men round the hips), a small one
+  // folded on the head in the tub; hidden until then
+  const towelM=new THREE.MeshStandardMaterial({color:0xf3efe6,roughness:.95});
+  const towel=o.fem?C(sh+.012,waist+.04,.58,towelM,0,1.0,0,F,14):C(waist+.04,waist+.05,.3,towelM,0,.8,0,F,14); towel.visible=false;
   // head, neck, hair
   C(.042,.046,.08,skin,0,1.43,0); const head=new THREE.Group(); head.position.set(0,1.56,0); F.add(head); S(.102,skin,0,0,0,head);
   const cap=new THREE.Mesh(new THREE.SphereGeometry(.108,14,8,0,Math.PI*2,0,Math.PI/2.1),hair); cap.position.set(0,.02,.015); cap.rotation.x=-.3; head.add(cap);
   if(o.bun==='high') S(.06,hair,0,.07,.09,head); if(o.bun==='low') S(.065,hair,0,-.06,.1,head);
   if(o.temples){ const gm=m(0x9a978f); for(const sx of [-1,1]) B(.02,.06,.05,gm,sx*.1,-.01,0,head); }
   for(const sx of [-1,1]){ const e=new THREE.Mesh(new THREE.SphereGeometry(.011,6,5),hair); e.scale.set(1,.7,.5); e.position.set(sx*.037,.01,-.096); head.add(e); }
-  if(o.hat){ C(.24,.24,.012,m(0xc8b27a),0,.11,0,head,20); C(.11,.115,.08,m(0xc8b27a),0,.15,0,head,16); }
+  if(o.hat){ extra.push(C(.24,.24,.012,m(0xc8b27a),0,.11,0,head,20)); extra.push(C(.11,.115,.08,m(0xc8b27a),0,.15,0,head,16)); }
+  const htow=B(.15,.035,.11,towelM,0,.115,.0,head); htow.visible=false;
   // arms (shoulder pivots), sleeves to the wrist
   const arms=[]; for(const sx of [-1,1]){ const p=new THREE.Group(); p.position.set(sx*(sh+.035),1.37,0); F.add(p); C(.046,.05,.48,top,0,-.24,0,p); S(.036,skin,0,-.5,0,p); arms.push(p); }
   F.scale.set(o.thin?.92:o.wide?1.08:1,H,o.thin?.92:1);
-  g.userData.parts={F,legs,arms,head,body}; return g; }
+  g.userData.parts={F,legs,shoes,arms,head,body,extra,towel,htow,mats:{top,low,shoe},cols:{top:top.color.clone(),low:low.color.clone(),shoe:shoe.color.clone()},skin}; return g; }
+// the bath look: clothes off (skin where the 衫 and trousers were, bare feet), the towel on; 'soak' moves it to the head
+function npcBathLook(n,mode){ const P=n.g.userData.parts; if(n.look===mode) return; n.look=mode; const bare=!!mode;
+  for(const k of ['top','low','shoe']) P.mats[k].color.copy(bare?P.skin.color:P.cols[k]);
+  for(const e of P.extra) e.visible=!bare; P.towel.visible=mode==='towel'; P.htow.visible=mode==='soak'; if(n.toolG) n.toolG.visible=!bare&&!n.seated; if(n.shears) n.shears.visible=!bare&&!n.seated; }
 // tools held in the hands (on the arm pivots) and on the shoulder
 function npcTool(kind){ const g=new THREE.Group(), wd=new THREE.MeshStandardMaterial({map:T.wood,color:0x8a6a48,roughness:.8}), bam=new THREE.MeshStandardMaterial({color:0xb59a5e,roughness:.75});
   const C=(r1,r2,h,mt,x,y,z,s=10)=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,s),mt); k.position.set(x,y,z); g.add(k); return k; };
@@ -5335,6 +5349,7 @@ const raining=()=>(typeof WX!=='undefined')&&WX.rain>.05;
 
 // what each person does when nothing is asked of them, and the chains
 function npcPlan(n){
+  if(window.__staffPlan&&window.__staffPlan(n)) return;
   if(window.__mealPlan&&window.__mealPlan(n)) return;
   const c=NS.cake.st, now=Date.now();
   if(n.id==='cai'){
@@ -5363,7 +5378,7 @@ const near=(n,r)=>Math.hypot(ME.x-n.x,ME.z-n.z)<r;
 let teaArriveAt=performance.now()+45000;
 
 /* ---- talking ---- */
-function npcTalk(id){ const n=NPC[id]; if(!n||!n.g.visible) return; n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
+function npcTalk(id){ const n=NPC[id]; if(!n||!n.g.visible) return; if(n.lie){ toast(NT('staff.sleep',Math.random()<.5?0:1),3000); return; } if(n.look||n.pose==='ssit'){ npcSay(id,NT('staff.bath',n.look==='soak'?1:0)); return; } n.talk=performance.now()+9000; npcFace(n,ME); autoMute=performance.now()+20000; closeChoices();
   const c=NS.cake.st, say=k=>npcSay(id,npcLine(k)), VRm=renderer.xr.isPresenting;
   if(id==='yu'){ if(NS.tea.st==='arrived') return say('yu.tea'); if(raining()) return say('yu.rain'); if(n.act==='sweep') return say('yu.sweep'); if(!NS.first){ NS.first=true; npcSave(); return say('yu.first'); } return say('yu.again'); }
   if(id==='xu'){ if(!NS.talked.xu){ NS.talked.xu=true; npcSave(); say('xu.first'); }
@@ -5396,7 +5411,7 @@ const npcHint=document.createElement('div'); npcHint.style.cssText='position:fix
 document.body.append(npcHint);
 let hintFor=null;
 addEventListener('keydown',e=>{ if(e.key.toLowerCase()!=='e'||e.repeat||!hintFor||e.target.tagName==='INPUT'||panel.classList.contains('open')) return; e.preventDefault(); e.stopImmediatePropagation(); npcTalk(hintFor); },true);
-function npcProximity(n,dist,now){
+function npcProximity(n,dist,now){ if(n.lie||n.look||n.pose||n.tl) return;
   // proximity lines: once on entering range, again only after leaving it and thirty seconds
   const inR=dist<(n.id==='yu'?4.2:2.2); if(!inR){ n.near=false; return; } if(n.near) return; n.near=true;
   if(now<autoMute||now<(n.lastAuto||0)+30000||now<n.talk) return; let k=null;
@@ -5425,7 +5440,8 @@ function tickNPC(dt){ if(!window.__entered) return; const now=performance.now(),
       if(dist>25){ L.lost+=dt; if(L.lost>10) leadEnd(false); } else L.lost=0; }
     // talking stops the work; afterwards it carries on
     const talking=now<n.talk;
-    if(talking){ const want=Math.atan2(-(ME.x-n.x),-(ME.z-n.z)); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*4); }
+    if(n.tl&&window.__staffTL) window.__staffTL(n,dt);
+    else if(talking&&!n.lie&&!n.pose){ const want=Math.atan2(-(ME.x-n.x),-(ME.z-n.z)); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*4); }
     else if(n.act==='walk'&&n.path.length&&now>n.wait){ const t=n.path[0], dx=t.x-n.x, dz=t.z-n.z, d=Math.hypot(dx,dz);
       // someone in the way, close and ahead: stop and let them by
       const ahead=dist<.9&&((ME.x-n.x)*dx+(ME.z-n.z)*dz)>0;
@@ -5459,11 +5475,12 @@ function tickNPC(dt){ if(!window.__entered) return; const now=performance.now(),
     if(n.id==='huo'){ n.act=n.act==='steam'&&NS.cake.st!==2?'cook':n.act; NPCP.lid.position.y=1.37+(NS.cake.st===2&&aR>1.4?.12:0); }
     // carrying: the tray, the pole with wood, water or tea
     if(n.id==='chun'){ const tray=n.toolG; tray.visible=n.carry==='cake'; if(tray.visible){ aL=aR=1.25; if(!tray.userData.cake){ const c=NPCP.cake.clone(); c.position.set(0,.02,0); c.visible=true; tray.add(c); tray.userData.cake=c; } } }
-    if(n.seated!==n.wasSeated){ n.wasSeated=n.seated; for(const t of [n.id==='chun'||n.id==='cai'?null:n.toolG,n.shears]) if(t) t.visible=!n.seated; }
+    const hid=!!(n.seated||n.look||n.lie||n.pose||n.tl); if(hid!==n.wasSeated){ n.wasSeated=hid; for(const t of [n.id==='chun'||n.id==='cai'?null:n.toolG,n.shears]) if(t) t.visible=!hid; }
     if(n.id==='huo'&&n.tray){ n.tray.visible=n.carry==='dish'; if(n.tray.visible){ aL=aR=1.25; } }
-    if(n.id==='cai'){ const pole=n.toolG; pole.visible=!!n.carry; if(n.carry&&pole.userData.what!==n.carry){ pole.userData.what=n.carry; npcLoad(pole,n.carry); } if(n.carry){ aR=2.6; aL=moving?-s*.3:.2; P.F.position.y-=.02; } }
+    if(n.id==='cai'){ const pole=n.toolG, cc=n.carry&&n.carry!=='basin'?n.carry:null; pole.visible=!!cc; if(cc&&pole.userData.what!==cc){ pole.userData.what=cc; npcLoad(pole,cc); } if(cc){ aR=2.6; aL=moving?-s*.3:.2; P.F.position.y-=.02; } }
     P.arms[0].rotation.x+=((aL)-P.arms[0].rotation.x)*Math.min(1,dt*8); P.arms[1].rotation.x+=((aR)-P.arms[1].rotation.x)*Math.min(1,dt*8);
     P.arms[0].rotation.z=zL; P.arms[1].rotation.z=zR; P.head.rotation.x+=(headX*(talking?0:1)-P.head.rotation.x)*Math.min(1,dt*5);
+    if(window.__staffPose) window.__staffPose(n,P,dt,w); else n.g.position.y=0;
     // the guest is close and looking at this person: offer to talk
     if(n.g.visible&&dist<2.6&&renderer.xr&&!renderer.xr.isPresenting){ const dot=((n.x-ME.x)*fx+(n.z-ME.z)*fz)/Math.max(.01,dist); if(dot>.8&&dist<bestD){ best=id; bestD=dist; } }
     npcProximity(n,dist,now); }
@@ -5488,7 +5505,7 @@ if(NS.cake.st===4||NS.cake.st===5){ npcPlace(NPC.chun,NP.prep); }
    carries the dishes in, calls everyone, and they eat for twenty minutes; then he washes up. Menu and words: back office. */
 const DINE={x:39.2,z:-2.5,r:.72,top:.77,bo:1.05,bl:1.65,bh:.46};
 const KIT={x0:41.92,x1:46.56,z0:-4.0,z1:4.0, run:{x0:45.94,z0:-3.58,z1:2.66}, tall:{z0:2.7,z1:3.98}};
-const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}, KFIRE={on:false,fl:[]}, KNOOD={on:false,bub:[]}, KBASIN={on:false}, WC={doors:[],seats:[],slides:[],spout:{on:false},incense:[],vases:[],mirror:null}, BATH={seats:[],sseats:[],wseats:[],steam:[],tubC:null,door:null,sdoor:null,shower:null,water:null,pour:null,mist:null,tray:null,wash:false}; var KITCHEN_STRIP=null; const NOODLE_STEAM={at:null,s:[]};
+const MEAL_DYN=[], KGAS=[], KTAP={on:false}, KPANTRY={pv:null,open:false}, KFIRE={on:false,fl:[]}, KNOOD={on:false,bub:[]}, KBASIN={on:false}, WC={doors:[],seats:[],slides:[],spout:{on:false},incense:[],vases:[],mirror:null}, BATH={seats:[],sseats:[],wseats:[],steam:[],glows:[],lights:[],tubC:null,door:null,sdoor:null,shower:null,water:null,pour:null,mist:null,tray:null,wash:false}; var KITCHEN_STRIP=null; const NOODLE_STEAM={at:null,s:[]};
 Object.assign(NP,{noodle:{x:45.62,z:1.78},hob:{x:45.62,z:-2.72},sink:{x:45.62,z:-.05},pass:{x:45.62,z:-1.6},dineDoor:{x:41.25,z:-.3},tableDrop:{x:40.62,z:-1.3}});
 // click texts: back office (_data/vr.yml › texts) first, these when it is blank
 for(const [key,title,body] of [
@@ -5505,11 +5522,13 @@ for(const [key,title,body] of [
   ['krice','米缸','有木蓋的陶米缸，量米的竹筒擱在蓋上。'],
   ['kjar','水缸','老灶旁的陶水缸，水瓢浮在上面。'],
   ['dscreen','屏風・趙孟頫《雙松平遠圖》','四扇屏風，擋在通往廁所的門前。畫取自元・趙孟頫《雙松平遠圖》：近處兩株松樹、亂石，遠處平遠的山水。原作為手卷，紐約大都會藝術博物館藏（開放資料），這裡裁取松樹與遠山一段。'],
-  ['bathlock','置物櫃','十二格檜木置物櫃，每格一塊黃銅號碼牌和一把鎖。'],
-  ['bathrest','休息區','泡完、烤完擦乾後坐一下：長凳、捲好的毛巾、一甕清水和茶杯。出去就從玄關右邊的門簾。'],
-  ['bathin','浴室','從明間掀開「湯」字暖簾進玄關脫鞋。左轉是脫衣間：置物櫃、雙盆洗手台和鏡子；右轉是休息區。玄關後面的走道通往玻璃門，門後是浴缸、洗身處和烤箱。暖簾的「湯」字用教育部隸書。'],
-  ['bathtub','檜木浴缸','大檜木浴缸，靠在封起來的前牆邊，角落一支檜木湯口把熱水沿木槽倒進來；缸裡靠走道那側有一階石凳，水面浮著放清酒的小木盤。對著水按 E（或點水面）泡進去，按方向鍵起身。'],
-  ['bathsauna','烤箱','整間檜木的烤箱：條板地、上下兩層長凳，烤爐藏在角落的格柵下，牆上一對半圓壁燈、溫度計和沙漏。走進去對著長凳按 E 坐下。'],
+  ['bathsign','湯的木牌','暖簾旁的木牌。傭人洗澡的時候翻成「女湯」或「男湯」（女生先、男生後，時間照作息表），其他時候寫「湯」。客人隨時都可以進去。'],
+  ['bedlamp','床頭燈','床頭櫃上的瓷座小燈，一人一盞。睡前亮著，熄燈後半小時關掉，起床前再亮一下。'],
+  ['bathlock','置物櫃','十二格檜木置物櫃，佔滿休息區的後牆，每格一塊黃銅號碼牌和一把鎖；上方擋板後有一道暖光往下打在櫃門上。洗澡時換下的衣服就放這裡。'],
+  ['bathrest','休息區','泡完、烤完擦乾後在這裡穿衣、休息。後牆是整面置物櫃。出去就從玄關右邊的門簾。'],
+  ['bathin','浴室','從明間掀開「湯」字暖簾進玄關脫鞋，暖簾旁的木牌寫著現在是男湯、女湯還是一般的「湯」。左轉是脫衣間：落地的檜木洗手櫃（下面兩層放毛巾）和背光鏡；右轉是休息區，整面牆的置物櫃。玄關後面的走道通往玻璃門，門後是浴缸、洗身處和烤箱。燈都藏在天花板邊的檜木擋板後，晚上會亮一些。暖簾的「湯」字用教育部隸書。'],
+  ['bathtub','檜木浴缸','大檜木浴缸，靠在前牆的窗下，角落一支檜木湯口把熱水沿木槽倒進來；缸裡四個位子，兩兩相對，靠走道那側有一階石凳，水面浮著小木盤，瓷壺裡裝的是冷水。水光淡淡映在牆上和天花板。對著水按 E（或點水面）泡進去，按方向鍵起身。'],
+  ['bathsauna','烤箱','整間檜木的遠紅外線烤箱：條板地、上下兩層長凳，牆上四片紅外線板。進去把門關上，板子會慢慢發出暗紅的光，大約兩分鐘升到五十五度左右；門邊的溫度計看得到溫度，右下角也會顯示溫度和時間，十二分鐘時提醒你出來休息。'],
   ['wcf','女廁','米白牆、淺米色大地磚、淺橡木門，兩間到頂的隔間各一座免治馬桶。點拉門、隔間門開關，點馬桶或遙控器掀蓋、沖水。'],
   ['wcm','男廁','米白牆、淺米色大地磚、淺橡木門，一間小便斗、一間免治馬桶，都是到頂的隔間。'],
   ['wcvase','竹花入','一截竹筒掛在牆上，只插一枝：冬梅、春桃、夏荷、秋芒，照臺北的月份自動換。'],
@@ -5560,6 +5579,13 @@ function taipeiNow(){ const d=new Date(Date.now()+MEAL_SHIFT*60000), s=d.toLocal
   const dow=new Date(D+'T00:00:00Z').getUTCDay(); return {day:D,dow:dow||7,min:h*60+mi+se/60}; }
 const MEALS=(()=>{ const t=String(NT('meal.times')).split(/[,，、\s]+/).map(s=>{ const m=/^(\d{1,2})[:：](\d{2})$/.exec(s.trim()); return m?+m[1]*60+ +m[2]:null; });
   const def=[420,720,1080,1320]; return ['b','l','d','n'].map((k,i)=>({k,at:t[i]!=null?t[i]:def[i],eat:k==='n'?15:20})); })();
+// the household's day (back office: day.times = getting up, the women's bath, the men's bath, lights out)
+const DAY=(()=>{ const t=String(NT('day.times')).split(/[,，、\s]+/).map(s=>{ const m=/^(\d{1,2})[:：](\d{2})$/.exec(s.trim()); return m?+m[1]*60+ +m[2]:null; });
+  const def=[300,1360,1400,1440], v=[0,1,2,3].map(i=>t[i]!=null?t[i]:def[i]); return {wake:v[0],wf:v[1],wm:v[2],sleep:v[3]%1440||1440}; })();
+const dayMin=()=>taipeiNow().min;
+const asleepAt=m=>m<DAY.wake||(DAY.sleep<1440&&m>=DAY.sleep);
+// which bath it is by the noren: the women's from a quarter of an hour before their time, the men's after
+const bathSlot=m=>m>=DAY.wf-15&&m<DAY.wm?'f':m>=DAY.wm&&(DAY.sleep>=1440?m<1440:m<DAY.sleep)?'m':'';
 // where the house is in its meals now: cook (40 min before) → serve (10 min before) → eat → clear (10 min)
 function mealState(){ const T=taipeiNow(); for(const M of MEALS){ const r=T.min-M.at;
     if(r>=-40&&r<M.eat+10){ const phase=r<-10?'cook':r<0?'serve':r<M.eat?'eat':'clear'; return {k:M.k,phase,r,id:T.day+M.k,dow:T.dow,endMs:Date.now()+(M.eat-r)*60000,T}; } }
@@ -5897,7 +5923,8 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       B(.035,h,w,oak,0,h/2,0,g,tag); for(const s of [-1,1]){ B(.006,.42,.035,mat(0x5a4632,.5),s*.0185,1.0,w/2-.1,g,tag); }
       WC.slides.push({g,z0:(dz0+dz1)/2,open:.5}); MEAL_DYN.push(g);
       const ptex=textCanvas(120,120,(g2,W,Hh)=>{ g2.fillStyle='#efe7d9'; g2.fillRect(0,0,W,Hh); g2.fillStyle='#6e655a'; g2.font=F('600',70); g2.textAlign='center'; g2.textBaseline='middle'; g2.fillText(NT('wc.'+key),W/2,Hh/2+4); });
-      const sd=key==='f'?1:-1; B(.012,.15,.15,oak,xw+sd*.056,2.35,(dz0+dz1)/2); plane(.13,.13,mat(0xffffff,.8,{map:ptex}),xw+sd*.063,2.35,(dz0+dz1)/2,sd>0?Math.PI/2:-Math.PI/2,scene,{type:'wc'+key}); };
+      // the 男／女 plate sits on the door itself at eye height, on the corridor side near its leading edge, and slides with it
+      const sd=key==='f'?1:-1, pz=-(w/2-.14); B(.012,.17,.17,oak,sd*.023,1.52,pz,g); plane(.15,.15,mat(0xffffff,.8,{map:ptex}),sd*.03,1.52,pz,sd>0?Math.PI/2:-Math.PI/2,g,{type:'wc'+key}); };
     WC.slides=[]; slide(cw0-.05,'f'); slide(cw1+.05,'m');
     // stalls: cream walls to the ceiling, pale oak flush doors, all hinged on the same side, opening inwards; a slim chrome pull
     WC.doors=[]; WC.seats=[];
@@ -5925,7 +5952,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const rx=tx+.43; B(.015,.2,.05,mat(0xf4f4f2,.3),rx,1.0,tz-.1,scene,tag); for(let k=0;k<4;k++) B(.004,.012,.022,mat(k?0xc8ccd0:0x4a8ad0,.3),rx-.009,1.06-k*.03,tz-.1);
       const hx=tx-.43; B(.02,.02,.14,chrome,hx,.75,tz-.1); const roll=C(.055,.055,.1,mat(0xfbfaf6,.9),hx+.06,.7,tz-.1,scene,16); roll.rotation.x=Math.PI/2; };
     // the urinal: a tall white china urinal with a rounded top, hung on the back wall, a sensor at the top
-    const urinal=(ux)=>{ const ut={type:'wcuri',x:ux}; OB(ux-.18,ux+.18,zb-.32,zb); const uz=zb-.02, cer=porcelain, g=new THREE.Group(); g.position.set(ux,0,uz); scene.add(g);
+    const urinal=(ux)=>{ const ut={type:'wcuri',x:ux}; OB(ux-.18,ux+.18,zb-.32,zb); const UD=WC.doors[WC.doors.length-2]; if(UD) UD.uri=ux; const uz=zb-.02, cer=porcelain, g=new THREE.Group(); g.position.set(ux,0,uz); scene.add(g);
       B(.36,.72,.3,cer,0,.6,-.15,g,ut); const top=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.3,24,1,false,0,Math.PI),cer); top.rotation.z=Math.PI/2; top.rotation.y=Math.PI/2; top.position.set(0,.96,-.15); g.add(top); top.userData=ut; pickables.push(top);
       const inner=new THREE.Mesh(new THREE.PlaneGeometry(.26,.62),mat(0xeef1f2,.2)); inner.position.set(0,.68,-.302); inner.rotation.y=Math.PI; g.add(inner); const lip=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.02,20,1,false,0,Math.PI),mat(0xf2f4f5,.2)); lip.position.set(0,.38,-.3); g.add(lip);
       const sensor=new THREE.Mesh(new THREE.CircleGeometry(.025,16),mat(0xd8dcdf,.2)); sensor.position.set(0,.98,-.302); sensor.rotation.y=Math.PI; g.add(sensor); C(.008,.008,.012,chrome,0,.45,-.24,g,10); };
@@ -6024,7 +6051,14 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     face('x',X1,Z0,wz0,-1,0,CYb,hk(3.4,1)); face('x',X1,wz1,Z1,-1,0,CYb,hk(3.4,1)); face('x',X1,wz0,wz1,-1,0,wy0,hk(1.2,.5)); face('x',X1,wz0,wz1,-1,wy1,CYb,hk(1.2,.05));
     for(const [w,h,z,y] of [[wz1-wz0+.16,.07,(wz0+wz1)/2,wy0-.035],[wz1-wz0+.16,.07,(wz0+wz1)/2,wy1+.035],[.07,wy1-wy0,wz0-.035,(wy0+wy1)/2],[.07,wy1-wy0,wz1+.035,(wy0+wy1)/2]]) B(.04,h,w,hgrain,X1i-.02,y,z);
     B(.14,.03,wz1-wz0+.2,hgrain,X1i-.03,wy0-.07,(wz0+wz1)/2);
-    for(const [x0,x1,z0,z1] of [[X0i+.02,xg-.04,Z0i+.02,Z1i-.02],[xg+.04,X1i-.02,Z0i+.02,SZ-.08]]){ B(x1-x0,.012,.02,ledM,(x0+x1)/2,CYb-.04,z0); B(x1-x0,.012,.02,ledM,(x0+x1)/2,CYb-.04,z1); B(.02,.012,z1-z0,ledM,x0,CYb-.04,(z0+z1)/2); B(.02,.012,z1-z0,ledM,x1,CYb-.04,(z0+z1)/2); }
+    // hidden light: a low hinoki valance a hand from each wall, a warm (2700 K) glow washing the ceiling above it; no bare
+    // strips. BATH.glows are dimmed by day and brought up after dark.
+    { const gT=textCanvas(64,32,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'rgba(255,255,255,.95)'); gr.addColorStop(.35,'rgba(255,255,255,.4)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
+      const gM=new THREE.MeshBasicMaterial({map:gT,color:0xffb874,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false}); BATH.glows.push(gM);
+      const cove=(x0,x1,z0,z1)=>{ for(const [ax,at,a,b,n] of [['z',z0,x0,x1,1],['z',z1,x0,x1,-1],['x',x0,z0,z1,1],['x',x1,z0,z1,-1]]){ const L0=b-a, m=(a+b)/2;
+          if(ax==='z'){ B(L0,.07,.015,hgrain,m,CYb-.12,at+n*.09); const p=new THREE.Mesh(new THREE.PlaneGeometry(L0,.55),gM); p.rotation.x=Math.PI/2; p.rotation.z=n>0?Math.PI:0; p.position.set(m,CYb-.004,at+n*.275); scene.add(p); }
+          else { B(.015,.07,L0,hgrain,at+n*.09,CYb-.12,m); const p=new THREE.Mesh(new THREE.PlaneGeometry(L0,.55),gM); p.rotation.x=Math.PI/2; p.rotation.z=n>0?Math.PI/2:-Math.PI/2; p.position.set(at+n*.275,CYb-.004,m); scene.add(p); } } };
+      cove(X0i,xg-.05,Z0i,zv0-.05); cove(X0i,xg-.05,zv1+.05,Z1i); cove(xg+.05,X1i,Z0i,SZ-.05); }
     // ---- the noren at the door from the 明間: linen, 湯 in clerical script (教育部隸書) in the middle, split down the centre
     const linen=(W2,H2)=>textCanvas(W2,H2,(g,w,h)=>{ g.fillStyle='#e9dfcb'; g.fillRect(0,0,w,h); for(let y=0;y<h;y+=2){ g.fillStyle=`rgba(160,140,110,${y%4?.05:.09})`; g.fillRect(0,y,w,1); } for(let x=0;x<w;x+=3){ g.fillStyle='rgba(255,255,255,.05)'; g.fillRect(x,0,1,h); } g.fillStyle='#8a6a4a'; g.fillRect(0,0,w,8); });
     { const nt=linen(512,530), parts=[], w2=(20.62-19.18)/2;
@@ -6032,18 +6066,23 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
         const p2=new THREE.Mesh(new THREE.PlaneGeometry(w2-.006,1.48),mat(0xffffff,.9,{side:THREE.DoubleSide,map:t})); p2.position.set(41.76,2.46-.74,19.18+w2*(s2+.5)); p2.rotation.y=-Math.PI/2; scene.add(p2); p2.userData={type:'block'}; }
       const img=new Image(); img.onload=()=>{ const g=nt.image.getContext('2d'), s=300; g.drawImage(img,256-s/2,205-s/2,s,s); nt.needsUpdate=true; parts.forEach(t=>t.needsUpdate=true); }; img.src='noren-tang.png';
       C(.012,.012,1.54,hgrain,41.76,2.47,19.9,scene,8).rotation.x=Math.PI/2; }
+    // ---- a wooden plate beside the noren: 女湯 or 男湯 while the household bathes, 湯 otherwise
+    { const cv=document.createElement('canvas'); cv.width=96; cv.height=256; const sT=new THREE.CanvasTexture(cv); sT.colorSpace=THREE.SRGBColorSpace;
+      B(.03,.48,.2,hgrain,41.762,1.62,18.78); const pl=new THREE.Mesh(new THREE.PlaneGeometry(.17,.44),mat(0xffffff,.7,{map:sT})); pl.position.set(41.745,1.62,18.78); pl.rotation.y=-Math.PI/2; scene.add(pl); pl.userData={type:'bathsign'}; pickables.push(pl);
+      C(.004,.004,.14,brass,41.762,1.93,18.78,scene,6); BATH.sign={cv,sT,k:null}; }
     // ---- the entrance: a raised hinoki step, slippers, the wall ahead; an opening to each side with a plain curtain
     { wall('x',xv,zv0-.05,zv1+.05,CYb,.1,hk(2,1));
       for(const z of [zv0,zv1]){ wall('z',z,X0,op0,CYb,.1,hk(.3,1)); B(xv-op0,CYb-2.1,.1,hk(.6,.28),(op0+xv)/2,(2.1+CYb)/2,z); for(const xx of [op0,xv-.05]) B(.04,2.1,.12,hgrain,xx,1.05,z);
         const cm=mat(0xffffff,.9,{side:THREE.DoubleSide,map:linen(256,384)}); for(const s of [0,1]){ const p=plane((xv-op0)/2-.01,1.15,cm,op0+(xv-op0)*(.25+s*.5),2.1-.575,z,0); p.userData={type:'block'}; } }
       B(xv-42.3,.1,zv1-zv0-.1,hgrain,(42.3+xv)/2,.05,(zv0+zv1)/2,scene,{type:'bathin'});
       for(let i=0;i<3;i++) for(const s of [-1,1]) B(.1,.022,.25,mat(0x8a7a5a,.8),42.45+i*.16+s*.055,.112,zv1-.3); }
-    // ---- the changing room. Lockers against the front wall: three columns, four rows of hinoki doors with real gaps,
-    //      a brass number plate and a lock on each
-    { // built facing +z as before, then turned to stand against the rest room's partition, facing the room
-      const LG=new THREE.Group(); LG.rotation.y=Math.PI/2; LG.position.set(X0i-Z0i,0,22.35+X0i+.75); scene.add(LG);
+    // ---- the lockers: three columns, four rows of hinoki doors with real gaps, a brass number plate and a lock on each,
+    //      filling the rest room's back wall from the outer wall to the glass; a soft light grazes down their doors
+    const LW=xg-.05-X0i;
+    { // built facing +z as before, then turned round to stand against the back wall, facing the room
+      const LG=new THREE.Group(); LG.rotation.y=Math.PI; LG.position.set(2*X0i+LW,0,Z1i+Z0i); scene.add(LG);
       const B=(w,h,d,m,x,y,z,p=LG,pick=null)=>{ const o=box(w,h,d,m,x,y,z,p,pick); o.castShadow=o.receiveShadow=true; return o; }, C=(r1,r2,h,m,x,y,z,p=LG,seg=20)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m); o.position.set(x,y,z); p.add(o); return o; };
-      const lx0=X0i, lx1=X0i+1.5, lz0=Z0i, LD=.44, LH=1.82, cols=3, rows=4, lt={type:'bathlock'}, cw=(lx1-lx0)/cols, rh=(LH-.12)/rows;
+      const lx0=X0i, lx1=X0i+LW, lz0=Z0i, LD=.44, LH=1.82, cols=3, rows=4, lt={type:'bathlock'}, cw=(lx1-lx0)/cols, rh=(LH-.12)/rows;
       B(lx1-lx0,LH,LD,hgrain,(lx0+lx1)/2,LH/2,lz0+LD/2-.01,LG,lt); B(lx1-lx0+.02,.04,LD+.02,hgrain,(lx0+lx1)/2,LH+.02,lz0+LD/2); B(lx1-lx0,.1,.02,mat(0x6a5038,.8),(lx0+lx1)/2,.05,lz0+LD+.0);
       const numT=textCanvas(512,64,(g,w,h)=>{ g.fillStyle='#b5945b'; g.fillRect(0,0,w,h); g.fillStyle='#2e2216'; g.font='700 34px "Noto Serif TC",serif'; g.textAlign='center'; g.textBaseline='middle'; for(let i=0;i<12;i++){ g.fillText(String(i+1),(i+.5)*w/12,h/2+2); } });
       let n=0; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ const cx=lx0+cw*(c+.5), cy=.12+rh*(rows-r-.5), dm=grainV(((r*3+c)*.27)%1,((r*7+c*3)*.19)%1,.5,.5);
@@ -6052,7 +6091,10 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
         const pl=new THREE.Mesh(new THREE.PlaneGeometry(.07,.04),mat(0xffffff,.35,{metalness:.5,map:t})); pl.position.set(cx,cy+rh*.28,lz0+LD+.024); LG.add(pl);
         C(.012,.012,.008,brass,cx,cy-rh*.05,lz0+LD+.026,LG,14).rotation.x=Math.PI/2; B(.003,.009,.004,mat(0x1a1410,.5),cx,cy-rh*.05,lz0+LD+.031);
         for(let k=0;k<3;k++) B(.08,.005,.004,mat(0x5a4028,.7),cx,cy-rh*.33+k*.016,lz0+LD+.023); }
-      OB(X0i,X0i+LD,21.6,23.1); }
+      const wash=new THREE.Mesh(new THREE.PlaneGeometry(lx1-lx0,LH),new THREE.MeshBasicMaterial({map:textCanvas(16,128,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'rgba(255,255,255,.75)'); gr.addColorStop(.5,'rgba(255,255,255,.18)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); }),color:0xffb874,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,depthWrite:false}));
+      wash.position.set((lx0+lx1)/2,LH/2+.02,lz0+LD+.035); LG.add(wash); BATH.glows.push(wash.material);
+      BATH.lockPt={x:X0i+LW/2,z:Z1i-LD-.55};
+      OB(X0i,X0i+LW,Z1i-LD,Z1i); }
     // the vanity: a floating hinoki counter, two white basins, slim nickel spouts from the wall, a frameless mirror that
     // reflects, a soft glow round it and under the counter, a woven basket of towels below
     { // built against the partition as before, then turned onto the front wall (local +x out of the wall → world +z)
@@ -6061,18 +6103,29 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
         C=(r1,r2,h,m,x,y,z,p=VG,seg=20,pick=null)=>{ const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m); o.position.set(x,y,z); o.castShadow=true; p.add(o); if(pick){ o.userData=pick; pickables.push(o); } return o; },
         L=(pts,m,x,y,z,p=VG,pick=null)=>{ const o=lathe(pts,m,24); o.position.set(x,y,z); o.castShadow=true; p.add(o); if(pick){ o.userData=pick; pickables.push(o); } return o; };
       const vz0=16.3, vz1=17.75, vx1=X0i+.52, top=.84, tag={type:'bathin'};
-      B(vx1-X0i,.06,vz1-vz0,grainV(.1,.3,1,.6),(X0i+vx1)/2,top-.03,(vz0+vz1)/2,VG,tag); B(.02,.03,vz1-vz0-.1,ledM,vx1-.06,top-.075,(vz0+vz1)/2);
-      const pool=new THREE.Mesh(new THREE.PlaneGeometry(.9,vz1-vz0+.3),new THREE.MeshBasicMaterial({map:SOFT_TEX,color:0xffd8a0,transparent:true,opacity:.35,depthWrite:false})); pool.rotation.x=-Math.PI/2; pool.position.set(X0i+.3,.015,(vz0+vz1)/2); VG.add(pool);
+      B(vx1-X0i,.06,vz1-vz0,grainV(.1,.3,1,.6),(X0i+vx1)/2,top-.03,(vz0+vz1)/2,VG,tag);
+      // standing on the floor: a hinoki cabinet open at the front, two shelves of folded towels, a recessed plinth with a
+      // warm glow along the floor beneath it
+      { const D0=vx1-X0i-.03, cx=X0i+D0/2, cz=(vz0+vz1)/2, sideM=grainV(.3,.6,.4,1), H0=top-.06;
+        for(const z of [vz0+.0125,vz1-.0125]) B(D0,H0-.1,.025,sideM,cx,.1+(H0-.1)/2,z,VG,tag);
+        B(.015,H0-.1,vz1-vz0-.05,hgrain,X0i+.008,.1+(H0-.1)/2,cz,VG,tag); B(D0,.08,vz1-vz0-.05,hgrain,cx+.005,H0-.04,cz,VG,tag);
+        for(const y of [.115,.45]) B(D0-.02,.025,vz1-vz0-.05,hgrain,cx,y,cz,VG,tag);
+        B(D0-.08,.1,vz1-vz0-.06,mat(0x5a4632,.8),cx-.04,.05,cz,VG);
+        const toe=mat(0xfff0d6,.6,{emissive:0xffc07a,emissiveIntensity:.7}); B(.012,.008,vz1-vz0-.1,toe,X0i+D0-.06,.097,cz); BATH.toe=toe;
+        const pool=new THREE.Mesh(new THREE.PlaneGeometry(.55,vz1-vz0+.1),new THREE.MeshBasicMaterial({map:SOFT_TEX,color:0xffb874,transparent:true,opacity:.28,depthWrite:false,blending:THREE.AdditiveBlending})); pool.rotation.x=-Math.PI/2; pool.position.set(X0i+D0+.05,.016,cz); VG.add(pool); BATH.glows.push(pool.material);
+        const tw=[0xf6f3ee,0xe9e2d4,0xf1ece2], n=4, sp=(vz1-vz0-.08)/n;
+        for(const y of [.128,.463]) for(let i=0;i<n;i++) for(let k=0;k<3;k++) B(.3,.048,sp-.05,mat(tw[(i+k)%3],.95),X0i+.2,y+.03+k*.05,vz0+.04+sp*(i+.5)); }
       OB(VX-.73,VX+.73,Z0i,Z0i+.52);
       for(const bz of [vz0+.38,vz1-.38]){ L([[0,0],[.06,0],[.15,.035],[.19,.11],[.195,.135],[.188,.14],[.18,.125],[.14,.06],[.05,.03],[0,.03]],porcelain,X0i+.28,top,bz,VG,tag);
         const esc=C(.028,.028,.012,nickel,X0i+.006,1.06,bz,VG,16); esc.rotation.z=Math.PI/2; const sp=C(.009,.009,.24,nickel,X0i+.12,1.06,bz,VG,10); sp.rotation.z=Math.PI/2;
         const tip=C(.009,.009,.03,nickel,X0i+.235,1.05,bz,VG,10); const lev=B(.008,.06,.008,nickel,X0i+.04,1.1,bz); lev.rotation.z=-.35; }
       L([[0,0],[.028,0],[.032,.12],[.02,.14],[.012,.16]],mat(0xece6dc,.35),X0i+.1,top,(vz0+vz1)/2-.08); C(.003,.003,.04,nickel,X0i+.1,top+.18,(vz0+vz1)/2-.08,VG,6);
       L([[0,0],[.035,0],[.04,.06],[.032,.08]],mat(0x7a6f62,.6),X0i+.1,top,(vz0+vz1)/2+.1); for(let i=0;i<7;i++){ const lf=new THREE.Mesh(new THREE.SphereGeometry(.022,8,6),mat(i%2?0x6f9a3a:0x8ab04a,.6)); lf.scale.set(1,.4,1.4); lf.position.set(X0i+.1+Math.cos(i*1.3)*.035,top+.1+Math.sin(i)*.02,(vz0+vz1)/2+.1+Math.sin(i*1.3)*.04); lf.rotation.y=i; VG.add(lf); }
-      L([[0,0],[.16,0],[.19,.24],[.2,.26]],mat(0xb08a52,.85,{side:THREE.DoubleSide}),X0i+.24,0,(vz0+vz1)/2,VG,tag); for(let i=0;i<3;i++) B(.24,.045,.18,mat(0xf6f3ee,.95),X0i+.24,.27+i*.046,(vz0+vz1)/2);
       // the mirror
       const mw=vz1-vz0-.12, mh=.82, my=1.6, mx=X0i+.012;
-      const halo=new THREE.Mesh(new THREE.PlaneGeometry(mw+.3,mh+.3),new THREE.MeshBasicMaterial({map:SOFT_TEX,color:0xffdcb0,transparent:true,opacity:.55,depthWrite:false})); halo.position.set(X0i+.004,my,(vz0+vz1)/2); halo.rotation.y=Math.PI/2; VG.add(halo);
+      const ringT=textCanvas(256,192,(g,w,h)=>{ const im=g.createImageData(w,h), d=im.data, bx=.12*w, by=.12*h; for(let j=0;j<h;j++) for(let i=0;i<w;i++){ const dx=Math.max(bx-i,i-(w-bx),0), dy=Math.max(by-j,j-(h-by),0), r=Math.hypot(dx/bx,dy/by), k=(j*w+i)*4;
+          const a=dx===0&&dy===0?0:Math.max(0,1-r)*Math.max(0,1-r); d[k]=d[k+1]=d[k+2]=255; d[k+3]=a*255; } g.putImageData(im,0,0); });
+      const halo=new THREE.Mesh(new THREE.PlaneGeometry(mw/(1-.24),mh/(1-.24)),new THREE.MeshBasicMaterial({map:ringT,color:0xffc488,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending})); halo.position.set(X0i+.004,my,(vz0+vz1)/2); halo.rotation.y=Math.PI/2; VG.add(halo); BATH.glows.push(halo.material);
       const rt=new THREE.WebGLRenderTarget(512,320), mcam=new THREE.PerspectiveCamera();
       const mm=new THREE.ShaderMaterial({uniforms:{map:{value:rt.texture},tm:{value:new THREE.Matrix4()}},
         vertexShader:'uniform mat4 tm; varying vec4 vU; void main(){ vU=tm*modelMatrix*vec4(position,1.); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
@@ -6081,14 +6134,6 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       BATH.mirror={mesh:mirror,rt,cam:mcam,mat:mm,ax:'z',at:Z0i+.012,cx:VX,clip:[new THREE.Plane(new THREE.Vector3(0,0,1),-(Z0i+.016))]}; }
     // a plain hinoki bench by the glass
     { B(.36,.05,1.4,hgrain,xg-.28,.44,17.0,scene,{type:'bathin'}); for(const z of [16.4,17.6]) B(.3,.42,.05,hgrain,xg-.28,.21,z); OB(xg-.46,xg-.1,16.3,17.7); }
-    // ---- the rest room: the lockers (above), towels on open shelves against the back wall, a small water stand in the corner by the glass
-    { const tag={type:'bathrest'};
-      const sx0=X0i, sx1=X0i+1.0, sd=.4; B(sx1-sx0,1.6,.02,hgrain,(sx0+sx1)/2,.8,Z1i-.01); for(const x of [sx0+.01,sx1-.01]) B(.02,1.6,sd,hgrain,x,.8,Z1i-sd/2); for(const y of [.02,.55,1.08,1.6]) B(sx1-sx0,.025,sd,hgrain,(sx0+sx1)/2,y,Z1i-sd/2,scene,tag);
-      for(const y of [.55,1.08]) for(let i=0;i<4;i++){ const r=C(.07,.07,.32,mat(i%2?0xf6f3ee:0xe8e2d6,.95),sx0+.14+i*.24,y+.085,Z1i-sd/2,scene,14); r.rotation.x=Math.PI/2; }
-      for(let i=0;i<5;i++) B(.36,.04,.3,mat(0xf6f3ee,.95),(sx0+sx1)/2,.06+i*.042,Z1i-sd/2); OB(sx0,sx1,Z1i-sd,Z1i);
-      const wx=xg-.26, wz=Z1i-.24; B(.38,.04,.4,hgrain,wx,.82,wz,scene,tag); for(const [dx,dz] of [[-.15,-.16],[.15,-.16],[-.15,.16],[.15,.16]]) B(.035,.8,.035,hgrain,wx+dx,.4,wz+dz);
-      L([[0,0],[.1,0],[.13,.12],[.12,.26],[.07,.32],[.075,.34]],mat(0xd8d2c4,.3),wx,.84,wz-.08,scene,tag); C(.008,.008,.06,nickel,wx+.12,.9,wz-.08,scene,8).rotation.z=Math.PI/2;
-      for(let i=0;i<3;i++) L([[0,0],[.025,0],[.032,.07]],mat(0x5a6a5a,.4),wx-.06+i*.06,.84,wz+.1); OB(wx-.2,wx+.2,wz-.2,wz+.2); }
     // ---- the glass partition, a solid hinoki wall where the sauna is, the sliding door in the middle
     { const dz0=19.45, dz1=20.35; for(const [a,b] of [[Z0i,dz0],[dz1,SZ]]){ B(.012,2.2,b-a,glassM,xg,1.1,(a+b)/2); B(.05,.05,b-a,alu,xg,2.2,(a+b)/2); B(.05,.03,b-a,alu,xg,.015,(a+b)/2); OB(xg-.03,xg+.03,a,b); }
       B(.05,CYb-2.2,SZ-Z0,hk(5,.25),xg,(2.2+CYb)/2,(Z0+SZ)/2); wall('x',xg,SZ,Z1i,CYb,.1,hk(2.2,1));
@@ -6100,7 +6145,14 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const side=(w,d,x,z,k)=>B(w,TH,d,grainV(k*.23,k*.31,1,.5),x,TH/2,z,scene,tag);
       side(tx1-tx0,tw,(tx0+tx1)/2,tz0+tw/2,1); side(tx1-tx0,tw,(tx0+tx1)/2,tz1-tw/2,2); side(tw,tz1-tz0-2*tw,tx0+tw/2,(tz0+tz1)/2,3); side(tw,tz1-tz0-2*tw,tx1-tw/2,(tz0+tz1)/2,4);
       for(const [w,d,x,z] of [[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz0+tw/2],[tx1-tx0+.02,tw+.02,(tx0+tx1)/2,tz1-tw/2],[tw+.02,tz1-tz0,tx0+tw/2,(tz0+tz1)/2],[tw+.02,tz1-tz0,tx1-tw/2,(tz0+tz1)/2]]) B(w,.02,d,hgrain,x,TH+.01,z);
-      B(.02,.012,tz1-tz0-.1,ledM,tx0-.012,.07,(tz0+tz1)/2); B(tx1-tx0-.1,.012,.02,ledM,(tx0+tx1)/2,.07,tz1+.012);
+      const rimM=mat(0xfff0d6,.6,{emissive:0xffb070,emissiveIntensity:.45}); BATH.rim=rimM; B(.02,.012,tz1-tz0-.1,rimM,tx0-.012,.07,(tz0+tz1)/2); B(tx1-tx0-.1,.012,.02,rimM,(tx0+tx1)/2,.07,tz1+.012);
+      // light off the water: faint moving caustics on the front wall over the tub, the side wall and the ceiling
+      { const cv=document.createElement('canvas'); cv.width=cv.height=256; const cT=new THREE.CanvasTexture(cv); cT.wrapS=cT.wrapT=THREE.RepeatWrapping;
+        const cM=new THREE.MeshBasicMaterial({map:cT,color:0xffe2b8,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false});
+        const fade=textCanvas(64,64,(g,w,h)=>{ const r=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2); r.addColorStop(0,'#fff'); r.addColorStop(.6,'#bbb'); r.addColorStop(1,'#000'); g.fillStyle=r; g.fillRect(0,0,w,h); }); cM.alphaMap=fade;
+        const qs=[]; for(const [w,h,x,y,z,rx,ry] of [[tx1-tx0,1.1,(tx0+tx1)/2,WY+.75,Z0i+.004,0,0],[tz1-tz0,1.1,X1i-.004,WY+.75,(tz0+tz1)/2,0,-Math.PI/2],[tx1-tx0,tz1-tz0,(tx0+tx1)/2,CYb-.006,(tz0+tz1)/2,Math.PI/2,0]]){
+          const q=new THREE.Mesh(new THREE.PlaneGeometry(w,h),cM); q.rotation.set(rx,ry,0); q.position.set(x,y,z); scene.add(q); qs.push(q); MEAL_DYN.push(q); }
+        BATH.caust={cv,cT,cM,t:0}; }
       B(tx1-tx0-2*tw,.04,tz1-tz0-2*tw,hk(2,2),(tx0+tx1)/2,.06,(tz0+tz1)/2);
       const stoneStep=B(tx1-tx0-2*tw-.1,.28,.4,stone,(tx0+tx1)/2,.08+.14,tz1-tw-.22);
       const wat=new THREE.Mesh(new THREE.PlaneGeometry(tx1-tx0-2*tw,tz1-tz0-2*tw),new THREE.MeshStandardMaterial({color:0x9fbcbc,roughness:.04,metalness:.1,transparent:true,opacity:.6})); wat.rotation.x=-Math.PI/2; wat.position.set((tx0+tx1)/2,WY,(tz0+tz1)/2); scene.add(wat); BATH.water=wat;
@@ -6121,28 +6173,28 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const foam=new THREE.Mesh(new THREE.CircleGeometry(.09,20),new THREE.MeshBasicMaterial({map:SOFT_TEX,color:0xffffff,transparent:true,opacity:.6,depthWrite:false})); foam.rotation.x=-Math.PI/2; foam.position.set(hitX,WY+.004,hitZ); scene.add(foam); MEAL_DYN.push(foam);
       const rip=[]; for(let k=0;k<4;k++){ const r=new THREE.Mesh(new THREE.RingGeometry(.05,.062,28),new THREE.MeshBasicMaterial({color:0xf2f8fa,transparent:true,opacity:0,depthWrite:false})); r.rotation.x=-Math.PI/2; r.position.set(hitX,WY+.002,hitZ); scene.add(r); rip.push(r); MEAL_DYN.push(r); }
       BATH.pour={pour:fall,tex:fallT,foam,rip,x:hitX,z:hitZ}; OB(px-.12,px+.12,pz-.12,pz+.12);
-      // the floating tray with a small sake set
-      const tray=new THREE.Group(); tray.position.set(tx0+.7,WY+.01,tz0+.7); scene.add(tray); B(.34,.03,.26,hgrain,0,0,0,tray); for(const [x,z] of [[-.12,-.08],[-.12,.08],[.12,-.08],[.12,.08]]) B(.03,.05,.03,hgrain,x,.025,z,tray);
+      // the floating tray with a small porcelain bottle of cold water and two cups
+      const tray=new THREE.Group(); tray.position.set((tx0+tx1)/2-.15,WY+.01,(tz0+tz1)/2); scene.add(tray); B(.34,.03,.26,hgrain,0,0,0,tray); for(const [x,z] of [[-.12,-.08],[-.12,.08],[.12,-.08],[.12,.08]]) B(.03,.05,.03,hgrain,x,.025,z,tray);
       L([[0,0],[.035,0],[.045,.08],[.03,.12],[.015,.14]],porcelain,-.06,.015,0,tray); for(let i=0;i<2;i++) L([[0,0],[.02,0],[.025,.035]],porcelain,.08,.015,-.05+i*.1,tray); BATH.tray=tray; MEAL_DYN.push(tray);
-      const tl=new THREE.PointLight(0xffd8a8,.75,4.5,2); tl.position.set((tx0+tx1)/2,2.2,(tz0+tz1)/2); scene.add(tl);
+      const tl=new THREE.PointLight(0xffc890,.5,4.5,2); BATH.lights.push([tl,.5]); tl.position.set((tx0+tx1)/2,2.2,(tz0+tz1)/2); scene.add(tl);
       BATH.tubC={x:(tx0+tx1)/2,z:(tz0+tz1)/2,sx:(tx1-tx0)/2-.2,sz:(tz1-tz0)/2-.2};
-      for(const x of [tx0+.55,(tx0+tx1)/2,tx1-.6]){ const si=addSeat(x,tz1-.5,0,'bath',NT('bath.seat')); SEATS[si].ap={x,z:tz1+.5}; BATH.seats.push(si); }
+      for(const [x,z,yaw] of [[tx0+.75,tz1-.5,0],[tx1-.95,tz1-.5,0],[tx0+.75,tz0+.55,Math.PI],[tx1-.95,tz0+.55,Math.PI]]){ const si=addSeat(x,z,yaw,'bath',NT('bath.seat')); SEATS[si].ap={x,z:tz1+.5}; BATH.seats.push(si); }
       for(const o of [wat,stoneStep]){ o.userData={type:'seat',si:BATH.seats[1]}; pickables.push(o); } }
     // ---- the washing place under the bamboo window: two seated places (stool, bucket, a thermostatic bar with a hand
     //      shower on a rail, a shelf of bottles), then a rain shower behind a glass screen with a square head in the ceiling
     { const wt={type:'bathwash'};
-      for(const wz of [19.25,19.95]){ const sx=X1i-.42;
+      for(const wz of [18.72,19.27,19.82,20.37]){ const sx=X1i-.42;
         B(.3,.24,.24,hgrain,sx,.12,wz); L([[0,0],[.11,0],[.12,.19],[.125,.2]],hgrain,sx-.32,0,wz+.18); for(const y of [.05,.15]){ const b=new THREE.Mesh(new THREE.TorusGeometry(.12,.005,5,24),copper); b.rotation.x=Math.PI/2; b.position.set(sx-.32,y,wz+.18); scene.add(b); }
         const bar=C(.022,.022,.3,nickel,X1i-.04,.62,wz,scene,14,wt); bar.rotation.x=Math.PI/2; for(const s of [-1,1]){ const k=C(.026,.026,.035,nickel,X1i-.06,.62,wz+s*.17,scene,14,wt); k.rotation.z=Math.PI/2; }
         B(.012,.7,.012,nickel,X1i-.02,1.05,wz+.11); const hs=C(.018,.024,.17,nickel,X1i-.06,1.24,wz+.11,scene,12,wt); hs.rotation.z=.4; C(.03,.03,.012,nickel,X1i-.1,1.31,wz+.11,scene,14).rotation.z=Math.PI/2+.4;
         B(.1,.012,.26,hgrain,X1i-.05,.95,wz-.04); for(let i=0;i<2;i++) C(.022,.022,.13,mat([0xf2efe8,0x2f3a34][i],.3),X1i-.06,1.02,wz-.12+i*.08,scene,12);
         const si=addSeat(sx,wz,-Math.PI/2,'wstool',NT('wash.seat')); SEATS[si].ap={x:sx-.6,z:wz}; BATH.wseats.push(si);
         const hit=new THREE.Mesh(new THREE.BoxGeometry(.32,.08,.28),new THREE.MeshBasicMaterial({visible:false})); hit.position.set(sx,.26,wz); hit.userData={type:'seat',si}; scene.add(hit); pickables.push(hit); MEAL_DYN.push(hit); }
-      const sz0=20.45, shx=X1i-.45, shz=20.92;
+      const sz0=20.66, shx=X1i-.45, shz=21.03;
       B(X1i-(X1i-.95),2.0,.012,glassM,X1i-.475,1.0,sz0); B(.95,.04,.04,alu,X1i-.475,2.0,sz0); OB(X1i-.95,X1i,sz0-.03,sz0+.03);
       B(.32,.012,.32,nickel,shx,CYb-.006,shz,scene,{type:'bathshower'}); const holeM=mat(0x2a2c2e,.4); for(let i=0;i<6;i++) for(let j=0;j<6;j++) C(.005,.005,.004,holeM,shx-.125+i*.05,CYb-.014,shz-.125+j*.05,scene,6);
       C(.045,.045,.02,nickel,X1i-.01,1.15,shz,scene,20,{type:'bathshower'}).rotation.z=Math.PI/2; B(.012,.006,.03,mat(0x2a2a2a,.4),X1i-.025,1.15,shz,scene,{type:'bathshower'});
-      B(.02,.3,.4,hk(.4,.3),X1i-.01,1.5,shz+.05); B(.12,.012,.4,hgrain,X1i-.06,1.36,shz+.05); for(let i=0;i<3;i++) C(.026,.026,.15,mat([0xf2efe8,0xc9d9c4,0x2f3a34][i],.3),X1i-.06,1.44,shz-.08+i*.12,scene,12);
+      B(.02,.3,.3,hk(.4,.3),X1i-.01,1.5,shz); B(.12,.012,.3,hgrain,X1i-.06,1.36,shz); for(let i=0;i<3;i++) C(.026,.026,.15,mat([0xf2efe8,0xc9d9c4,0x2f3a34][i],.3),X1i-.06,1.44,shz-.09+i*.09,scene,12);
       const rain=[]; for(let i=0;i<44;i++){ const d=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.12,3),mat(0xeaf4f8,.05,{transparent:true,opacity:.55})); d.visible=false; scene.add(d); rain.push({d,x:shx+(Math.random()-.5)*.28,z:shz+(Math.random()-.5)*.28,ph:Math.random()}); MEAL_DYN.push(d); }
       const fog=[]; for(let i=0;i<6;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX})); scene.add(s); fog.push({s,ph:i/6}); MEAL_DYN.push(s); }
       BATH.shower={on:false,rain,fog,x:shx,z:shz}; }
@@ -6157,15 +6209,23 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       B(.5,.06,Z1i-1.04-SZ-.8,hgrain,sx1-.25,.45,(SZ+.8+Z1i-1.04)/2,scene,tag); B(.04,.42,Z1i-1.04-SZ-.8,hgrain,sx1-.5,.22,(SZ+.8+Z1i-1.04)/2);
       for(let i=0;i<6;i++) B(.016,.4,.016,hgrain,sx0+.3+i*.08,.22,Z1i-1.045);
       OB(sx0,sx1,Z1i-1.04,Z1i); OB(sx1-.5,sx1,SZ+.8,Z1i-1.04);
-      const gx=X1i-.3, gz=SZ+.42; B(.5,.5,.5,mat(0x2a2a2a,.6),gx,.25,gz); for(let i=0;i<7;i++) B(.5,.03,.03,hgrain,gx,.52,gz-.21+i*.07); const sg=new THREE.Mesh(new THREE.PlaneGeometry(.44,.44),new THREE.MeshBasicMaterial({color:0xff8a3a,transparent:true,opacity:.35})); sg.rotation.x=-Math.PI/2; sg.position.set(gx,.505,gz); scene.add(sg); OB(gx-.27,gx+.27,gz-.27,gz+.27);
+      // far-infrared panels, flush in the hinoki: dark until the door is shut on someone, then a deep red glow
+      { const irM=mat(0x2a1a14,.5,{emissive:0xb83a18,emissiveIntensity:0}), frM=mat(0x5a4030,.6), pk={type:'bathsauna'};
+        const panel=(w,h,x,y,z,ry)=>{ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry; scene.add(g); box(w+.05,h+.05,.02,frM,0,0,0,g); const f=box(w,h,.012,irM,0,0,.012,g); f.userData=pk; pickables.push(f);
+          for(let i=1;i<6;i++) box(.004,h-.04,.004,mat(0x3a2418,.6),-w/2+i*w/6,0,.02,g); };
+        panel(.9,.55,(xg+X1i)/2-.55,1.62,Z1i-.012,Math.PI); panel(.9,.55,(xg+X1i)/2+.55,1.62,Z1i-.012,Math.PI); panel(.55,.9,xg+.062,1.2,SZ+.75,Math.PI/2); panel(.55,.9,X1i-.012,1.25,SZ+.5,-Math.PI/2);
+        const rl=new THREE.PointLight(0xff4a1a,0,3.2,2); rl.position.set((xg+X1i)/2,1.4,(SZ+Z1i)/2); scene.add(rl);
+        BATH.sauna={irM,rl,T:28,x0:xg+.05,x1:X1i,z0:SZ+.05,z1:Z1i,since:0,reminded:false}; }
       for(const [x,z] of [[xg+.1,SZ+.8],[X1i-.02,SZ+.8]]){ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.09,14,10,0,Math.PI),mat(0xfff4e4,.5,{emissive:0xffd9a8,emissiveIntensity:.9,side:THREE.DoubleSide})); lamp.rotation.y=x<45?Math.PI/2:-Math.PI/2; lamp.position.set(x,2.25,z); scene.add(lamp); }
       B(.3,.012,.3,mat(0x3a3028,.6),(xg+X1i)/2,CYb-.006,SZ+.6); for(let i=0;i<6;i++) B(.3,.004,.02,hgrain,(xg+X1i)/2,CYb-.012,SZ+.47+i*.05);
-      B(.02,.22,.12,hgrain,X1i-.01,1.5,SZ+.95); const th=new THREE.Mesh(new THREE.CircleGeometry(.05,20),mat(0xf4efe4,.5)); th.position.set(X1i-.022,1.55,SZ+.95); th.rotation.y=-Math.PI/2; scene.add(th);
+      // the thermometer by the door shows the heat
+      { const cv=document.createElement('canvas'); cv.width=128; cv.height=200; const tT=new THREE.CanvasTexture(cv); tT.colorSpace=THREE.SRGBColorSpace;
+        B(.02,.24,.15,hgrain,xg+.06,1.55,SZ+.28); const th=new THREE.Mesh(new THREE.PlaneGeometry(.12,.19),mat(0xffffff,.5,{map:tT})); th.position.set(xg+.072,1.55,SZ+.28); th.rotation.y=Math.PI/2; scene.add(th); BATH.therm={cv,tT,last:-1}; }
       for(const [x,z,kind] of [[xg+.6,Z1i-.77,'sauna'],[xg+1.3,Z1i-.77,'sauna'],[xg+.6,Z1i-.27,'sauna2'],[xg+1.3,Z1i-.27,'sauna2'],[sx1-.25,SZ+.95,'sauna']]){ const side=x>sx1-.5; const si=addSeat(x,z,side?Math.PI/2:0,kind,NT('sauna.seat')); SEATS[si].ap=side?{x:sx1-.95,z}:{x,z:Z1i-1.5}; BATH.sseats.push(si);
         const hit=new THREE.Mesh(new THREE.BoxGeometry(.5,.08,.46),new THREE.MeshBasicMaterial({visible:false})); hit.position.set(x,kind==='sauna2'?.95:.5,z); hit.userData={type:'seat',si}; scene.add(hit); pickables.push(hit); MEAL_DYN.push(hit); }
-      const sl=new THREE.PointLight(0xffc48a,.55,2.8,2); sl.position.set((xg+X1i)/2,2.3,(SZ+Z1i)/2); scene.add(sl); }
+      const sl=new THREE.PointLight(0xffb070,.35,2.8,2); BATH.lights.push([sl,.35]); sl.position.set((xg+X1i)/2,2.3,(SZ+Z1i)/2); scene.add(sl); }
     // ---- one soft light for the dry half; steam particles over the tub and the spout
-    { const pl=new THREE.PointLight(0xffe2bc,.55,5.5,2); pl.position.set(42.9,CYb-.3,19.9); scene.add(pl); }
+    { const pl=new THREE.PointLight(0xffc890,.45,5.5,2); pl.position.set(42.9,CYb-.3,19.9); scene.add(pl); BATH.lights.push([pl,.45]); }
     for(let i=0;i<40;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,map:SOFT_TEX})); scene.add(s); BATH.steam.push({s,ph:i/40,x:(Math.random()-.5),z:(Math.random()-.5),spout:i>=32}); MEAL_DYN.push(s); }
   }
 
@@ -6300,7 +6360,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       B(.18,.1,.12,mat(0x6e4a2e,.55),XC+.8,T0+.05,TDZ+.24); for(let i=0;i<2;i++) B(.16,.004,.004,brass,XC+.8,T0+.03+i*.045,TDZ+.181);
       CLS_LAP.m=lapM; }
     // teacher's armchair between the desk and the board, facing the class
-    const tsi=addSeat(XC,23.06,0,'clst',NT('cls.seat',1)); SEATS[tsi].ap={x:XC+1.25,z:23.06};
+    const tsi=addSeat(XC,23.06,0,'clst',NT('cls.seat',1)); SEATS[tsi].ap={x:XC+1.25,z:22.5};
     { const pk={type:'seat',si:tsi}, sy=PH+.47, z=23.06, w=.56, d=.48, bz=z+d/2-.03;
       B(w,.035,d,hd.H,XC,sy-.017,z,scene,pk);
       for(const sx of [-1,1]){ B(.04,sy-PH-.03,.04,hd.V,XC+sx*(w/2-.03),PH+(sy-PH-.03)/2,z-d/2+.03,scene,pk); B(.04,sy+.64-PH,.04,hd.V,XC+sx*(w/2-.03),(sy+.64+PH)/2,bz,scene,pk);
@@ -6308,7 +6368,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       B(w+.12,.045,.05,hd.H,XC,sy+.64,bz,scene,pk); B(.2,.5,.02,hd.V,XC,sy+.33,bz+.005,scene,pk);
       for(const zz of [z-d/2+.03,bz]) B(w-.06,.03,.025,hd.H,XC,PH+.14,zz); }
     // ---- the class: double desks in two columns, the door side without a front desk
-    const ROWS=[20.7,19.15,17.6], COLS=[[X0+.42+.725,[1,2]],[X1-.42-.725,[0,1,2]]], DW=1.45, DD=.6, DH=.75;
+    const ROWS=[20.75,18.95,17.15], COLS=[[X0+.3+.725,[1,2]],[X1-.3-.725,[0,1,2]]], DW=1.45, DD=.6, DH=.75;
     let sd=7; const rr=()=>((sd=sd*16807%2147483647)/2147483647);
     for(const [cx,rows] of COLS) for(const ri of rows){ const cz=ROWS[ri], pk={type:'clsdesk'};
       B(DW,.035,DD,wl.H,cx,DH-.0175,cz,scene,pk);
@@ -6587,9 +6647,9 @@ SEAT_KIND.clst={eye:1.27,pitch:-.3,front:false,sink:-.27,get label(){ return NT(
 // wide velvet frame round the screen, a flat dark ceiling with a field of tiny stars, wall-to-wall carpet. A soffit runs
 // along each long wall with a warm cove light in its edge and pin lights under it that throw scallops down the fabric.
 // Seats are centred on the screen: a three-seat sofa with a walnut coffee table in front at floor level; a stepped riser
-// (45 cm, one 22.5 cm step the width of the room, lit nosings) behind with a U of sofa on it, and a small glass-door
-// fridge of soft drinks in its corner. Red velvet curtains open when a film is loaded and close when it stops. Hinoki
-// shutters close the court window from inside. Light scenes and level are shared by everyone in the house; volume is
+// (45 cm, one 22.5 cm step the width of the room, lit nosings) behind with a U of sofa on it. Deep brown velvet curtains
+// open when a film is loaded and close when it stops; the light is kept low (darker still while a film runs), and
+// the court window has bamboo blinds like the rest of the house. Light scenes and level are shared by everyone in the house; volume is
 // each player's own. The films are files the master keeps on Cloudflare R2 and lists in the back office
 // (_data/vr.yml › films); choices travel through the house server's relay ({t:'b', d:{k:'cine'}}).
 SEAT_KIND.cine={eye:1.02,pitch:.16,front:true,sink:-.44,get label(){ return NT('cine.label'); },get hello(){ return NT('cine.hello'); },status:()=>NT('cine.status')};
@@ -6651,7 +6711,7 @@ SEAT_KIND.cine2={eye:1.02+CIN.rh,pitch:.06,front:true,sink:-.44+CIN.rh,get label
       const gl=new THREE.Mesh(new THREE.PlaneGeometry(.7,Z1-Z0),glowM); gl.rotation.set(Math.PI/2,0,s<0?0:Math.PI); gl.position.set(xi-s*.35,CEIL-.004,(Z0+Z1)/2); scene.add(gl);
       const gf=new THREE.Mesh(new THREE.PlaneGeometry(.22,Z1-Z0),glowM); gf.rotation.set(0,s<0?Math.PI/2:-Math.PI/2,Math.PI/2); gf.position.set(xi-s*.002,CEIL-SD/2,(Z0+Z1)/2); scene.add(gf);
       for(const z of s<0?[16.5,18.2,21.3,23.1]:[16.5,23.1]){ const p=new THREE.Mesh(new THREE.CircleGeometry(.022,14),pinM);   // none over the door or the octagonal windows p.rotation.x=Math.PI/2; p.position.set(xw-s*SW*.45,CEIL-SD-.002,z); scene.add(p);
-        const top=CEIL-SD-.02, H=2.5, w=1.05, sc=new THREE.Mesh(new THREE.PlaneGeometry(w,H),scM); sc.position.set(xw-s*.026,top-H/2,z); sc.rotation.y=s<0?Math.PI/2:-Math.PI/2; scene.add(sc); scallops.push({sc,pin:p}); }
+        const top=CEIL-SD-.02, H=1.5, w=.9, sc=new THREE.Mesh(new THREE.PlaneGeometry(w,H),scM); sc.position.set(xw-s*.026,top-H/2,z); sc.rotation.y=s<0?Math.PI/2:-Math.PI/2; scene.add(sc); scallops.push({sc,pin:p}); }
       for(const z of [17.4,21.8]){ const l=new THREE.PointLight(0xffd2a0,0,6.5,2); l.position.set(xw-s*.55,2.6,z); scene.add(l); lights.push(l); } }
     // stars: three sets that twinkle out of step
     const dotT=ctex(32,32,(g,w,h)=>{ const gr=g.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.35,'rgba(255,255,255,.6)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
@@ -6712,22 +6772,10 @@ SEAT_KIND.cine2={eye:1.02+CIN.rh,pitch:.06,front:true,sink:-.44+CIN.rh,get label
     const sx=i=>xL+.2+sw*(i+.5), sis=[0,1,2,3,4].map(i=>{ const x=sx(i), si=addSeat(x,zb+D/2+.06,Math.PI,'cine2',NT('cine.seat',1)); SEATS[si].ap=i===0?{x:x+.34,z:17.72}:i===4?{x:x-.34,z:17.72}:{x,z:17.08}; return si; });
     g.traverse(o=>{ if(!o.isMesh) return; const wp=o.getWorldPosition(new THREE.Vector3()); const i=Math.max(0,Math.min(4,Math.floor((wp.x-xL-.2)/sw))); o.userData={type:'seat',si:sis[i]}; pickables.push(o); });
     OB(xL,xL+W,zb,zb+D); OB(xL,xL+sw+.2,zb+D,zb+D+CL); OB(xL+W-sw-.2,xL+W,zb+D,zb+D+CL); }
-  // ---- hinoki shutters on the court window, two leaves closed from inside
-  { const T2=new THREE.TextureLoader().load('hinoki-grain.jpg'); T2.colorSpace=THREE.SRGBColorSpace; T2.wrapS=T2.wrapT=THREE.RepeatWrapping;
-    const hk=new THREE.MeshStandardMaterial({map:T2,color:0xd6c8b4,roughness:.5}), hkD=new THREE.MeshStandardMaterial({map:T2,color:0xb8a68c,roughness:.5}), pk={type:'cineshutter'}, leaves=[];
-    const y0=.98, H=1.5, Wl=.62, z=Z0+.075;
-    for(const s of [-1,1]){ const hx=s<0?13.88:15.12, pv=new THREE.Group(); pv.position.set(hx,y0,z); scene.add(pv);
-      const lx=-s*Wl/2; B(Wl,H,.032,hk,lx,H/2,0,pk,pv);
-      for(const [yy,hh] of [[.05,.1],[H-.05,.1],[H*.42,.08]]) B(Wl,hh,.012,hkD,lx,yy,.022,pk,pv);
-      for(const xx of [.04,Wl-.04]) B(.08,H,.012,hkD,-s*xx,H/2,.022,pk,pv);
-      for(let i=1;i<6;i++) B(.012,H*.42-.1,.01,hkD,-s*(i*Wl/6),.1+(H*.42-.1)/2,.026,pk,pv);   // narrow battens below the rail, as in the bath house
-      const kn=Cy(.012,.012,.03,brass,-s*(Wl-.06),H*.5,.04,12,pv); kn.rotation.x=Math.PI/2;
-      leaves.push({pv,s}); }
-    CIN.shut={leaves,k:0}; }
   // ---- a light switch plate inside the door
   { const g=new THREE.Group(); g.position.set(X1-.02,1.25,18.75); g.rotation.y=-Math.PI/2; scene.add(g); const pk={type:'cineswitch'};
     B(.12,.2,.012,brass,0,0,.006,pk,g); for(let i=0;i<5;i++){ const b=Cy(.009,.009,.012,m(0xf4efe4,.4),0,.06-i*.03,.016,12,g); b.rotation.x=Math.PI/2; b.userData=pk; pickables.push(b); } }
-  Object.assign(CIN,{scr,scrM,sub,subCv,subTex,SPK,curt,curtK:0,glow:null,SW:SWd,SH:SHt,SY}); ZL_DYN.push(scr,sub,...curt,...CIN.shut.leaves.map(l=>l.pv));
+  Object.assign(CIN,{scr,scrM,sub,subCv,subTex,SPK,curt,curtK:0,glow:null,SW:SWd,SH:SHt,SY}); ZL_DYN.push(scr,sub,...curt);
   { const glow=new THREE.PointLight(0xc8d4ff,0,9,1.6); glow.position.set(XC,SY-.2,Z1-1.4); scene.add(glow); const glow2=new THREE.PointLight(0xc8d4ff,0,6,2); glow2.position.set(XC,2.6,20.2); scene.add(glow2); CIN.glow=glow; CIN.glow2=glow2; } }
 
 // ---- European panel doors for the cinema and the classroom (into the 明間 between them): walnut, two raised panels a
@@ -6757,15 +6805,15 @@ addEuroDoor('dcls',19.6+ZR.wallX,(ZR.door.z0+ZR.door.z1)/2,Math.PI/2,(ZR.door.z1
   vid.style.cssText='width:100%;height:100%;object-fit:contain;background:#000';
   const tex=new THREE.VideoTexture(vid); tex.colorSpace=THREE.SRGBColorSpace;
   const SCENES=['welcome','pre','film','inter','night'], LOOK={
-    welcome:{cove:0xffd2a0,ci:1,sc:1,pt:1,st:0}, pre:{cove:0xffa860,ci:.55,sc:.4,pt:.35,st:.35}, film:{cove:0xff9a50,ci:.05,sc:0,pt:.02,st:1},
-    inter:{cove:0xffb070,ci:.35,sc:.22,pt:.24,st:.5}, night:{cove:0xc06a30,ci:.22,sc:.03,pt:.03,st:1} };
-  // shared: the film (u,ti,sb), playing, where, and the room (lt scene, lv level, sh shutters closed); v orders the changes
+    welcome:{cove:0xffc890,ci:.45,sc:.42,pt:.4,st:0}, pre:{cove:0xffa860,ci:.24,sc:.12,pt:.1,st:.35}, film:{cove:0xff9a50,ci:.012,sc:0,pt:0,st:1},
+    inter:{cove:0xffb070,ci:.15,sc:.07,pt:.06,st:.5}, night:{cove:0xc06a30,ci:.05,sc:.012,pt:.01,st:1} };
+  // shared: the film (u,ti,sb), playing, where, and the room (lt scene, lv level 0–2, 1 in the middle; sh is no longer used); v orders the changes
   const S={u:'',ti:'',sb:'',p:false,t:0,at:performance.now(),lt:'welcome',lv:1,sh:false,v:0,id:''};
   const L={stars:localStorage.getItem('cineStars')!=='0',vol:+(localStorage.getItem('cineVol')||.8),mute:false,subs:localStorage.getItem('cineSubs')!=='0',err:'',loaded:'',cues:[],cue:-1,near:false,inRoom:false,want:false,blocked:false,fs:false,hud:localStorage.getItem('cineHud')!=='0'};
   const pos=()=>S.t+(S.p?(performance.now()-S.at)/1000:0);
   const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'cine'},d),to)); }catch{ return false; } };
   const pack=()=>({o:'st',u:S.u,ti:S.ti,sb:S.sb,p:S.p,t:+pos().toFixed(2),lt:S.lt,lv:S.lv,sh:S.sh,v:S.v,id:S.id});
-  function take(d){ Object.assign(S,{u:d.u||'',ti:d.ti||'',sb:d.sb||'',p:!!d.p&&!!d.u,t:Math.max(0,+d.t||0),at:performance.now(),lt:SCENES.includes(d.lt)?d.lt:'welcome',lv:Math.max(0,Math.min(1,d.lv??1)),sh:!!d.sh,v:d.v|0,id:d.id||''}); sync(true); refresh(); }
+  function take(d){ Object.assign(S,{u:d.u||'',ti:d.ti||'',sb:d.sb||'',p:!!d.p&&!!d.u,t:Math.max(0,+d.t||0),at:performance.now(),lt:SCENES.includes(d.lt)?d.lt:'welcome',lv:Math.max(0,Math.min(2,d.lv??1)),sh:!!d.sh,v:d.v|0,id:d.id||''}); sync(true); refresh(); }
   function act(ch){ const st=Object.assign(pack(),ch,{v:S.v+1,id:MY_PID}); take(st); send(st); unlockAudio(); }
   const play=on=>{ L.blocked=false; const end=vid.duration&&pos()>=vid.duration-.2; act({p:on,t:end?0:pos(),lt:on?'film':'pre',lv:1}); };
   // ---- subtitles (.srt or .vtt)
@@ -6825,17 +6873,15 @@ addEuroDoor('dcls',19.6+ZR.wallX,(ZR.door.z0+ZR.door.z1)/2,Math.PI/2,(ZR.door.z1
     const lk=LOOK[S.lt]||LOOK.welcome, f=Math.min(1,dt*1.6), lv=S.lv;
     cur.cove.lerp(tmpC.setHex(lk.cove),f); for(const k of ['ci','sc','pt','st']) cur[k]+=(lk[k]*(k==='st'?1:lv)-cur[k])*f;
     R.cove.color.copy(cur.cove).multiplyScalar(Math.max(.03,cur.ci)); R.glowM.color.copy(cur.cove).multiplyScalar(cur.ci*.9);
-    R.scM.color.setHex(0xffd2a0).multiplyScalar(cur.sc); R.pinM.color.setHex(0xfff0dc).multiplyScalar(.08+.92*cur.sc);
+    R.scM.color.setHex(0xffd2a0).multiplyScalar(cur.sc); R.pinM.color.setHex(0xffd9a8).multiplyScalar(.025+.6*cur.sc);
     R.lights.forEach(l=>{ l.intensity=1.1*cur.pt+.25*cur.ci; l.color.copy(cur.cove).lerp(tmpC.setHex(0xffd2a0),.6); });
     const tw=now/1000; R.stars.forEach((m,k)=>{ m.opacity=(L.stars?1:0)*cur.st*(.55+.45*Math.sin(tw*(.7+k*.37)+k*2.1)); });
-    R.stepLed.emissiveIntensity=.9+.7*(1-cur.pt);
+    R.stepLed.emissiveIntensity=.18+.5*Math.min(1,cur.ci*2);
     // the picture's own light
     if(show&&!vid.paused&&ambOK&&now-ambAt>140){ ambAt=now; try{ ambX.drawImage(vid,0,0,4,4); const d=ambX.getImageData(0,0,4,4).data; let r=0,g=0,b=0; for(let i=0;i<64;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; }
         AMB.setRGB(r/4080,g/4080,b/4080); ambL=Math.max(.05,(r+g+b)/12240); }catch{ ambOK=false; } }
     cur.amb+=((show?(ambOK?ambL:.4):0)-cur.amb)*Math.min(1,dt*6);
-    R.glow.color.copy(AMB); R.glow.intensity=2.2*cur.amb; R.glow2.color.copy(AMB); R.glow2.intensity=.9*cur.amb;
-    // shutters
-    const sk=R.shut; sk.k+=((S.sh?1:0)-sk.k)*Math.min(1,dt*2.2); sk.leaves.forEach(({pv,s})=>{ pv.rotation.y=s<0?-(Math.PI-.12)*(1-sk.k):(Math.PI-.12)*(1-sk.k); });
+    R.glow.color.copy(AMB); R.glow.intensity=1.1*cur.amb; R.glow2.color.copy(AMB); R.glow2.intensity=.35*cur.amb;
     // sound
     const shut=door&&!door.open, g=(L.mute?0:1)*(L.fs?1:inRoom?1:shut?0:Math.max(0,1-dOut/4)*.3)*L.vol*(vid.paused?0:1);
     if(ac&&gm){ gm.gain.setTargetAtTime(g,ac.currentTime,.12);
@@ -6865,13 +6911,13 @@ addEuroDoor('dcls',19.6+ZR.wallX,(ZR.door.z0+ZR.door.z1)/2,Math.PI/2,(ZR.door.z1
   SCENES.forEach((k,i)=>{ const b=document.createElement('button'); b.style.cssText='font-size:11px;padding:1px 7px'; b.dataset.s=k; b.onclick=()=>act({lt:k,lv:1}); H('sc').append(b); });
   H('vol').oninput=e=>{ L.vol=e.target.value/100; L.mute=false; try{ localStorage.setItem('cineVol',L.vol); }catch{} hudSync(); };
   H('mute').onclick=()=>{ L.mute=!L.mute; hudSync(); };
-  let lvT=0; H('lv').oninput=e=>{ const v=e.target.value/100; S.lv=v; clearTimeout(lvT); lvT=setTimeout(()=>act({lv:v}),180); };
+  let lvT=0; H('lv').oninput=e=>{ const v=e.target.value/50; S.lv=v; clearTimeout(lvT); lvT=setTimeout(()=>act({lv:v}),180); };
   H('films').onclick=()=>openCine(); H('stars').onclick=()=>{ L.stars=!L.stars; try{ localStorage.setItem('cineStars',L.stars?'1':'0'); }catch{} hudSync(); }; H('sip').onclick=()=>sip(); H('back').onclick=()=>putBack();
   H('fold').onclick=()=>{ L.hud=!L.hud; try{ localStorage.setItem('cineHud',L.hud?'1':'0'); }catch{} hudSync(); };
   addEventListener('keydown',e=>{ if(!L.inRoom||e.repeat||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; if(e.key.toLowerCase()==='l'){ e.preventDefault(); H('fold').click(); } });
   function hudSync(){ H('title').textContent=NT('cine.title'); H('fold').textContent=L.hud?'－':'＋'; H('body').style.display=L.hud?'block':'none';
     H('vl').textContent=NT('cine.vol'); if(document.activeElement!==H('vol')) H('vol').value=Math.round(L.vol*100); H('mute').textContent=NT('cine.mute',L.mute?1:0);
-    H('ll').textContent=NT('cine.light'); if(document.activeElement!==H('lv')) H('lv').value=Math.round(S.lv*100);
+    H('ll').textContent=NT('cine.light'); if(document.activeElement!==H('lv')) H('lv').value=Math.round(S.lv*50);
     const nm=scNames(); H('sc').querySelectorAll('button').forEach((b,i)=>{ b.textContent=nm[i]||b.dataset.s; b.style.background=b.dataset.s===S.lt?'#3f3a39':''; b.style.color=b.dataset.s===S.lt?'#f1efe8':''; });
     H('films').textContent=NT('cine.title',1)||NT('cine.title'); H('stars').textContent=NT('cine.stars',L.stars?0:1); const has=false; H('sip').style.display=H('back').style.display=has?'':'none'; H('sip').textContent=NT('cine.sip',0); H('back').textContent=NT('cine.sip',1); }
   // ---- the main panel: films, play/pause, skip, seek, volume, subtitles, full screen
@@ -6932,7 +6978,6 @@ addEuroDoor('dcls',19.6+ZR.wallX,(ZR.door.z0+ZR.door.z1)/2,Math.PI/2,(ZR.door.z1
   window.__cineAct=u=>{ if(u.type==='cinescreen') openCine();
     else if(u.type==='cinefridge') openFridge();
     else if(u.type==='cineswitch'){ const i=(SCENES.indexOf(S.lt)+1)%SCENES.length; act({lt:SCENES[i],lv:1}); toast(NT('cine.light')+'：'+(scNames()[i]||SCENES[i]),2000); }
-    else if(u.type==='cineshutter'){ if(!L.inRoom){ toast(NT('cine.shout')); return true; } act({sh:!S.sh}); toast(NT('cine.shutter',S.sh?0:1),2000); }
     return true; };
   window.__cine={S,L,FILMS,vid,openCine,openFridge,enterFs,exitFs,act,pos,play,takeDrink,sip,putBack};
 }
@@ -6967,6 +7012,145 @@ window.__mealPlan=n=>{ const M=mealState();
     npcGo(n,NP.pass,m=>{ npcFace(m,{x:47,z:m.z}); m.carry='dish'; m.act='load'; m.busyUntil=Date.now()+1500; }); return true; }
   if(M.phase==='clear'){ n.carry=null; npcGo(n,NP.sink,m=>{ npcFace(m,{x:47,z:m.z}); m.act='wash'; m.busyUntil=Date.now()+12000; }); return true; }
   return false; };
+
+/* ================= 傭人作息：起床收簾、洗澡、就寢 =================
+   The household's day by Taipei time (back office: day.times). At getting-up time 玉姨 walks the east side and 阿財 the
+   west, rolling up every blind as they come to it; at lights-out they go round again letting them down, then everyone
+   is in bed (the men in 22 號房, the women in 26 號房), a lamp lit on the cabinet for the first half hour. In the evening
+   each takes a basin from their room, changes at the lockers (towel on), washes at a station, soaks in the tub (four
+   places, two facing two), sometimes sits in the sauna, dresses and goes back. The women go first, then the men.
+   All of it is worked out from the clock, so everyone in the house sees the same; blinds are shared over the network. */
+const STAFF={bed:{xu:0,shui:1,huo:2,cai:3,yu:4,chun:5},round:{yu:'e',cai:'w'},R:null};
+const minsSince=(m,s)=>((m-s)%1440+1440)%1440;
+const tpMin=t=>((t/60000+480)%1440+1440)%1440, wallNow=()=>Date.now()+MEAL_SHIFT*60000;
+const bedOf=n=>BEDS[STAFF.bed[n.id]], bedIn=b=>Math.sign(34.1-b.x)||1;
+const bedAp=b=>({x:b.x+bedIn(b)*1.16,z:b.z});
+function npcStand(n,p){ n.pose=null; n.sSi=-1; n.inSauna=false; n.lie=false; n.atBed=false; if(p) npcPlace(n,p); }
+// the two rounds: from the bed, each blind on their side in turn (nearest next), a few seconds at each
+function staffRoutes(){ if(STAFF.R) return STAFF.R; try{ if(!BLINDS.length||!BEDS.length) return null; }catch{ return null; } const SPD=1.05, DW=3500, R={};
+  const todo={e:[],w:[]}; BLINDS.forEach((b,i)=>{ b.g.updateMatrixWorld(true); const c=b.g.getWorldPosition(new THREE.Vector3()), n=new THREE.Vector3(0,0,1).applyQuaternion(b.g.getWorldQuaternion(new THREE.Quaternion())).setY(0).normalize();
+    const sides=[1,-1].map(s=>({x:c.x+n.x*s*.75,z:c.z+n.z*s*.75})).filter(p=>walkable(p.x,p.z)); b.off=0; if(sides.length) todo[c.z<courtAxis?'e':'w'].push({i,sides,c}); });
+  for(const id of ['yu','cai']){ const side=STAFF.round[id], list=todo[side].slice(), start=bedAp(BEDS[STAFF.bed[id]]); let cur=start, t=0; const pts=[{x:start.x,z:start.z,t:0}], hits=[];
+    while(list.length){ let bi=0, bd=1e9; list.forEach((L,k)=>{ const d=Math.hypot(L.c.x-cur.x,L.c.z-cur.z); if(d<bd){ bd=d; bi=k; } }); const L=list.splice(bi,1)[0];
+      const to=L.sides.reduce((a,p)=>Math.hypot(p.x-cur.x,p.z-cur.z)<Math.hypot(a.x-cur.x,a.z-cur.z)?p:a);
+      const path=(route(cur,to)||[to]).slice(1); for(const q of path){ const last=pts[pts.length-1]; t+=Math.hypot(q.x-last.x,q.z-last.z)/SPD*1000; pts.push({x:q.x,z:q.z,t}); }
+      if(!path.length){ t+=Math.hypot(to.x-cur.x,to.z-cur.z)/SPD*1000; pts.push({x:to.x,z:to.z,t}); }
+      const at=t; t+=DW; pts.push({x:to.x,z:to.z,t,face:L.c,dwell:true}); hits.push({i:L.i,t:at+1200}); BLINDS[L.i].off=at+1200; BLINDS[L.i].who=id; cur=to; }
+    const back=(route(cur,start)||[start]).slice(1); for(const q of back){ const last=pts[pts.length-1]; t+=Math.hypot(q.x-last.x,q.z-last.z)/SPD*1000; pts.push({x:q.x,z:q.z,t}); }
+    R[id]={pts,total:t,hits}; }
+  return STAFF.R=R; }
+// is a round on now for this person? then put them on it
+function roundOn(n,m){ if(!STAFF.round[n.id]) return false; const R=staffRoutes(); if(!R) return false; const r=R[n.id];
+  for(const s of [DAY.wake,DAY.sleep%1440]){ const el=minsSince(m,s)*60000; if(el<r.total){ if(!n.tl){ npcStand(n,null); npcBathLook(n,null); n.carry=null; } n.tl={r,start:Date.now()-el}; n.path=[]; n.busyUntil=Infinity; return true; } }
+  return false; }
+// moving along the round: walking between windows, arms up at each blind
+function staffTL(n,dt){ const T=n.tl, r=T.r, e=Date.now()-T.start; if(e>=r.total){ n.tl=null; n.busyUntil=0; n.act='idle'; return; }
+  const P=r.pts; let k=1; while(k<P.length-1&&P[k].t<e) k++; const a=P[k-1], b=P[k], f=b.t>a.t?Math.min(1,Math.max(0,(e-a.t)/(b.t-a.t))):1;
+  n.x=a.x+(b.x-a.x)*f; n.z=a.z+(b.z-a.z)*f; const still=b.dwell||(Math.hypot(b.x-a.x,b.z-a.z)<.01);
+  if(still){ n.act='blind'; if(b.face) npcFace(n,b.face); } else { n.act='walk'; const want=Math.atan2(-(b.x-a.x),-(b.z-a.z)); let dy=want-n.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); n.yaw+=dy*Math.min(1,dt*6); } }
+// lying down and getting up
+function goLie(n,now){ const b=bedOf(n); if(!b) return; const lie=()=>{ npcStand(n,null); n.lie=true; n.atBed=true; n.yaw=b.yaw; n.x=b.x+Math.sin(b.yaw)*-.79; n.z=b.z+Math.cos(b.yaw)*-.79; n.path=[]; n.act='lie'; n.busyUntil=Date.now()+30000; };
+  if(now) return lie(); npcGo(n,bedAp(b),()=>lie()); }
+function bedSit(n,until){ const b=bedOf(n); npcGo(n,bedAp(b),m=>{ const s=bedIn(b); npcPlace(m,{x:b.x+s*.62,z:b.z},-s*Math.PI/2); m.pose='bedsit'; m.atBed=true; m.carry=null; m.act='staff'; m.busyUntil=until; }); }
+// sitting in one of the bath's places: a stool, the tub, the sauna
+const freeSeat=list=>list.find(si=>si!==ME.seat&&!occupied(si));
+function bathSeat(n,list,pose,until,then){ const si=freeSeat(list); if(si==null){ n.act='idle'; n.st=-1; n.busyUntil=Date.now()+8000; return; } const s=SEATS[si];
+  n.sSi=si; npcGo(n,s.ap,m=>{ const back=pose==='wash'?.12:0; npcPlace(m,{x:s.x+Math.sin(s.yaw)*back,z:s.z+Math.cos(s.yaw)*back},s.yaw); m.sSi=si; m.pose=pose; m.act='staff'; m.busyUntil=until; if(then) then(m); }); }
+function lockSpot(n){ const ids=n.look0fem?['yu','chun']:['xu','shui','huo','cai'], k=ids.indexOf(n.id), L=BATH.lockPt; return {x:L.x-.55+k*(1.1/Math.max(1,ids.length-1)),z:L.z}; }
+const hashF=s=>{ let h=7; for(const c of s) h=(h*31+c.charCodeAt(0))%100003; return h/100003; };
+function bathPlan(n,m){ if(!BATH.lockPt) return false; const F=!!n.look0fem, b0=F?DAY.wf:DAY.wm, b1=F?DAY.wm:DAY.sleep, len=b1-b0, prep=b0-10;
+  if(!(m>=prep&&m<b1)) return false; const T=taipeiNow(), day=T.day+(F?'f':'m'), at=mm=>Date.now()+(mm-m)*60000;
+  const tWash=b0+.36*len, tSoak=b0+.7*len, tSauna=b0+.84*len, tDress=b1-4;
+  if(n.bday!==day){ n.bday=day; n.wantSauna=hashF(n.id+day)<.55; n.bs=0; n.st=-1;
+    // arriving partway through (the page opened late): start from where they would be
+    if(m>=b0+2){ n.bs=m<tWash?2:m<tSoak?3:(m<tSauna&&n.wantSauna)?4:m<tDress?5:6; if(n.bs<6){ npcStand(n,lockSpot(n)); npcBathLook(n,n.bs<5?'towel':null); } } }
+  const now=Date.now(); if(n.st===n.bs){ // the current step is done: stand up and move on
+    if(n.sSi>=0){ const s=SEATS[n.sSi]; npcStand(n,s.ap); } n.pose=null; n.inSauna=false; npcBathLook(n,n.look==='soak'?'towel':n.look);
+    n.bs=n.bs===3?(n.wantSauna&&m<tSauna-3?4:5):n.bs+1; }
+  n.st=n.bs;
+  switch(n.bs){
+    case 0: { const b=bedOf(n); npcGo(n,bedAp(b),k=>{ k.act='load'; k.busyUntil=Date.now()+3000; k.carry='basin'; }); return true; }
+    case 1: npcGo(n,lockSpot(n),k=>{ npcFace(k,{x:k.x,z:30}); k.act='undress'; k.busyUntil=Date.now()+22000; k.next=()=>{ npcBathLook(k,'towel'); k.busyUntil=0; }; }); return true;
+    case 2: n.carry='basin'; bathSeat(n,BATH.wseats,'wash',at(tWash)); return true;
+    case 3: n.carry=null; bathSeat(n,BATH.seats,'soak',at(n.wantSauna?tSoak:tSauna),k=>npcBathLook(k,'soak')); return true;
+    case 4: bathSeat(n,BATH.sseats,'ssit',at(tSauna),k=>{ k.inSauna=true; }); return true;
+    case 5: npcGo(n,lockSpot(n),k=>{ npcFace(k,{x:k.x,z:30}); k.act='undress'; k.busyUntil=Date.now()+20000; k.next=()=>{ npcBathLook(k,null); k.carry='basin'; k.busyUntil=0; }; }); return true;
+    case 6: bedSit(n,at(b1)); return true;
+    default: bedSit(n,at(b1)); return true; } }
+function staffPlan(n){ if(!BEDS.length||n.lead) return false; const m=taipeiNow().min;
+  if(roundOn(n,m)) return true;
+  if(asleepAt(m)){ if(n.look) npcBathLook(n,null); n.carry=null;
+    if(!n.lie){ const late=minsSince(m,DAY.sleep%1440)>20; goLie(n,late||Math.hypot(ME.x-n.x,ME.z-n.z)>30); } else { n.act='lie'; n.busyUntil=Date.now()+30000; }
+    return true; }
+  if(n.lie){ const b=bedOf(n); npcStand(n,bedAp(b)); }
+  if(bathPlan(n,m)) return true;
+  // after their bath and before lights out: sitting on the bed, a lamp on
+  const F=!!n.look0fem; if(m>=(F?DAY.wm:DAY.sleep)&&m<1440&&!asleepAt(m)){ if(n.look) npcBathLook(n,null); if(n.pose!=='bedsit') bedSit(n,Date.now()+60000); else n.busyUntil=Date.now()+60000; return true; }
+  if(n.pose||n.look||n.atBed){ npcBathLook(n,null); const p=n.sSi>=0?SEATS[n.sSi].ap:null; npcStand(n,p); n.carry=n.carry==='basin'?null:n.carry; }
+  return false; }
+for(const id in NPC) NPC[id].look0fem=!!NPCS.find(d=>d.id===id).look.fem;
+window.__seatNpc0=window.__seatNpc; window.__seatNpc=si=>{ if(window.__seatNpc0&&window.__seatNpc0(si)) return true; for(const id in NPC) if(NPC[id].sSi===si) return true; return false; };
+// poses for the evening: on a stool, in the water, on the sauna bench, on the bed's edge, lying under the quilt
+function staffPose(n,P,dt,w){ const g=n.g; g.rotation.order='YXZ';
+  const sh=!n.lie; if(P.shoes[0].visible!==sh) P.shoes.forEach(o=>o.visible=sh);
+  if(n.lie){ g.position.y=.62; g.rotation.x=Math.PI/2; P.F.position.y=0; P.legs[0].rotation.x=P.legs[1].rotation.x=0; P.arms[0].rotation.x=P.arms[1].rotation.x=0; P.head.rotation.x=0; return; }
+  g.rotation.x=0; if(n.tl&&n.act==='blind'){ P.arms[0].rotation.x=2.3; P.arms[1].rotation.x=2.1+Math.sin(w*3)*.15; P.head.rotation.x=-.25; return; }
+  const legs=a=>{ P.legs[0].rotation.x=P.legs[1].rotation.x=a; };
+  switch(n.pose){
+    case 'wash': P.F.position.y=-.6; legs(1.05); P.arms[0].rotation.x=.9+Math.sin(w*3)*.25; P.arms[1].rotation.x=1.1-Math.sin(w*3)*.25; P.head.rotation.x=.25; break;
+    case 'soak': P.F.position.y=-.87; legs(1.25); P.arms[0].rotation.x=P.arms[1].rotation.x=.25; P.head.rotation.x=-.12; break;
+    case 'ssit': { const s=SEATS[n.sSi], hi=s&&s.kind==='sauna2'; P.F.position.y=hi?.08:-.37; legs(1.35); P.arms[0].rotation.x=P.arms[1].rotation.x=.55; P.head.rotation.x=.18; break; }
+    case 'bedsit': P.F.position.y=-.33; legs(1.3); P.arms[0].rotation.x=P.arms[1].rotation.x=.5; P.head.rotation.x=.15; break; }
+  if(n.act==='undress'&&!n.pose){ P.arms[0].rotation.x=1.2+Math.sin(w*2)*.3; P.arms[1].rotation.x=1.0-Math.sin(w*2)*.3; P.head.rotation.x=.3; }
+  if(n.carry==='basin'&&!n.pose){ P.arms[0].rotation.x=P.arms[1].rotation.x=.9; } }
+// the basin they carry: a small hinoki tub with soap and a folded cloth
+for(const id in NPC){ const n=NPC[id], P=n.g.userData.parts, b=new THREE.Group(); b.position.set(0,.95,-.3); P.F.add(b); b.visible=false; n.basin=b;
+  const wd=new THREE.MeshStandardMaterial({color:0xd8b88a,roughness:.6}); const c=new THREE.Mesh(new THREE.CylinderGeometry(.15,.12,.1,16,1,true),wd); c.material.side=THREE.DoubleSide; b.add(c); const bt=new THREE.Mesh(new THREE.CircleGeometry(.12,16),wd); bt.rotation.x=-Math.PI/2; bt.position.y=-.045; b.add(bt);
+  box(.12,.03,.09,new THREE.MeshStandardMaterial({color:0xf3efe6,roughness:.95}),.03,-.02,0,b); box(.05,.03,.035,new THREE.MeshStandardMaterial({color:0xe8d9b0,roughness:.5}),-.06,-.025,.02,b); }
+// bedside lamps (one for each bed, lit while its sleeper is there, for the first half hour and just before getting up)
+// and one twin-bell alarm clock on each cabinet, ringing at getting-up time where someone sleeps by it
+const BEDSIDE={lamps:[],clocks:[]};
+{ const porc=new THREE.MeshStandardMaterial({color:0xefe7d8,roughness:.3}), brassM=new THREE.MeshStandardMaterial({color:0xc29a52,metalness:.8,roughness:.3}), dk=new THREE.MeshStandardMaterial({color:0x2a2420,roughness:.5});
+  for(const [si,St] of STANDS.entries()){ const top=.605, c=Math.cos(St.yaw), sn=Math.sin(St.yaw), W2=(x,z)=>({x:St.x+c*x+sn*z, z:St.z-sn*x+c*z});
+    for(const lx of [-(St.cab/2-.16),St.cab/2-.16]){ const p=W2(lx,.04), bi=St.beds.reduce((a,b)=>Math.abs(BEDS[b].x-p.x)<Math.abs(BEDS[a].x-p.x)?b:a);
+      const g=new THREE.Group(); g.position.set(p.x,top,p.z); scene.add(g);
+      const base=lathe([[0,0],[.06,0],[.065,.02],[.04,.06],[.05,.12],[.03,.17],[.012,.19],[0,.19]],porc,18); g.add(base);
+      const shM=new THREE.MeshStandardMaterial({color:0xf2e6cc,roughness:.9,side:THREE.DoubleSide,emissive:0xffb060,emissiveIntensity:0});
+      const sh=new THREE.Mesh(new THREE.CylinderGeometry(.075,.1,.16,20,1,true),shM); sh.position.y=.27; g.add(sh);
+      const gl=new THREE.Mesh(new THREE.PlaneGeometry(.75,.75),new THREE.MeshBasicMaterial({map:SOFT_TEX,color:0xffb060,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));
+      const wp=W2(lx,.17); gl.position.set(wp.x,top+.38,wp.z); gl.rotation.y=St.yaw+Math.PI; scene.add(gl);
+      const pool=new THREE.Mesh(new THREE.CircleGeometry(.3,20),gl.material.clone()); pool.rotation.x=-Math.PI/2; pool.position.set(p.x,top+.003,p.z); scene.add(pool);
+      g.traverse(o=>{ if(o.isMesh) o.userData={type:'bedlamp'}; pickables.push(o); });
+      BEDSIDE.lamps.push({bi,shM,gl,pool,k:0}); NPC_DYN.push(g,gl,pool); }
+    // the clock faces the room: a round brass case, a cream dial, two bells and the hammer between them, two feet
+    const g=new THREE.Group(); const p=W2(0,-.02); g.position.set(p.x,top,p.z); g.rotation.y=St.yaw; scene.add(g); const body=new THREE.Group(); body.position.y=.12; g.add(body); const pk={type:'alarm',i:si};
+    const cs=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.045,24),brassM); cs.rotation.x=Math.PI/2; body.add(cs);
+    const dial=new THREE.Mesh(new THREE.CircleGeometry(.06,24),new THREE.MeshStandardMaterial({color:0xf3ead6,roughness:.5,map:textCanvas(128,128,(q,w,h)=>{ q.fillStyle='#f3ead6'; q.fillRect(0,0,w,h); q.fillStyle='#2a2018'; for(let i=0;i<12;i++){ const a=i/12*Math.PI*2; q.save(); q.translate(64,64); q.rotate(a); q.fillRect(-2,-58,4,i%3?8:14); q.restore(); } })}));
+    dial.position.z=-.0235; dial.rotation.y=Math.PI; body.add(dial);
+    const hand=(L,wd)=>{ const pv=new THREE.Group(); pv.position.z=-.026; body.add(pv); const h=new THREE.Mesh(new THREE.BoxGeometry(wd,L,.002),dk); h.position.y=L/2-.006; pv.add(h); return pv; };
+    const hh=hand(.034,.007), mh=hand(.05,.005);
+    const bells=[]; for(const sx of [-1,1]){ const b=new THREE.Mesh(new THREE.SphereGeometry(.035,16,8,0,Math.PI*2,0,Math.PI/2),brassM); b.position.set(sx*.045,.072,0); b.rotation.z=sx*-.5; body.add(b); bells.push(b); }
+    const ham=new THREE.Group(); ham.position.set(0,.06,.005); body.add(ham); const hr=new THREE.Mesh(new THREE.CylinderGeometry(.003,.003,.05,6),brassM); hr.position.y=.025; ham.add(hr); const hb=new THREE.Mesh(new THREE.SphereGeometry(.008,8,6),brassM); hb.position.y=.05; ham.add(hb);
+    const hd=new THREE.Mesh(new THREE.TorusGeometry(.025,.003,6,16,Math.PI),brassM); hd.position.y=.1; body.add(hd);
+    for(const sx of [-1,1]){ const f=new THREE.Mesh(new THREE.CylinderGeometry(.006,.009,.06,8),brassM); f.position.set(sx*.045,.03,0); f.rotation.z=sx*.4; g.add(f); }
+    g.traverse(o=>{ if(o.isMesh){ o.userData=pk; pickables.push(o); } });
+    BEDSIDE.clocks.push({g,body,hh,mh,ham,beds:St.beds,x:p.x,z:p.z,rang:'',ring:0}); NPC_DYN.push(g); } }
+function ringBell(x,z){ const d=Math.hypot(ME.x-x,ME.z-z); if(d>9) return; try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const t0=actx.currentTime, v=.12*Math.max(.1,1-d/9), out=actx.createGain(); out.gain.value=v; out.connect(actx.destination);
+  for(let k=0;k<64;k++){ const t=t0+k*.075; for(const [f,a] of [[2150,1],[3380,.5],[5200,.25]]){ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=f*(k%2?1.04:1); g.gain.setValueAtTime(a,t); g.gain.exponentialRampToValueAtTime(.001,t+.07); o.connect(g); g.connect(out); o.start(t); o.stop(t+.08); } } }catch{} }
+let staffT=0;
+ZL_ANIM.push(dt=>{ if(!window.__entered) return; dt=dt||.016; const w=performance.now()/1000, T=taipeiNow(), m=T.min;
+  for(const id in NPC){ const n=NPC[id]; if(n.basin) n.basin.visible=n.carry==='basin'&&!n.pose; }
+  // the quilt spread over a sleeper, folded at the foot otherwise
+  const sleeper=bi=>{ for(const id in NPC){ const n=NPC[id]; if(STAFF.bed[id]===bi) return n; } return null; };
+  BEDS.forEach((b,bi)=>{ const n=sleeper(bi), on=!!(n&&n.lie); if(b.sq.visible!==on){ b.sq.visible=on; b.fq.visible=!on; } });
+  const quiet=asleepAt(m)&&minsSince(m,DAY.sleep%1440)>=30&&minsSince(DAY.wake,m)>12;
+  for(const L of BEDSIDE.lamps){ const n=sleeper(L.bi), on=!!(n&&n.atBed)&&!quiet; L.k+=((on?1:0)-L.k)*Math.min(1,dt*3); L.shM.emissiveIntensity=L.k*1.4; L.gl.material.opacity=L.k*.42; L.pool.material.opacity=L.k*.5; }
+  staffT+=dt; const tick=staffT>.5; if(tick) staffT=0;
+  for(const C of BEDSIDE.clocks){ if(tick){ const hm=m%720; C.hh.rotation.z=-(hm/720)*Math.PI*2; C.mh.rotation.z=-((m%60)/60)*Math.PI*2; }
+    const used=C.beds.some(bi=>sleeper(bi)), el=minsSince(m,DAY.wake)*60;
+    if(used&&el<5&&C.rang!==T.day){ C.rang=T.day; C.ring=5; ringBell(C.x,C.z); if(Math.hypot(ME.x-C.x,ME.z-C.z)<6) toast(NT('alarm.ring'),3000); }
+    if(C.ring>0){ C.ring-=dt; C.ham.rotation.z=Math.sin(w*80)*.5; C.body.position.x=Math.sin(w*95)*.003; C.body.rotation.z=Math.sin(w*60)*.04; } else if(C.ham.rotation.z){ C.ham.rotation.z=0; C.body.position.x=0; C.body.rotation.z=0; } } });
+window.__staff={STAFF,BEDS,STANDS,BEDSIDE,staffRoutes,DAY}; window.__staffPlan=staffPlan; window.__staffTL=staffTL; window.__staffPose=staffPose;
 
 /* ---- every half second: send people to the table when the meal starts, set the table, the lamp, steam and smoke ---- */
 const MEALRUN={t:1,id:'',called:'',bowl:'',chatAt:0,chatI:0};
@@ -7046,6 +7230,32 @@ ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*
   const P=B0.pour; P.tex.offset.y=(P.tex.offset.y+dt*1.6)%1; P.foam.scale.setScalar(1+Math.sin(w*9)*.12); P.rip.forEach((r,i)=>{ const ph=(w*.6+i/4)%1; r.scale.setScalar(1+ph*7); r.material.opacity=(1-ph)*.45; });
   B0.water.material.opacity=.58+Math.sin(w*2)*.03; B0.mist.position.y=.65+Math.sin(w*.7)*.03; B0.mist.rotation.z=w*.03; B0.mist.material.opacity=.17+Math.sin(w*.5)*.05;
   B0.tray.position.y=.56+Math.sin(w*1.1)*.012; B0.tray.rotation.x=Math.sin(w*.9)*.025; B0.tray.rotation.z=Math.cos(w*.7)*.02;
+  // soft light that follows the day: the hidden coves, the mirror's ring, the plinth and tub glows come up after dark
+  const nf=1-Math.max(0,Math.min(1,SKY_DAY)), lvl=.45+.55*nf;
+  if(Math.abs((B0.lvl||0)-lvl)>.01){ B0.lvl=lvl; for(const m of B0.glows){ m.userData.o0=m.userData.o0??m.opacity; m.opacity=m.userData.o0*lvl; } for(const [l,b] of B0.lights) l.intensity=b*(.65+.35*nf);
+    if(B0.toe) B0.toe.emissiveIntensity=.7*lvl; if(B0.rim) B0.rim.emissiveIntensity=.45*lvl; }
+  // light off the water
+  const Cs=B0.caust; if(Cs){ if(!Cs.drawn){ Cs.drawn=true; const g=Cs.cv.getContext('2d'), N=256, im=g.createImageData(N,N), d=im.data;
+      for(let j=0;j<N;j++) for(let i=0;i<N;i++){ const x=i/N*Math.PI*2, y=j/N*Math.PI*2; let v=0; for(let k=0;k<3;k++){ const a=Math.sin(x*(2+k)+Math.sin(y*(3-k)+k*1.7)*1.3)+Math.sin(y*(2+k)+Math.sin(x*(1+k)+k)*1.4); v+=Math.pow(Math.max(0,1-Math.abs(a)*1.6),3); }
+        const c=Math.min(255,v*150), o=(j*N+i)*4; d[o]=d[o+1]=d[o+2]=c; d[o+3]=255; } g.putImageData(im,0,0); Cs.cT.needsUpdate=true; }
+    Cs.cT.offset.set(Math.sin(w*.17)*.08+w*.006,Math.cos(w*.13)*.08-w*.009); Cs.cM.opacity=.07+.06*nf+Math.sin(w*.6)*.012; }
+  // the sauna: the door shut on someone inside → the panels glow and the heat climbs to about 55 °C in two minutes
+  const Sa=B0.sauna; if(Sa){ const meIn=ME.x>Sa.x0&&ME.x<Sa.x1&&ME.z>Sa.z0&&ME.z<Sa.z1, npcIn=Object.values(NPC).some(n=>n.inSauna), shut=!(S5.open||sNear), on=shut&&(meIn||npcIn);
+    Sa.T+=((on?55:28)-Sa.T)*Math.min(1,dt/45); const h=Math.max(0,(Sa.T-28)/27); Sa.on=on;
+    Sa.irM.emissiveIntensity+=((on?.2+.55*h:0)-Sa.irM.emissiveIntensity)*Math.min(1,dt*1.5); Sa.rl.intensity=Sa.irM.emissiveIntensity*.7;
+    const Th=B0.therm, tv=Math.round(Sa.T); if(Th&&tv!==Th.last){ Th.last=tv; const g=Th.cv.getContext('2d'); g.fillStyle='#efe6d2'; g.fillRect(0,0,128,200); g.strokeStyle='#6a5038'; g.lineWidth=6; g.strokeRect(3,3,122,194);
+      g.fillStyle='#d9cfbd'; g.fillRect(56,22,16,126); g.fillStyle='#b3261e'; const hh=Math.max(4,Math.min(126,(tv-20)/60*126)); g.fillRect(56,148-hh,16,hh); g.beginPath(); g.arc(64,160,17,0,7); g.fill();
+      g.fillStyle='#2a2018'; g.font='700 30px "Noto Serif TC",serif'; g.textAlign='center'; g.fillText(tv+'°',64,196-4); Th.tT.needsUpdate=true; }
+    // a small note while you are in: the heat and how long; once at twelve minutes, a reminder to come out
+    if(meIn){ if(!Sa.since){ Sa.since=performance.now(); Sa.reminded=false; } const sec=(performance.now()-Sa.since)/1000;
+      if(!Sa.hud){ Sa.hud=document.createElement('div'); Sa.hud.style.cssText='position:fixed;right:14px;bottom:120px;padding:6px 12px;background:#2a1a12e0;color:#f6e3cc;font:14px "Noto Serif TC",serif;border-radius:3px;z-index:28;pointer-events:none;border-left:3px solid #c0442a'; document.body.append(Sa.hud); }
+      const tx=NT('sauna.hud')+'　'+Math.round(Sa.T)+' °C　'+Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0'); if(Sa.hud.textContent!==tx) Sa.hud.textContent=tx; Sa.hud.style.display='block';
+      if(sec>720&&!Sa.reminded){ Sa.reminded=true; toast(NT('sauna.remind'),7000); } }
+    else { Sa.since=0; if(Sa.hud) Sa.hud.style.display='none'; } }
+  // the plate by the noren
+  const Sg=B0.sign; if(Sg&&(Sg.k===null||(Sg.t=(Sg.t||0)+dt)>1)){ Sg.t=0; const k=bathSlot(dayMin()); if(k!==Sg.k){ Sg.k=k; const g=Sg.cv.getContext('2d'); g.fillStyle='#d8bf94'; g.fillRect(0,0,96,256); g.strokeStyle='#6a5038'; g.lineWidth=5; g.strokeRect(4,4,88,248);
+      const t=k?NT('bath.sign',k==='f'?0:1):NT('bath.sign0'); g.fillStyle=k==='f'?'#8a2a24':k==='m'?'#24364f':'#3a2a1e'; g.font='700 64px "Noto Serif TC",serif'; g.textAlign='center'; g.textBaseline='middle';
+      const ch=[...t]; ch.forEach((c,i)=>g.fillText(c,48,128+(i-(ch.length-1)/2)*78)); Sg.sT.needsUpdate=true; } }
   const inBath=ME.seat>=0&&B0.seats.includes(ME.seat), base=inBath?.3:.17, C0=B0.tubC;
   B0.steam.forEach((S,i)=>{ const ph=(w*.14+S.ph)%1; if(S.spout) S.s.position.set(P.x+Math.sin(i*2.1+w*.6)*.1,.6+ph*1.0,P.z+Math.cos(i*1.7+w*.5)*.1); else S.s.position.set(C0.x+S.x*2*C0.sx+Math.sin(i*2.1+w*.2)*.15,.6+ph*1.5,C0.z+S.z*2*C0.sz+Math.cos(i*1.7+w*.15)*.15);
     S.s.material.opacity=(1-ph)*Math.min(1,ph*5)*base; S.s.scale.setScalar((S.spout?.25:.4)+ph*.8); });
@@ -7065,7 +7275,10 @@ ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*
   ZL_ANIM.push(dt=>{ dt=dt||.016; const w=performance.now()/1000, k=Math.min(1,dt*6);
     const sitting=si=>si>=0&&(ME.seat===si||occupied(si));
     if(WC.lastSeat!==ME.seat){ const was=WC.lastSeat; WC.lastSeat=ME.seat; if(was>=0&&SEATS[was]&&SEATS[was].kind==='wc') toast(NT('act.flush')); }
-    for(const D of WC.doors){ const busy=sitting(D.si); if(D.ind){ D.busy=busy; } const want=(D.open&&!busy)?-D.side*1.3:0; D.pv.rotation.y+=(want-D.pv.rotation.y)*k; if(D.ind){ const red=D.busy||!D.open; D.ind.color.setHex(red?0xb8322f:0x2f8a4a); D.ind.emissive.setHex(red?0x8a1a14:0x1a6a30); } }
+    // the urinal's stall: standing still at it shuts the door; turning to go opens it again
+    const still=(!ME.path||!ME.path.length)&&!['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].some(c=>keys.has(c));
+    for(const D of WC.doors){ if(D.uri){ const inS=Math.abs(ME.x-D.uri)<.5&&ME.z>22.55&&ME.z<23.6; D.still=inS&&still?(D.still||0)+dt:0; }
+      const busy=sitting(D.si)||(D.still||0)>.6; if(D.ind){ D.busy=busy; } const want=(D.open&&!busy)?-D.side*1.3:0; D.pv.rotation.y+=(want-D.pv.rotation.y)*k; if(D.ind){ const red=D.busy||!D.open; D.ind.color.setHex(red?0xb8322f:0x2f8a4a); D.ind.emissive.setHex(red?0x8a1a14:0x1a6a30); } }
     for(const S3 of WC.slides){ const want=S3.z0+.88*S3.open; S3.g.position.z+=(want-S3.g.position.z)*k; }
     // the mirror reflects only while you stand near it: the scene drawn again from the far side of the glass
     const Mi=WC.mirror; if(Mi&&!renderer.xr.isPresenting&&VIEW.mode==='walk'&&Math.hypot(ME.x-39.2,ME.z-Mi.z)<3.6){ Mi.t=(Mi.t||0)+dt; if(Mi.t>.05){ Mi.t=0;
@@ -7119,9 +7332,8 @@ function dineText(){ const S=mealState(), T=S.T, nm=nextMeal(); let h=`<p style=
    window's own outline (the octagon too) and hung in the frame (outer windows on the outside, octagons on the 明間 side),
    seen and worked from both sides. It rolls
    up from the bottom: the roll rides up the window and is as long as the window is wide at that height, and at the top it
-   tucks under a short cloth head. Windows that have been walled up or lined over (the toilets, the bath) are left out;
-   the cinema's court window has its own shutters. All start rolled up; who lowers or raises one is shared with everyone
-   in the house, and the two octagons between the cinema and its 明間 come down by themselves while a film plays. */
+   tucks under a short cloth head. Windows that have been walled up (the toilets) are left out. All start rolled up; who lowers or raises one is shared with everyone
+   in the house, and the cinema's three (two octagons toward its 明間, the court window) come down by themselves while a film plays. */
 const BLINDS=[];
 function buildBlinds(){ try{
   const slatT=ctex(128,512,(g,w,h)=>{ g.clearRect(0,0,w,h); let s=7; const r=()=>((s=s*16807%2147483647)/2147483647);
@@ -7151,7 +7363,6 @@ function buildBlinds(){ try{
     else { const roofed=s=>{ rc.set(c.clone().addScaledVector(n,s*2.4),UP); rc.far=9; return rc.intersectObjects(solids,false).length>0; }; if(roofed(-1)&&!roofed(1)) n.negate(); }
     off=W.k==='oct'?.05:.12;
     u=new THREE.Vector3().crossVectors(UP,n).normalize();   // across, so that (across, up, toward the roll's side) is a proper rotation
-    if(Math.hypot(c.x-14.5,c.z-15.6)<.6) continue;                                            // the cinema's court window: shutters
     // walled up or lined over? look through the opening from both sides
     let blocked=0; for(const [du,dv] of samples){ for(const s of [1,-1]){ const o=c.clone().addScaledVector(u,du).addScaledVector(UP,dv).addScaledVector(n,s*.7);
         rc.set(o,n.clone().multiplyScalar(-s)); rc.far=1.0; if(rc.intersectObjects(solids,false).length){ blocked++; break; } } }
@@ -7171,24 +7382,24 @@ function buildBlinds(){ try{
         const e=new THREE.Mesh(new THREE.BoxGeometry(L+.02,.024,.012),bm); e.position.set((x0+x1)/2,(y0+y1)/2,0); e.rotation.z=Math.atan2(y1-y0,x1-x0); e.userData=pk; f.add(e); pickables.push(e); }
       const roll=new THREE.Mesh(cyl,rollM); roll.rotation.z=Math.PI/2; roll.userData=pk; f.add(roll); pickables.push(roll); rolls.push(roll);
       const head=new THREE.Mesh(headG,headM); head.position.set(0,top-.02,.03); head.userData=pk; f.add(head); pickables.push(head); }
-    BLINDS.push({g,plane,rolls,slats:slatsA,top,H,chord,k:0,on:0,v:0,id:'',at:0,cine:Math.abs(c.x-(19.6-ZR.wallX))<.3&&c.z>15.6&&c.z<23.6});
+    BLINDS.push({g,plane,rolls,slats:slatsA,top,H,chord,k:0,on:0,v:0,id:'',at:0,cine:(Math.abs(c.x-(19.6-ZR.wallX))<.3&&c.z>15.6&&c.z<23.6)||Math.hypot(c.x-14.5,c.z-15.6)<.7});
     ZL_DYN.push(g); }
   }catch(e){ console.warn('blinds',e); } }
 { const send=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'blind'},d),to)); }catch{ return false; } };
-  // the household's round: at 05:00 (Taipei) they roll every blind up, at midnight they let every one down, one window
-  // after another (a few seconds apart, in the order the windows were built). Someone's own choice holds until the next round.
-  const STEP=3000, HOUR=3600e3, tpH=t=>(((t/HOUR+8)%24)+24)%24;
-  const sched=(i,t)=>{ const tt=t-i*STEP, h=tpH(tt); return {down:h<5?1:0,since:t-((h<5?h:h-5)*HOUR)}; };
+  // the household's round: at getting-up time 玉姨 (east side) and 阿財 (west side) roll every blind up, at lights-out
+  // they let every one down, each window as they reach it on their walk (see 傭人作息; b.off is when, from the start of
+  // the round). Someone's own choice holds until the next round.
+  const sched=(i,t)=>{ const b=BLINDS[i], mm=tpMin(t-(b.off||0)), down=asleepAt(mm)?1:0; return {down,since:t-minsSince(mm,down?DAY.sleep%1440:DAY.wake)*60000}; };
   let lastRound=null;
   let lastT=performance.now(); const wp=new THREE.Vector3();
-  ZL_ANIM.push(()=>{ if(!BLINDS.length) return; const now=performance.now(), dt=Math.min(.25,(now-lastT)/1000); lastT=now; const film=!!(window.__cine&&window.__cine.S.p), wall=Date.now();
-    const round=tpH(wall)<5?'down':'up'; if(lastRound&&round!==lastRound&&window.__entered) toast(NT('blind.npc',round==='up'?0:1),6000); lastRound=round;
+  ZL_ANIM.push(()=>{ if(!BLINDS.length) return; const now=performance.now(), dt=Math.min(.25,(now-lastT)/1000); lastT=now; const film=!!(window.__cine&&window.__cine.S.p), wall=wallNow();
+    if(window.__entered) staffRoutes(); const round=asleepAt(tpMin(wall))?'down':'up'; if(lastRound&&round!==lastRound&&window.__entered) toast(NT('blind.npc',round==='up'?0:1),6000); lastRound=round;
     for(const [i,b] of BLINDS.entries()){ const S=sched(i,wall), base=b.v&&b.at>S.since?b.on:S.down, want=b.cine&&film?1:base; if(b.k===want&&b.ok) continue; b.ok=true;
       b.k+=Math.sign(want-b.k)*Math.min(Math.abs(want-b.k),dt*.5);
       const yb=b.top-b.k*b.H, r=.012+.028*(1-b.k), len=Math.max(.02,b.chord(Math.min(b.top-.001,Math.max(-b.top+.001,yb))));
       for(const ro of b.rolls){ ro.position.set(0,yb,.012+r); ro.scale.set(r,len,r); }
       b.g.updateMatrixWorld(true); wp.set(0,yb,0); b.g.localToWorld(wp); b.plane.constant=-wp.y; for(const sl of b.slats) sl.visible=b.k>.005; } });
-  window.__blindAct=u=>{ const b=BLINDS[u.i]; if(!b) return; const S=sched(u.i,Date.now()), cur=b.v&&b.at>S.since?b.on:S.down; b.on=cur?0:1; b.v++; b.id=MY_PID; b.at=Date.now(); b.ok=false; send({o:'set',i:u.i,on:b.on,v:b.v,id:b.id,at:b.at}); toast(NT('blind.msg',b.on?0:1),2000); };
+  window.__blindAct=u=>{ const b=BLINDS[u.i]; if(!b) return; const S=sched(u.i,wallNow()), cur=b.v&&b.at>S.since?b.on:S.down; b.on=cur?0:1; b.v++; b.id=MY_PID; b.at=wallNow(); b.ok=false; send({o:'set',i:u.i,on:b.on,v:b.v,id:b.id,at:b.at}); toast(NT('blind.msg',b.on?0:1),2000); };
   const snapFor=new Map();
   window.__blindHello=()=>send({o:'hi'});
   window.__blindRecv=(d,from)=>{ if(!d||d.k!=='blind') return;

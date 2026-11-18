@@ -3605,7 +3605,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['blind','alarm','sampan','jetty','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['gramo','snackdish','blind','alarm','sampan','jetty','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -3621,6 +3621,8 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
   case 'blind': window.__blindAct?.(u); break;
   case 'sampan': window.__boatAct?.(u); break;
+  case 'snackdish': window.__snackAct?.(u); break;
+  case 'gramo': window.__gramoAct?.(u); break;
   case 'jetty': toast(NT('boat.jetty'),5000); break;
   case 'alarm': toast(String(NT('alarm.msg')).replace('{now}',hhmm(taipeiNow().min)).replace('{wake}',hhmm(DAY.wake)),4000); break;
   case 'cinescreen': case 'cinefridge': case 'cineswitch': if(window.__cineAct) window.__cineAct(u); break;
@@ -5172,6 +5174,10 @@ const NPC_TXT={
   'zone.tearoom':['茶室','第三進西廂知了間，進明間往北間'],'zone.store':['庫房','南廳西邊的過水'],
 };
 /*HTXT*/Object.assign(NPC_TXT,{"h.title":["許總管", "管家面板"],"h.tabs":["報告,帶路,叫人,集合,飲食,宅務,作息,待客,電影院,提醒", ""],"h.come":["{稱呼}，我在。", "{稱呼}請吩咐。"],"h.bath":["許總管正在洗澡，等他出來再說。", ""],"h.lead":["好，我帶{稱呼}去{地}，這邊請。", "{地}是吧，請跟我來。"],"h.arrive":["{地}到了。", "這裡就是{地}。"],"h.door":["裡頭是下人住的房間，我就帶到門口。", "這是傭人睡的地方，就送到這兒。"],"h.tour.start":["那我陪{稱呼}把宅子走一圈，大約十分鐘，想停下來隨時跟我說。", ""],"h.tour.next":["接下來去{地}。", "再往{地}走。"],"h.tour.end":["宅子大致就是這樣，{稱呼}慢慢逛。", "走完一圈了，有事再叫我。"],"h.tour.btn":["全宅導覽（約十分鐘）", "停止帶路"],"h.tour.note":["從門埕走到知了間，每到一處停一下介紹；落後了許總管會等。", ""],"pl.g1":["門前・第一進", ""],"pl.g2":["過廳", ""],"pl.g3":["第二進", ""],"pl.g4":["第三進", ""],"pl.g5":["宅外", ""],"pl.gate":["門埕", "大門裡頭的門埕，玉姨平日守在這裡，客人進出都打這兒過。"],"pl.well":["井邊", "第一進的埕東南角，一口老井，汲水、洗衣都在這裡。"],"pl.dine":["飯廳", "第一進東廂明間，一張大圓桌，宅裡上下三餐都在這裡吃。"],"pl.kit":["灶腳", "第一進東廂南間，火師掌灶，大灶、蒸籠、爐台都在裡頭。"],"pl.bath":["浴室", "第一進西廂南間，有洗身處、浴缸和烤箱；暖簾旁的木牌寫著現在是女湯還是男湯。"],"pl.wc":["廁所", "第一進西廂明間後半，男女分開，門上有牌子。"],"pl.r22":["22 號房", "第一進東廂北間，許總管、水生、火師、阿財幾個男工的房間。"],"pl.r26":["26 號房", "第一進西廂北間，玉姨、阿春、阿莉、阿荷的房間。"],"pl.gt":["過廳", "從前是門廳，現在是第一進和第二進之間的過廳。"],"pl.kids":["書僮房", "過廳東邊的前過水，阿福、阿來兩個書僮睡在這裡。"],"pl.court2":["第二進院子", "第二進的埕，北邊是南廳，西側是花圃。"],"pl.garden":["花圃", "水生照顧的花圃，含笑白天開、傍晚收。"],"pl.cls":["教室", "第二進西廂南間，有黑板和投影，上課、講談都在這裡。"],"pl.cine":["電影院", "12 號房，第二進西廂北間；銀幕從地面到天花板，放映時燈會暗下來。"],"pl.nt":["南廳", "第二進的正身，往北穿過去就是第三進。"],"pl.prep":["備茶處", "南廳東邊的過水，阿春在這裡揀茶、備茶具。"],"pl.store":["庫房", "南廳西邊的過水，放雜物和工具，阿財常在這裡修東西。"],"pl.court3":["第三進院子", "第三進的埕，西南角那棵松是宅裡最老的樹。"],"pl.lib":["學鳩齋", "第三進東廂，頭家的書齋，書架、書桌和閱讀角都在這裡。"],"pl.mid3":["知了間", "第三進西廂明間，條案上掛著丁雲鵬的《玉川煎茶圖》。"],"pl.tea":["茶室", "知了間北間，喝茶、吃茶點都在這裡。"],"pl.wa":["和室", "知了間南間，土間、式台、緣側、疊，還有一爐地火。"],"pl.zt":["正廳", "第三進正身，掛龍江衍派的匾，宅裡供佛的地方。"],"pl.dfE":["東大房", "正廳東邊，宅裡的庫房。"],"pl.dfW":["西大房", "正廳西邊，宅裡的庫房。"],"pl.road":["門前土路", "大門外的土路，兩旁是稻田，遠處是群山。"],"pl.dock":["渡頭", "土路走到底就是河邊渡頭，小舢舨在這裡靠岸。"],"h.st":["睡了,在洗澡,跟著頭家,在辦差,在吃飯,在帶路", ""],"h.r.labels":["今日,天氣,下一餐,宅中人手,宅況,今日來客,書僮功課,本月帳目", ""],"h.r.online":["現在在宅裡", ""],"h.r.none":["今天還沒有客人。", ""],"h.r.earlier":["稍早來過：", ""],"h.hs.blind":["竹簾：{下} 扇放下、{上} 扇捲起", ""],"h.hs.door":["門：{關} 扇關著", "門：全開著"],"h.hs.bath":["浴室：{牌}", ""],"h.hs.slot":["女湯,男湯,未分時段", ""],"h.hs.sauna":["烤箱有人，{度}°C", ""],"h.hs.cine":["電影院正在放《{片}》", "電影院沒有放映"],"acct.list":["米糧　2,400\n菜蔬豆腐　3,100\n茶葉　1,800\n柴炭　600\n燈油蠟燭　350\n工錢（八位）　28,000\n書僮紙墨書本　900\n修繕　1,200\n香花供品　500", "合計"],"lesson.1":["《千字文》背到「龍師火帝」，臨《九成宮》一張", "描紅一張，認二十個字"],"lesson.2":["《論語・學而》讀十遍，算盤加減", "《三字經》背到「養不教」，數數到一百"],"lesson.3":["臨《九成宮》兩張，默寫昨天的字", "描紅一張，背九九乘法到五"],"lesson.4":["《唐詩三百首》背一首，記帳練習", "《三字經》往下背十句"],"lesson.5":["《論語》默寫，算盤乘法", "認字二十個，描紅一張"],"lesson.6":["整理書房，抄書目", "跟阿福學磨墨，背一首詩"],"lesson.7":["溫書，許總管考背書", "溫書，許總管考背書"],"h.call.note":["點名字，許總管就去叫他過來；書僮直接跟上。", ""],"h.call.go":["我去叫{名}過來。", "{名}嗎？我這就叫他。"],"h.call.bath":["{名}在洗澡，等他洗好再過來吧。", ""],"h.call.back":["大家回去做事", ""],"h.call.done":["好，都回去做事了。", ""],"h.g.btn":["全宅集合點名", "解散"],"h.g.note":["大家到你所在的那一進院子排成一列，許總管點名；在洗澡的不來。", ""],"h.g.now":["{人}叫大家集合了。", ""],"h.g.call":["大家到院子集合，點名了！", "全宅的人，院子集合！"],"h.g.name":["{名}！", "{名}。"],"h.g.yes":["有。", "在。"],"h.g.yesK":["有！", "到！"],"h.g.all":["{稱呼}，人都到齊了，請吩咐。", "全到了，{稱呼}。"],"h.g.missing":["{稱呼}，{名}沒來，其餘都到了。", ""],"h.g.bye":["好，大家回去做事。", "解散！"],"h.f.changed":["（今天改了）", ""],"h.f.tea":["奉茶", ""],"h.f.teaMe":["阿春泡茶送到我這裡", ""],"h.f.teaRoom":["阿春泡茶送到茶室", ""],"h.f.teaDone":["茶放在茶室了，趁熱喝。", ""],"h.f.change":["改今天的一餐", ""],"h.f.set":["就改這個", ""],"h.f.reset":["照原本的菜單", ""],"h.f.ok":["好，我去跟火師說。", "知道了，我交代灶腳。"],"menu.alt":["白粥、菜脯蛋、醬瓜、炒青菜、豆腐乳\n素炒米粉、味噌湯、燙青菜\n香菇素肉燥飯、筍絲湯、滷豆干\n咖哩飯、蔬菜湯、涼拌小黃瓜\n素鍋燒意麵\n蒸蛋、清炒高麗菜、冬瓜湯、白飯\n紅燒豆腐、炒空心菜、竹筍湯、白飯\n地瓜粥、花生麵筋、蔭瓜、炒地瓜葉", ""],"h.h.blind":["竹簾", ""],"h.h.up":["全部捲起", ""],"h.h.down":["全部放下", ""],"h.h.doors":["全宅的門", ""],"h.h.open":["全開", ""],"h.h.shut":["全關", ""],"h.h.chores":["差事", ""],"h.h.light":["阿福去點燈", ""],"h.h.sweep":["阿荷來掃這裡", ""],"h.h.sweepTea":["阿荷去掃茶室", ""],"h.h.sweepLib":["阿福去撣書房", ""],"h.h.sheet":["阿莉換床單", ""],"h.h.flower":["水生換花（茶室、書房）", ""],"h.h.fix":["阿財來修這裡", ""],"h.h.mail":["玉姨把信送到書房", ""],"h.h.patrol0":["許總管現在巡一趟", ""],"h.h.patrol":["我去各進看一圈，門窗燈火都看過。", ""],"h.h.ok":["是，我這就辦。", "知道了。"],"h.d.house":["宅裡的作息", ""],"h.d.wake":["起床", ""],"h.d.wf":["女生洗澡", ""],"h.d.wm":["男生洗澡", ""],"h.d.sleep":["熄燈", ""],"h.d.kids":["書僮 {起} 起、{睡} 睡", ""],"h.d.each":["各人的工作", ""],"h.d.usual":["照平常", ""],"h.d.change":["今晚臨時調整（只算這一晚）", ""],"h.d.sl":["熄燈延後半小時", "熄燈延後一小時"],"h.d.early":["提早半小時熄燈", ""],"h.d.late":["延後", "提早"],"h.d.wk":["明早晚半小時起床", ""],"h.d.reset":["照常", ""],"h.d.slNote":["今晚熄燈{早晚} {分} 分鐘。", ""],"h.d.wkNote":["明早起床延後 {分} 分鐘。", ""],"h.d.ok":["好，我跟大家說一聲。", ""],"h.gu.on":["現在宅裡的客人：{名}", "現在沒有客人。"],"h.gu.gate":["許總管到門口迎客", ""],"h.gu.go":["我到門口候著，客人來了我招呼。", ""],"h.gu.hi":["{名}您好，歡迎光臨，請進。", "{名}，裡面請。"],"h.gu.tea":["阿春泡茶送到茶室", ""],"h.gu.tour":["許總管帶客人參觀全宅", ""],"h.c.pick":["放哪一部", ""],"h.c.when":["幾點開演", ""],"h.c.go":["排定", ""],"h.c.now":["五分鐘後開演", ""],"h.c.note":["開演前五分鐘許總管會通知，閒著的人都會進電影院坐；大家看到的是同一場。", ""],"h.c.set":["{時} 放《{片}》（{人}排的）", ""],"h.c.cancel":["取消這一場", ""],"h.c.none":["片單是空的，請先在後台加片子。", ""],"h.c.soon":["電影院五分鐘後放《{片}》。", "《{片}》快開演了，大家進電影院坐吧。"],"h.c.ok":["好，時間到了我叫大家。", ""],"h.m.rem":["提醒", ""],"h.m.empty":["還沒有提醒。", ""],"h.m.ph":["要提醒的事", ""],"h.m.add":["加入", ""],"h.m.del":["刪", ""],"h.m.ok":["記下了，時間到我來說。", ""],"h.m.say":["{稱呼}，{事}的時間到了。", ""],"h.m.read":["讀書計時", ""],"h.m.min":["分鐘", ""],"h.m.readNote":["時間到許總管會來叫你起來走走。", ""],"h.m.readLeft":["還有 {分} 分鐘。", ""],"h.m.readStop":["停止計時", ""],"h.m.readGo":["好，時間到我來叫{稱呼}。", ""],"h.m.readDone":["{稱呼}，已經讀了 {分} 分鐘，起來走走、喝口茶吧。", ""],"h.m.note":["記事（只存在這台裝置）", ""]});
+/*HTXT*/Object.assign(NPC_TXT,{"snack.mochi":["麻糬", "剛搗好的麻糬，沾花生粉、芝麻粉，趁軟吃。"],"snack.jiangui":["煎粿", ""],"snack.fanshu":["番薯餅", ""],"snack.yuwan":["芋丸", ""],"snack.douhua":["豆花", "豆花加了花生和粉圓，糖水是黑糖熬的。"],"snack.tangyuan":["紅豆湯圓", ""],"snack.xingren":["杏仁茶配油條", "杏仁茶熱的，油條剛炸起來，剪成段了。"],"snack.runbing":["潤餅", ""],"snack.baoice":["剉冰", "剉冰淋了黑糖，上面有紅豆、綠豆和芋圓。"],"snack.wangue":["碗粿", ""],"snack.shaomai":["素燒賣", ""],"snack.shuijing":["水晶素餃", ""],"snack.chashao":["素叉燒包", ""],"snack.naihuang":["奶黃包", ""],"snack.liusha":["流沙包", ""],"snack.changfen":["腸粉", ""],"snack.luobo":["蘿蔔糕", ""],"snack.mati":["馬蹄糕", ""],"snack.xianzhu":["鮮竹卷", ""],"snack.chunjuan":["素春卷", ""],"snack.yujiao":["芋角", ""],"snack.jiandui":["煎堆", ""],"snack.dantat":["蛋撻", "蛋撻剛出爐，皮很酥，小心燙。"],"snack.yangzhi":["楊枝甘露", "楊枝甘露是芒果、柚子和西米露，冰的。"],"snack.shuangpi":["雙皮奶", ""],"snack.mala":["馬拉糕", ""],"snack.nuomi":["糯米糍", ""],"snack.doufuhua":["豆腐花", ""],"snack.bolo":["菠蘿包", ""],"snack.scone":["司康", ""],"snack.madeleine":["瑪德蓮", ""],"snack.financier":["費南雪", ""],"snack.puff":["泡芙", ""],"snack.millefeuille":["千層派", ""],"snack.croissant":["可頌", ""],"snack.chiffon":["戚風蛋糕", ""],"snack.cheesecake":["乳酪蛋糕", ""],"snack.brownie":["布朗尼", ""],"snack.souffle":["舒芙蕾", "舒芙蕾要快吃，一下就塌了。"],"snack.pudding":["布丁", ""],"snack.pannacotta":["奶酪", "奶酪用洋菜做的，上面淋了莓果醬。"],"snack.tiramisu":["提拉米蘇", "提拉米蘇沒放酒，是咖啡和可可的味道。"],"snack.applepie":["蘋果派", ""],"snack.fruittart":["水果塔", ""],"snack.pancake":["鬆餅", ""],"snack.frtoast":["法式吐司", ""],"snack.macaron":["馬卡龍", ""],"snack.cookie":["手工餅乾", ""],"snack.title":["茶點", ""],"snack.order":["點茶點", ""],"snack.cat.tw":["台式", ""],"snack.cat.hk":["港式（素）", ""],"snack.cat.we":["西式", ""],"snack.note":["都是現做的，蛋奶素、不放五辛、不用吉利丁、不加酒；做好由阿春連茶一起端到茶室，宅裡的人看到的都一樣。", ""],"snack.okC":["好，我去跟火師說，{菜}大約 {分} 分鐘好，我端到茶室。", "{菜}是吧，做好我送去茶室。"],"snack.okX":["是，我叫人去灶腳交代，{菜}大約 {分} 分鐘送到茶室。", "好，{菜}，做好送茶室。"],"snack.full":["灶腳手上已經有好幾樣了，等這幾樣好了再點吧。", ""],"snack.send":["{名}，去灶腳跟火師說一聲。", ""],"snack.tell":["火師，要一份{菜}，送茶室的。", "火師，{菜}一份，阿春會來端。"],"snack.huo":["{菜}是吧，馬上來。", "好，{菜}，我來弄。"],"snack.ready":["{菜}好了！阿春，來端。", "好了，趁熱。"],"snack.served":["{菜}和茶都放在茶室了，請慢用。", "{菜}來了，茶也泡好了。"],"snack.eat":["{菜}，慢用。", ""],"snack.st":["交代灶腳","火師在做"],"snack.stDone":["已送到茶室",""],"gm.title":["備客飯", ""],"gm.how":["幾位客人、幾點開飯", ""],"gm.at":["照這個時間", ""],"gm.now":["馬上準備（約八分鐘）", ""],"gm.menu":["麻油猴頭菇\n三杯杏鮑菇\n紅燒豆腐\n炒時蔬\n素佛跳牆\n白飯", ""],"gm.set":["{時} 開飯，{人} 位客人（{誰}交代的）。", ""],"gm.cancel":["取消", ""],"gm.ok":["好，{人}位的客飯，我交代灶腳。", ""],"gm.call":["飯菜好了，請各位入座！", "開飯了，請來飯廳坐。"],"gm.toast":["飯廳的客飯好了，請入座。", ""]});
+/*HTXT*/Object.assign(NPC_TXT,{"rw.yu":["哎呀，頭家太客氣了，這是我本分。", "紅包我收下了，給孫子買件新衣。"],"rw.xu":["不敢當，都是大家同心。", "謝頭家。這個月的帳我會記清楚。"],"rw.chun":["謝謝頭家，我會更用心泡茶。", "頭家給的紅包，我要存起來。"],"rw.shui":["哪裡，花自己會開，我只是澆水。", "多謝頭家，我買些新花苗來種。"],"rw.huo":["嘿，頭家吃得滿意就好！", "謝頭家！今晚多加一道菜。"],"rw.cai":["嘿嘿，頭家看得到就好。", "多謝頭家！我拿去跟水生叔買一盆蘭花。"],"rw.li":["Terima kasih，頭家，我會繼續努力。", "謝謝頭家，我寄回家給媽媽。"],"rw.he":["真的嗎？謝謝頭家！我會更認真。", "紅包！謝謝頭家，我要買新衣服！"],"rw.fu":["謝謝頭家！我以後字寫得更好。", "謝謝頭家！我要買一本新書。"],"rw.lai":["嘿嘿，謝謝頭家！", "哇，紅包！謝謝頭家！我要存起來買糖。"],"h.rw.title":["表揚與紅包", ""],"h.rw.note":["許總管當眾說，本人回話；次數記在這台裝置。", ""],"h.rw.p":["表揚", ""],"h.rw.r":["紅包", ""],"h.rw.count":["表揚 {表揚}・紅包 {紅包}", ""],"h.rw.praise":["{名}這陣子做事用心，頭家表揚。", "頭家要表揚{名}，大家學著點。"],"h.rw.red":["頭家賞{名}一個紅包。", "{名}，頭家給的紅包，收好。"],"h.cal":["民國 {民國} 年・昭和 {昭和} 年・農曆{干支}年{農曆}", ""],"fest.solar":["01-01 元旦\n02-28 和平紀念日\n04-04 兒童節\n05-01 勞動節\n09-28 教師節（孔子誕辰）\n10-10 國慶日\n12-25 行憲紀念日", ""],"fest.lunar":["1-1 春節\n1-9 天公生\n1-15 元宵\n2-19 觀音誕\n4-8 浴佛節\n5-5 端午\n6-19 觀音成道\n7-7 七夕\n7-15 中元・盂蘭盆\n8-15 中秋\n9-9 重陽\n9-19 觀音出家\n12-8 臘八\n12-16 尾牙\n12-24 送神", ""],"fest.eve":["除夕", ""],"h.fest.today":["今天是{節}。", ""],"h.fest.soon":["{天} 天後是{節}", ""],"h.fest.greet":["{稱呼}，今天是{節}。", ""],"h.posts":["網站新文章", ""],"h.newpost":["{稱呼}，網站上有新文章《{題}》，報告裡可以點開看。", ""]});
+/*HTXT*/Object.assign(NPC_TXT,{"gramo.title":["留聲機", ""],"gramo.now":["正在放：{曲}", ""],"gramo.idle":["挑一張放上去，宅裡的人都聽得到。", ""],"gramo.stop":["把唱針抬起來", ""],"gramo.put":["放上〈{曲}〉。", ""],"gramo.none":["還沒有唱片。請在後台「過廳留聲機的唱片」加入（音樂檔放在 R2，只放公有領域或有權使用的錄音）。", ""],"gramo.tap":["過廳的留聲機在放音樂，點一下畫面就聽得到。", ""]});
+/*HTXT*/Object.assign(NPC_TXT,{"pl.gramo":["留聲機", "過廳西北角的留聲機，點一下可以挑唱片，宅裡的人聽到的是同一張。"]});
 for(const e of (Array.isArray(VRD.npc)?VRD.npc:[])) if(e&&e.key&&NPC_TXT[e.key]){ const d=NPC_TXT[e.key]; NPC_TXT[e.key]=[String(e.a||'').trim()||d[0],String(e.b||'').trim()||d[1]]; }
 const NT=(k,i=0)=>(NPC_TXT[k]||['',''])[i]||''; NTX=NT;
 // weather and wind by hand, in the menu under the lights: follow Taipei, or set it yourself (kept in this browser)
@@ -7401,6 +7407,7 @@ function talkMenu(id){ const n=NPC[id], boss=isBoss(), back=[NT('ui.back'),()=>t
   if(boss&&(id==='shui'||id==='cai')) care.push([NT('ui.sup'),()=>sayK(id,'sup.'+id)]);
   const top=[[NT('ui.chat'),()=>npcChoices(id,chat.concat([back]))],[NT('ui.ask'),()=>npcChoices(id,ask.concat([back]))],[NT('ui.care'),()=>npcChoices(id,care.concat([back]))]];
   if(id==='xu') top.unshift([NT('ui.lead'),()=>openButler('lead')],[NT('h.title',1),()=>openButler()]);
+  if(id==='chun') top.unshift([NT('snack.order'),()=>window.__food&&window.__food.snackMenu('chun')]);
   if(id==='he') top.unshift(['逗她',()=>npcChoices('he',[1,2,3,4,5].map(k=>[NT('he.t'+k,1),()=>tease(k)]).concat([back]))]);
   if(boss&&ORDERS[id]) top.push([NT('ui.order'),()=>npcChoices(id,ORDERS[id]().concat([back]))]);
   npcChoices(id,top); }
@@ -7459,9 +7466,9 @@ function mealTick(dt){ if(!window.__entered) return; const now=performance.now()
   MEALRUN.t+=dt; if(MEALRUN.t<.5) return; MEALRUN.t=0;
   const S=mealState(); MEALRUN.M=S;
   // the table: dishes come in during the last ten minutes, stay through the meal; then the cover and the teapot
-  const sets=DINE.sets; const showK=(S.phase==='serve'||S.phase==='eat')?S.k:null;
-  for(const k of ['b','l','d','n']) sets[k].visible=k===showK&&(S.phase==='eat'||S.r>-7);
-  sets.x.visible=!(showK&&(S.phase==='eat'||S.r>-7)); DINE.places.visible=!!showK&&(S.phase==='eat'||S.r>-8);
+  const sets=DINE.sets, GMon=!!(window.__guestMealOn&&window.__guestMealOn()&&!S.phase); const showK=GMon?'d':(S.phase==='serve'||S.phase==='eat')?S.k:null;
+  for(const k of ['b','l','d','n']) sets[k].visible=k===showK&&(GMon||S.phase==='eat'||S.r>-7);
+  sets.x.visible=!(showK&&(GMon||S.phase==='eat'||S.r>-7)); DINE.places.visible=!!showK&&(GMon||S.phase==='eat'||S.r>-8);
   // the lamp: on for meals and after dark
   const on=!!showK||SKY_DAY<.35; DINE.shade.material.emissiveIntensity=on?.55:0; DINE.bulb.material.emissiveIntensity=on?1.4:0; DINE.lamp.intensity=on?1.6:0;
   if(KITCHEN_STRIP) KITCHEN_STRIP.emissiveIntensity=(S.phase||SKY_DAY<.35)?1.1:0;
@@ -7625,14 +7632,14 @@ const PLACES=[
   // id, group, where, {door: room rect for guests, boss: master only, notour}
   ['gate',1,P(50.2,9.8)],['well',1,P(44,6.6)],['dine',1,P(39.2,-.6)],['kit',1,P(44,1.2)],['bath',1,P(43.2,18.2)],['wc',1,P(39,21.6)],
   ['r22',1,P(34.4,-1.2),{door:[31.56,36.62,-4.3,4.3],notour:1}],['r26',1,P(34.4,20.8),{door:[31.56,36.62,15.3,23.9],notour:1}],
-  ['gt',2,P(29.4,9.8)],['kids',2,P(29.4,-.6),{door:[27.24,31.56,-4.3,4.49],notour:1}],
+  ['gt',2,P(29.4,9.8)],['gramo',2,P(26.9,13.4)],['kids',2,P(29.4,-.6),{door:[27.24,31.56,-4.3,4.49],notour:1}],
   ['court2',3,P(20.4,9.8)],['garden',3,P(16.2,12.6)],['cls',3,P(23,19.6)],['cine',3,P(14.56,20.5)],['nt',3,P(9.8,9.8)],['prep',3,P(9.8,-.6)],['store',3,P(10.4,20.4),{notour:1}],
   ['court3',4,P(.4,9.8)],['lib',4,P(0,0)],['mid3',4,P(0,19.6)],['tea',4,P(-5,19.6)],['wa',4,P(5,19.6)],
   ['zt',4,P(-9.8,9.8),{boss:1,notour:1}],['dfE',4,P(-11,0),{boss:1,notour:1}],['dfW',4,P(-11,19.6),{boss:1,notour:1}],
   ['road',5,P(70,9.8),{notour:1}],['dock',5,P(89.5,9.8),{notour:1}],
 ].map(([id,g,p,o])=>Object.assign({id,g,x:p.x,z:p.z},o||{}));
 const PL=Object.fromEntries(PLACES.map(p=>[p.id,p]));
-const TOUR=['gate','well','dine','kit','bath','gt','court2','garden','cls','cine','nt','prep','court3','lib','mid3','tea','wa'];
+const TOUR=['gate','well','dine','kit','bath','gt','gramo','court2','garden','cls','cine','nt','prep','court3','lib','mid3','tea','wa'];
 const plName=id=>HT2('pl.'+id,0)||id, plIntro=id=>HT2('pl.'+id,1);
 // a walkable point near a place
 function plSpot(p){ for(let r=0;r<3;r+=.2) for(let a=0;a<Math.PI*2;a+=Math.PI/8){ const x=p.x+Math.cos(a)*r, z=p.z+Math.sin(a)*r; if(walkable(x,z)) return {x,z}; } return {x:p.x,z:p.z}; }
@@ -7646,12 +7653,12 @@ function tourStart(){ closePanel(); npcSay('xu',HF('h.tour.start')); setTimeout(
 function tourNext(n){ const T=n.lead&&n.lead.tour; if(!T) return; T.i++; n.lead=null; if(T.i>=TOUR.length){ npcSay('xu',HF('h.tour.end')); n.act='idle'; n.busyUntil=Date.now()+8000; return; } leadTo(TOUR[T.i],T); }
 
 /* ---- the shared part: one state, versioned, handed to whoever comes in ---- */
-const HOUSE={v:0,id:'',show:null,sched:{sl:0,slU:0,wk:0,wkU:0},movr:{},gather:null};
+const HOUSE={v:0,id:'',show:null,sched:{sl:0,slU:0,wk:0,wkU:0},movr:{},gather:null,orders:[],gmeal:null,gramo:null};
 const DAY0={wake:DAY.wake,sleep:DAY.sleep};
 const hSend=(d,to)=>{ try{ return !!(NET.bcast&&NET.bcast(Object.assign({k:'house'},d),to)); }catch{ return false; } };
-const hPack=()=>({o:'st',v:HOUSE.v,id:HOUSE.id,show:HOUSE.show,sched:HOUSE.sched,movr:HOUSE.movr,gather:HOUSE.gather});
+const hPack=()=>({o:'st',v:HOUSE.v,id:HOUSE.id,show:HOUSE.show,sched:HOUSE.sched,movr:HOUSE.movr,gather:HOUSE.gather,orders:HOUSE.orders,gmeal:HOUSE.gmeal,gramo:HOUSE.gramo});
 function hTake(d){ const prevG=HOUSE.gather&&HOUSE.gather.t0, prevS=HOUSE.show&&HOUSE.show.at;
-  Object.assign(HOUSE,{v:d.v|0,id:d.id||'',show:d.show||null,sched:Object.assign({sl:0,slU:0,wk:0,wkU:0},d.sched||{}),movr:d.movr||{},gather:d.gather||null});
+  Object.assign(HOUSE,{v:d.v|0,id:d.id||'',show:d.show||null,sched:Object.assign({sl:0,slU:0,wk:0,wkU:0},d.sched||{}),movr:d.movr||{},gather:d.gather||null,orders:Array.isArray(d.orders)?d.orders.slice(0,8):[],gmeal:d.gmeal||null,gramo:d.gramo||null});
   hApplySched(); if((HOUSE.gather&&HOUSE.gather.t0)!==prevG){ HOUSE.gather?gatherRun(HOUSE.gather):gatherEnd(); } if((HOUSE.show&&HOUSE.show.at)!==prevS&&!HOUSE.show) showEnd(); if(bIsOpen()&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#bpane'))) bRender(); }
 function hAct(ch){ const st=Object.assign(hPack(),ch,{v:HOUSE.v+1,id:MY_PID}); hTake(st); hSend(st); }
 const hRank=()=>{ const ids=[...((NET.peers&&NET.peers.keys&&NET.peers.keys())||[])].concat(MY_PID).sort(); return Math.max(0,ids.indexOf(MY_PID)); };
@@ -7683,7 +7690,7 @@ setInterval(()=>{ const n=NPC.xu; if(!n||!n.butler||n.lead) return; const d=Math
   if(d>3.2&&(!n.bT||Math.hypot(n.bT.x-ME.x,n.bT.z-ME.z)>2.2)) xuGo(); else if(d<=3.2&&n.act!=='walk') npcFace(n,ME); },900);
 
 /* ---- the panel ---- */
-const TABS=['rep','lead','call','gather','food','house','day','guest','cine','rem'], GUEST_TABS=['rep','lead','day','rem'];
+const TABS=['rep','lead','call','gather','food','house','day','guest','cine','rem'], GUEST_TABS=['rep','lead','food','day','rem'];
 { const st=document.createElement('style'); st.textContent=`.btabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 12px}.btabs button{font:13px "Noto Serif TC",serif;padding:3px 9px;background:none;border:1px solid var(--rule,#c9bfae);color:inherit;border-radius:2px;cursor:pointer}
 .btabs button.on{background:var(--ink,#2a211a);color:var(--paper,#f3ead8);border-color:var(--ink,#2a211a)}
 .bp h4{font-size:14px;margin:14px 0 4px;font-weight:600}.bp p{margin:3px 0;line-height:1.8}.bp .meta{opacity:.7;font-size:13px}
@@ -7868,7 +7875,210 @@ PANES.rem=(pane)=>{ const now=Date.now();
   blk(pane,HT2('h.m.read'),left?[[HT2('h.m.readStop'),()=>{ REM.read=0; remSave(); bRender(); }]]:[25,45,60,90].map(m=>[m+' '+HT2('h.m.min'),()=>{ REM.read=Date.now()+m*60000; REM.readMin=m; remSave(); sayK('xu','h.m.readGo'); bRender(); }]),left?HF('h.m.readLeft',{分:left},0):HT2('h.m.readNote'));
   const nt=para(pane,`<h4>${esc(HT2('h.m.note'))}</h4><textarea id="bnote" rows="7">${esc(REM.note||'')}</textarea>`);
   nt.querySelector('#bnote').oninput=e=>{ REM.note=e.target.value.slice(0,4000); remSave(); }; };
+/* ---- 日曆與節慶、新文章、獎賞 (報告 and 叫人) ---- */
+function calInfo(off=0){ const dt=new Date(Date.now()+MEAL_SHIFT*60000+off), [Y,Mo,Dd]=dt.toLocaleString('sv',{timeZone:'Asia/Taipei'}).split(' ')[0].split('-').map(Number); let lm=0, ld=0, leap=false, yn='';
+  try{ for(const p of new Intl.DateTimeFormat('en-u-ca-chinese',{timeZone:'Asia/Taipei',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(dt)){ if(p.type==='month'){ leap=/bis|閏/i.test(p.value); lm=parseInt(p.value,10)||0; } if(p.type==='day') ld=parseInt(p.value,10)||0; }
+    for(const p of new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{timeZone:'Asia/Taipei',year:'numeric',month:'long',day:'numeric'}).formatToParts(dt)) if(p.type==='yearName') yn=p.value; }catch{}
+  const cn='〇一二三四五六七八九十', mN=['','正','二','三','四','五','六','七','八','九','十','冬','臘'][lm]||'', dN=!ld?'':ld<=10?'初'+(ld===10?'十':cn[ld]):ld<20?'十'+cn[ld-10]:ld===20?'二十':ld<30?'廿'+cn[ld-20]:'三十';
+  return {Y,Mo,Dd,lm,ld,leap,yn,roc:Y-1911,showa:Y-1925,lunar:(leap?'閏':'')+mN+'月'+dN}; }
+// today's festival, from the back office lists (fest.solar: "MM-DD 名稱", fest.lunar: "M-D 名稱"); 除夕 is the day before 正月初一
+function festOf(dayOffset=0){ const C=calInfo(dayOffset*86400000), out=[];
+  for(const l of HT2('fest.solar').split(/\n+/)){ const m=/^(\d{1,2})[-\/](\d{1,2})\s+(.+)$/.exec(l.trim()); if(m&&+m[1]===C.Mo&&+m[2]===C.Dd) out.push(m[3]); }
+  if(!C.leap) for(const l of HT2('fest.lunar').split(/\n+/)){ const m=/^(\d{1,2})[-\/](\d{1,2})\s+(.+)$/.exec(l.trim()); if(m&&+m[1]===C.lm&&+m[2]===C.ld) out.push(m[3]); }
+  { const c2=calInfo((dayOffset+1)*86400000); if(c2.lm===1&&c2.ld===1&&!c2.leap) out.push(HT2('fest.eve')); }
+  return out; }
+function calLine(){ const C=calInfo(); return HF('h.cal',{民國:C.roc,昭和:C.showa,農曆:C.lunar,干支:C.yn},0); }
+// the newest pieces on the site
+const newPosts=()=>(Array.isArray(POSTS)?POSTS.map((p,i)=>({p,i})).filter(o=>o.p&&o.p.date&&o.p.title).sort((a,b)=>String(b.p.date).localeCompare(String(a.p.date))):[]);
+{ const base=PANES.rep; PANES.rep=(pane,boss)=>{ base(pane,boss);
+    const first=pane.querySelector('p'); if(first){ const f=festOf(0), up=[]; for(let k=1;k<=7&&up.length<2;k++){ const x=festOf(k); if(x.length) up.push(HF('h.fest.soon',{天:k,節:x.join('、')},0)); }
+      first.insertAdjacentHTML('afterend',`<p class="meta">${esc(calLine())}</p>`+(f.length?`<p>${esc(HF('h.fest.today',{節:f.join('、')},0))}</p>`:'')+up.map(t=>`<p class="meta">${esc(t)}</p>`).join('')); }
+    const L=newPosts().slice(0,4); if(!L.length) return; const d=document.createElement('div'); d.innerHTML=`<h4>${esc(HT2('h.posts'))}</h4>`+L.map(o=>`<p><a href="#" data-pi="${o.i}">${esc(o.p.title)}</a><span class="meta">　${esc(String(o.p.date).slice(0,10))}</span></p>`).join('');
+    d.querySelectorAll('[data-pi]').forEach(a=>a.onclick=e=>{ e.preventDefault(); closePanel(); openReader(+a.dataset.pi); });
+    const h4=[...pane.querySelectorAll('h4')][2]; if(h4) h4.parentNode.insertBefore(d,h4); else pane.append(d); }; }
+// when he comes, the steward mentions a new piece once, and the day's festival once a day
+{ const base=xuCome; xuCome=function(){ base.apply(this,arguments); const n=NPC.xu; if(!n||n.look) return; const T=taipeiNow(); let said=false;
+    try{ const L=newPosts(); const top=L[0], seen=localStorage.getItem('hkLastPost')||''; if(top&&String(top.p.date)>seen){ localStorage.setItem('hkLastPost',String(top.p.date)); if(seen){ setTimeout(()=>npcSay('xu',HF('h.newpost',{題:top.p.title},0)),2500); said=true; } } }catch{}
+    try{ const f=festOf(0); if(f.length&&localStorage.getItem('hkFestSaid')!==T.day){ localStorage.setItem('hkFestSaid',T.day); setTimeout(()=>npcSay('xu',HF('h.fest.greet',{節:f.join('、')},0)),said?6000:2500); } }catch{} }; }
+// 表揚 and 紅包, from the master: the steward says it before the house, the one praised answers
+const RW=(()=>{ try{ return JSON.parse(localStorage.getItem('hkReward')||'{}'); }catch{ return {}; } })();
+function reward(id,kind){ const n=NPC[id]; if(!n) return; RW[id]=RW[id]||{p:0,r:0}; RW[id][kind]++; try{ localStorage.setItem('hkReward',JSON.stringify(RW)); }catch{}
+  if(id!=='xu') npcSay('xu',HF(kind==='p'?'h.rw.praise':'h.rw.red',{名:npcName(id)},Math.random()<.5?0:1));
+  setTimeout(()=>{ const t=NT('rw.'+id,kind==='p'?0:1); if(t) npcSay(id,String(t).replace(/\{稱呼\}/g,titleFill().稱呼)); },2600);
+  if(!n.lie&&!n.look&&Math.hypot(n.x-ME.x,n.z-ME.z)<12) npcFace(n,ME); }
+{ const base=PANES.call; PANES.call=(pane,boss)=>{ base(pane,boss); if(!boss) return;
+    const d=document.createElement('div'); d.innerHTML=`<h4>${esc(HT2('h.rw.title'))}</h4><p class="meta">${esc(HT2('h.rw.note'))}</p><table>`+NPCS.filter(x=>x.id!=='xu').concat(NPCS.filter(x=>x.id==='xu')).map(x=>{ const r=RW[x.id]||{p:0,r:0};
+      return `<tr><td style="white-space:nowrap">${esc(npcName(x.id))}</td><td><a href="#" data-rp="${x.id}">${esc(HT2('h.rw.p'))}</a>　<a href="#" data-rr="${x.id}">${esc(HT2('h.rw.r'))}</a></td><td class="meta">${r.p||r.r?esc(HF('h.rw.count',{表揚:r.p,紅包:r.r},0)):''}</td></tr>`; }).join('')+'</table>';
+    d.querySelectorAll('[data-rp]').forEach(a=>a.onclick=e=>{ e.preventDefault(); reward(a.dataset.rp,'p'); bRender(); });
+    d.querySelectorAll('[data-rr]').forEach(a=>a.onclick=e=>{ e.preventDefault(); reward(a.dataset.rr,'r'); bRender(); });
+    pane.append(d); }; }
 window.__butler={openButler,leadTo,tourStart,tourNext,HOUSE,hAct,PLACES,gatherRun,FOOD_EXTRA,GUEST_EXTRA,PANES};
+
+/* ================= 茶點與客飯：現做的茶點送到茶室、待客的飯菜 =================
+   An order (from 阿春 or from 許總管's panel; guests may order too) goes into the shared state with its time: a runner
+   takes it to the kitchen (許總管's way: 阿來, else 阿福, else 阿春 herself), 火師 makes it at its station for its minutes,
+   and 阿春 carries it with a pot of tea to the tea room (茶室). Everyone sees the same: the dish is on the tea table from
+   the same moment for all (served = ordered + 1 min + the minutes + 1 min), and someone coming in later finds it there.
+   A meal for guests (2–8, now or at a time) is cooked by 火師 with 阿荷 washing and 阿春 cutting, laid on the round table
+   in the 飯廳 and called by 阿春. Names and lines are in the back office (snack.<id>: name and 阿春's line; snack.cat.*). */
+// where each kind of thing is made: the spot by the run or the table, and what the cook's hands do
+const KST={
+  steam:{at:P(45.3,-2.95),face:P(47,-2.95),act:'steam'}, oven:{at:P(45.35,-2.6),face:P(47,-2.6),act:'load'},
+  fry:{at:P(45.3,-1.75),face:P(47,-1.75),act:'cook'}, pan:{at:P(45.3,-2.35),face:P(47,-2.35),act:'cook'},
+  pot:{at:P(45.3,-.95),face:P(47,-.95),act:'prep'}, ice:{at:P(44.75,3.25),face:P(45.2,3.6),act:'prep'},
+  mortar:{at:P(43.4,5.55),face:P(43.4,4.85),act:'sweep'}, table:{at:P(43.25,0),face:P(44,0),act:'prep'} };
+// the menu: id, kind, equipment, minutes, the dish's shape and colours
+const SNK=[
+  ['mochi','tw','mortar',4,'plate',[0xf4efe6,0x5a4636]],['jiangui','tw','pan',3,'plate',[0xe9e2d0,0xc89a5a]],['fanshu','tw','fry',3,'plate',[0xd98a2e,0xb8742a]],['yuwan','tw','fry',3,'plate',[0x9a86a8,0xc9a96a]],
+  ['douhua','tw','pot',2,'bowl',[0xf3ecd9,0xc9a05a]],['tangyuan','tw','pot',4,'bowl',[0x7a3a2a,0xf6f2ea]],['xingren','tw','fry',4,'cup',[0xefe6d2,0xd9a84a]],['runbing','tw','pan',4,'roll',[0xf1e8d2,0x5c8a3a]],
+  ['baoice','tw','ice',2,'ice',[0xf7f7f4,0xb0402e]],['wangue','tw','pot',4,'bowl',[0xd8c7a2,0x7a5a3a]],
+  ['shaomai','hk','steam',5,'basket',[0xf3e6b8,0xe0b040]],['shuijing','hk','steam',5,'basket',[0xeef0e6,0x8ab070]],['chashao','hk','steam',5,'basket',[0xf6f1e4,0xb0503a]],['naihuang','hk','steam',5,'basket',[0xf6f1e4,0xf0c040]],
+  ['liusha','hk','steam',5,'basket',[0xf6f1e4,0xe8a030]],['changfen','hk','steam',4,'roll',[0xf3f0e8,0x6a4a2a]],['luobo','hk','pan',4,'plate',[0xe8dcc0,0xc89a5a]],['mati','hk','pan',4,'plate',[0xd8b97a,0xe8d4a0]],
+  ['xianzhu','hk','steam',5,'roll',[0xe0c48a,0x8a5a2a]],['chunjuan','hk','fry',3,'roll',[0xd99a40,0xc0802a]],['yujiao','hk','fry',4,'plate',[0xe0b060,0xc49040]],['jiandui','hk','fry',4,'plate',[0xd99a40,0xf2ead8]],
+  ['dantat','hk','oven',5,'tart',[0xe8b45a,0xf2cc4a]],['yangzhi','hk','table',2,'cup',[0xf2b640,0xf6efe0]],['shuangpi','hk','table',2,'bowl',[0xf8f4ea,0xf0e6c8]],['mala','hk','steam',5,'slice',[0xc99a5a,0xb88a4a]],
+  ['nuomi','hk','table',3,'plate',[0xf6f2ea,0xe9e0c8]],['doufuhua','hk','pot',2,'bowl',[0xf6f2ea,0xb9874a]],
+  ['bolo','we','oven',5,'plate',[0xe8b45a,0xd99a40]],['scone','we','oven',5,'plate',[0xd8a868,0xf2ead8]],['madeleine','we','oven',4,'plate',[0xe0b060,0xc99040]],['financier','we','oven',4,'plate',[0xc8904a,0xb07a3a]],
+  ['puff','we','oven',5,'plate',[0xe0b070,0xf6f0e0]],['millefeuille','we','oven',5,'slice',[0xf0e0b8,0xd8b070]],['croissant','we','oven',5,'plate',[0xd99a40,0xc0802a]],['chiffon','we','table',2,'slice',[0xf2e0a8,0xf6ecd0]],
+  ['cheesecake','we','table',2,'slice',[0xf3e6c4,0xc89a5a]],['brownie','we','oven',4,'plate',[0x4a2e1e,0x6a4a32]],['souffle','we','oven',5,'cup',[0xe8c070,0xf6efe0]],['pudding','we','table',2,'tart',[0xf0c860,0x7a4a20]],
+  ['pannacotta','we','table',2,'cup',[0xf8f4ea,0xb03040]],['tiramisu','we','table',2,'slice',[0xe8dcc0,0x6a4a32]],['applepie','we','oven',5,'slice',[0xd9a050,0xc08040]],['fruittart','we','table',3,'tart',[0xe0b060,0xc03a3a]],
+  ['pancake','we','pan',3,'plate',[0xd9a050,0xf4e6b0]],['frtoast','we','pan',3,'plate',[0xd99a40,0xf2ead8]],['macaron','we','table',2,'plate',[0xe8a8b8,0xa8d0a0]],['cookie','we','oven',4,'plate',[0xc8904a,0x5a3a26]],
+].map(([id,cat,eq,min,shape,col])=>({id,cat,eq,min,shape,col}));
+const SNKI=Object.fromEntries(SNK.map(s=>[s.id,s]));
+const snName=id=>NT('snack.'+id,0)||id;
+// timing of one order (ms from the order): the runner, the cooking, the carrying
+const oTimes=o=>{ const s=SNKI[o.sk]||{min:3}; const cook=o.t0+60000, ready=cook+s.min*60000, served=ready+60000; return {cook,ready,served,gone:served+45*60000}; };
+
+/* ---- the dishes ---- */
+const SNK_DYN=[];
+const snMat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.7});
+function snMesh(s){ const g=new THREE.Group(), [a,b]=s.col, porc=snMat(0xf6f3ec), M=(geo,m,x,y,z)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); g.add(o); return o; };
+  const plate=r=>M(new THREE.CylinderGeometry(r,r*.8,.015,20),porc,0,.008,0);
+  switch(s.shape){
+    case 'basket': { const bam=snMat(0xc8a46a); M(new THREE.CylinderGeometry(.11,.11,.055,18,1,true),bam,0,.03,0).material.side=THREE.DoubleSide; M(new THREE.CircleGeometry(.105,18),snMat(0xd8c08a),0,.006,0).rotation.x=-Math.PI/2;
+      for(let i=0;i<3;i++){ const q=M(new THREE.SphereGeometry(.035,10,8),snMat(a),Math.cos(i*2.1)*.05,.035,Math.sin(i*2.1)*.05); q.scale.y=.8; M(new THREE.SphereGeometry(.009,6,5),snMat(b),q.position.x,.064,q.position.z); } break; }
+    case 'bowl': { const bw=M(new THREE.CylinderGeometry(.065,.04,.05,18,1,true),porc,0,.03,0); bw.material.side=THREE.DoubleSide; M(new THREE.CircleGeometry(.06,18),snMat(a),0,.045,0).rotation.x=-Math.PI/2;
+      for(let i=0;i<4;i++) M(new THREE.SphereGeometry(.012,6,5),snMat(b),Math.cos(i*1.6)*.025,.048,Math.sin(i*1.6)*.025); break; }
+    case 'cup': { const gl=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.1,transparent:true,opacity:.35}); M(new THREE.CylinderGeometry(.04,.035,.09,16,1,true),gl,0,.05,0);
+      M(new THREE.CylinderGeometry(.037,.033,.07,16),snMat(a),0,.04,0); M(new THREE.CylinderGeometry(.037,.037,.012,16),snMat(b),0,.08,0); plate(.06); break; }
+    case 'ice': { M(new THREE.CylinderGeometry(.075,.045,.04,18),porc,0,.02,0); const m=M(new THREE.SphereGeometry(.07,14,10),snMat(a),0,.05,0); m.scale.y=.85;
+      for(let i=0;i<6;i++) M(new THREE.SphereGeometry(.014,6,5),snMat(i%2?b:0x5a7a2a),Math.cos(i)*.04,.09+Math.sin(i*3)*.01,Math.sin(i)*.04); break; }
+    case 'roll': { plate(.1); for(let i=0;i<3;i++){ const r=M(new THREE.CylinderGeometry(.018,.018,.09,10),snMat(a),-.035+i*.035,.03,0); r.rotation.x=Math.PI/2; M(new THREE.CylinderGeometry(.006,.006,.091,6),snMat(b),r.position.x,.03,0).rotation.x=Math.PI/2; } break; }
+    case 'tart': { plate(.09); for(let i=0;i<3;i++){ const x=Math.cos(i*2.1)*.04, z=Math.sin(i*2.1)*.04; M(new THREE.CylinderGeometry(.026,.02,.018,14),snMat(a),x,.024,z); M(new THREE.CylinderGeometry(.021,.021,.004,14),snMat(b),x,.034,z); } break; }
+    case 'slice': { plate(.085); const sh=new THREE.Shape(); sh.moveTo(0,0); sh.absarc(0,0,.09,-.35,.35,false); sh.lineTo(0,0); const geo=new THREE.ExtrudeGeometry(sh,{depth:.05,bevelEnabled:false}); const w=M(geo,snMat(a),-.04,.016,0); w.rotation.x=-Math.PI/2;
+      const top=new THREE.ExtrudeGeometry(sh,{depth:.006,bevelEnabled:false}); const t2=M(top,snMat(b),-.04,.066,0); t2.rotation.x=-Math.PI/2; break; }
+    default: { plate(.095); for(let i=0;i<5;i++){ const x=Math.cos(i*1.25)*.045, z=Math.sin(i*1.25)*.045; const q=M(new THREE.SphereGeometry(.024,10,8),snMat(i%2?b:a),x,.028,z); q.scale.y=.65; } } }
+  // a little pot of tea and a cup beside it
+  const tp=M(new THREE.SphereGeometry(.045,12,10),snMat(0x5a3428),.16,.045,.02); tp.scale.y=.85; M(new THREE.CylinderGeometry(.006,.009,.05,6),snMat(0x5a3428),.21,.06,.02).rotation.z=-.9;
+  M(new THREE.CylinderGeometry(.022,.016,.03,12),porc,.12,.016,-.09);
+  return g; }
+// on the tea table: one place for each dish, in two rows along the table
+const TEA_T=ZP.modern, SNACK_ON=new Map();
+function snPlace(slot){ const i=slot%6, row=Math.floor(i/3); return {x:TEA_T.cx-.75+(i%3)*.75, y:TEA_T.h+.004, z:TEA_T.cz-.2+row*.38}; }
+function snShow(o,slot){ if(SNACK_ON.has(o.id)) return; const s=SNKI[o.sk]; if(!s) return; const g=snMesh(s), p=snPlace(slot); g.position.set(p.x,p.y,p.z); g.rotation.y=Math.PI*(slot%2?.1:-.1); scene.add(g); SNACK_ON.set(o.id,g);
+  g.traverse(c=>{ if(c.isMesh){ c.userData={type:'snackdish',oid:o.id}; pickables.push(c); } }); }
+function snHide(id){ const g=SNACK_ON.get(id); if(!g) return; scene.remove(g); g.traverse(c=>{ if(c.isMesh){ const i=pickables.indexOf(c); if(i>=0) pickables.splice(i,1); c.geometry.dispose(); } }); SNACK_ON.delete(id); }
+// the dish in 阿春's hands on the way (a plain tray with a cover)
+for(const id of ['chun','he']){ const n=NPC[id]; if(n&&n.propG){ const P0=n.g.userData.parts, h=new THREE.Group(); const tray=new THREE.Mesh(new THREE.BoxGeometry(.34,.02,.24),snMat(0x6a4630)); h.add(tray); const cv=new THREE.Mesh(new THREE.SphereGeometry(.09,12,8,0,Math.PI*2,0,Math.PI/2),snMat(0xd8d2c4)); cv.position.y=.01; h.add(cv);
+    const tp=new THREE.Mesh(new THREE.SphereGeometry(.04,10,8),snMat(0x5a3428)); tp.position.set(.11,.04,.05); h.add(tp); h.visible=false; n.propG.mail.parent.add(h); n.propG.tray=h; } }
+
+/* ---- running the orders: each browser plays the same times ---- */
+const RUN=new Map();   // order id → this browser's progress
+const freeForRun=id=>{ const n=NPC[id]; return n&&n.g.visible&&!n.lie&&!n.look&&!n.follow&&!n.gather&&!n.cineW&&!n.lead&&!n.tl&&!(n.errand&&!n.snackJob); };
+function orderRun(o,slot){ const now=Date.now(), T=oTimes(o); let R=RUN.get(o.id); if(!R){ R={st:0}; RUN.set(o.id,R); }
+  if(now>=T.gone){ snHide(o.id); RUN.delete(o.id); return; }
+  if(now>=T.served){ if(R.st<5){ R.st=5; snShow(o,slot); const c=NPC.chun; if(c.snackJob===o.id){ c.snackJob=null; c.prop=null; c.errand=false; c.busyUntil=0; } } return; }
+  const huo=NPC.huo, chun=NPC.chun, s=SNKI[o.sk], K=KST[s.eq]||KST.table;
+  // the runner: from beside 許總管 to the kitchen door, then back to work
+  if(R.st<1){ R.st=1; if(now<T.cook-15000){ const rid=o.via==='chun'?'chun':['lai','fu','chun'].find(freeForRun); if(rid){ const r=NPC[rid]; leaveSpot(r); r.snackJob=o.id; if(o.via==='xu'&&near(NPC.xu,10)) npcSay('xu',npcLine('snack.send',{名:npcName(rid)}));
+        doErrand(r,(o.via==='xu'?[{to:()=>({x:NPC.xu.x+.7,z:NPC.xu.z+.3}),face:()=>NPC.xu,dur:1500}]:[]).concat([{to:P(43.2,-1.6),face:()=>NPC.huo,dur:2500,on:m=>{ if(near(m,9)) npcSay(m.id,npcLine('snack.tell',{菜:snName(o.sk)})); }}]),m=>{ m.snackJob=null; }); } } }
+  // the cook: at the station from cook to ready
+  if(R.st<2&&now>=T.cook-10000){ R.st=2; if(!huo.lie&&!huo.look&&!huo.gather&&!huo.cineW){ leaveSpot(huo); huo.snackJob=o.id; if(near(huo,9)) npcSay('huo',npcLine('snack.huo',{菜:snName(o.sk)}));
+      doErrand(huo,[{to:K.at,face:K.face,act:K.act,dur:Math.max(5000,T.ready-Date.now())}],m=>{ m.snackJob=null; if(near(m,9)) npcSay('huo',npcLine('snack.ready',{菜:snName(o.sk)})); }); } }
+  // 阿春 comes for it as it is done, and takes it with a pot of tea to the tea room
+  if(R.st<3&&now>=T.ready-25000){ R.st=3; if(freeForRun('chun')||chun.snackJob){ leaveSpot(chun); chun.snackJob=o.id;
+      doErrand(chun,[{to:P(43.2,-2.2),face:P(45,-2.2),act:'load',dur:Math.max(3000,T.ready-Date.now()+3000)},{to:()=>NP.tea,prop:'tray',act:'unload',drop:true,dur:3000,on:m=>{ snShow(o,slot); R.st=5; if(near(m,9)) npcSay('chun',String(NT('snack.'+o.sk,1)||npcLine('snack.served',{菜:snName(o.sk)})).replace(/\{稱呼\}/g,titleFill().稱呼)); }}],m=>{ m.snackJob=null; }); } }
+}
+setInterval(()=>{ if(!window.__entered) return; const L=(HOUSE.orders||[]); L.forEach((o,i)=>orderRun(o,i)); for(const id of [...SNACK_ON.keys()]) if(!L.some(o=>o.id===id)) snHide(id); for(const id of [...RUN.keys()]) if(!L.some(o=>o.id===id)) RUN.delete(id); },1000);
+function orderSnack(sk,via){ const now=Date.now(); const keep=(HOUSE.orders||[]).filter(o=>now<oTimes(o).gone); if(keep.length>=6){ npcSay(via,npcLine('snack.full')); return; }
+  const o={id:MY_PID.slice(0,6)+now.toString(36),sk,by:myName,t0:now,via}; hAct({orders:keep.concat([o])}); npcSay(via,npcLine(via==='xu'?'snack.okX':'snack.okC',{菜:snName(sk),分:SNKI[sk].min+2})); }
+// clearing a dish from the tea table: click it
+window.__snackAct=u=>{ const o=(HOUSE.orders||[]).find(o=>o.id===u.oid); if(o) toast(String(NT('snack.eat')).replace('{菜}',snName(o.sk)),2600); };
+// the menu, in a panel: three kinds, a name each
+function snackMenu(via){ const cats=['tw','hk','we'];
+  const body=openPanel(NT('snack.title')||'茶點',`<div class="bp">${cats.map(c=>`<h4>${esc(NT('snack.cat.'+c))}</h4><div class="bl">${SNK.filter(s=>s.cat===c).map(s=>`<button type="button" data-s="${s.id}">${esc(snName(s.id))}</button>`).join('')}</div>`).join('')}<p class="meta">${esc(NT('snack.note'))}</p></div>`);
+  body.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ closePanel(); orderSnack(b.dataset.s,via); }); }
+FOOD_EXTRA.push((pane)=>{ const L=(HOUSE.orders||[]).filter(o=>Date.now()<oTimes(o).gone);
+  const d=document.createElement('div'); d.innerHTML=`<h4>${esc(NT('snack.title'))}</h4>`+(L.length?L.map(o=>{ const T=oTimes(o), now=Date.now(); const st=now>=T.served?NT('snack.stDone'):now>=T.cook?NT('snack.st',1):NT('snack.st',0); return `<p>${esc(snName(o.sk))}<span class="meta">　${esc(st)}　${esc(o.by||'')}</span></p>`; }).join(''):'')+`<div class="bl"><button type="button" id="bsn">${esc(NT('snack.order'))}</button></div>`;
+  d.querySelector('#bsn').onclick=()=>snackMenu('xu'); pane.append(d); });
+
+/* ---- a meal for guests ---- */
+const GMEAL={on:false};
+window.__guestMealOn=()=>{ const G=HOUSE.gmeal; if(!G) return false; const now=Date.now(); return now>=G.at-60000&&now<G.at+75*60000; };
+const gmTimes=G=>({cook:G.at-Math.min(25,Math.max(6,(G.at-G.t0)/60000))*60000,lay:G.at-60000,end:G.at+75*60000});
+let GM=null;
+setInterval(()=>{ const G=HOUSE.gmeal, now=Date.now(); if(!window.__entered) return;
+  if(!G){ if(GM){ for(const id of ['huo','he','chun']){ const n=NPC[id]; if(n.gmJob){ n.gmJob=false; n.errand=false; n.busyUntil=0; n.act='idle'; } } GM=null; } return; }
+  const T=gmTimes(G); if(!GM||GM.at!==G.at){ GM={at:G.at,st:0}; }
+  if(now>=T.end){ if(hRank()===0) hAct({gmeal:null}); return; }
+  const job=(id,steps,done)=>{ const n=NPC[id]; if(n.lie||n.look||n.gather||n.cineW||n.lead) return; leaveSpot(n); n.gmJob=true; doErrand(n,steps,m=>{ m.gmJob=false; if(done) done(m); }); };
+  if(GM.st<1&&now>=T.cook&&now<T.lay){ GM.st=1; const left=Math.max(10000,T.lay-now-20000);
+    job('huo',[{to:()=>NP.stove,face:P(47,NP.stove.z),act:'cook',dur:left*.5},{to:KST.pan.at,face:KST.pan.face,act:'cook',dur:left*.5}]);
+    job('he',[{to:()=>NP.sink,face:P(47,-.05),act:'wash',dur:left}]);
+    job('chun',[{to:KST.table.at,face:KST.table.face,act:'prep',dur:left}]); }
+  if(GM.st<2&&now>=T.lay-20000&&now<T.end){ GM.st=2;
+    job('chun',[{to:P(43.2,-1.2),act:'load',dur:2500,prop:'tray'},{to:P(40.2,-2.5),face:()=>({x:DINE.x,z:DINE.z}),act:'unload',drop:true,dur:4000,on:m=>{ if(near(m,14)) npcSay('chun',npcLine('gm.call',{人:G.n})); toast(NT('gm.toast'),6000); }}]);
+    job('he',[{to:P(43.2,-.6),act:'load',dur:3000,prop:'tray'},{to:P(39.2,-1.4),face:()=>({x:DINE.x,z:DINE.z}),act:'unload',drop:true,dur:4000}]); }
+  if(GM.st<3&&now>=T.lay){ GM.st=3; } },1500);
+FOOD_EXTRA.push((pane,boss)=>{ const G=HOUSE.gmeal, d=document.createElement('div');
+  if(G){ d.innerHTML=`<h4>${esc(NT('gm.title'))}</h4><p>${esc(String(NT('gm.set')).replace('{人}',G.n).replace('{時}',hhmm(((taipeiNow().min+(G.at-Date.now())/60000)%1440+1440)%1440)).replace('{誰}',G.by||''))}</p><p class="meta">${esc(String(NT('gm.menu')).split(/\n+/).join('、'))}</p><div class="bl"><button type="button" id="bgmx">${esc(NT('gm.cancel'))}</button></div>`;
+    d.querySelector('#bgmx').onclick=()=>{ hAct({gmeal:null}); bRender(); }; pane.append(d); return; }
+  if(!boss) return;
+  d.innerHTML=`<h4>${esc(NT('gm.title'))}</h4><p>${esc(NT('gm.how'))}　<select id="bgmn">${[2,3,4,5,6,7,8].map(n=>`<option>${n}</option>`).join('')}</select>　<input id="bgmt" type="time" value="${hhmm(Math.ceil((taipeiNow().min+30)/5)*5%1440)}"></p><p class="meta">${esc(String(NT('gm.menu')).split(/\n+/).join('、'))}</p><div class="bl"><button type="button" id="bgmgo">${esc(NT('gm.at'))}</button><button type="button" id="bgmnow">${esc(NT('gm.now'))}</button></div>`;
+  const go=at=>{ const n=+d.querySelector('#bgmn').value; hAct({gmeal:{n,at,t0:Date.now(),by:myName}}); npcSay('xu',npcLine('gm.ok',{人:n})); bRender(); };
+  d.querySelector('#bgmgo').onclick=()=>{ const m=/^(\d{1,2}):(\d{2})/.exec(d.querySelector('#bgmt').value); if(!m) return; let dm=(+m[1]*60+ +m[2])-taipeiNow().min; if(dm<0) dm+=1440; go(Date.now()+Math.max(8,dm)*60000); };
+  d.querySelector('#bgmnow').onclick=()=>go(Date.now()+8*60000); pane.append(d); });
+GUEST_EXTRA.push(pane=>{ const d=document.createElement('div'); d.innerHTML=`<div class="bl"><button type="button" id="bgsn">${esc(NT('snack.order'))}</button><button type="button" id="bggm">${esc(NT('gm.title'))}</button></div>`;
+  d.querySelector('#bgsn').onclick=()=>snackMenu('xu'); d.querySelector('#bggm').onclick=()=>{ bTab=TABS.indexOf('food'); bRender(); }; pane.append(d); });
+window.__food={SNK,KST,orderSnack,snackMenu,snMesh,RUN,oTimes};
+
+/* ================= 過廳的留聲機：西北角，大家聽到同一張 =================
+   A horn gramophone on a small cabinet in the 過廳's north-west corner. Click it for the records (back office: records,
+   title and the R2 address of each file); what is on and from when is shared by everyone in the house (relay {k:'house'},
+   state gramo) and handed to whoever comes in; the sound is loud by it and fades across the hall and the courts. */
+const GRAMO={x:26.0,z:14.35,yaw:Math.atan2(-(29.4-26.0),-(9.8-14.35))};
+const RECS=(Array.isArray(VRD.records)?VRD.records:[]).filter(r=>r&&String(r.url||'').trim()).map(r=>({t:String(r.title||'').trim()||String(r.url).split('/').pop(),a:String(r.artist||'').trim(),u:String(r.url).trim()}));
+{ const g=new THREE.Group(); g.position.set(GRAMO.x,0,GRAMO.z); g.rotation.y=GRAMO.yaw; scene.add(g); GRAMO.g=g;
+  const wood=new THREE.MeshStandardMaterial({map:T.wood,color:0x8a5a34,roughness:.55}), dark=new THREE.MeshStandardMaterial({color:0x2a1c14,roughness:.5}),
+    brass=new THREE.MeshStandardMaterial({color:0xc9a050,metalness:.85,roughness:.32,side:THREE.DoubleSide}), felt=new THREE.MeshStandardMaterial({color:0x5a1e1e,roughness:.95}), blk=new THREE.MeshStandardMaterial({color:0x111111,roughness:.35});
+  const add=(geo,m,x,y,z)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); g.add(o); o.userData={type:'gramo'}; pickables.push(o); return o; };
+  // the cabinet: legs, a body with two doors, a lid
+  for(const [x,z] of [[-.24,-.2],[.24,-.2],[-.24,.2],[.24,.2]]) add(new THREE.BoxGeometry(.05,.3,.05),dark,x,.15,z);
+  add(new THREE.BoxGeometry(.56,.48,.48),wood,0,.54,0); for(const x of [-.135,.135]) add(new THREE.BoxGeometry(.25,.36,.01),wood,x,.54,.245);
+  for(const x of [-.03,.03]) add(new THREE.SphereGeometry(.012,8,6),brass,x,.54,.255);
+  add(new THREE.BoxGeometry(.6,.03,.52),dark,0,.795,0);
+  // the turntable and a record, the tone arm, the crank
+  add(new THREE.CylinderGeometry(.17,.17,.02,28),felt,-.05,.82,0); const rec=add(new THREE.CylinderGeometry(.155,.155,.006,28),blk,-.05,.834,0); GRAMO.rec=rec;
+  add(new THREE.CylinderGeometry(.04,.04,.008,16),new THREE.MeshStandardMaterial({color:0xb03a2a,roughness:.6}),-.05,.839,0);
+  add(new THREE.CylinderGeometry(.018,.022,.06,10),brass,.2,.84,.16); const arm=add(new THREE.CylinderGeometry(.008,.008,.24,8),brass,.1,.87,.08); arm.rotation.z=Math.PI/2; arm.rotation.y=.7;
+  const ck=add(new THREE.CylinderGeometry(.008,.008,.16,8),brass,.3,.6,.0); ck.rotation.z=Math.PI/2;
+  // the horn: a brass tulip rising from behind and opening forward
+  const pts=[]; for(let i=0;i<=24;i++){ const t=i/24; pts.push(new THREE.Vector2(.018+.29*Math.pow(t,2.6),t*.62)); }
+  const horn=add(new THREE.LatheGeometry(pts,28),brass,0,0,0); horn.position.set(.2,.86,.16); horn.rotation.set(-Math.PI/2+.55,0,0); horn.translateY(0);
+  const neck=add(new THREE.TorusGeometry(.06,.012,8,16,Math.PI),brass,.2,.9,.16); neck.rotation.y=Math.PI/2;
+  OB(GRAMO.x-.36,GRAMO.x+.36,GRAMO.z-.36,GRAMO.z+.36); ZL_DYN.push(rec); }
+const AU=new Audio(); AU.preload='auto'; let auWant=false, auBlocked=false, auSrc='';
+function gramoState(){ const G=HOUSE.gramo; if(!G||!RECS[G.i]) return null; return G; }
+function gramoSync(){ const G=gramoState(); if(!G){ if(!AU.paused) AU.pause(); auWant=false; return; } const r=RECS[G.i]; if(auSrc!==r.u){ auSrc=r.u; AU.src=r.u; }
+  auWant=true; const pos=(Date.now()-G.t0)/1000; if(AU.readyState>=1&&isFinite(AU.duration)&&AU.duration>0){ if(pos>AU.duration+1){ if(hRank()===0) hAct({gramo:{i:(G.i+1)%RECS.length,t0:Date.now()}}); return; } if(Math.abs(AU.currentTime-pos)>2) AU.currentTime=Math.max(0,pos); }
+  if(AU.paused) AU.play().then(()=>{ auBlocked=false; }).catch(()=>{ if(!auBlocked){ auBlocked=true; if(Math.hypot(ME.x-GRAMO.x,ME.z-GRAMO.z)<14) toast(NT('gramo.tap'),5000); } }); }
+setInterval(()=>{ if(!window.__entered) return; gramoSync(); const d=Math.hypot(ME.x-GRAMO.x,ME.z-GRAMO.z); AU.volume=Math.max(0,Math.min(1,d<3?1:1-(d-3)/16))*(window.__cine&&window.__cine.L.inRoom&&window.__cine.S.p?0:1); },400);
+addEventListener('pointerdown',()=>{ if(auBlocked&&auWant) AU.play().then(()=>{ auBlocked=false; }).catch(()=>{}); });
+ZL_ANIM.push(dt=>{ if(GRAMO.rec&&gramoState()) GRAMO.rec.rotation.y-=(dt||.016)*8.2; });
+function gramoPanel(){ const G=gramoState();
+  const body=openPanel(NT('gramo.title'),`<div class="bp">`+(RECS.length?`<p>${G?esc(String(NT('gramo.now')).replace('{曲}',RECS[G.i].t)):esc(NT('gramo.idle'))}</p><div class="bl">`+RECS.map((r,i)=>`<button type="button" data-r="${i}">${esc(r.t)}${r.a?'　<span class="meta">'+esc(r.a)+'</span>':''}</button>`).join('')+`</div>`+(G?`<div class="bl"><button type="button" id="grs">${esc(NT('gramo.stop'))}</button></div>`:''):`<p class="meta">${esc(NT('gramo.none'))}</p>`)+`</div>`);
+  body.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ hAct({gramo:{i:+b.dataset.r,t0:Date.now()}}); auBlocked=false; gramoSync(); toast(String(NT('gramo.put')).replace('{曲}',RECS[+b.dataset.r].t),2600); gramoPanel(); });
+  const s=body.querySelector('#grs'); if(s) s.onclick=()=>{ hAct({gramo:null}); gramoSync(); gramoPanel(); }; }
+window.__gramoAct=()=>gramoPanel();
 
 /* ================= 宅外：稻田與寧平山水 =================
    The house stands in rice fields. Paddies run out on every side, cut by raised dikes you can walk (a packed-earth 曬穀場

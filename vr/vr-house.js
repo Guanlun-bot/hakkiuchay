@@ -5610,6 +5610,12 @@ for(const [key,title,body] of [
   ['dpaint','張熊《蔬果圖》','清・張熊《蔬果圖》，同治九年（1870）夏四月十九日作，畫紅、白蘿蔔與幾樣蔬果。國立故宮博物院藏，取自故宮開放資料。'],
   ['dbasin','洗手台','洗石子的洗手台，白瓷盆、老式黃銅龍頭。飯前洗手，毛巾摺好疊在旁邊的層板上。'],
   ['dcal','日曆','撕一頁過一天的老日曆，走臺北時間：國曆、農曆、星期，每天自動翻頁。'],
+  ['kgoven','烤箱','嵌在瓦斯爐下的烤箱，白琺瑯門、深色玻璃窗。蛋撻、菠蘿包、司康、泡芙、蘋果派都從這裡出爐。'],
+  ['kgsteam','蒸籠','三層竹蒸籠疊在瓦斯爐上，燒賣、水晶餃、叉燒包、奶黃包、馬拉糕都用它蒸。有東西在蒸的時候會冒白煙。'],
+  ['kgfry','油炸鍋','檯面上的油炸鍋，油槽、炸籃、溫度旋鈕。春卷、芋角、煎堆、番薯餅、油條都靠它。'],
+  ['kgpot','電鍋','檯面上的電鍋，外鍋放一杯水、按下開關，碗粿、紅豆湯圓、豆花都能蒸能熱。'],
+  ['kgice','剉冰機','老式手搖剉冰機，鑄鐵架子、搖柄轉刀盤，冰磚刨成細雪落進碗裡，再淋黑糖、加紅豆綠豆。'],
+  ['kgmortar','石臼','屋外簷下的花崗石臼和木杵。糯米蒸熟倒進臼裡，一人搗、一人翻，搗成麻糬。'],
   ['dcup','菜櫥與茶水櫃','左邊是紗門菜櫥，收剩菜和醬菜；右邊是茶水櫃，熱水瓶、茶壺和杯子，飯後喝茶。'],
 ]) if(!VRT[key]||!String(VRT[key].body||'').trim()) VRT[key]={key,title,body};
 const MEAL_TXT={
@@ -7947,6 +7953,54 @@ const SNKI=Object.fromEntries(SNK.map(s=>[s.id,s]));
 const snName=id=>NT('snack.'+id,0)||id;
 // timing of one order (ms from the order): the runner, the cooking, the carrying
 const oTimes=o=>{ const s=SNKI[o.sk]||{min:3}; const cook=o.t0+60000, ready=cook+s.min*60000, served=ready+60000; return {cook,ready,served,gone:served+45*60000}; };
+
+/* ---- the new things in the kitchen (as approved on the plan): an oven under the gas rings, a stack of bamboo steamers
+   on the front-right ring, a deep fryer and an electric rice cooker on the worktop, an iron ice shaver on a stand by the
+   rice jar, and a stone mortar outside under the eaves ---- */
+const KGEAR={};
+{ const M=(c,r=.6,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},o)), x0=KIT.run.x0;
+  const put=(geo,m,x,y,z,par=scene,tag)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); par.add(o); if(tag){ o.userData=tag; pickables.push(o); } return o; };
+  const bx=(w,h,d,m,x,y,z,par,tag)=>put(new THREE.BoxGeometry(w,h,d),m,x,y,z,par,tag), cy=(rt,rb,h,m,x,y,z,par,seg=20,tag)=>put(new THREE.CylinderGeometry(rt,rb,h,seg),m,x,y,z,par,tag);
+  const enamel=M(0xf1ede4,.28), chrome=M(0xc9ccce,.22,{metalness:.85}), glass=M(0x1a1612,.15,{metalness:.2}), steelM=M(0xb9bec0,.3,{metalness:.75}), black=M(0x1b1a19,.45),
+    bamboo=M(0xc9a66a,.75), bambooD=M(0xa98648,.8), wood=M(0x7a5232,.6,{map:T.wood}), iron=M(0x2e2c2a,.55,{metalness:.45}), granite=M(0x8f8b84,.95), red=M(0xb8322c,.38);
+  const TG=k=>({type:'kg'+k});
+  // 1 oven: an enamel front under the rings, a dark window, a chrome bar, a dial
+  { const zc=-2.72, w=.8; bx(.014,.6,w,enamel,x0-.024,.44,zc,scene,TG('oven')); bx(.006,.3,w-.24,glass,x0-.033,.46,zc); bx(.004,.32,w-.22,chrome,x0-.031,.46,zc);
+    const bar=cy(.011,.011,w-.16,chrome,x0-.07,.7,zc); bar.rotation.x=Math.PI/2; for(const s of [-1,1]) bx(.05,.012,.012,chrome,x0-.05,.7,zc+s*(w/2-.1));
+    const dial=cy(.026,.026,.02,M(0x2a2827,.4),x0-.04,.2,zc+w/2-.09,scene,16); dial.rotation.z=Math.PI/2; KGEAR.oven={x:x0-.04,z:zc}; }
+  // 2 the steamer stack on the front-right ring: three bamboo baskets and a lid
+  { const sx=x0+.16, sz=-2.52, g=new THREE.Group(); g.position.set(sx,.975,sz); scene.add(g); const tag=TG('steam');
+    for(let i=0;i<3;i++){ const r=put(new THREE.CylinderGeometry(.13,.13,.07,24,1,true),bamboo,0,.035+i*.072,0,g); r.material.side=THREE.DoubleSide; for(const y of [.005,.065]) put(new THREE.TorusGeometry(.13,.006,5,24),bambooD,0,y+i*.072,0,g).rotation.x=Math.PI/2; }
+    const lid=put(new THREE.SphereGeometry(.132,20,8,0,Math.PI*2,0,Math.PI/2.6),bamboo,0,.216,0,g); lid.scale.y=.45; put(new THREE.TorusGeometry(.03,.006,5,12),bambooD,0,.262,0,g);
+    g.traverse(c=>{ if(c.isMesh){ c.userData=tag; pickables.push(c); } }); KGEAR.steam={x:sx,y:1.24,z:sz}; }
+  // 3 the deep fryer: a steel box, the oil well with a basket, a handle forward, a dial and a lamp
+  { const fx=x0+.24, fz=-1.72; bx(.34,.26,.3,steelM,fx,1.03,fz,scene,TG('fry')); bx(.26,.01,.22,M(0x6a4a1a,.15,{metalness:.2}),fx+.01,1.162,fz);
+    const bk=bx(.2,.06,.16,M(0x9a9ea0,.4,{metalness:.6,wireframe:true}),fx+.01,1.18,fz); const h=cy(.009,.009,.2,black,fx-.2,1.2,fz); h.rotation.z=Math.PI/2.4;
+    const d=cy(.022,.022,.016,black,fx-.176,1.05,fz+.08,scene,14); d.rotation.z=Math.PI/2; bx(.006,.012,.012,M(0xff6a3a,.4,{emissive:0xff4a1a,emissiveIntensity:.5}),fx-.172,1.1,fz-.08);
+    KGEAR.fry={x:fx,y:1.2,z:fz}; }
+  // 4 the electric rice cooker: a round body, a domed lid with a knob, side handles, a switch
+  { const tag=TG('pot'), rx=x0+.22, rz=-.78, g=new THREE.Group(); g.position.set(rx,.9,rz); scene.add(g);
+    put(new THREE.CylinderGeometry(.13,.12,.2,28),red,0,.1,0,g); put(new THREE.CylinderGeometry(.131,.131,.012,28),chrome,0,.2,0,g);
+    const lid=put(new THREE.SphereGeometry(.128,24,8,0,Math.PI*2,0,Math.PI/2),chrome,0,.2,0,g); lid.scale.y=.35; put(new THREE.SphereGeometry(.02,10,8),black,0,.25,0,g);
+    for(const s of [-1,1]){ const hd=put(new THREE.TorusGeometry(.03,.007,5,10,Math.PI),black,0,.17,s*.14,g); hd.rotation.y=s>0?0:Math.PI; hd.rotation.x=0; }
+    put(new THREE.BoxGeometry(.02,.03,.03),black,-.13,.05,0,g); put(new THREE.CircleGeometry(.005,8),M(0xff8a3a,.4,{emissive:0xff6a1a,emissiveIntensity:.6}),-.131,.09,0,g).rotation.y=-Math.PI/2;
+    g.traverse(c=>{ if(c.isMesh){ c.userData=tag; pickables.push(c); } }); KGEAR.pot={x:rx,y:1.15,z:rz}; }
+  // 5 the ice shaver on its own small stand: a cast-iron frame, a wheel with a crank, a bowl under the blade
+  { const tag=TG('ice'), ix=45.2, iz=3.55, g=new THREE.Group(); g.position.set(ix,0,iz); g.rotation.y=Math.PI*.75; scene.add(g);
+    for(const [x,z] of [[-.17,-.17],[.17,-.17],[-.17,.17],[.17,.17]]) put(new THREE.BoxGeometry(.045,.72,.045),wood,x,.36,z,g); put(new THREE.BoxGeometry(.44,.04,.44),wood,0,.74,0,g); put(new THREE.BoxGeometry(.36,.02,.36),wood,0,.18,0,g);
+    put(new THREE.BoxGeometry(.24,.03,.2),iron,0,.775,0,g); for(const s of [-1,1]) put(new THREE.BoxGeometry(.03,.42,.04),iron,s*.1,.99,-.06,g); put(new THREE.BoxGeometry(.24,.04,.06),iron,0,1.2,-.06,g);
+    put(new THREE.CylinderGeometry(.085,.085,.05,20),M(0xd8dcdc,.2,{metalness:.6}),0,1.06,-.06,g); const wh=put(new THREE.TorusGeometry(.11,.012,6,24),iron,.15,1.1,-.06,g); wh.rotation.y=Math.PI/2;
+    const ck=put(new THREE.CylinderGeometry(.01,.01,.1,8),wood,.17,1.2,-.02,g); ck.rotation.x=Math.PI/2; put(new THREE.CylinderGeometry(.06,.04,.04,16),M(0xf6f3ec,.3),0,.81,.02,g);
+    g.traverse(c=>{ if(c.isMesh){ c.userData=tag; pickables.push(c); } }); OB(ix-.3,ix+.3,iz-.3,iz+.3); }
+  // 6 the stone mortar outside under the eaves, a wooden mallet leaning on it
+  { const mx=43.4, mz=4.85; cy(.3,.34,.42,granite,mx,.21,mz,scene,24,TG('mortar')); const bowl=put(new THREE.CircleGeometry(.22,24),M(0x6e6a64,.95),mx,.422,mz); bowl.rotation.x=-Math.PI/2;
+    const g=new THREE.Group(); g.position.set(mx+.36,0,mz+.08); g.rotation.z=.32; scene.add(g); put(new THREE.CylinderGeometry(.02,.022,.9,8),wood,0,.45,0,g); const hd=put(new THREE.CylinderGeometry(.075,.075,.26,14),wood,0,.92,0,g); hd.rotation.z=Math.PI/2;
+    OB(mx-.36,mx+.48,mz-.36,mz+.36); KGEAR.mortar={x:mx,y:.5,z:mz}; } }
+// steam from the steamer while something is in it; a shimmer over the fryer
+{ const pm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false}); const puffs=[]; for(let i=0;i<10;i++){ const p=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),pm.clone()); p.visible=false; scene.add(p); puffs.push(p); MEAL_DYN.push(p); }
+  ZL_ANIM.push(()=>{ const huo=NPC.huo, L=(HOUSE.orders||[]), now=Date.now(); let at=null;
+    for(const o of L){ const T=oTimes(o), s=SNKI[o.sk]; if(s&&now>=T.cook&&now<T.ready&&(s.eq==='steam'||s.eq==='fry'||s.eq==='pot')){ at=KGEAR[s.eq]; break; } }
+    const t=performance.now()/1000; puffs.forEach((p,i)=>{ if(!at){ p.visible=false; return; } const ph=(t*.45+i/puffs.length)%1; p.visible=true; p.position.set(at.x+Math.sin(i*2.3+t)*.05,at.y+ph*.7,at.z+Math.cos(i*1.7)*.05); p.material.opacity=(1-ph)*.3; p.scale.setScalar(.6+ph*1.4); }); }); }
 
 /* ---- the dishes ---- */
 const SNK_DYN=[];

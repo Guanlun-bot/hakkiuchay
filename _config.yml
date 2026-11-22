@@ -15,6 +15,7 @@ permalink: /posts/:year/:month/:day/:title/
 exclude:
   - README.md
   - CLAUDE.md
+  - CONTRIBUTING.md
   - .pages.yml
 defaults:
   - scope:

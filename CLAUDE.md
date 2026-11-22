@@ -51,7 +51,7 @@
 
 ## 線上書齋程式分段與共編
 - `vr/vr-house.js` 只是一串 `{% include_relative _parts/… %}`，GitHub Pages 建置時由 Jekyll 依序接成一個檔；程式要改 `vr/_parts/` 裡的分段（一覽在 `vr/_parts/README.md`）。每個分段第一行 `// {% raw %}`、最後一行 `// {% endraw %}` 不能刪。
-- 本機測試或檢查語法：`python3 vr/_parts/build.py` 組出 `_site-vr/vr-house.js`（不進 git）並跑 `node --check`。以前用 file:// 測試頁直接載 `vr/vr-house.js` 的做法，現在要改載組好的檔。
+- 本機預覽：`python3 vr/_parts/serve.py`（根目錄的 `預覽書齋.bat`／`預覽書齋.command` 就是執行它），不用 Jekyll：即時組 `vr-house.js`、用 `_data/vr.yml` 產生 `data.json` 與 `gate.json`（需 PyYAML）、去掉 `index.html` 的 front matter，並開到測試房。只檢查語法：`python3 vr/_parts/build.py` 組出 `_site-vr/vr-house.js`（不進 git）並跑 `node --check`。以前用 file:// 測試頁直接載 `vr/vr-house.js` 的做法，現在要改載組好的檔，或直接用 serve.py。
 - 齋主和朋友一起開發線上書齋，流程寫在根目錄 `CONTRIBUTING.md`：朋友在自己的分支改、開 Pull Request 合併進 main；測試時網址加 `?room=TEST-…` 進獨立房間，免得測試動作被線上的人看到。替朋友工作時也照這個流程，不要直接推 main。
 
 ## 自動流程

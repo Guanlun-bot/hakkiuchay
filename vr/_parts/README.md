@@ -31,12 +31,14 @@
 - 新增分段：檔名照編號插進想要的位置，第一行和最後一行照上面的寫法，再到 `vr/vr-house.js` 加一行 `{% include_relative _parts/檔名 %}`，並更新這張表。
 - 一個分段太長時可以再拆，切點要選在完整的敘述之後（通常是 `/* ===== … */` 或 `// ---- …` 標題前）。
 
-## 本機組檔
+## 在自己電腦上看書齋
 
-不裝 Jekyll 也能組出完整的程式，並檢查語法：
+雙擊根目錄的 `預覽書齋.bat`（Windows）或 `預覽書齋.command`（Mac），或在根目錄執行：
 
 ```
-python3 vr/_parts/build.py
+python3 vr/_parts/serve.py
 ```
 
-組好的檔案在 `_site-vr/vr-house.js`（這個資料夾不會進 git）。
+不用裝 Jekyll。它會開一個本機小網站，每次重新整理都重新組檔，並自動開瀏覽器進到測試房（`?room=TEST-…`）。
+
+只想檢查語法、不開瀏覽器時：`python3 vr/_parts/build.py`，組好的檔在 `_site-vr/vr-house.js`（不進 git）。

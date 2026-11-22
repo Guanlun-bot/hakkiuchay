@@ -1,0 +1,4 @@
+# 本機組檔與 Jekyll 預覽的輸出
+_site/
+_site-vr/
+.jekyll-cache/

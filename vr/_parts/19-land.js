@@ -182,8 +182,33 @@ const landLight={uLandSun:{value:sunDirection},uCliffShadows:cliffShadows,uLandD
 const wakes={value:[new THREE.Vector4(),new THREE.Vector4()]};
 window.__landWalk=(x,z)=>LAND.walk(x,z)||!!(FARB&&FARB.walk(x,z)); window.__landOut=p=>!(p.x>LAND.BLOCK.x0&&p.x<LAND.BLOCK.x1&&p.z>LAND.BLOCK.z0&&p.z<LAND.BLOCK.z1)&&!(p.x>LAND.FORE.x0-.1&&p.x<LAND.FORE.x1-.4&&p.z>LAND.FORE.z0&&p.z<LAND.FORE.z1);
 // paths outside: straight if the line is clear, otherwise along the dike grid (to the nearest crossing, across, along)
-window.__landRoute=(a,b)=>{ if(clearLine(a,b)) return [b]; if(a.x>270&&b.x>270){ const g=typeof gridPath==='function'?gridPath(a,b):null; return g&&g.length?g:[b]; } const D=LAND.DIKE, sx=x=>Math.round((x-D.ox)/D.dx)*D.dx+D.ox, sz=z=>Math.round((z-D.oz)/D.dz)*D.dz+D.oz;
-  const pts=[]; const ia={x:sx(a.x),z:sz(a.z)}, ib={x:sx(b.x),z:sz(b.z)}; if(!clearLine(a,ia)){ pts.push({x:a.x,z:ia.z}); } pts.push(ia,{x:ib.x,z:ia.z},ib); if(!clearLine(ib,b)) pts.push({x:ib.x,z:b.z}); pts.push(b); return pts; };
+window.__landRoute=(a,b)=>{ if(clearLine(a,b)) return [b]; const p=landPath(a,b); return p&&p.length?p:[b]; };
+// a path outside: A* over a 0.25 m grid of where you can walk outside (the dikes, the levee, the yard round the house,
+// the boardwalk, the far bank), then pulled tight with clearLine. The old way (along the dike lines) ran through the
+// paddies and the house itself, and the walk stopped at the first step.
+function landPath(a,b){ const S=.25, pad=24, W=window.__landWalk, D0=LAND.DIKE;
+  // the grid lines fall on the dikes' centre lines (16 m and 12 m apart: whole multiples of 0.25 m)
+  const x0=D0.ox+Math.floor((Math.min(a.x,b.x)-pad-D0.ox)/S)*S, z0=D0.oz+Math.floor((Math.min(a.z,b.z)-pad-D0.oz)/S)*S, nx=Math.ceil((Math.abs(a.x-b.x)+2*pad)/S)+1, nz=Math.ceil((Math.abs(a.z-b.z)+2*pad)/S)+1, N=nx*nz;
+  if(N>4e6) return null;
+  const ok=new Int8Array(N).fill(-1), free=(i,j)=>{ if(i<0||j<0||i>=nx||j>=nz) return false; const k=j*nx+i; if(ok[k]<0) ok[k]=W(x0+i*S,z0+j*S)?1:0; return ok[k]===1; };
+  const near=p=>{ const i0=Math.round((p.x-x0)/S), j0=Math.round((p.z-z0)/S); let best=null, bd=1e9; for(let r=0;r<=6&&!best;r++) for(let di=-r;di<=r;di++) for(let dj=-r;dj<=r;dj++){ if(Math.max(Math.abs(di),Math.abs(dj))!==r) continue; const i=i0+di, j=j0+dj; if(free(i,j)){ const d=Math.hypot(di,dj); if(d<bd){ bd=d; best=[i,j]; } } } return best; };
+  const s0=near(a), g0=near(b); if(!s0||!g0) return null;
+  const G=new Float32Array(N).fill(1e9), from=new Int32Array(N).fill(-1), done=new Uint8Array(N), heap=[], goal=g0[1]*nx+g0[0];
+  const hf=k=>Math.hypot(k%nx-g0[0],Math.floor(k/nx)-g0[1]);
+  const push=(f,k)=>{ heap.push([f,k]); let c=heap.length-1; while(c){ const q=(c-1)>>1; if(heap[q][0]<=heap[c][0]) break; [heap[q],heap[c]]=[heap[c],heap[q]]; c=q; } };
+  const pop=()=>{ const top=heap[0], last=heap.pop(); if(heap.length){ heap[0]=last; let c=0; for(;;){ const l=2*c+1, r=l+1; let m=c; if(l<heap.length&&heap[l][0]<heap[m][0]) m=l; if(r<heap.length&&heap[r][0]<heap[m][0]) m=r; if(m===c) break; [heap[m],heap[c]]=[heap[c],heap[m]]; c=m; } } return top; };
+  const s=s0[1]*nx+s0[0]; G[s]=0; push(hf(s),s);
+  const D=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.4142],[1,-1,1.4142],[-1,1,1.4142],[-1,-1,1.4142]];
+  let steps=0, found=false;
+  while(heap.length&&steps++<900000){ const [,k]=pop(); if(done[k]) continue; done[k]=1; if(k===goal){ found=true; break; }
+    const i=k%nx, j=(k-i)/nx;
+    for(const [di,dj,c] of D){ const ii=i+di, jj=j+dj; if(!free(ii,jj)) continue; if(di&&dj&&(!free(i+di,j)||!free(i,j+dj))) continue;
+      const kk=jj*nx+ii, g=G[k]+c+(free(ii+1,jj)&&free(ii-1,jj)&&free(ii,jj+1)&&free(ii,jj-1)?0:.8); if(g<G[kk]){ G[kk]=g; from[kk]=k; push(g+hf(kk),kk); } } }   // a little dearer along the edges: keep to the middle
+  if(!found) return null;
+  const cells=[]; for(let k=goal;k>=0;k=from[k]) cells.push({x:x0+(k%nx)*S,z:z0+Math.floor(k/nx)*S}); cells.reverse(); cells.push({x:b.x,z:b.z});
+  const out=[]; let cur={x:a.x,z:a.z}, i=0;   // pull tight: from where we are, jump to the furthest point still in clear sight
+  while(i<cells.length-1){ let j=cells.length-1; while(j>i+1&&!clearLine(cur,cells[j])) j--; out.push(cells[j]); cur=cells[j]; i=j; }
+  return out; }
 // season: the rice always carries ears; green in spring, gold in autumn, pale gold in winter
 function season(){ const mo=(new Date(Date.now()+8*3600e3+MEAL_SHIFT*60000)).getUTCMonth()+1; if(mo>=3&&mo<=5) return {ripe:.18,pale:0,water:.8}; if(mo>=6&&mo<=8) return {ripe:.45,pale:0,water:.45}; if(mo>=9&&mo<=11) return {ripe:1,pale:0,water:.22}; return {ripe:.8,pale:.55,water:.6}; }
 { const S=season(); U.uRipe.value=S.ripe; U.uPale.value=S.pale; U.uWaterVis.value=S.water; }

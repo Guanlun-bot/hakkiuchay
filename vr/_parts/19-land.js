@@ -467,13 +467,13 @@ const PEAKS=[];
   // the villages, for the grey round them
   const VILL=TWP.PLACES.filter(p=>p.n).map(p=>({x:p.x,z:p.z,r:(p.r||5)*TWP.S}));
   const C={paddy:new THREE.Color(.30,.43,.16),ripe:new THREE.Color(.55,.50,.22),fallow:new THREE.Color(.44,.38,.24),cane:new THREE.Color(.36,.47,.20),
-    wood:new THREE.Color(.15,.27,.12),wood2:new THREE.Color(.21,.33,.15),high:new THREE.Color(.40,.43,.27),rock:new THREE.Color(.45,.42,.36),sand:new THREE.Color(.74,.68,.52),
+    wood:new THREE.Color(.15,.27,.12),wood2:new THREE.Color(.21,.33,.15),high:new THREE.Color(.40,.43,.27),rock:new THREE.Color(.45,.42,.36),sand:new THREE.Color(.74,.68,.52),black:new THREE.Color(.27,.26,.25),
     vill:new THREE.Color(.47,.45,.40),bank:new THREE.Color(.40,.45,.24),wet:new THREE.Color(.25,.23,.18)};
   const c=new THREE.Color();
   const colour=(x,e,z,ny)=>{ const f=TWP.fbm(x*.0035+3.3,z*.0035-1.1,3), plot=TWP.h2(Math.floor((x+z)/80),Math.floor((x-z)/60)), slopeK=1-ss(ny,.8,.95);
     const w=TWP.water(x,z);
     if(w&&!w.sea&&e<w.y+.2) return c.copy(C.wet);
-    if(e<2.6&&(w&&w.sea||e<2)) return c.copy(C.sand).lerp(C.wet,ss(-e,0,3));
+    if(e<2.6&&(w&&w.sea||e<2)){ const [mx,my]=TWP.l2m(x,z); return c.copy(mx>845&&my>300&&my<560?C.black:C.sand).lerp(C.wet,ss(-e,0,3)); }   // 磺水嶺's foot: black sand and rock platform
     // farmland where it is flat enough and not too high
     const farm=(1-ss(e,220,420))*(1-slopeK)*(1-ss(f,.6,.72));
     c.copy(C.wood).lerp(C.wood2,ss(f,.35,.65)); c.lerp(C.high,ss(e,1200,2200)*.7); c.lerp(C.rock,ss(e,2300,2800)*.6);
@@ -485,26 +485,26 @@ const PEAKS=[];
   const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3);
     for(let i=0;i<P.count;i++){ const x=P.getX(i), z=P.getZ(i), e=P.getY(i)+E0, cc=colour(x,e,z,N.getY(i)); col[i*3]=cc.r; col[i*3+1]=cc.g; col[i*3+2]=cc.b; }
     g.setAttribute('color',new THREE.BufferAttribute(col,3)); };
-  // the township, tile by tile; the house's fields are left out (their own flat ground is there)
-  const T=50;
-  for(let tj=0;tj<G.nN;tj+=T) for(let ti=0;ti<G.nE;ti+=T){ const ni=Math.min(T,G.nE-ti), nj=Math.min(T,G.nN-tj), pos=new Float32Array((ni+1)*(nj+1)*3), idx=[], inF=new Uint8Array((ni+1)*(nj+1));
-    for(let j=0;j<=nj;j++) for(let i=0;i<=ni;i++){ const E=G.E0+(ti+i)*G.st, N=G.N0+(tj+j)*G.st, [x,z]=TWP.toL(E,N), k=j*(ni+1)+i; pos[k*3]=x; pos[k*3+1]=G.h[(tj+j)*W+ti+i]-E0; pos[k*3+2]=z; inF[k]=TWP.fieldOut(x,z)<.01?1:0; }
+  // the township, tile by tile (and west of it the 中央山脈 to 三叉嶺 on TWP.G2's 50 m grid); the house's fields are left out
+  const tiles=(GG,T)=>{ const W=GG.nE+1; for(let tj=0;tj<GG.nN;tj+=T) for(let ti=0;ti<GG.nE;ti+=T){ const ni=Math.min(T,GG.nE-ti), nj=Math.min(T,GG.nN-tj), pos=new Float32Array((ni+1)*(nj+1)*3), idx=[], inF=new Uint8Array((ni+1)*(nj+1));
+    for(let j=0;j<=nj;j++) for(let i=0;i<=ni;i++){ const E=GG.E0+(ti+i)*GG.st, N=GG.N0+(tj+j)*GG.st, [x,z]=TWP.toL(E,N), k=j*(ni+1)+i; pos[k*3]=x; pos[k*3+1]=GG.h[(tj+j)*W+ti+i]-E0; pos[k*3+2]=z; inF[k]=TWP.fieldOut(x,z)<.01?1:0; }
     for(let j=0;j<nj;j++) for(let i=0;i<ni;i++){ const a=j*(ni+1)+i, b=a+1, cc=a+ni+1, d=cc+1; if(inF[a]&&inF[b]&&inF[cc]&&inF[d]) continue; idx.push(a,cc,b,b,cc,d); }
     if(!idx.length) continue;
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); upward(g); paint(g); g.computeBoundingSphere();
-    const m=new THREE.Mesh(g,hm); m.receiveShadow=true; m.userData={type:'floor'}; m.matrixAutoUpdate=false; m.updateMatrix(); pickables.push(m); scene.add(m); reflect(m); }
+    const m=new THREE.Mesh(g,hm); m.receiveShadow=true; m.userData={type:'floor'}; m.matrixAutoUpdate=false; m.updateMatrix(); pickables.push(m); scene.add(m); reflect(m); } };
+  tiles(G,50); tiles(TWP.G2,50);
   // the far land: a 400 m grid with a hole where the township's grid lies
   { const st=400, E1=-46000, N1=-34000, nE=Math.round((34000-E1)/st), nN=Math.round((34000-N1)/st), pos=new Float32Array((nE+1)*(nN+1)*3), idx=[], WW=nE+1;
-    const gE0=G.E0+G.st, gE1=G.E0+(G.nE-1)*G.st, gN0=G.N0+G.st, gN1=G.N0+(G.nN-1)*G.st;
-    for(let j=0;j<=nN;j++) for(let i=0;i<=nE;i++){ const E=E1+i*st, N=N1+j*st, [x,z]=TWP.toL(E,N), [mx,my]=TWP.g2m(E,N), k=j*WW+i; pos[k*3]=x; pos[k*3+1]=TWP.elevM(mx,my)-E0; pos[k*3+2]=z; }
-    for(let j=0;j<nN;j++) for(let i=0;i<nE;i++){ const Ea=E1+i*st, Na=N1+j*st; if(Ea>=gE0&&Ea+st<=gE1&&Na>=gN0&&Na+st<=gN1) continue; const a=j*WW+i, b=a+1, cc=a+WW, d=cc+1; idx.push(a,cc,b,b,cc,d); }
+    const G2=TWP.G2, gE0=G2.E0+G2.st, gE1=G.E0+(G.nE-1)*G.st, gN0=Math.max(G.N0,G2.N0)+G.st, gN1=Math.min(G.N0+G.nN*G.st,G2.N0+G2.nN*G2.st)-G.st, hE1=G2.E0+(G2.nE-1)*G2.st, hN0=G2.N0+G2.st, hN1=G2.N0+(G2.nN-1)*G2.st;
+    for(let j=0;j<=nN;j++) for(let i=0;i<=nE;i++){ const E=E1+i*st, N=N1+j*st, [x,z]=TWP.toL(E,N), [mx,my]=TWP.g2m(E,N), k=j*WW+i; pos[k*3]=x; pos[k*3+1]=TWP.elevM(mx,my)-E0-4; pos[k*3+2]=z; }   // a little low: where it overlaps the finer grids it stays under them
+    for(let j=0;j<nN;j++) for(let i=0;i<nE;i++){ const Ea=E1+i*st, Na=N1+j*st; if(Ea>=gE0&&Ea+st<=gE1&&Na>=gN0&&Na+st<=gN1) continue; if(Ea>=gE0&&Ea+st<=hE1&&Na>=hN0&&Na+st<=hN1) continue; const a=j*WW+i, b=a+1, cc=a+WW, d=cc+1; idx.push(a,cc,b,b,cc,d); }
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); upward(g); paint(g);
     const m=new THREE.Mesh(g,hm); scene.add(m); reflect(m); }
   cliffShadows.value.forEach(s=>s.set(1e5,1e5,1,1));
   // woods: up the slopes, over 磺水嶺 and 和尚崙, on the range's foot; a few trees round the villages
   const crown=new THREE.IcosahedronGeometry(1,0), cone=new THREE.ConeGeometry(.75,2.8,6); cone.translate(0,.4,0);
-  const broad=[], fir=[], R0={E0:G.E0,E1:G.E0+G.nE*G.st,N0:G.N0,N1:G.N0+G.nN*G.st};
-  for(let k=0;k<200000&&broad.length+fir.length<9000;k++){ const E=R0.E0+RAND()*(R0.E1-R0.E0), N=R0.N0+RAND()*(R0.N1-R0.N0), [x,z]=TWP.toL(E,N);
+  const broad=[], fir=[], R0={E0:TWP.G2.E0,E1:G.E0+G.nE*G.st,N0:G.N0,N1:G.N0+G.nN*G.st};
+  for(let k=0;k<400000&&broad.length+fir.length<16000;k++){ const E=R0.E0+RAND()*(R0.E1-R0.E0), N=R0.N0+RAND()*(R0.N1-R0.N0), [x,z]=TWP.toL(E,N);
     if(TWP.fieldOut(x,z)<30) continue; const e=TWP.heightAt(x,z); if(e<3||TWP.water(x,z)) continue;
     const sl=HILLS.slope(x,z), f=TWP.fbm(x*.0035+3.3,z*.0035-1.1,3), farm=e<220&&sl>.95&&f<.6;
     if(farm&&RAND()>.03) continue; if(!farm&&RAND()>.6) continue;

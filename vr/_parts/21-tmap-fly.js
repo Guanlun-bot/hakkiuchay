@@ -55,7 +55,7 @@ const PORTAL=(()=>{ const live=[];
 window.__portal=PORTAL;
 
 // ---- the map
-const TMAP=(()=>{ const MX0=-80, MY0=-60, MX1=1080, MY1=720, K=1.3;   // the map's area (map units) and its base resolution (px a unit)
+const TMAP=(()=>{ const MX0=-1600, MY0=-60, MX1=1080, MY1=720, K=1.1;   /* west to 三叉嶺 */   // the map's area (map units) and its base resolution (px a unit)
   const BW=Math.round((MX1-MX0)*K), BH=Math.round((MY1-MY0)*K);
   let base=null, open=false, zoom=1, cam={x:0,y:0}, sel=null, drag=null, moved=false;
   const box=document.createElement('div'); box.id='tmap'; box.innerHTML=`<div class="tm-head"><b></b><span></span><button class="tm-x" type="button"></button></div><div class="tm-body"><canvas></canvas><div class="tm-list"></div></div><div class="tm-pop"></div>`;
@@ -131,11 +131,11 @@ const TMAP=(()=>{ const MX0=-80, MY0=-60, MX1=1080, MY1=720, K=1.3;   // the map
   cv.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y}; moved=false; cv.setPointerCapture(e.pointerId); });
   cv.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.hypot(dx,dy)>4) moved=true; if(moved){ cam.x=drag.cx-dx/zoom; cam.y=drag.cy-dy/zoom; pop.style.display='none'; } });
   cv.addEventListener('pointerup',e=>{ const was=drag; drag=null; if(!was||moved) return; const V=view(), r=cv.getBoundingClientRect(), sx=(e.clientX-r.left)*V.dpr, sy=(e.clientY-r.top)*V.dpr, [mx,my]=unscr(sx,sy,V), p=nearest(mx,my,V); select(p?p.mx:mx,p?p.my:my,p); });
-  cv.addEventListener('wheel',e=>{ e.preventDefault(); const V=view(), r=cv.getBoundingClientRect(), sx=(e.clientX-r.left)*V.dpr, sy=(e.clientY-r.top)*V.dpr, [mx,my]=unscr(sx,sy,V), k=Math.exp(-e.deltaY*.0015); zoom=Math.min(12,Math.max(.35,zoom*k));
+  cv.addEventListener('wheel',e=>{ e.preventDefault(); const V=view(), r=cv.getBoundingClientRect(), sx=(e.clientX-r.left)*V.dpr, sy=(e.clientY-r.top)*V.dpr, [mx,my]=unscr(sx,sy,V), k=Math.exp(-e.deltaY*.0015); zoom=Math.min(12,Math.max(.15,zoom*k));
     const [bx,by]=toB(mx,my); cam.x=bx-(sx-V.w/2)/(zoom*V.dpr); cam.y=by-(sy-V.h/2)/(zoom*V.dpr); pop.style.display='none'; },{passive:false});
   box.querySelector('.tm-x').onclick=()=>close();
   function show(){ open=true; box.classList.add('on'); box.querySelector('.tm-head b').textContent=NT('tmap.title')||'斗安鄉全圖'; box.querySelector('.tm-head span').textContent=NT('tmap.title',1)||''; box.querySelector('.tm-x').textContent=NT('tmap.close')||'關閉';
-    try{ document.exitPointerLock?.(); }catch{} list(); const V=view(); cam={x:BW/2,y:BH/2}; zoom=Math.min(V.w/(BW*V.dpr),V.h/(BH*V.dpr)); if(!(zoom>0)) zoom=1;   /* the whole township at first */ sel=null; pop.style.display='none'; }
+    try{ document.exitPointerLock?.(); }catch{} list(); const V=view(); cam={x:(500-MX0)*K,y:(330-MY0)*K}; zoom=Math.min(V.w/(1180*K*V.dpr),V.h/(780*K*V.dpr)); if(!(zoom>0)) zoom=1;   /* the whole township at first */ sel=null; pop.style.display='none'; }
   function close(){ open=false; box.classList.remove('on'); pop.style.display='none'; }
   const toggle=()=>open?close():show();
   ZL_ANIM.push(()=>{ if(open) draw(); });

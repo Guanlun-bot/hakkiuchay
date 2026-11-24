@@ -4642,7 +4642,7 @@ const mapUI=(()=>{ const tr=$('#hud-tr'), W=140, H=296, DPR=2; tr.innerHTML=`<ca
     if(!best){ toast('那裡走不進去'); return; } ME.x=best.x; ME.z=best.z; ME.path=[]; ME.targetYaw=null; if(VIEW.mode!=='walk') setView('walk'); pushPresence(true); }
   let t=9, mt=0;
   function tick(dt){ if(!window.__entered) return; const away=typeof TWP!=='undefined'&&TWP.fieldOut(ME.x,ME.z)>60, hide=tr.classList.contains('mmoff')||VIEW.mode==='plan'||away; tr.style.visibility=VIEW.mode==='plan'||away?'hidden':''; if(hide) return;   /* far out in the township the house's plan means nothing: N shows the whole map */
-    t+=dt; mt+=dt; if(t>2||!base){ t=0; shoot(); } if(base&&mt>.1){ mt=0; marks(); } }
+    t+=dt; mt+=dt; if(t>20||!base){ t=0; shoot(); }   /* the plan hardly changes; a full render plus a pixel read stalls the frame */ if(base&&mt>.1){ mt=0; marks(); } }
   function toggle(){ tr.classList.toggle('mmoff'); LS.set('hk-map',tr.classList.contains('mmoff')?'off':'on'); }
   return {tick,toggle,teleport}; })();
 ZL_ANIM.push(dt=>mapUI.tick(dt||.016));
@@ -10323,7 +10323,9 @@ function buildBlinds(){ try{
   slatT.wrapS=slatT.wrapT=THREE.RepeatWrapping;
   const bindM=new THREE.MeshStandardMaterial({color:0x7a4a2a,roughness:.85}), rollM=new THREE.MeshStandardMaterial({color:0x4f321d,roughness:.6}), headM=new THREE.MeshStandardMaterial({color:0x6e4226,roughness:.9});
   scene.updateMatrixWorld(true);
-  const solids=[]; scene.traverse(o=>{ if(o.isMesh&&o.visible&&!o.userData.blind) solids.push(o); });
+  // only the house's own pieces: the township's ground, water and roads are huge and would make every ray slow
+  const solids=[], _bs=new THREE.Sphere(); scene.traverse(o=>{ if(!o.isMesh||!o.visible||o.userData.blind) return; const g=o.geometry; if(!g.boundingSphere) g.computeBoundingSphere(); _bs.copy(g.boundingSphere).applyMatrix4(o.matrixWorld);
+    if(_bs.radius<120&&Math.hypot(_bs.center.x-19,_bs.center.z-10)<_bs.radius+60) solids.push(o); });
   const rc=new THREE.Raycaster(), UP=new THREE.Vector3(0,1,0);
   const oct=r=>[...Array(8)].map((_,k)=>{ const a=Math.PI/8+k*Math.PI/4; return [Math.cos(a)*r,Math.sin(a)*r]; });
   for(const W of WINDOWS){ const P=W.parent; P.updateMatrixWorld(true); const q=P.getWorldQuaternion(new THREE.Quaternion()), ws=P.getWorldScale(new THREE.Vector3());

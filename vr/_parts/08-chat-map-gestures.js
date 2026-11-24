@@ -132,7 +132,7 @@ const mapUI=(()=>{ const tr=$('#hud-tr'), W=140, H=296, DPR=2; tr.innerHTML=`<ca
     if(!best){ toast('那裡走不進去'); return; } ME.x=best.x; ME.z=best.z; ME.path=[]; ME.targetYaw=null; if(VIEW.mode!=='walk') setView('walk'); pushPresence(true); }
   let t=9, mt=0;
   function tick(dt){ if(!window.__entered) return; const away=typeof TWP!=='undefined'&&TWP.fieldOut(ME.x,ME.z)>60, hide=tr.classList.contains('mmoff')||VIEW.mode==='plan'||away; tr.style.visibility=VIEW.mode==='plan'||away?'hidden':''; if(hide) return;   /* far out in the township the house's plan means nothing: N shows the whole map */
-    t+=dt; mt+=dt; if(t>2||!base){ t=0; shoot(); } if(base&&mt>.1){ mt=0; marks(); } }
+    t+=dt; mt+=dt; if(t>20||!base){ t=0; shoot(); }   /* the plan hardly changes; a full render plus a pixel read stalls the frame */ if(base&&mt>.1){ mt=0; marks(); } }
   function toggle(){ tr.classList.toggle('mmoff'); LS.set('hk-map',tr.classList.contains('mmoff')?'off':'on'); }
   return {tick,toggle,teleport}; })();
 ZL_ANIM.push(dt=>mapUI.tick(dt||.016));

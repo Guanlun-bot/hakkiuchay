@@ -16,7 +16,9 @@ function buildBlinds(){ try{
   slatT.wrapS=slatT.wrapT=THREE.RepeatWrapping;
   const bindM=new THREE.MeshStandardMaterial({color:0x7a4a2a,roughness:.85}), rollM=new THREE.MeshStandardMaterial({color:0x4f321d,roughness:.6}), headM=new THREE.MeshStandardMaterial({color:0x6e4226,roughness:.9});
   scene.updateMatrixWorld(true);
-  const solids=[]; scene.traverse(o=>{ if(o.isMesh&&o.visible&&!o.userData.blind) solids.push(o); });
+  // only the house's own pieces: the township's ground, water and roads are huge and would make every ray slow
+  const solids=[], _bs=new THREE.Sphere(); scene.traverse(o=>{ if(!o.isMesh||!o.visible||o.userData.blind) return; const g=o.geometry; if(!g.boundingSphere) g.computeBoundingSphere(); _bs.copy(g.boundingSphere).applyMatrix4(o.matrixWorld);
+    if(_bs.radius<120&&Math.hypot(_bs.center.x-19,_bs.center.z-10)<_bs.radius+60) solids.push(o); });
   const rc=new THREE.Raycaster(), UP=new THREE.Vector3(0,1,0);
   const oct=r=>[...Array(8)].map((_,k)=>{ const a=Math.PI/8+k*Math.PI/4; return [Math.cos(a)*r,Math.sin(a)*r]; });
   for(const W of WINDOWS){ const P=W.parent; P.updateMatrixWorld(true); const q=P.getWorldQuaternion(new THREE.Quaternion()), ws=P.getWorldScale(new THREE.Vector3());

@@ -27,7 +27,7 @@
     const sm=g.map((_,i)=>{ let a=0,n=0; for(let k=-win;k<=win;k++){ const j=i+k; if(j<0||j>=g.length) continue; a+=g[j]; n++; } return a/n; });
     const deck=S.map((s,i)=>s.wet&&!(noDeck&&noDeck(s))?(TWP.water(s.x,s.z).y-E0+clear):-1e9);
     const D=[]; deck.forEach((d,i)=>{ if(d>-1e8) D.push([i,d]); });
-    S.forEach((s,i)=>{ let y=sm[i]; for(const [j,d] of D){ const r=d-Math.abs(i-j)*step*grade; if(r>y) y=r; } s.y=y; s.g=g[i]; s.bridge=s.wet||y>g[i]+6; s.dy=y-g[i]; }); return S; };
+    S.forEach((s,i)=>{ let y=sm[i]; for(const [j,d] of D){ if(Math.abs(i-j)>30) continue; const r=d-Math.abs(i-j)*step*grade; if(r>y) y=r; }   /* a bridge's approaches only, not a ramp across the hills */ s.y=y; s.g=g[i]; s.bridge=s.wet||y>g[i]+6; s.dy=y-g[i]; }); return S; };
   // an embankment under a line where it stands up off the ground (and a cutting where it goes below)
   const bank=(S,half,hex)=>{ const pos=[], col=[], idx=[], c=new THREE.Color(hex); S.forEach((s,i)=>{ const nx=-s.tz, nz=s.tx, up=Math.max(0,Math.min(s.dy,6)), w=half+up*1.6;
       for(const [o,y] of [[-w,s.g-.3],[-half,s.y],[half,s.y],[w,s.g-.3]]){ pos.push(s.x+nx*o,(s.bridge&&!s.wet&&s.dy>6)?s.y:y,s.z+nz*o); const k=.85+.25*TWP.h2(s.x+o,s.z); col.push(c.r*k,c.g*k,c.b*k); }

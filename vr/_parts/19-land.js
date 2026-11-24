@@ -454,10 +454,22 @@ const PEAKS=[];
   const upward=g=>{ const N=g.attributes.normal; let s=0; for(let i=0;i<N.count;i+=7) s+=N.getY(i); if(s>=0) return; const I=g.index.array; for(let i=0;i<I.length;i+=3){ const t=I[i+1]; I[i+1]=I[i+2]; I[i+2]=t; } g.index.needsUpdate=true; g.computeVertexNormals(); };
   const hm=new THREE.MeshLambertMaterial({vertexColors:true});
   hm.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,landLight,{uSkyH:WATER_U.uSkyH});
-    sh.vertexShader='varying vec3 vHW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHW=(modelMatrix*vec4(transformed,1.)).xyz;');
-    sh.fragmentShader='varying vec3 vHW;\nuniform vec3 uSkyH;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    sh.vertexShader='varying vec3 vHW;\nattribute vec2 agri;\nvarying vec2 vAg;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHW=(modelMatrix*vec4(transformed,1.)).xyz; vAg=agri;');
+    sh.fragmentShader='varying vec3 vHW;\nvarying vec2 vAg;\nuniform vec3 uSkyH;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
       float grain=vnoiseH(vHW.xz*.9)*.5+vnoiseH(vHW.xz*3.1)*.3+vnoiseH(vHW.xz*.07)*.4;
-      diffuseColor.rgb*=.88+.2*grain;`).replace('#include <fog_fragment>',`
+      diffuseColor.rgb*=.88+.2*grain;
+      // terraces and tea (west of 吳厝): lines along the contours, the paddies' banks every 2.4 m of height, the tea's rows
+      // every third of a metre; they fade out where they would be finer than a pixel
+      if(vAg.x+vAg.y>.01){
+        float hy=vHW.y/2.4, fw=fwidth(hy), t=fract(hy), crisp=1.-smoothstep(.12,.35,fw);
+        float lot=hashH(vec2(floor(hy),floor((vHW.x+vHW.z)/38.)));
+        vec3 pad=mix(vec3(.24,.38,.13),vec3(.40,.50,.26),lot);
+        pad=mix(pad,vec3(.44,.38,.25),(1.-smoothstep(.0,.07,t))*crisp*.9);       // the bank's top
+        pad*=1.-.35*smoothstep(.82,1.,t)*crisp;                                  // the riser's shadow under the next bank
+        float ry=vHW.y/.33, rw=fwidth(ry), rc=1.-smoothstep(.1,.28,rw), gap=smoothstep(.36,.47,abs(fract(ry)-.5))*rc, bush=mix(.64,sin(fract(ry)*3.1416),rc);
+        vec3 tea=mix(vec3(.09,.20,.08),vec3(.20,.34,.14),bush*(.6+.4*vnoiseH(vHW.xz*.6)));
+        tea=mix(tea,vec3(.28,.22,.15),gap);
+        diffuseColor.rgb=mix(diffuseColor.rgb,pad*(.9+.15*grain),vAg.x); diffuseColor.rgb=mix(diffuseColor.rgb,tea*(.9+.15*grain),vAg.y); }`).replace('#include <fog_fragment>',`
       float hz=smoothstep(400.,9000.,length(cameraPosition-vHW));
       gl_FragColor.rgb=mix(gl_FragColor.rgb,uSkyH*vec3(.62,.78,.86)*(.55+.45*uLandDay),hz*.5);
       #include <fog_fragment>`).replace('void main() {',`float hashH(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
@@ -482,9 +494,10 @@ const PEAKS=[];
     for(const v of VILL){ const d=Math.hypot(x-v.x,z-v.z); if(d<v.r*1.2) c.lerp(C.vill,(1-ss(d,v.r*.5,v.r*1.2))*.55); }
     if(w&&!w.sea) c.lerp(C.bank,.4);
     return c; };
-  const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3);
-    for(let i=0;i<P.count;i++){ const x=P.getX(i), z=P.getZ(i), e=P.getY(i)+E0, cc=colour(x,e,z,N.getY(i)); col[i*3]=cc.r; col[i*3+1]=cc.g; col[i*3+2]=cc.b; }
-    g.setAttribute('color',new THREE.BufferAttribute(col,3)); };
+  const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), ag=new Float32Array(P.count*2);
+    for(let i=0;i<P.count;i++){ const x=P.getX(i), z=P.getZ(i), e=P.getY(i)+E0, cc=colour(x,e,z,N.getY(i)); col[i*3]=cc.r; col[i*3+1]=cc.g; col[i*3+2]=cc.b;
+      const [mx,my]=TWP.l2m(x,z), w=TWP.agri(mx,my); if(TWP.water(x,z)){ w[0]=w[1]=0; } ag[i*2]=w[0]; ag[i*2+1]=w[1]; }
+    g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setAttribute('agri',new THREE.BufferAttribute(ag,2)); };
   // the township, tile by tile (and west of it the 中央山脈 to 三叉嶺 on TWP.G2's 50 m grid); the house's fields are left out
   const tiles=(GG,T)=>{ const W=GG.nE+1; for(let tj=0;tj<GG.nN;tj+=T) for(let ti=0;ti<GG.nE;ti+=T){ const ni=Math.min(T,GG.nE-ti), nj=Math.min(T,GG.nN-tj), pos=new Float32Array((ni+1)*(nj+1)*3), idx=[], inF=new Uint8Array((ni+1)*(nj+1));
     for(let j=0;j<=nj;j++) for(let i=0;i<=ni;i++){ const E=GG.E0+(ti+i)*GG.st, N=GG.N0+(tj+j)*GG.st, [x,z]=TWP.toL(E,N), k=j*(ni+1)+i; pos[k*3]=x; pos[k*3+1]=GG.h[(tj+j)*W+ti+i]-E0; pos[k*3+2]=z; inF[k]=TWP.fieldOut(x,z)<.01?1:0; }
@@ -506,6 +519,7 @@ const PEAKS=[];
   const broad=[], fir=[], R0={E0:TWP.G2.E0,E1:G.E0+G.nE*G.st,N0:G.N0,N1:G.N0+G.nN*G.st};
   for(let k=0;k<400000&&broad.length+fir.length<16000;k++){ const E=R0.E0+RAND()*(R0.E1-R0.E0), N=R0.N0+RAND()*(R0.N1-R0.N0), [x,z]=TWP.toL(E,N);
     if(TWP.fieldOut(x,z)<30) continue; const e=TWP.heightAt(x,z); if(e<3||TWP.water(x,z)) continue;
+    { const [amx,amy]=TWP.l2m(x,z), ag=TWP.agri(amx,amy); if(ag[0]+ag[1]>.3) continue; }
     const sl=HILLS.slope(x,z), f=TWP.fbm(x*.0035+3.3,z*.0035-1.1,3), farm=e<220&&sl>.95&&f<.6;
     if(farm&&RAND()>.03) continue; if(!farm&&RAND()>.6) continue;
     (e>600&&RAND()<.5?fir:broad).push([x,e-E0,z]); }

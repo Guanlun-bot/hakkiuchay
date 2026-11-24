@@ -25,7 +25,7 @@ var TWP=(()=>{
   const sdPoly=(x,z,P)=>polyD(x,z,P)*(inPoly(x,z,P)?1:-1);
 
   // ---- the map's land, in map units
-  const ANCHORS=[[132,320,182],[186,400,138],[262,352,110],[340,320,86],[392,250,82],[476,330,70],[300,200,112],[230,130,140],[200,50,160],[350,80,118],
+  const ANCHORS=[[132,320,182],[186,400,138],[262,352,110],[340,320,86],[392,250,82],[476,330,100],[300,200,112],[230,130,140],[200,50,160],[350,80,118],
     [450,150,86],[560,120,62],[650,110,48],[760,110,26],[860,150,11],[915,200,5],[830,250,9],[790,300,8.5],[752,338,8],[770,340,8],[805,335,7.5],[870,290,5],
     [630,430,21],[548,478,27],[700,418,19.5],[735,386,19],[745,402,15],[772,385,10],[808,412,12],[790,450,15],[700,470,23],[600,505,40],[935,300,2.5],[955,318,2.5],[930,420,4],[915,560,6],[860,610,14],
     [520,420,30],[460,430,45],[300,430,95],[200,430,128]];
@@ -45,6 +45,22 @@ var TWP=(()=>{
     [[-120,330],[0,335],[60,340],[90,360],[130,385],[150,404]],[[40,120],[90,180],[120,230],[140,300],[150,360],[165,405]],[[40,700],[80,620],[95,560],[100,500],[115,460],[130,412]],[[-200,370],[-80,375],[0,380],[60,388],[120,398],[150,404]]];
   const SANCHA={mx:-1470,my:395};   // 三叉嶺 (2,860 m), 大陂溪's source
   const bump=t=>t<1?(1-t*t)**2:0;
+  // the west's heights (鄉志 戊): villages and summits the rise passes through, plus a few to hold the slopes' sides
+  const WEST=[[476,330,100],[392,250,120],[340,320,235],[262,352,410],[186,400,570],[146,330,655],[-650,360,2030],[-1470,395,2860],
+    [420,462,106],[500,465,46],[560,470,27],[300,200,190],[230,130,300],[200,50,380],[350,80,165],
+    [120,60,760],[120,650,760],[-650,0,1960],[-650,750,1960],[-1470,0,2450],[-1470,800,2450]];
+  const westB=(()=>{ const n=WEST.length, P=WEST.map(([x,y])=>[x/100,y/100]), f=r2=>r2>1e-12?r2*Math.log(r2)*.5:0, N=n+3, M=[...Array(N)].map(()=>new Float64Array(N+1));
+    for(let i=0;i<n;i++){ for(let j=0;j<n;j++) M[i][j]=f((P[i][0]-P[j][0])**2+(P[i][1]-P[j][1])**2); M[i][n]=1; M[i][n+1]=P[i][0]; M[i][n+2]=P[i][1]; M[n][i]=1; M[n+1][i]=P[i][0]; M[n+2][i]=P[i][1]; M[i][N]=WEST[i][2]; }
+    for(let c=0;c<N;c++){ let b=c; for(let r=c+1;r<N;r++) if(Math.abs(M[r][c])>Math.abs(M[b][c])) b=r; [M[c],M[b]]=[M[b],M[c]]; for(let r=0;r<N;r++) if(r!==c){ const k=M[r][c]/M[c][c]; if(k) for(let q=c;q<=N;q++) M[r][q]-=k*M[c][q]; } }
+    const w=M.map((row,i)=>row[N]/row[i]);
+    return (mx,my)=>{ const x=mx/100, y=my/100; let v=w[n]+w[n+1]*x+w[n+2]*y; for(let i=0;i<n;i++) v+=w[i]*f((x-P[i][0])**2+(y-P[i][1])**2); return v; }; })();
+  // the villages sit on their own gentler ground (no ridges or gullies under the houses)
+  const WFLAT=[[476,330,14],[392,250,14],[340,320,11],[262,352,12],[186,400,10],[146,330,10]];
+  const westFlat=(mx,my)=>{ let f=0; for(const [x,y,r] of WFLAT){ const d=Math.hypot(mx-x,my-y); if(d<r*2) f=Math.max(f,1-sm(d,r,r*2)); } return f; };
+  // west of 吳厝 (鄉志 戊): rice terraces on the lower slopes, tea gardens higher up toward 芎寮; [paddy, tea] weights
+  const agri=(mx,my)=>{ if(mx<80||mx>275||my<230||my>500) return [0,0]; const band=sm(my,235,265)*(1-sm(my,470,495)), patch=sm(fbm(mx*.045+7,my*.045,3),.3,.42);
+    if(band*patch<=0) return [0,0]; const v=1-westFlat(mx,my), tea=(sm(mx,85,105)*(1-sm(mx,178,196)))*band*patch*v, pad=(sm(mx,172,190)*(1-sm(mx,250,270)))*band*patch*v;
+    return [pad,tea]; };
   function elevM(mx,my){
     let sw=0, se=0; for(const [ax,ay,ae] of ANCHORS){ const d2=(mx-ax)**2+(my-ay)**2+60, w=1/(d2*d2); sw+=w; se+=w*ae; } let e=se/sw;
     e+=4*(fbm(mx*.03,my*.03,3)-.5);
@@ -60,9 +76,15 @@ var TWP=(()=>{
     const r=ridged(mx*.011,my*.011,5);
     // 中央山脈: rising straight from the fan's head (800–1,000 m within two kilometres, 箭竹山稜 over 1,500 m some five or
     // six kilometres in, 三叉嶺 2,860 m fifteen kilometres in), cut by V-shaped valleys
-    { const w=165-mx; if(w>0){ let vd=1e9; for(const V of VALLEYS) for(let i=0;i<V.length-1;i++){ const q=segD(mx,my,V[i][0],V[i][1],V[i+1][0],V[i+1][1])[0]; if(q<vd) vd=q; }
-      const H=1050*(1-Math.exp(-w/140))*sm(w,0,40)+1630*sm(w,250,1650), val=Math.max(.1+.9*sm(vd,2.5,45+w*.03),1-Math.hypot(mx-SANCHA.mx,my-SANCHA.my)/110), peak=330*Math.max(0,1-Math.hypot(mx-SANCHA.mx,my-SANCHA.my)/140)**2;
-        e=Math.max(e,Math.min(180+(H*val)*(.8+.38*r)+peak,2860-1.1*Math.max(0,Math.hypot(mx-SANCHA.mx,my-SANCHA.my)-12))); } }   // nothing higher than 三叉嶺
+    // the west (戊): one smooth rise from 西福尾 up through the villages to 箭竹山稜 and 三叉嶺, steepest by the villages and
+    // easing toward the crest (a thin-plate surface through the heights below), with ridges and V-shaped valleys growing
+    // out of it westward; it takes over from the fan's anchors west of 福尾
+    { const wB=sm(500-mx,0,108); if(wB>0){ let vd=1e9; for(const V of VALLEYS) for(let i=0;i<V.length-1;i++){ const q=segD(mx,my,V[i][0],V[i][1],V[i+1][0],V[i+1][1])[0]; if(q<vd) vd=q; }
+      const B=westB(mx,my), A=10+540*sm(190-mx,0,760), ds=Math.hypot(mx-SANCHA.mx,my-SANCHA.my);
+      const vf=Math.max(sm(vd,2,30+Math.max(0,165-mx)*.04),Math.max(0,1-ds/90)), flat=westFlat(mx,my);
+      let eW=B+A*(1-flat)*(vf*(.62+.7*(r-.5))-.5)+3*(fbm(mx*.05,my*.05,2)-.5);
+      eW=Math.min(eW,2860-1.1*Math.max(0,ds-12));   // nothing higher than 三叉嶺
+      e=e+(eW-e)*wB; } }
     { const s=my-470+12*Math.sin(mx*.02); if(s>0) e+=600*(1-Math.exp(-s/260))*(.55+.8*r)*(1-sm(mx,880,960))*(1-sm(165-mx,0,200)); }
     { const s=-40-my; if(s>0) e+=240*(1-Math.exp(-s/380))*(.5+.8*r)*(1-sm(mx,820,900))*(1-sm(165-mx,0,200)); }
     // the sea
@@ -80,6 +102,8 @@ var TWP=(()=>{
     {id:'up',hw:14,dep:2.2,P:[['m',-1380,405,2450],['m',-1300,410,2100],['m',-1000,420,1500],['m',-700,430,1000],['m',-400,445,600],['m',-200,440,330],['m',-60,430,215],['m',0,425,190],['m',60,418,166],['m',120,410,148],['m',190,405,132],['m',260,415,112],['m',330,450,84],['m',420,458,52],['m',500,463,33],['m',560,466,25],['m',610,458,21],['m',628,432,19.5],['m',636,410,18.6],['m',640,397,18]].map(pt)},
     {id:'down',hw:16,dep:2.4,P:[['m',659,383,18],['l',-950,-300,17],['l',-790,-270,16],['l',-770,-110,15],['l',-630,-130,13.5],['l',-570,20,12.5],['l',-440,-10,11],['l',-400,120,9.8],['l',-300,150,8.7],['l',-190,183,8.05],['l',-60,180,7.95],['l',40,150,7.92],['l',95,85,7.9],['l',113,25,7.9],['l',150,-8,7.88],['l',230,-5,7.85],['l',330,40,7.7],
       ['l',460,-100,7.3],['l',610,-30,6.9],['l',680,150,6.4],['l',840,70,5.9],['l',950,-90,5.3],['l',1090,60,4.6],['l',1180,230,3.8],['l',1340,140,3],['l',1440,250,2],['l',1560,274,1],['l',1700,330,-.6]].map(pt)}];
+  // 大陂溪 up in the west runs on the floor of the rise (戊): its water a little under the land there
+  for(const q of RIVERS[0].P){ const [mx,my]=l2m(q[0],q[1]); if(mx<500) q[2]=Math.min(q[2]+1e9*(mx<480),elevM(mx,my)-(mx<165?3:2.2)); }
   // the rivers every 30 m, the water never above the land round it (but kept as given along the house's fields)
   for(const R of RIVERS){ const Q=[]; let last=1e9; for(let i=0;i<R.P.length-1;i++){ const a=R.P[i], b=R.P[i+1], n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/30));
       for(let k=0;k<n;k++){ const t=k/n, x=a[0]+(b[0]-a[0])*t, z=a[1]+(b[1]-a[1])*t; let w=a[2]+(b[2]-a[2])*t; if(fieldOut(x,z)>60) w=Math.min(w,landL(x,z)-.8); w=Math.min(w,last); last=w; Q.push([x,z,w]); } }
@@ -155,7 +179,7 @@ var TWP=(()=>{
     {id:'old',w:6,street:1,P:[['m',698,248],['m',668,272],['m',642,296],['m',616,326]].map(L)},
     {id:'new',w:8,street:1,P:[['m',616,326],['m',592,314],['m',562,303]].map(L)},
     {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)}];
-  return {S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
+  return {agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
     PLACES,place,RAIL,RAIL_TUNNEL,RAIL_OWN,TRUNK,ROADS,sm,fbm,vn,h2,segD,inPoly,polyD};
 })();
 // {% endraw %}

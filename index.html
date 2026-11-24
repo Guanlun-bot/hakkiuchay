@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>學鳩齋・線上書齋</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+
+:root{--paper:#f1efe8;--card:#f7f6f1;--ink:#3f3a39;--ink-soft:#6e6866;--rule:#d3cec3;--seal:#a8343a;
+--c-academic:#3e5873;--c-talks:#3d6b4f;--c-life:#86683c;--c-taji:#a8343a;--f:"Noto Serif TC","Songti TC","PMingLiU",serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#1b1714;color:var(--ink);font-family:var(--f)}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+button{font-family:var(--f);cursor:pointer}
+.hide{display:none!important}
+/* gate：門口（取名與扮相）。顏色與字型跟學鳩齋網站一致：灰白和紙、消炭墨、細線，朱色只留一道細線 */
+#gate{position:fixed;inset:0;z-index:50;background:linear-gradient(rgba(34,14,9,.3),rgba(34,14,9,.38)),var(--brick,none) 0 0/640px auto,#8e4433;color:var(--ink);overflow:auto;transition:opacity .6s;--ez:cubic-bezier(.25,.8,.25,1)}
+#gate.out{opacity:0;pointer-events:none}
+#gate .gwrap{max-width:960px;margin:0 auto;padding:4.5vh 22px 28px}
+#gate .ghead{display:flex;justify-content:center;text-align:center;margin-bottom:18px}
+#gate .gtitle{font-family:Reisho,ReishoFull,var(--f);font-size:3.2rem;letter-spacing:.15em;line-height:1.05;color:#f4efe4;text-shadow:0 2px 6px rgba(40,16,10,.45)}
+#gate .gsub{display:inline-block;font-size:14px;color:#f1e9dc;text-shadow:0 1px 4px rgba(40,16,10,.5);margin:8px 0 0;border-left:3px solid var(--seal);padding-left:10px}
+#gate .gcard{background:var(--card);border:1px solid var(--rule);outline:1px solid rgba(241,239,232,.55);outline-offset:4px;padding:22px;display:grid;grid-template-columns:260px 1fr;gap:26px;box-shadow:0 10px 30px rgba(40,16,10,.35)}
+#gate .gleft{display:flex;flex-direction:column;gap:10px}
+#gate .gprev{position:relative;height:340px;background:linear-gradient(#f8f6f0,#ece8dd);border:1px solid var(--rule);padding:18px 26px 10px}
+#gate .gprev::after{content:"";position:absolute;inset:5px;border:1px solid rgba(211,206,195,.8);pointer-events:none}
+#gate .gprev svg{transform-origin:50% 100%}
+#gate .gprev.pop svg{animation:gpop .32s var(--ez)}
+@keyframes gpop{0%{transform:scale(.97)}60%{transform:scale(1.01)}100%{transform:scale(1)}}
+#gate .gform{display:flex;flex-direction:column;gap:14px;min-width:0}
+#gate .gsec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+#gate .gsec+.gsec{border-top:1px solid var(--rule);padding-top:14px}
+#gate .gf{display:flex;flex-direction:column;gap:5px;min-width:0}
+#gate .gf.wide{grid-column:1/-1}
+#gate .gl{font-size:12px;color:var(--ink-soft);letter-spacing:.08em}
+#gate input,#gate select,#gate .gopt button,#gate .gbtn2{height:38px;border-radius:4px;border:1px solid #d2c8b8;background:#fffdf8;color:var(--ink);font-family:var(--f);font-size:15px;transition:background .2s var(--ez),border-color .2s var(--ez),box-shadow .2s var(--ez),transform .2s var(--ez)}
+#gate input{padding:0 10px;width:100%}
+#gate select{padding:0 8px;width:100%;appearance:auto}
+#gate input:hover,#gate select:hover,#gate .gopt button:hover,#gate .gbtn2:hover{background:#f6f1e6;border-color:#b9ad99}
+#gate input:focus,#gate select:focus{outline:none;border-color:var(--ink-soft);box-shadow:0 0 0 3px rgba(168,52,58,.12)}
+#gate input.need{border-color:var(--seal)}
+#gate .gopt{display:flex;gap:6px}
+#gate .gopt button{flex:1;padding:0 8px;white-space:nowrap}
+#gate .gopt button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#gate .gopt button:active,#gate .gbtn2:active{transform:translateY(1px) scale(.985)}
+#gate #groomRow{display:flex;gap:6px}
+#gate #groomRow input{flex:1;text-transform:uppercase}
+#gate #groomRow .gbtn2{white-space:nowrap;padding:0 12px;width:auto;flex:none;letter-spacing:.05em}
+#gate .gbtn2{width:100%;letter-spacing:.2em}
+#gate .gsw{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:38px}
+#gate .gsw button{position:relative;width:24px;height:24px;border-radius:50%;border:2px solid #fffdf8;box-shadow:0 0 0 1px var(--rule);transition:transform .2s var(--ez),box-shadow .2s var(--ez);padding:0}
+#gate .gsw button:hover{transform:scale(1.15)}
+#gate .gsw button.on{box-shadow:0 0 0 2px var(--ink)}
+#gate .gsw button::after{content:attr(data-n);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;padding:2px 6px;border-radius:2px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+#gate .gsw button:hover::after{opacity:1}
+#gate .gbtn{height:46px;width:100%;font-family:var(--f);font-size:17px;letter-spacing:.4em;padding-left:.4em;background:var(--ink);color:var(--paper);border:0;border-radius:4px;transition:background .2s var(--ez),transform .2s var(--ez),box-shadow .2s var(--ez)}
+#gate .gbtn:hover{background:#2b2726;transform:translateY(-1px);box-shadow:0 4px 12px rgba(63,58,57,.22)}
+#gate .gbtn:active{transform:translateY(1px) scale(.99);box-shadow:none}
+#gate .gbtn:disabled{opacity:.6}
+#gate .gkeys{margin-top:16px;font-size:.82rem;color:#f1e9dc;line-height:2;text-shadow:0 1px 3px rgba(40,16,10,.6)}
+#gate .gkeys span{white-space:nowrap;margin-right:12px}
+#gate kbd{font-family:var(--f);font-size:.78rem;border:1px solid var(--rule);border-bottom-width:2px;border-radius:3px;padding:0 5px;background:#fffdf8;color:var(--ink-soft);margin-right:3px;text-shadow:none}
+@media (max-width:760px){ #gate .gcard{grid-template-columns:1fr} #gate .gprev{height:300px;max-width:260px;margin:0 auto;width:100%} #gate .gleft{align-items:stretch} #gate .gtitle{font-size:2.6rem} }
+@media (max-width:420px){ #gate .gsec{grid-template-columns:1fr} }
+/* loading：推門與宅中人整理屋子的故事 */
+#loading-overlay{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;opacity:0;pointer-events:none;transition:opacity .6s}
+#loading-overlay.on{opacity:1;pointer-events:auto}
+#loading-overlay .ldoor{position:relative;width:180px;height:230px;perspective:600px;background:#f4d9a0;box-shadow:inset 0 0 40px 10px #e9b866;border:12px solid #a8a6a1;border-bottom-width:6px;outline:1px solid #8f8d88}
+#loading-overlay .ldoor i{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(90deg,#5a3a26 0 21px,#4c311f 21px 22px);will-change:transform;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+#loading-overlay .ldoor i:first-child{left:0;transform-origin:0 50%}
+#loading-overlay .ldoor i:last-child{right:0;transform-origin:100% 50%}
+#loading-overlay.on .ldoor i:first-child{animation:ldl 3.2s var(--ez,ease) .3s forwards}
+#loading-overlay.on .ldoor i:last-child{animation:ldr 3.2s var(--ez,ease) .3s forwards}
+@keyframes ldl{to{transform:rotateY(-72deg)}}
+@keyframes ldr{to{transform:rotateY(72deg)}}
+#loading-overlay .ltxt{font-size:15px;color:var(--ink-soft);min-height:1.6em;letter-spacing:.06em;animation:lbreath 2.4s ease-in-out infinite}
+@keyframes lbreath{50%{opacity:.55}}
+#loading-overlay .lbar{width:220px;height:2px;background:var(--rule);overflow:hidden}
+#loading-overlay .lbar b{display:block;height:100%;background:var(--ink);transform-origin:0 50%;transform:scaleX(0);transition:transform .4s cubic-bezier(.25,.8,.25,1);will-change:transform}
+#planlabels{position:fixed;inset:0;pointer-events:none;z-index:9}
+#planlabels .pl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;margin:-9px 0 0 -6px;background:rgba(241,239,232,.88);padding:1px 6px 1px 3px;border-radius:9px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+#planlabels .pl i{width:10px;height:10px;border-radius:50%;display:inline-block}
+#planlabels .pl.me{background:var(--ink);color:#f1efe8}
+/* hud：四角散點。白晝宣紙、夜裡松煙墨；開啟中的按鈕用墨色反白（朱色只留標題細線） */
+:root{--hud-bg:rgba(244,241,234,.94);--hud-ink:#1f1d1a;--hud-soft:#5f5a52;--hud-rule:rgba(63,58,57,.22);--hud-on:#1f1d1a;--hud-on-ink:#f4f1ea;--hud-track:#d9d3c6;--hud-sh:0 4px 18px rgba(0,0,0,.22)}
+:root[data-hud="night"]{--hud-bg:rgba(24,23,21,.94);--hud-ink:#f0ece1;--hud-soft:#b5ae9f;--hud-rule:rgba(240,236,225,.22);--hud-on:#f0ece1;--hud-on-ink:#181715;--hud-track:#4a4640;--hud-sh:0 4px 18px rgba(0,0,0,.5)}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;font-family:var(--f)}
+#hud .hp{position:absolute;pointer-events:auto;background:var(--hud-bg);color:var(--hud-ink);border-radius:4px;box-shadow:var(--hud-sh);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#hud button{font-family:var(--f);cursor:pointer}
+#hud .tb{background:transparent;border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:13px;padding:5px 10px;border-radius:4px;letter-spacing:.06em;transition:background .2s,color .2s,border-color .2s}
+#hud .tb:hover{border-color:var(--hud-soft)}
+#hud .tb.on,#hud .tb[aria-pressed="true"]{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
+#hud .tb:disabled{opacity:.45;cursor:default}
+/* 一頁式儀表板：右上「選單 Tab」彈出，直排一欄 */
+#hud #utility{position:absolute;right:14px;top:12px;pointer-events:auto;color:var(--hud-ink)}
+#utility summary{list-style:none;cursor:pointer;margin-left:auto;width:max-content;background:var(--hud-bg);border:1px solid var(--hud-rule);border-radius:4px;padding:6px 12px;box-shadow:var(--hud-sh);font-size:14px;letter-spacing:.08em;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#utility summary::-webkit-details-marker{display:none}
+#utility summary kbd{font:11px var(--f);border:1px solid var(--hud-rule);border-radius:3px;padding:0 4px;color:var(--hud-soft)}
+#utility[open] summary{background:var(--hud-on);color:var(--hud-on-ink)}
+#utility-body{margin-top:8px;margin-left:auto;background:var(--hud-bg);border-radius:4px;box-shadow:var(--hud-sh);padding:14px;width:min(310px,calc(100vw - 28px));display:flex;flex-direction:column;gap:12px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);max-height:calc(100vh - 80px);overflow:auto;transform-origin:top right;animation:dashPop .24s cubic-bezier(.2,.9,.3,1.15)}
+#utility.shut #utility-body{animation:dashShut .17s ease-in forwards}
+@keyframes dashPop{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes dashShut{to{opacity:0;transform:translateY(-8px) scale(.94)}}
+@media (prefers-reduced-motion:reduce){#utility-body,#utility.shut #utility-body{animation-duration:.01s}}
+#utility .dsec{min-width:0}
+#utility .dsec+.dsec{border-top:1px solid var(--hud-rule);padding-top:12px}
+#brand{border-left:3px solid var(--seal);padding-left:10px}
+#brand .bt{display:flex;align-items:center;gap:10px}
+#brand .n{font-family:Reisho,var(--f);font-size:25px;line-height:1.1}
+#brand .t{font-size:12px;color:var(--hud-soft);margin-top:3px;letter-spacing:.04em;line-height:1.6}
+#bDayNight{margin-left:auto;padding:2px 9px!important;font-size:13px!important}
+#envpanel{margin-top:10px}
+#lighting,#ctempRow,#wxRow{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:6px}
+#lighting input,#ctempRow input{flex:1;min-width:80px}
+#lighting output,#ctempRow output{min-width:3.2em;text-align:right;color:var(--hud-soft)}
+#hud input[type=range],#panel input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--hud-track);outline:none;margin:6px 0}
+#hud input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--hud-bg);border:1.5px solid var(--hud-ink);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+#hud input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--hud-bg);border:1.5px solid var(--hud-ink)}
+#ctempRow input[type=range]{background:linear-gradient(90deg,#f0b071,#f6eee0 55%,#dbe8e3)}
+#hud select{-webkit-appearance:none;appearance:none;font-family:var(--f);font-size:12.5px;color:var(--hud-ink);background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.3'/%3E%3C/svg%3E") no-repeat right 7px center;border:1px solid var(--hud-rule);border-radius:4px;padding:4px 24px 4px 8px;outline:none}
+#hud select option{color:#1f1d1a;background:#f4f1ea}
+/* 小地圖：宅院平面圖的縮影，長方形，N 開關 */
+#hud #hud-tr{left:14px;top:12px;padding:0;overflow:hidden;cursor:pointer}
+#hud-tr.mmoff{display:none}
+#people .h{font-size:12.5px;color:var(--hud-soft);letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px}
+#pl{max-height:26vh;overflow:auto;margin-top:4px;font-size:13px}
+#people .p{display:flex;gap:6px;align-items:baseline;line-height:1.7}
+#people .dot{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
+#people .st{color:var(--hud-soft);font-size:12px;margin-left:auto;white-space:nowrap}
+#hud-bl .vrow{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+#voice-status{font-size:11.5px;color:var(--hud-soft)}
+.vctl{margin-top:6px;font-size:12px;display:flex;flex-direction:column;gap:4px}
+.vctl label{display:flex;align-items:center;gap:6px;color:var(--hud-soft)}
+.vctl input[type=range]{flex:1}
+#voicevol{display:none}
+#hud-bl.voice #voicevol{display:flex}
+#settings{margin-top:8px;border-top:1px solid var(--hud-rule);padding-top:4px}
+#settings summary{font-size:12px;color:var(--hud-soft);cursor:pointer;list-style:none}
+#settings summary::-webkit-details-marker{display:none}
+#settings summary::before{content:"▸ "}
+#settings[open] summary::before{content:"▾ "}
+#hud-br{display:flex;flex-direction:column;gap:8px}
+#bar{display:flex;gap:6px;flex-wrap:wrap}
+#bar button{background:transparent;border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:13.5px;padding:6px 11px;border-radius:4px;letter-spacing:.04em;transition:background .2s,color .2s}
+#bar button:hover{border-color:var(--hud-soft)}
+#bar button.on{background:var(--hud-on);color:var(--hud-on-ink);border-color:var(--hud-on)}
+#bar button:disabled{opacity:.5;cursor:default}
+@media (max-width:760px){ #utility-body{max-height:calc(100vh - 140px)} }
+#planbar{position:absolute;right:14px;bottom:70px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+#planbar button{background:var(--hud-bg);border:1px solid var(--hud-rule);color:var(--hud-ink);font-size:14px;padding:7px 12px;border-radius:4px;box-shadow:var(--hud-sh)}
+#hint{opacity:0;position:absolute;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(30,26,23,.78);color:#efe8da;font-size:13px;padding:8px 14px;border-radius:4px;line-height:1.7;text-align:center;max-width:92vw;pointer-events:none;transition:opacity .4s}
+#drink{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:var(--hud-bg);color:var(--hud-ink);padding:6px 10px;font-size:13px;box-shadow:var(--hud-sh);display:flex;gap:8px;align-items:center;border-radius:4px;pointer-events:auto}
+#drink button{font-size:12px;padding:3px 8px;border:1px solid var(--hud-rule);background:transparent;border-radius:4px;color:var(--hud-ink)}
+.menu li{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.vol{display:flex;align-items:center;gap:8px;font-size:13px;margin:10px 0}
+.vol input{flex:1;accent-color:var(--ink)}
+#timer{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--hud-bg);color:var(--hud-ink);padding:10px 16px;text-align:center;box-shadow:var(--hud-sh);border-top:3px solid var(--c-talks);border-radius:4px;pointer-events:auto}
+#timer .lab{font-size:12px;color:var(--hud-soft);letter-spacing:.2em}
+#timer .clk{font-size:34px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.04em;line-height:1.2}
+#timer .row{display:flex;gap:6px;margin-top:6px;justify-content:center}
+#timer button{font-size:13px;padding:5px 10px;border:1px solid var(--hud-rule);background:transparent;color:var(--hud-ink);border-radius:4px}
+#timer button.pri{background:var(--c-talks);color:#fff;border-color:var(--c-talks)}
+@media (max-width:640px){#brand .n{font-size:21px}#hint{bottom:110px}}
+/* side panel */
+#panel{position:fixed;right:0;top:0;bottom:0;width:min(400px,100vw);background:var(--paper);z-index:20;box-shadow:-6px 0 24px rgba(0,0,0,.3);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .35s cubic-bezier(.22,.61,.36,1)}
+#panel.open{transform:none}
+#panel .ph{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--rule)}
+#panel .ph h2{font-size:18px;margin:0;font-weight:600;flex:1;line-height:1.4}
+#panel .x{border:0;background:none;font-size:22px;color:var(--ink-soft);padding:0 4px;line-height:1}
+#panel .pb{overflow:auto;padding:12px 16px 24px;flex:1;-webkit-overflow-scrolling:touch}
+.srch{width:100%;font:15px var(--f);padding:9px 10px;border:1px solid var(--rule);background:#fff;border-radius:2px;outline:none;margin-bottom:8px}
+.meta{font-size:12px;color:var(--ink-soft)}
+.list{list-style:none;margin:0;padding:0}
+.list li{padding:8px 2px;border-bottom:1px solid #e3dfd5;cursor:pointer;line-height:1.5}
+.list li:hover{background:#ebe7dd}
+.list .bt{font-size:14.5px}
+.list .ba{font-size:12px;color:var(--ink-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 10px}
+.chips button{font-size:12.5px;padding:4px 9px;border:1px solid var(--rule);background:#fff;border-radius:2px;color:var(--ink)}
+.chips button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.card dl{display:grid;grid-template-columns:4.5em 1fr;gap:6px 10px;margin:8px 0 14px;font-size:14px}
+.card dt{color:var(--ink-soft)}
+.card dd{margin:0}
+.card .tt{font-size:19px;font-weight:600;line-height:1.5}
+.btn{display:inline-block;font-size:13.5px;padding:7px 12px;border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:2px;text-decoration:none;margin:0 6px 6px 0}
+.btn.pri{background:var(--seal);color:#fff;border-color:var(--seal)}
+.sec{font-size:13px;letter-spacing:.2em;margin:14px 0 4px;padding-left:8px;border-left:3px solid}
+/* reader */
+#reader{position:fixed;inset:0;z-index:30;background:var(--paper);overflow:auto;-webkit-overflow-scrolling:touch}
+#reader .rw{max-width:720px;margin:0 auto;padding:28px 22px 80px}
+#reader .top{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--paper);padding:10px 0;border-bottom:1px solid var(--rule);margin-bottom:22px;z-index:1}
+#reader h1{font-size:24px;line-height:1.5;margin:0 0 6px;font-weight:700}
+#reader .sub{color:var(--ink-soft);font-size:15px;margin-bottom:4px}
+#reader .by{color:var(--ink-soft);font-size:13px;margin-bottom:22px}
+#reader .src{font-size:13px;color:var(--ink-soft);background:var(--card);padding:10px 12px;border-left:3px solid var(--rule);margin-bottom:22px;line-height:1.8}
+#reader article{font-size:16.5px;line-height:2;text-align:justify}
+#reader article p{margin:0 0 1.1em}
+#reader article h2{font-size:19px;margin:1.8em 0 .6em}
+#reader article h3{font-size:17px;margin:1.5em 0 .5em}
+#reader blockquote{margin:0 0 1.2em;padding:4px 0 4px 16px;border-left:3px solid var(--rule);color:#5b5553;font-size:15.5px}
+#reader sup a{color:var(--seal);text-decoration:none;font-size:11px}
+#reader .img{display:block;font-size:13px;color:var(--ink-soft);border:1px dashed var(--rule);padding:8px 12px;margin:0 0 1.2em;text-decoration:none}
+#reader .notes{border-top:1px solid var(--rule);margin-top:30px;padding-top:14px;font-size:13.5px;line-height:1.8;color:#555}
+#reader .notes li{margin-bottom:6px}
+#reader a{color:var(--c-academic)}
+@media (max-width:640px){#brand .n{font-size:21px}#people{font-size:12px;min-width:0;top:107px;right:auto;left:14px;padding:6px 10px}#people .st{margin-left:10px}#bar button{padding:8px 10px;font-size:13px}#hint{bottom:110px}}
+#aim{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);color:white;text-shadow:0 0 3px black;pointer-events:none;z-index:5;font:22px monospace}
+#aim-action{position:absolute;top:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:#29231ee8;padding:4px 8px;border-radius:3px;font:14px system-ui}
+/* voice hud & lobby room */
+#voice-hud{position:fixed;right:14px;top:190px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;pointer-events:none;z-index:9}
+.voice-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(27,23,20,.78);border:1px solid rgba(211,206,195,.35);color:#f1efe8;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.28);transition:all .15s ease}
+.voice-pill svg{width:13px;height:13px;flex-shrink:0;fill:rgba(241,239,232,.86)}
+.voice-pill.speaking{background:rgba(168,52,58,.92);border-color:#f0c265;color:#fff6dc;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.voice-pill.speaking svg{fill:#f0c265}
+</style>
+<link rel="stylesheet" href="./vr-fonts.css" media="print" onload="this.media='all'">
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas><span id="aim" hidden aria-hidden="true">+<span id="aim-action" hidden></span></span>
+<div id="gate">
+  <div class="gwrap">
+    <div class="ghead">
+      <div><div class="gtitle">學鳩齋</div><div class="gsub" id="gsub">線上書齋・入門前，先報上名來</div></div>
+    </div>
+    <div class="gcard">
+      <div class="gleft">
+        <div class="gprev" id="gprev"></div>
+        <button type="button" class="gbtn2" id="grand" data-t="ui.random">隨機扮相</button>
+      </div>
+      <div class="gform">
+        <div class="gsec">
+          <div class="gf"><span class="gl" data-t="ui.mode">模式</span><div class="gopt" data-k="mode"><button data-v="solo" data-t="ui.solo">單人</button><button data-v="multi" data-t="ui.multi">多人</button></div></div>
+          <div class="gf"><span class="gl" data-t="ui.ctrl">鼠標</span><div class="gopt" data-k="ctrlMode"><button data-v="fps" data-t="ui.fps">FPS</button><button data-v="hand" data-t="ui.hand">手模式</button></div></div>
+          <div class="gf wide" id="groomF"><span class="gl" data-t="ui.room">房間</span><div id="groomRow"><input id="groom" maxlength="16" placeholder="HAKKIUCHAY-01" autocomplete="off"><button type="button" class="gbtn2" id="gcopy" data-t="ui.copy">複製邀請連結</button></div></div>
+          <div class="gf"><span class="gl" data-t="ui.name">名字</span><input id="gname" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname"></div>
+          <div class="gf"><span class="gl" data-t="cat.g">身形</span><div class="gopt" data-k="g"><button data-v="m" data-t="g.m">男</button><button data-v="f" data-t="g.f">女</button></div></div>
+        </div>
+        <div class="gsec" id="gsel"></div>
+        <div class="gsec">
+          <div class="gf"><span class="gl" data-t="ui.color">衣色</span><div class="gsw" id="gsw"></div></div>
+          <div class="gf"><span class="gl" data-t="ui.hair">髮色</span><div class="gsw" id="ghc"></div></div>
+        </div>
+        <button id="genter" class="gbtn" data-t="ui.enter">進門</button>
+      </div>
+    </div>
+    <div class="gkeys" id="gkeys"></div>
+  </div>
+</div>
+<div id="loading-overlay"><div class="ldoor"><i></i><i></i></div><div class="ltxt" id="ltxt"></div><div class="lbar"><b id="lbar"></b></div></div>
+<script src="look.js?v=1795515529"></script>
+<script>
+(()=>{ const K=window.HK_LOOK, LS={get:k=>{ try{ return localStorage.getItem(k); }catch{ return null; } }};
+  // texts the back office can change (_data/vr.yml › look); these are the defaults
+  const UI={'ui.mode':'模式','ui.solo':'單人','ui.multi':'多人','ui.ctrl':'鼠標','ui.fps':'FPS','ui.hand':'手模式','ui.room':'房間','ui.copy':'複製邀請連結','ui.copied':'已複製連結',
+    'ui.name':'名字','ui.namePh':'怎麼稱呼你','ui.nameNeed':'請先取個名字','ui.color':'衣色','ui.hair':'髮色','ui.random':'隨機扮相','ui.enter':'進門','ui.change':'換好了','ui.failed':'載入失敗，點此重新整理',
+    'ui.keys':'進門後｜WASD 移動｜Shift 跑｜空白鍵 跳｜Z 蹲｜V 第三人稱｜M 麥克風｜C 抽菸｜Enter 聊天',
+    'hud.menu':'選單','hud.day':'晝','hud.night':'夜','hud.light':'燈光','hud.ctemp':'色溫','hud.here':'在齋','hud.voice':'加入語音 (M)','hud.mute':'靜音','hud.vol':'語音音量','hud.settings':'設定','hud.audio':'音效',
+    'hud.audioOn':'全部音效（含腳步聲）','hud.audioAmb':'只留互動提示（無腳步聲）','hud.audioOff':'全部靜音','hud.mouse':'鼠標','hud.fps':'FPS（鎖定視角）','hud.hand':'手模式（自由拖曳）','hud.acts':'動作',
+    'hud.plan':'宅院平面','hud.books':'找書','hud.posts':'文章','hud.seat':'找位子','hud.name':'名字・裝扮','hud.smoke':'抽菸 (C)','hud.third':'第三人稱 (V)','hud.entry':'入口視角','hud.vr':'進入 VR'};
+  for(const k of Object.keys(UI)) K.labels[k]=UI[k];
+  let LOADING=['玉姨把門埕最後一撮落葉掃到牆邊','許總管翻開冊子，看今天有誰要來','阿春在備茶處燒水，擦乾茶盤','火師生起灶火，蒸籠冒出第一縷白煙','阿財把柴挑進灶腳，順手掩上後門','水生叔給含笑澆了水','書架上的書一本本歸位','壁燈點上了，請進'];
+  const T=k=>K.labels[k]||k;
+  const COLORS=K.COLORS.map(c=>c[0]);
+  let look=K.clean((()=>{ try{ return JSON.parse(LS.get('hk-look')||'null'); }catch{ return null; } })());
+  const urlRoom=(new URLSearchParams(location.search).get('room')||'').trim().toUpperCase().slice(0,16);
+  const G=window.__gate={name:(LS.get('hk-name')||'').trim().slice(0,12),color:COLORS.includes(LS.get('hk-color'))?LS.get('hk-color'):(LS.get('hk-color')||COLORS[Math.floor(Math.random()*COLORS.length)]),look,
+    mode:urlRoom?'multi':(LS.get('hk-mode')==='solo'?'solo':'multi'),room:(urlRoom||LS.get('hk-room')||'HAKKIUCHAY-01').trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01',ctrlMode:LS.get('hk-ctrl-mode')==='hand'?'hand':'fps'};
+  if(G.name==='訪客') G.name='';
+  const $=s=>document.querySelector(s), inp=$('#gname'), btn=$('#genter'), roomInp=$('#groom'), roomF=$('#groomF'), copyBtn=$('#gcopy'), prev=$('#gprev');
+  inp.value=G.name; roomInp.value=G.room;
+  // six menus in a two-by-three grid, each grouped
+  const SEL=['o','h','f','a','hs','p'];
+  function build(){ $('#gsel').innerHTML=SEL.map(k=>`<div class="gf"><span class="gl">${T('cat.'+k)}</span><select data-k="${k}">${K.CAT[k].groups.map((g,gi)=>{ const o=g.items.map(([id])=>`<option value="${id}">${T(k+'.'+id)}</option>`).join(''); return g.label?`<optgroup label="${T('grp.'+k+'.'+gi)}">${o}</optgroup>`:o; }).join('')}</select></div>`).join('');
+    $('#gsw').innerHTML=K.COLORS.map(([c])=>`<button type="button" data-c="${c}" data-n="${T('color.'+c)}" style="background:${c}" aria-label="${T('color.'+c)}"></button>`).join('');
+    $('#ghc').innerHTML=K.HAIR.map(([c])=>`<button type="button" data-c="${c}" data-n="${T('hair.'+c)}" style="background:${c}" aria-label="${T('hair.'+c)}"></button>`).join('');
+    document.querySelectorAll('[data-t]').forEach(e=>{ e.textContent=T(e.dataset.t); });
+    inp.placeholder=T('ui.namePh');
+    $('#gkeys').innerHTML=T('ui.keys').split('｜').map((p,i)=>i?`<span>${p.replace(/^(\S+)\s/,(m,k)=>`<kbd>${k}</kbd>`)}</span>`:`<span>${p}</span>`).join('');
+    $('#gsel').onchange=e=>{ const s=e.target.closest('select'); if(!s) return; G.look[s.dataset.k]=s.value; sync(true); };
+    $('#gsw').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.color=b.dataset.c; sync(true); };
+    $('#ghc').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; G.look.hc=b.dataset.c; sync(true); };
+    sync(false); }
+  function sync(pop){ G.look=K.clean(G.look);
+    document.querySelectorAll('#gate .gopt').forEach(d=>d.querySelectorAll('button').forEach(b=>b.classList.toggle('on',(d.dataset.k==='mode'?G.mode:d.dataset.k==='ctrlMode'?G.ctrlMode:G.look[d.dataset.k])===b.dataset.v)));
+    document.querySelectorAll('#gsel select').forEach(s=>{ s.value=G.look[s.dataset.k]; });
+    roomF.style.display=G.mode==='multi'?'':'none';
+    document.querySelectorAll('#gsw button').forEach(b=>b.classList.toggle('on',b.dataset.c===G.color));
+    document.querySelectorAll('#ghc button').forEach(b=>b.classList.toggle('on',b.dataset.c===G.look.hc));
+    prev.innerHTML=K.svg(G.look,G.color); if(pop){ prev.classList.remove('pop'); void prev.offsetWidth; prev.classList.add('pop'); } }
+  document.querySelectorAll('#gate .gopt').forEach(d=>d.onclick=e=>{ const b=e.target.closest('button'); if(!b) return; const k=d.dataset.k;
+    if(k==='mode') G.mode=b.dataset.v; else if(k==='ctrlMode') G.ctrlMode=b.dataset.v; else { G.look[k]=b.dataset.v; if(k==='g'){ const fem=K.FEM_O.includes(G.look.o); if((b.dataset.v==='f')!==fem&&!['robe','suit','trench','tang'].includes(G.look.o)) G.look.o=b.dataset.v==='f'?'qipao':'robe'; } } sync(k==='g'); });
+  $('#grand').onclick=()=>{ G.look=K.random(G.look.g); G.color=COLORS[Math.floor(Math.random()*COLORS.length)]; sync(true); };
+  roomInp.oninput=()=>{ G.room=roomInp.value.trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01'; };
+  copyBtn.onclick=()=>{ const code=(roomInp.value||G.room||'HAKKIUCHAY-01').trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01'; G.room=code; roomInp.value=code;
+    const url=`${location.origin}${location.pathname}?room=${encodeURIComponent(code)}`;
+    if(navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(()=>{ copyBtn.textContent=T('ui.copied'); setTimeout(()=>copyBtn.textContent=T('ui.copy'),1800); }).catch(()=>prompt(T('ui.copy'),url)); else prompt(T('ui.copy'),url); };
+  inp.oninput=()=>{ G.name=inp.value; };
+  // the loading screen: the doors swing open while the household gets the place ready; the house reports its progress
+  const ov=$('#loading-overlay'), lt=$('#ltxt'), lb=$('#lbar'); let li=-1, lastP=0;
+  window.__loadStep=p=>{ p=Math.max(lastP,Math.min(1,p)); lastP=p; lb.style.transform=`scaleX(${p})`; const i=Math.min(LOADING.length-1,Math.floor(p*LOADING.length)); if(i!==li){ li=i; lt.textContent=LOADING[i]; } };
+  window.__loadDone=()=>{ window.__loadStep(1); setTimeout(()=>ov.classList.remove('on'),450); };
+  function go(){ G.name=inp.value.trim(); if(!G.name){ inp.focus(); inp.classList.add('need'); inp.placeholder=T('ui.nameNeed'); return; }
+    G.room=roomInp.value.trim().toUpperCase().slice(0,16)||'HAKKIUCHAY-01';
+    if(window.__houseReady&&window.__enterHouse){ window.__enterHouse(); return; }
+    window.__wantEnter=true; btn.disabled=true; li=-1; lastP=0; window.__loadStep(.02); ov.classList.add('on'); setTimeout(()=>window.__loadHouse?.(),650); }
+  btn.onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } e.stopPropagation(); };
+  window.__openGate=()=>{ const g=$('#gate'); inp.value=G.name; roomInp.value=G.room; btn.textContent=T('ui.change'); btn.disabled=false; g.classList.remove('hide','out'); sync(false); };
+  window.__gateFail=()=>{ ov.classList.remove('on'); btn.textContent=T('ui.failed'); btn.disabled=false; btn.onclick=()=>location.reload(); };
+  { const c=document.createElement('canvas'), W=720, H=480, bw=60, bh=20, m=3; c.width=W; c.height=H; const g=c.getContext('2d'); let sd=7; const R=()=>(sd=(sd*16807)%2147483647)/2147483647;
+    g.fillStyle='#b9ab95'; g.fillRect(0,0,W,H);
+    for(let r=0;r*bh<H;r++){ const off=r%2?bw/2:0; for(let x=-off;x<W;x+=bw){ const h=8+R()*10|0, l=34+R()*10|0, s=48+R()*14|0; g.fillStyle=`hsl(${h} ${s}% ${l}%)`; g.fillRect(x+m/2,r*bh+m/2,bw-m,bh-m);
+      for(let i=0;i<14;i++){ g.fillStyle=`rgba(${R()<.5?'40,12,6':'230,170,140'},${.06+R()*.1})`; g.fillRect(x+m/2+R()*(bw-m-4),r*bh+m/2+R()*(bh-m-2),2+R()*5,1+R()*2); } } }
+    document.getElementById('gate').style.setProperty('--brick',`url(${c.toDataURL('image/jpeg',.82)})`); }
+  if(matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
+  build(); if(!G.name) setTimeout(()=>inp.focus(),50);
+  // the back office: renamed items, the loading story
+  fetch('gate.json').then(r=>r.ok?r.json():null).then(j=>{ if(!j) return;
+    if(j.sub) $('#gsub').textContent=j.sub;
+    for(const e of Array.isArray(j.look)?j.look:[]) if(e&&e.key&&String(e.label||'').trim()) K.labels[e.key]=String(e.label).trim();
+    const L=(Array.isArray(j.loading)?j.loading:[]).map(x=>String(x&&x.line||x||'').trim()).filter(Boolean); if(L.length) LOADING=L;
+    build(); }).catch(()=>{});
+})();
+</script>
+
+
+<div id="planlabels" class="hide"></div>
+<div id="hud">
+  
+  
+  <div id="timer" class="hide">
+    <div class="lab" id="tlab">自習</div>
+    <div class="clk" id="tclk">25:00</div>
+    <div class="row"><button class="pri" id="tfocus">專注 25 分</button><button id="tbreak">休息 5 分</button><button id="tup">起身</button></div>
+  </div>
+  <div id="drink" class="hide"><span id="dname"></span><button id="dsip">喝一口</button><button id="dfin">不喝了</button></div>
+  <div id="hint"></div>
+  <div id="voice-hud" aria-live="polite"></div>
+  <div id="hud-tr" class="hp"></div>
+  <details id="utility"><summary><span data-t="hud.menu">選單</span> <kbd>Tab</kbd></summary><div id="utility-body">
+  <div id="hud-tl" class="dsec open">
+    <div id="brand"><div class="bt"><span class="n">學鳩齋</span><button type="button" class="tb" id="bDayNight" aria-pressed="false" data-t="hud.day">晝</button></div><div class="t" id="today"></div></div>
+    <div id="envpanel"><label id="lighting"><span data-t="hud.light">燈光</span> <input id="lightLevel" type="range" min="0" max="100" value="45"><output id="lightValue" for="lightLevel">45%</output></label><label id="ctempRow"><span data-t="hud.ctemp">色溫</span> <input id="ctemp" type="range" min="2700" max="6500" step="100" value="4900"><output id="ctempValue" for="ctemp">4900K</output></label></div>
+  </div>
+  <div id="hud-bl" class="dsec">
+    <div id="people"><div class="h" id="pplHead"><span><span data-t="hud.here">在齋</span> <span id="pc"></span></span><span id="whereNow"></span></div><div id="pl"></div></div>
+    <div class="vrow"><button class="tb" id="voice-toggle" disabled data-t="hud.voice">加入語音 (M)</button><button class="tb" id="voice-mute" hidden data-t="hud.mute">靜音</button></div>
+    <div id="voice-status" role="status"></div>
+    <div class="vctl"><label id="voicevol"><span data-t="hud.vol">語音音量</span> <input id="voice-volume" type="range" min="0" max="2" step="0.05" value="1.0"><span id="voice-vol-val">100%</span></label></div>
+    <details id="settings"><summary data-t="hud.settings">設定</summary><div class="vctl"><label><span data-t="hud.audio">音效</span><select id="audio-mode"><option value="on" data-t="hud.audioOn">全部音效（含腳步聲）</option><option value="ambient" data-t="hud.audioAmb">只留互動提示（無腳步聲）</option><option value="off" data-t="hud.audioOff">全部靜音</option></select></label><label><span data-t="hud.mouse">鼠標</span><select id="ctrl-mode"><option value="fps" data-t="hud.fps">FPS（鎖定視角）</option><option value="hand" data-t="hud.hand">手模式（自由拖曳）</option></select></label></div></details>
+  </div>
+  <div id="hud-br" class="dsec"><div id="bar">
+    <button id="bPlan" data-t="hud.plan">宅院平面</button>
+    <button id="bBooks" data-t="hud.books">找書</button>
+    <button id="bPosts" data-t="hud.posts">文章</button>
+    <button id="bSeat" data-t="hud.seat">找位子</button>
+    <button id="bName" data-t="hud.name">名字・裝扮</button>
+    <button id="bSmoke" data-t="hud.smoke">抽菸 (C)</button>
+    <button id="bThird" data-t="hud.third">第三人稱 (V)</button>
+    <button id="bEntry" data-t="hud.entry">入口視角</button>
+    <button id="bVR" data-t="hud.vr">進入 VR</button>
+  </div></div>
+  </div></details>
+  <div id="planbar" class="hide"><button id="pzIn">＋</button><button id="pzOut">－</button><button id="pTop">回到正上方</button><button id="pWalk">回到行走</button></div>
+</div>
+
+<div id="panel"><div class="ph"><h2 id="ptitle"></h2><button class="x" id="pclose" aria-label="關閉">×</button></div><div class="pb" id="pbody"></div></div>
+<div id="reader" class="hide"><div class="rw"><div class="top"><button class="btn" id="rclose">← 回到書齋</button><a class="btn" id="rlink" href="#" target="_blank" rel="noopener">到學鳩齋網站讀</a></div><div id="rbody"></div></div></div>
+
+
+<script>
+const configReady=new Promise(resolve=>{
+  const script=document.createElement('script');
+  script.src='./config.js';
+  script.onload=script.onerror=resolve;
+  document.head.append(script);
+});
+// fetch the realtime library while the visitor is still at the gate, so joining the others doesn't wait for it after the house is built
+configReady.then(()=>{ if(!window.VR_CONFIG||!window.VR_CONFIG.url||window.VR_CONFIG.ws||window.supabase) return; const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'; s.async=true; document.head.append(s); });
+</script>
+<link rel="stylesheet" href="fonts/reisho.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script>
+let houseLoading=false;
+// the house is built only after the visitor has chosen a name and look and pressed 進門 (nothing 3D runs at the gate)
+window.__loadHouse=()=>{
+  if(houseLoading) return;
+  houseLoading=true;
+  import('./vr-house.js?v=1795515529').catch(error=>{ console.error(error); houseLoading=false; window.__gateFail?.(); });
+};
+</script>
+</body>
+</html>

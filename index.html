@@ -250,7 +250,7 @@ button{font-family:var(--f);cursor:pointer}
   </div>
 </div>
 <div id="loading-overlay"><div class="ldoor"><i></i><i></i></div><div class="ltxt" id="ltxt"></div><div class="lbar"><b id="lbar"></b></div></div>
-<script src="look.js?v=1795537392"></script>
+<script src="look.js?v=1795541182"></script>
 <script>
 (()=>{ const K=window.HK_LOOK, LS={get:k=>{ try{ return localStorage.getItem(k); }catch{ return null; } }};
   // texts the back office can change (_data/vr.yml › look); these are the defaults
@@ -388,7 +388,7 @@ let houseLoading=false;
 window.__loadHouse=()=>{
   if(houseLoading) return;
   houseLoading=true;
-  import('./vr-house.js?v=1795537392').catch(error=>{ console.error(error); houseLoading=false; window.__gateFail?.(); });
+  import('./vr-house.js?v=1795541182').catch(error=>{ console.error(error); houseLoading=false; window.__gateFail?.(); });
 };
 </script>
 </body>

@@ -1,77 +1,80 @@
 # 一起改線上書齋
 
-給一起開發學鳩齋線上書齋（https://hakkiuchay.space/vr/ ）的朋友看的說明。
+照著做就好，不用懂 Jekyll。
 
-## 先知道三件事
+## 第一次：準備（只做一次）
 
-1. **`main` 就是正式網站。** 推上 `main` 約一分鐘後，GitHub Pages 會自動更新網站；改到 `_vrserver/`，Cloudflare 也會自動重新發布多人伺服器。所以 `main` 只放確定能上線的東西。
-2. **齋主會從後台直接存檔到 `main`**（Pages CMS、Sveltia CMS，主要是改 `_data/` 的文字），所以 `main` 隨時可能多出新的 commit。
-3. **儲存庫是公開的。** 任何金鑰、密碼、私人信箱都不能放進來。`vr/config.js` 裡的 Supabase 金鑰本來就是公開用的，不算。
+1. 安裝 **GitHub Desktop**（https://desktop.github.com/ ），用你的 GitHub 帳號登入。
+2. 安裝 **Python**（https://www.python.org/downloads/ ）。Windows 安裝時要勾選「Add python.exe to PATH」。
+3. 在 GitHub Desktop 按 File → Clone repository，選 `Guanlun-bot/hakkiuchay`，抓到你的電腦。
 
-## 流程
+## 每次要改東西
 
-```
-git checkout main && git pull           # 先拿最新的
-git checkout -b 你的名字/要做的事         # 例：alex/boat-lantern
-# …改、測…
-git add -A && git commit -m "說明這次改了什麼"
-git push -u origin 你的名字/要做的事
-```
+### 1. 開一條自己的分支
 
-推上去後，到 GitHub 開一個 Pull Request 到 `main`，請另一個人看過再按 Merge。合併就等於上線。
+GitHub Desktop 上方先按 **Fetch origin**（拿最新版），再按 **Current branch → New branch**，取名 `你的名字/要做的事`，例如 `chiongkhoe/boat-lantern`。
 
-分支放太久的話，先把 `main` 的新東西拉進來，再繼續改：
+**不要在 main 上改。** main 就是正式網站，推上去一分鐘就上線。
 
-```
-git fetch origin && git rebase origin/main
-```
+### 2. 找到要改的檔
 
-## 分工：盡量不要同時改同一個檔
+書齋的 3D 程式依區域分成 20 個檔，放在 `vr/_parts/`：
 
-線上書齋的 3D 程式已經依區域拆成好幾個檔，放在 `vr/_parts/`，一覽表在 `vr/_parts/README.md`。開工前在群組說一聲「我要改 `14-cinema.js`」，對方就先不要動那個檔。兩個人改不同的檔，合併時幾乎不會衝突。
+| 想改的地方 | 檔案 |
+|---|---|
+| 學鳩齋（書房）的家具 | `03-xuejiu-furniture.js` |
+| 知了間、茶室 | `04-zhiliao.js` |
+| 人物外型、扮相 | `05-looks-plan.js`（門口的選項在 `vr/look.js`） |
+| 移動、操作、面板 | `06-gate-controls-ui.js` |
+| 多人連線、語音 | `07-network-voice.js` |
+| 傭人、書僮 | `11-npc.js`、`15-staff-pages.js` |
+| 灶腳、飯廳 | `12-kitchen-dining.js` |
+| 教室 | `13-classroom.js` |
+| 電影院 | `14-cinema.js` |
+| 對話 | `16-talk.js` |
+| 許總管面板 | `17-steward.js` |
+| 茶點、留聲機 | `18-snacks-gramophone.js` |
+| 宅外稻田、山、河、船 | `19-land.js` |
+| 竹簾 | `20-blinds.js` |
 
-大家都會改的檔：
+完整一覽在 `vr/_parts/README.md`。書齋裡顯示的**文字**不在程式裡，而是放在 `_data/vr.yml`。
 
-- `_data/vr.yml`（書齋裡所有的文字）：新增的條目加在自己功能那一段，不要整段重排或重新縮排。
-- `vr/_parts/01-core.js`、`06-gate-controls-ui.js`、`07-network-voice.js`：全宅共用的基礎，改之前先講好。
+開工前在群組說一聲「我要改 `14-cinema.js`」，對方就先不要動那個檔，免得兩個人改到同一處。
 
-不要直接改 `vr/vr-house.js`。它只負責把 `_parts/` 接起來。
+兩個小規矩：
 
-## 在自己電腦上測試
+- 每個檔的**第一行和最後一行不要刪**（`// {% raw %}`、`// {% endraw %}`），那是網站組檔要用的。
+- 不要改 `vr/vr-house.js`，它只負責把 20 個檔接起來。
 
-### 方法一：完整網站（建議）
+### 3. 在自己電腦上看
 
-裝 Ruby 之後：
+雙擊儲存庫根目錄的：
 
-```
-gem install jekyll kramdown-parser-gfm
-jekyll serve
-```
+- Windows：**`預覽書齋.bat`**
+- Mac：**`預覽書齋.command`**
 
-打開 http://localhost:4000/vr/?room=TEST-你的名字
+會跳出一個黑色視窗，瀏覽器自動打開書齋的**測試房**。改完檔案後，回瀏覽器重新整理就看得到。視窗不要關，關掉預覽就停了。
 
-### 方法二：只檢查程式有沒有寫壞
+- 測試房是自己的，線上的人看不到你，你開電影、改黑板也不會吵到別人。
+- 兩個人要一起測多人功能，就把兩邊網址最後的 `room=TEST-…` 改成同一個。
+- 程式寫壞的話，黑色視窗會顯示錯在哪一行。
+- 電影院的片子在本機播不出來，這是正常的。
+- 黑色視窗提醒「沒有裝 PyYAML」時，在終端機打 `pip install pyyaml`，書齋裡的文字才會跟後台一樣。
 
-```
-python3 vr/_parts/build.py
-```
+### 4. 送出
 
-會把分段組成 `_site-vr/vr-house.js`，並用 node 檢查語法。
+1. GitHub Desktop 左下角寫一句這次改了什麼，按 **Commit**。
+2. 按上方的 **Push origin**。
+3. 按 **Create Pull Request**，網頁會打開，再按一次 Create pull request。
 
-### 一定要加 `?room=`
+接下來由齋主看過後按合併，合併後一分鐘就上線。合併後記得回到 main 按 Fetch，下次再從第 1 步開新分支。
 
-本機的書齋一樣連到正式的多人伺服器。不加 `?room=` 的話，會進到大家平常在的房間，你的測試動作（開電影、改黑板、點茶點、叫人集合）會被正在線上的人看到。兩個人要一起測多人功能時，用同一個房間代號，例如 `?room=TEST-OURS`。代號只能用英文、數字和減號，最多 16 字。
+## 不要做的事
 
-其他測試小技巧：
-
-- `?meal=<分鐘>` 可以把宅裡的時間往後推，測三餐、洗澡、熄燈。
-- 電影院的片子只允許從 hakkiuchay.space 播放，在本機播不出來是正常的。
-
-## 改多人伺服器（`_vrserver/`）
-
-伺服器一合併進 `main` 就會上線，而且所有人都連它。改之前一定要先講，合併後兩個人馬上到正式網站實際連線看一次。
-
-## 文字與圖片
-
-- 書齋裡看得到的文字都放在 `_data/vr.yml`，不要寫死在程式裡，這樣齋主才能從後台改。
+- 不要把任何密碼、金鑰、私人信箱放進來（儲存庫是公開的）。
+- 改 `_vrserver/`（多人伺服器）前一定要先講。它一合併就上線，所有人都連它。
 - 圖片、音樂、影片只用公有領域或確定有權使用的。
+
+## 如果你用 Claude 寫程式
+
+把這個資料夾交給 Claude（例如在 Claude Code 打開它）就好。儲存庫裡的 `CLAUDE.md` 會告訴它檔案在哪裡、要照上面的流程走。

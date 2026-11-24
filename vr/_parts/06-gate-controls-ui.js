@@ -291,20 +291,21 @@ function walkable(x,z){
     towardRange>5.89 && towardRange<13.05;
   const fx=Math.abs(x-FIRST.cx)<Math.abs(x-FRONT.cx)?x-FIRST.cx:x-FRONT.cx, inFirst=(x>14.3&&x<FIRST.gate-.4||x>33.9&&x<FIRST.fx0+.5)&&z>FIRST.z0+.5&&z<FIRST.z1-.5;
   const inGateHall=x>25.45&&x<33.35&&Math.abs(axisZ)<4.55, inGateDoor=Math.abs(axisZ)<.83&&((x>24.4&&x<25.9)||(x>32.9&&x<34.3));
-  const inFore=x>FIRST.fx0+.3&&x<FIRST.fx1-.45&&z>-3.75&&z<2*courtAxis+3.75;
+  const inFore=x>FIRST.fx0+.3&&x<FIRST.fx1-.45&&z>-3.75&&z<2*courtAxis+3.75||x>52.4&&x<53.7&&Math.abs(z-courtAxis)<1.25;   /* the court, and the gap in its low wall between the posts */
   const inBackDoor=x>12.9&&x<14.7&&Math.abs(axisZ)<.83;
   const inFirstWing=Math.abs(fx)<7.25*roomWidthScale&&((z>-3.25&&z<3.94)||(z>2*courtAxis-3.94&&z<2*courtAxis+3.25));
   const inFirstDoor=Math.abs(fx)<.8&&((z>=3.6&&z<=4.9)||(z>=2*courtAxis-4.9&&z<=2*courtAxis-3.6));
   let inSide=false; for(const r of SIDE_ROOMS) if(x>r.x0+.32&&x<r.x1-.32&&z>r.z0+.32&&z<r.z1-.32){ inSide=true; break; }
   const zz=z<courtAxis?z:2*courtAxis-z;   /* fold the west half onto the east: the rooms and doors are mirrored */
   const inSideDoor=(Math.abs(x+10.87)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-9.8)<.5&&zz>3.9&&zz<5.4)||(Math.abs(x-29.4)<.5&&zz>3.9&&zz<5.4);
+  const inLaundryBack=x>LDRY.door.x0+.08&&x<LDRY.door.x1-.08&&z>23.3&&z<26.5;
   const inDine=(x>36.85&&x<41.55&&z>-3.86&&z<-3.0)||(x>36.7&&x<41.7&&z>20.98&&z<23.42)||(x>41.95&&x<46.5&&z>15.66&&z<23.45);   /* 明間 dining strip; the toilets in the west 明間 */   /* 明間: the strip behind the dining table's back bench */
   const inLand=!!(window.__landWalk&&window.__landWalk(x,z));
-  if(!(inRoom||inYard||inDoor||inMatchingRoom||inFirst||inBackDoor||inFirstWing||inFirstDoor||inSide||inSideDoor||inGateHall||inGateDoor||inFore||inDine||inLand)) return false;
-  if(inLand&&!inFore) return true;
+  if(!(inRoom||inYard||inDoor||inMatchingRoom||inFirst||inBackDoor||inFirstWing||inFirstDoor||inSide||inSideDoor||inGateHall||inGateDoor||inFore||inDine||inLand||inLaundryBack)) return false;
+  if(inLand&&!inFore){ if(PATH_POSTS) for(const p of PATH_POSTS) if(Math.abs(x-p[0])<.26&&Math.abs(z-p[1])<.26) return false; return true; }
   if(zlBlocked(x,z)) return false;
   for(const o of OBST) if(x>o.x0-0.22&&x<o.x1+0.22&&z>o.z0-0.22&&z<o.z1+0.22) return false;
-  for(const b of DOOR_BLOCKS){ const d=DOORS[b.key]; if(d&&!d.open&&x>b.x0-.12&&x<b.x1+.12&&z>b.z0-.12&&z<b.z1+.12) return false; }
+  if(!NPC_WALK) for(const b of DOOR_BLOCKS){ const d=DOORS[b.key]; if(d&&!d.open&&x>b.x0-.12&&x<b.x1+.12&&z>b.z0-.12&&z<b.z1+.12) return false; }
   return true; }
 function segHitsRect(a,b,o,m=0.3){ for(let t=0;t<=1;t+=0.04){ const x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t; if(x>o.x0-m&&x<o.x1+m&&z>o.z0-m&&z<o.z1+m) return true;} return false; }
 const ZONE_DIR={S:[0,-1],N:[0,1],W:[-1,0],E:[1,0]};
@@ -316,10 +317,11 @@ function zoneOf(p){ const dx=p.x, dz=p.z-courtAxis, ax=Math.abs(dx), az=Math.abs
   return az>=ax ? (dz<0?'S':'N') : (dx<0?'W':'E'); }
 function doorPoint(zone,dist){ const [ux,uz]=ZONE_DIR[zone]; return {x:ux*dist+(zone==='N'?PX(PLAN.corridorX):0), z:courtAxis+uz*dist}; }   // 知了間: walk in along the corridor, clear of the divider wall
 // straight line if it is clear; otherwise a grid search (A*) over walkable cells, then pull the path tight
-function clearLine(a,b){ const L=Math.hypot(b.x-a.x,b.z-a.z), n=Math.max(1,Math.ceil(L/.02)), px=L?-(b.z-a.z)/L*.07:0, pz=L?(b.x-a.x)/L*.07:0; for(let k=1;k<=n;k++){ const x=a.x+(b.x-a.x)*k/n, z=a.z+(b.z-a.z)*k/n; if(!walkable(x,z)) return false; if(k<n&&(!walkable(x+px,z+pz)||!walkable(x-px,z-pz))) return false; } return true; }
+function clearLine(a,b,lat=.07){ const L=Math.hypot(b.x-a.x,b.z-a.z), n=Math.max(1,Math.ceil(L/.05)), px=L?-(b.z-a.z)/L*lat:0, pz=L?(b.x-a.x)/L*lat:0; for(let k=1;k<=n;k++){ const x=a.x+(b.x-a.x)*k/n, z=a.z+(b.z-a.z)*k/n; if(!walkable(x,z)) return false; if(k<n&&(!walkable(x+px,z+pz)||!walkable(x-px,z-pz))) return false; } return true; }
+let GRID_CLR=0;   // clearance a grid cell needs on all four sides (paths first try to keep a body's width off the walls)
 function gridPath(a,b){ const h=.15, pad=8, x0=Math.min(a.x,b.x)-pad, z0=Math.min(a.z,b.z,courtAxis)-pad, nx=Math.ceil((Math.abs(a.x-b.x)+2*pad)/h)+1, nz=Math.ceil((Math.max(a.z,b.z,courtAxis)-Math.min(a.z,b.z,courtAxis)+2*pad)/h)+1;   // always spans the axis, where the halls' doors are
   const id=(i,j)=>j*nx+i, cx=i=>x0+i*h, cz=j=>z0+j*h, ok=new Int8Array(nx*nz).fill(-1);
-  const free=(i,j)=>{ if(i<0||j<0||i>=nx||j>=nz) return false; const k=id(i,j); if(ok[k]<0) ok[k]=walkable(cx(i),cz(j))?1:0; return ok[k]===1; };
+  const free=(i,j)=>{ if(i<0||j<0||i>=nx||j>=nz) return false; const k=id(i,j); if(ok[k]<0){ const x=cx(i), z=cz(j), c=GRID_CLR; ok[k]=walkable(x,z)&&(!c||(walkable(x+c,z)&&walkable(x-c,z)&&walkable(x,z+c)&&walkable(x,z-c)))?1:0; } return ok[k]===1; };
   const near=p=>{ let best=null, bd=1e9; const i0=Math.round((p.x-x0)/h), j0=Math.round((p.z-z0)/h); for(let di=-3;di<=3;di++) for(let dj=-3;dj<=3;dj++){ const i=i0+di, j=j0+dj; if(free(i,j)){ const d=Math.hypot(cx(i)-p.x,cz(j)-p.z); if(d<bd){ bd=d; best=[i,j]; } } } return best; };
   const s0=near(a), g0=near(b); if(!s0||!g0) return null;
   const G=new Float32Array(nx*nz).fill(1e9), from=new Int32Array(nx*nz).fill(-1), done=new Uint8Array(nx*nz), open=[]; const goal=id(g0[0],g0[1]);
@@ -335,7 +337,7 @@ function gridPath(a,b){ const h=.15, pad=8, x0=Math.min(a.x,b.x)-pad, z0=Math.mi
   return out; }
 function exitPts(z){ const back=[{x:15.0,z:courtAxis},{x:12.7,z:courtAxis}];
   return z==='F'?[...back,doorPoint('E',6.6),doorPoint('E',4.8)]:z==='C'?[]:[doorPoint(z,6.6),doorPoint(z,4.8)]; }
-function route(a,b){ const LO=window.__landOut;
+function route(a,b){ if(window.__stnRoute){ const sr=window.__stnRoute(a,b); if(sr) return sr; } const LO=window.__landOut;
   if(LO&&(LO(a)||LO(b))){ const gate={x:52.6,z:courtAxis}, out={x:55,z:courtAxis};
     if(LO(a)&&LO(b)) return window.__landRoute(a,b);
     if(LO(b)) return route(a,gate).concat([out]).concat(window.__landRoute(out,b));
@@ -345,8 +347,10 @@ function route(a,b){ const LO=window.__landOut;
     else { pts.push(...exitPts(za)); pts.push(...exitPts(zb).reverse()); } }
   pts.push(b); const out=[pts[0]];
   for(let i=1;i<pts.length;i++){ const from=out[out.length-1], to=pts[i];
-    if(clearLine(from,to)){ out.push(to); continue; }
-    const path=gridPath(from,to); if(path) out.push(...path); else out.push(to); }
+    if(clearLine(from,to,.2)){ out.push(to); continue; }
+    // a path that keeps a body's width from walls and furniture; failing that one that just fits; failing that the straight line
+    GRID_CLR=.2; let path=gridPath(from,to); GRID_CLR=0; if(!path&&clearLine(from,to)){ out.push(to); continue; } if(!path) path=gridPath(from,to);
+    if(path) out.push(...path); else out.push(to); }
   return out.slice(1); }
 function standUp(){ if(ME.seat<0) return; const s=SEATS[ME.seat]; ME.seat=-1; const back=seatApproach(s);
   ME.x=back.x; ME.z=back.z; if(!walkable(ME.x,ME.z)){ // the nearest open floor round the seat, never through a wall
@@ -447,7 +451,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['gramo','snackdish','blind','alarm','sampan','jetty','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['phone','ledger','abacus','dbell','mango','cooler','popcorn','lddrop','ldbundle','gramo','snackdish','blind','alarm','sampan','jetty','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -455,7 +459,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'case': showCase(u.ci); break;
   case 'post': openReader(u.pi); break;
   case 'cab': showCab(u.ci); break;
-  case 'seat': sit(u.si); break;
+  case 'seat': { const si=groupSeat(u,h.point); if(si==null){ toast(NT('bath.full')); break; } sit(si); break; }
   case 'hou': showText(`${HOU.term}・${HOU.hou}`,`<p style="font-size:22px;letter-spacing:.2em;margin:6px 0 14px">${esc(HOU.yu)}</p><p class="meta">七十二候，五日一候。今天是${esc(HOU.term)}${esc(HOU.hou)}。書齋的時節依臺北時間更新；天色也跟著日出日落（06:00～18:00 為白天）。</p>`); break;
   case 'quote': showText(D.quote_src,`<div style="line-height:2.1;font-size:15.5px">${esc(D.quote).replace(/\n/g,'<br>')}</div>`); break;
   case 'about': showText('學鳩齋',D.intro.split('\n\n').map(p=>`<p style="line-height:2">${esc(p)}</p>`).join('')+`<p><a class="btn pri" href="https://hakkiuchay.space/" target="_blank" rel="noopener">學鳩齋網站</a><a class="btn" href="https://otterslibrary.pages.dev/" target="_blank" rel="noopener">獺祭魚書庫</a></p>`); break;
@@ -468,6 +472,10 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'jetty': toast(NT('boat.jetty'),5000); break;
   case 'alarm': toast(String(NT('alarm.msg')).replace('{now}',hhmm(taipeiNow().min)).replace('{wake}',hhmm(DAY.wake)),4000); break;
   case 'cinescreen': case 'cinefridge': case 'cineswitch': if(window.__cineAct) window.__cineAct(u); break;
+  case 'mango': window.__mangoAct&&window.__mangoAct(u); break;
+  case 'cooler': case 'popcorn': window.__coolerAct&&window.__coolerAct(u); break;
+  case 'phone': case 'ledger': case 'abacus': case 'dbell': window.__zhangAct&&window.__zhangAct(u); break;
+  case 'lddrop': case 'ldbundle': if(!(window.__laundAct&&window.__laundAct(u))&&VRT[u.type]) showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); break;
   case 'dtable': case 'dmenu': if(typeof dineText==='function') dineText(); break;
   case 'zhiliao': showText('知了間',`<p style="line-height:2">茶寮「知了間」，與學鳩齋隔院相望。</p><p style="line-height:2">分成三間。進門是明間，正對翹頭案與《玉川煎茶圖》、對聯，兩側各一對太師椅。左邊是和室：土間脫鞋，上式台，拉開障子是九疊榻榻米與囲炉裏，床之間掛葡萄知了圖。右邊是茶室：工夫茶席、當代茶席、整面牆的茶壺展示櫃，進門正對一米八高、不封頂的淺色茶櫃，錫罐、普洱、洗手盆和一格雨林缸，雨林缸上方掛《美人》。</p><p style="line-height:2">有緣人路過，歡迎進來食茶。</p>`); break;
   case 'irori': showIrori(); break;

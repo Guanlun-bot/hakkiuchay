@@ -136,7 +136,7 @@ function callOne(id){ const k=NPC[id]; if(!k) return; if(id==='fu'||id==='lai'){
   npcSay('xu',HF('h.call.go',{名:npcName(id)}));
   setTimeout(()=>doErrand(k,[{to:()=>nearMe(1.2),face:()=>ME,dur:45000,on:m=>{ sayK(m.id,'ui.o.come'); }}]),1200); }
 PANES.call=(pane)=>{ para(pane,`<p class="meta">${esc(HT2('h.call.note'))}</p>`);
-  const d=para(pane,'<table>'+NPCS.filter(x=>x.id!=='xu').map(x=>`<tr><td style="white-space:nowrap"><a href="#" data-c="${x.id}">${esc(npcName(x.id))}</a></td><td class="meta">${esc(nState(NPC[x.id]))}</td></tr>`).join('')+'</table>');
+  const d=para(pane,'<table>'+NPCS.filter(x=>x.id!=='xu'&&!x.ext).map(x=>`<tr><td style="white-space:nowrap"><a href="#" data-c="${x.id}">${esc(npcName(x.id))}</a></td><td class="meta">${esc(nState(NPC[x.id]))}</td></tr>`).join('')+'</table>');
   d.querySelectorAll('[data-c]').forEach(a=>a.onclick=e=>{ e.preventDefault(); callOne(a.dataset.c); bRender(); });
   blk(pane,'',[[HT2('h.call.back'),()=>{ for(const x of NPCS){ const k=NPC[x.id]; if(x.id!=='xu'&&k.errand&&!k.lead&&!k.gather){ k.errand=false; k.busyUntil=0; k.prop=null; } if(k.follow&&(x.id==='fu'||x.id==='lai')) callKid(x.id); } npcSay('xu',HF('h.call.done')); bRender(); }]]); };
 
@@ -144,7 +144,7 @@ PANES.call=(pane)=>{ para(pane,`<p class="meta">${esc(HT2('h.call.note'))}</p>`)
 const COURTS=[39.2,19.6,0];
 function gatherStart(){ const j=jinOf(ME), c=j===3?2:j===2?1:0; hAct({gather:{t0:Date.now(),c,by:myName}}); closePanel(); }
 let GA=null;
-function gatherRun(G){ gatherEnd(true); const cx=COURTS[G.c]||39.2, xu=NPC.xu, ids=NPCS.map(d=>d.id).filter(id=>id!=='xu');
+function gatherRun(G){ gatherEnd(true); const cx=COURTS[G.c]||39.2, xu=NPC.xu, ids=NPCS.filter(d=>!d.ext).map(d=>d.id).filter(id=>id!=='xu');
   const present=ids.filter(id=>{ const n=NPC[id]; return n.g.visible&&!n.look&&n.pose!=='ssit'&&!n.tl; }), absent=ids.filter(id=>!present.includes(id));
   GA={G,cx,present,absent,i:-1,next:0,done:false,arrived:new Set(),start:Date.now()};
   if(xu.lead) leadEnd(false); leaveSpot(xu); xu.errand=true; xu.gather=true; xu.butler=0; xu.task=null; xu.next=null; xu.carry=null;
@@ -198,7 +198,7 @@ PANES.day=(pane,boss)=>{ const s=HOUSE.sched, now=Date.now();
   if(now<s.slU&&s.sl) h+=`<p class="meta">${esc(HF('h.d.slNote',{分:Math.abs(s.sl),早晚:s.sl>0?HT2('h.d.late',0):HT2('h.d.late',1)},0))}</p>`;
   if(now<s.wkU&&s.wk) h+=`<p class="meta">${esc(HF('h.d.wkNote',{分:s.wk},0))}</p>`;
   h+=`<p class="meta">${esc(HF('h.d.kids',{起:hhmm(KIDS.wake),睡:hhmm(KIDS.sleep)},0))}</p>`;
-  h+=`<h4>${esc(HT2('h.d.each'))}</h4><table>`+NPCS.map(d=>`<tr><td style="white-space:nowrap">${esc(npcName(d.id))}</td><td class="meta">${esc(String(NT('plan.'+d.id)||HT2('h.d.usual')).replace(/\n/g,'、'))}</td></tr>`).join('')+'</table>';
+  h+=`<h4>${esc(HT2('h.d.each'))}</h4><table>`+NPCS.filter(d=>!d.ext).map(d=>`<tr><td style="white-space:nowrap">${esc(npcName(d.id))}</td><td class="meta">${esc(String(NT('plan.'+d.id)||HT2('h.d.usual')).replace(/\n/g,'、'))}</td></tr>`).join('')+'</table>';
   para(pane,h); if(!boss) return;
   const set=(ch,k)=>()=>{ hAct({sched:Object.assign({},HOUSE.sched,ch)}); sayK('xu',k); bRender(); };
   blk(pane,HT2('h.d.change'),[[HT2('h.d.sl',0),set({sl:30,slU:untilMorning()},'h.d.ok')],[HT2('h.d.sl',1),set({sl:60,slU:untilMorning()},'h.d.ok')],[HT2('h.d.early'),set({sl:-30,slU:untilMorning()},'h.d.ok')],
@@ -224,7 +224,7 @@ setInterval(()=>{ const S=HOUSE.show, now=Date.now(); if(!S){ if(SH) showEnd(); 
   if(!SH.called&&now>=S.at-5*60000){ SH.called=true; const f=C.FILMS[S.fi]; toast(HF('h.c.soon',{片:f?f.title:''},0),6000); if(near(NPC.xu,12)) npcSay('xu',HF('h.c.soon',{片:f?f.title:''},1));
     // the household takes the back seats first and leaves one for every guest in the house and one more
     const seats=SEATS.map((s,i)=>(s.kind==='cine'||s.kind==='cine2')?i:-1).filter(i=>i>=0).reverse(); seats.length=Math.max(0,seats.length-((typeof others!=='undefined'?others.size:0)+2));
-    for(const d of NPCS){ const n=NPC[d.id]; if(n.lie||n.look||n.follow||n.lead||n.tl||n.gather||n.pose==='ssit') continue; const si=seats.find(i=>i!==ME.seat&&!occupied(i)&&!Object.values(NPC).some(m=>m.sSi===i)); if(si==null) break;
+    for(const d of NPCS){ const n=NPC[d.id]; if(d.ext||n.lie||n.look||n.follow||n.lead||n.tl||n.gather||n.pose==='ssit') continue; const si=seats.find(i=>i!==ME.seat&&!occupied(i)&&!Object.values(NPC).some(m=>m.sSi===i)); if(si==null) break;
       leaveSpot(n); n.errand=true; n.cineW=true; n.task=null; n.next=null; n.carry=null; SH.ids.push(d.id); seatAt(n,si,'bedsit',Infinity); } }
   if(!SH.started&&now>=S.at){ SH.started=true; const f=C.FILMS[S.fi]; if(f&&hRank()===0&&!(C.S.p&&C.S.u===f.url)) C.act({u:f.url,ti:f.title,sb:f.subs,p:true,t:0,lt:'film',lv:1}); }
   if(SH.started&&now>S.at+90000&&!C.S.p){ if(!SH.idle) SH.idle=now; if(now-SH.idle>60000&&hRank()===0) hAct({show:null}); } else SH.idle=0;

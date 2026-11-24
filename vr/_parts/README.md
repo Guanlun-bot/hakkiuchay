@@ -17,12 +17,16 @@
 | `11-npc.js` | 宅中人物：地點、道具、人物模型、字幕、對話框 |
 | `12-kitchen-dining.js` | 灶腳與飯廳、三餐；檔尾是教室的房間本體 |
 | `13-classroom.js` | 教室：黑板、投影、多人同步 |
-| `14-cinema.js` | 電影院 |
+| `14-cinema.js` | 電影院：房間、門（歐式對開門、玻璃木門） |
+| `14a-laundry.js` | 洗衣間（西邊前過水） |
+| `14b-cinema-play.js` | 電影院：放映、燈光、同步、門外爆米花機 |
 | `15-staff-pages.js` | 傭人作息；阿莉、阿荷、阿福、阿來 |
 | `16-talk.js` | 對話、人物之間的對話、臨時差事 |
 | `17-steward.js` | 許總管面板 |
 | `18-snacks-gramophone.js` | 茶點與客飯、過廳的留聲機 |
-| `19-land.js` | 宅外：稻田、峰林、河、遊船 |
+| `19-land.js` | 宅外：稻田、潭堤、斗灣潭與大陂溪、對岸的斗安街、遠山、遊船、樹、水牛、鳥 |
+| `19a-zhang-phone.js` | 帳房與電話 |
+| `19b-station.js` | 渡船頭站：站房、月台、鐵軌、隧道、站長 |
 | `20-blinds.js` | 竹簾 |
 
 ## 規矩
@@ -31,12 +35,14 @@
 - 新增分段：檔名照編號插進想要的位置，第一行和最後一行照上面的寫法，再到 `vr/vr-house.js` 加一行 `{% include_relative _parts/檔名 %}`，並更新這張表。
 - 一個分段太長時可以再拆，切點要選在完整的敘述之後（通常是 `/* ===== … */` 或 `// ---- …` 標題前）。
 
-## 本機組檔
+## 在自己電腦上看書齋
 
-不裝 Jekyll 也能組出完整的程式，並檢查語法：
+雙擊根目錄的 `預覽書齋.bat`（Windows）或 `預覽書齋.command`（Mac），或在根目錄執行：
 
 ```
-python3 vr/_parts/build.py
+python3 vr/_parts/serve.py
 ```
 
-組好的檔案在 `_site-vr/vr-house.js`（這個資料夾不會進 git）。
+不用裝 Jekyll。它會開一個本機小網站，每次重新整理都重新組檔，並自動開瀏覽器進到測試房（`?room=TEST-…`）。
+
+只想檢查語法、不開瀏覽器時：`python3 vr/_parts/build.py`，組好的檔在 `_site-vr/vr-house.js`（不進 git）。

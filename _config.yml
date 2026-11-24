@@ -16,6 +16,8 @@ exclude:
   - README.md
   - CLAUDE.md
   - CONTRIBUTING.md
+  - 預覽書齋.bat
+  - 預覽書齋.command
   - .pages.yml
 defaults:
   - scope:

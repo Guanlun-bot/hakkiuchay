@@ -34,8 +34,47 @@ const SNACKS=[
   ['冬瓜茶','鋁箔包','pack',0xd2a84a],
   ['香菸','一包，附打火機','cig',0xf3efe6],
   ['小雪茄','一盒','cig2',0x6a3e22],
+  ['爆米花','電影院外的爆米花機，奶油香','popcorn',0xf3e3b0,1],
+  ['芒果','剛從樹上摘下來的','mango',0xf2b33a,1],
 ];
 let mySnack=-1;
+/* ---- eating and drinking, and what it does (everything in the house is 蛋奶素: no alcohol, meat, fish or the five pungent
+   plants). Whatever is in your hand — a bottle from the cooler, popcorn, a mango, a snack from the cabinet, the meal at the
+   table, a dish in the tea room — can be eaten or drunk a bite or a sip at a time; the effects: tea and coffee put a spring
+   in your step for a few minutes, a full meal slows you a little, something hot warms you when it is cold out and
+   something iced cools you when it is hot, sweet things cheer you; a word over your head shows it to everyone. */
+var myFx=null;
+const FOOD={energy:0,full:0,bites:0,biteK:'',
+  speed(){ const n=Date.now(); return (n<this.energy?1.15:1)*(n<this.full?.93:1); },
+  kindOf(name){ const t=String(name||''); const k=[];
+    if(/茶|咖啡|拿鐵|卡布/.test(t)) k.push('energy'); if(/汽水|沙士|可樂|西打|彈珠|運動/.test(t)) k.push('cool','sweet'); if(/汁|冰|剉|露|水$/.test(t)) k.push('cool');
+    if(/奶|乳|豆漿|米漿|養樂多|糖|酥|糕|派|塔|餅|蛋糕|布丁|巧克力|麻糬|湯圓|豆花|爆米花|芒果|甜/.test(t)) k.push('sweet'); if(/湯|粥|熱|杏仁茶|紅豆|薑/.test(t)) k.push('warm');
+    return k.length?k:['sweet']; },
+  fx(kinds,name){ const n=Date.now(), temp=(typeof WX!=='undefined'&&WX.temp!=null)?WX.temp:22, mo=new Date(n+8*3600e3).getUTCMonth()+1, hot=temp>=27||(WX.temp==null&&mo>=6&&mo<=9), cold=temp<=18||(WX.temp==null&&(mo>=12||mo<=2));
+    let word='';
+    if(kinds.includes('full')){ this.full=n+10*60000; word=NT('fx.full'); }
+    if(kinds.includes('energy')){ this.energy=n+5*60000; word=NT('fx.energy'); }
+    if(kinds.includes('warm')&&cold) word=NT('fx.warm'); if(kinds.includes('cool')&&hot) word=NT('fx.cool');
+    if(!word&&kinds.includes('sweet')) word=NT('fx.sweet');
+    if(kinds.includes('crunch')){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); noiseBurst(.12,2400,6,.05); noiseBurst(.08,3200,7,.04,.12); }catch{} }
+    if(word){ myFx=[word,n]; pushPresence(); toast(word,2200); } } };
+// the food in your hand right now, for the little panel: what it is, how many bites, eat / put down
+function heldFood(){ const n=Date.now();
+  if(window.__cineBt>=0&&window.__cineDrink){ const nm=window.__cineDrink.names()[window.__cineBt]||''; return {name:nm,verb:NT('food.sip'),eat:()=>window.__cineDrink.sip(),put:()=>window.__cineDrink.put()}; }
+  if(mySnack>=0&&SNACKS[mySnack]&&!/^cig/.test(SNACKS[mySnack][2])){ const [nm,,shape]=SNACKS[mySnack], drink=/bottle|can|pack/.test(shape), N=shape==='popcorn'?12:shape==='mango'?4:drink?5:4;
+    if(FOOD.biteK!=='s'+mySnack){ FOOD.biteK='s'+mySnack; FOOD.bites=N; }
+    return {name:nm,verb:NT(drink?'food.sip':'food.bite'),eat:()=>{ if(FOOD.bites<=0) return; FOOD.bites--; const k=FOOD.kindOf(nm); if(shape==='popcorn') k.push('crunch');
+      if(FOOD.bites===N-1||shape==='popcorn') FOOD.fx(k,nm); else toast(NT(drink?'food.sipd':'food.bited').replace('{名}',nm),1600); try{ noiseBurst(.06,drink?700:1800,4,.04); }catch{}
+      if(FOOD.bites<=0){ setTimeout(()=>{ setSnack(-1); toast(NT('food.done').replace('{名}',nm),2200); },700); } },put:()=>setSnack(-1)}; }
+  if(ME.seat>=0&&SEATS[ME.seat]&&SEATS[ME.seat].kind==='dine'){ const S=typeof mealState==='function'?mealState():null; if(S&&S.phase==='eat'){ const key='m'+S.id; if(FOOD.biteK!==key){ FOOD.biteK=key; FOOD.bites=8; }
+      return {name:NT('meal.'+S.k),verb:NT('food.bite'),eat:()=>{ if(FOOD.bites<=0){ toast(NT('food.fullup'),2000); return; } FOOD.bites--; try{ noiseBurst(.05,1500,4,.04); }catch{} if(FOOD.bites===0) FOOD.fx(['full'],''); else if(FOOD.bites===7) FOOD.fx(['warm'],''); else toast(NT('food.bited').replace('{名}',NT('meal.'+S.k)),1500); }}; } }
+  return null; }
+// the panel: bottom centre, only while there is something to eat
+{ const css=document.createElement('style'); css.textContent='#foodbar{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:21;display:none;gap:8px;align-items:center;background:var(--hud-bg,rgba(247,246,241,.9));color:var(--hud-ink,#3f3a39);border:1px solid var(--hud-rule,#d3cec3);border-radius:999px;padding:5px 8px 5px 14px;font:14px "Noto Serif TC",serif;box-shadow:var(--hud-sh,0 2px 8px rgba(0,0,0,.15))}#foodbar.on{display:flex}#foodbar button{font:13px "Noto Serif TC",serif;border:1px solid var(--hud-rule,#d3cec3);background:transparent;color:inherit;border-radius:999px;padding:3px 12px;cursor:pointer}'; document.head.appendChild(css);
+  const bar=document.createElement('div'); bar.id='foodbar'; bar.innerHTML='<span class="n"></span><button class="e"></button><button class="p"></button>'; document.body.appendChild(bar);
+  let cur=null; bar.querySelector('.e').onclick=()=>{ cur&&cur.eat(); }; bar.querySelector('.p').onclick=()=>{ cur&&cur.put&&cur.put(); };
+  setInterval(()=>{ if(!window.__entered){ bar.classList.remove('on'); return; } cur=heldFood(); bar.classList.toggle('on',!!cur); if(cur){ bar.querySelector('.n').textContent=cur.name; bar.querySelector('.e').textContent=cur.verb; const p=bar.querySelector('.p'); p.textContent=NT('food.put'); p.style.display=cur.put?'':'none'; } },250);
+  addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return; if(e.key.toLowerCase()==='q'&&cur){ e.preventDefault(); cur.eat(); } }); }
 
 /* ---------- shared tea sessions ---------- */
 function sharedLatest(field,mine){ let best=mine&&num(mine.at)>0?{t:mine.t,at:mine.at,by:'你',mine:true}:null;
@@ -114,11 +153,14 @@ function snackMesh(i){ const g=new THREE.Group(); if(i<0||!SNACKS[i]) return g; 
   else if(shape==='can'){ cylinder(.033,.033,.12,m,0,.06,0,g); cylinder(.031,.031,.005,new THREE.MeshStandardMaterial({color:0xc8c8c4,metalness:.8,roughness:.3}),0,.123,0,g); cylinder(.0335,.0335,.04,label,0,.06,0,g); }
   else if(shape==='pack'){ box(.06,.1,.04,m,0,.05,0,g); cylinder(.003,.003,.12,new THREE.MeshStandardMaterial({color:0xf2f2f2}),.018,.12,0,g).rotation.z=-.3; }
   else if(shape==='cig'){ box(.055,.085,.022,m,0,.012,0,g).rotation.x=-Math.PI/2; box(.056,.03,.023,red,0,.013,-.02,g).rotation.x=-Math.PI/2; box(.022,.012,.06,new THREE.MeshStandardMaterial({color:0x2a4e7a,roughness:.3}),.06,.006,0,g); }
+  else if(shape==='popcorn'){ const cup=new THREE.Mesh(new THREE.CylinderGeometry(.06,.045,.14,14,1,true),new THREE.MeshStandardMaterial({map:textCanvas(64,32,(gg,w,h)=>{ for(let i=0;i<8;i++){ gg.fillStyle=i%2?'#f4efe4':'#c0352c'; gg.fillRect(i*w/8,0,w/8,h); } }),side:THREE.DoubleSide,roughness:.7})); cup.position.y=.07; g.add(cup);
+    for(let k=0;k<14;k++){ const c=new THREE.Mesh(new THREE.IcosahedronGeometry(.016,0),m); c.position.set((Math.random()-.5)*.08,.14+Math.random()*.03,(Math.random()-.5)*.08); g.add(c); } }
+  else if(shape==='mango'){ const f=new THREE.Mesh(new THREE.SphereGeometry(.05,14,10),m); f.scale.set(1,.8,1.35); f.position.y=.04; g.add(f); const bl=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),new THREE.MeshStandardMaterial({color:0xd8582a,roughness:.5})); bl.position.set(.025,.055,.03); g.add(bl); }
   else if(shape==='cig2'){ box(.1,.02,.08,m,0,.01,0,g); for(let k=0;k<2;k++){ const c=cylinder(.006,.006,.1,new THREE.MeshStandardMaterial({color:0x5a3218,roughness:.8}),-.02+k*.025,.026,0,g); c.rotation.x=Math.PI/2; } }
   return g; }
 let mySnackMesh=new THREE.Group(); scene.add(mySnackMesh);
 function setSnack(i){ mySnack=i; scene.remove(mySnackMesh); mySnackMesh=snackMesh(i); scene.add(mySnackMesh); pushPresence(); renderPeople(); }
-function showSnacks(){ const body=openPanel('矮櫃',`<p class="meta">拉開櫃門，裡面偷偷塞了零食、飲料和香菸。拿一樣，坐下時會擺在你面前。${mySnack>=0?`現在手上是${esc(SNACKS[mySnack][0])}。`:''}</p><ul class="list menu">${SNACKS.map(([n,d],i)=>`<li data-sn="${i}"><div><div class="bt">${n}</div><div class="ba">${d}</div></div><span class="ba">${i===mySnack?'手上這個':'拿這個'}</span></li>`).join('')}</ul>${mySnack>=0?'<button class="btn" id="snback">放回櫃子</button>':''}`);
+function showSnacks(){ const body=openPanel('矮櫃',`<p class="meta">拉開櫃門，裡面偷偷塞了零食、飲料和香菸。拿一樣，坐下時會擺在你面前。${mySnack>=0?`現在手上是${esc(SNACKS[mySnack][0])}。`:''}</p><ul class="list menu">${SNACKS.map(([n,d,,,hide],i)=>hide?'':`<li data-sn="${i}"><div><div class="bt">${n}</div><div class="ba">${d}</div></div><span class="ba">${i===mySnack?'手上這個':'拿這個'}</span></li>`).join('')}</ul>${mySnack>=0?'<button class="btn" id="snback">放回櫃子</button>':''}`);
   body.querySelector('.list').onclick=e=>{ const li=e.target.closest('li[data-sn]'); if(!li) return; const i=+li.dataset.sn; setSnack(i); try{ knock(); }catch{} toast(`從矮櫃裡摸出${SNACKS[i][0]}。`); closePanel(); };
   const bk=body.querySelector('#snback'); if(bk) bk.onclick=()=>{ setSnack(-1); toast('放回櫃子了。'); closePanel(); }; }
 
@@ -231,9 +273,11 @@ const TATAMI={x0:JR.dama.x1, x1:ZP.left, z0:16.05, z1:ZP.back, h:JR.rise};
 const CLS_PLAT={x0:22.32,x1:26.96,z0:21.7,z1:23.6,h:.15}, CLS_ROOM={}, CLS_LAP={};
 // 12 號房 電影院: the room, the riser (45 cm, to z 17.6) and its one step (22.5 cm, to z 17.9), the flat ceiling; the drinks in the fridge
 const CIN={x0:12.24,x1:16.88,z0:15.6,z1:23.6,xc:14.56,rz:17.6,sz:17.9,rh:.45,sh:.225,ceil:3.4,
-  DRINK:[{c:0x8a5a2b,k:'can'},{c:0x5a3a1c,k:'bottle',glass:true,cap:0xc8a040},{c:0x3a1f14,k:'can'},{c:0x7fb6d8,k:'bottle',glass:true,cap:0x2a6ad0},{c:0xc9952e,k:'bottle',glass:true,cap:0xe0e0e0},
+  DRINK:[{c:0xb5803e,k:'pack'},{c:0xb88a3a,k:'can'},{c:0x5a2416,k:'can'},{c:0x7fc6d8,k:'bottle',glass:true,cap:0x2a6ad0},{c:0xb02a24,k:'can'},{c:0x4f9a52,k:'can'},{c:0xc9952e,k:'bottle',glass:true,cap:0xe0e0e0},{c:0x9fb54a,k:'bottle',glass:true,cap:0x3f8a3a},{c:0xd9a441,k:'pack'},{c:0xc9a27a,k:'pack'},
+    {c:0xf4f2ec,k:'box'},{c:0xf0e6f0,k:'bottle',cap:0xd04a7a},{c:0xff5a3a,k:'bottle',cap:0xe02a2a},{c:0xefe6d2,k:'box'},{c:0xe0d0a8,k:'box'},{c:0xf0961e,k:'box'},{c:0xd6e8a0,k:'box'},{c:0xb7c98a,k:'can'},{c:0x6ab0e0,k:'bottle',cap:0x2050a0},{c:0xd8eef8,k:'bottle',glass:true,cap:0x3a7ad0}],
+  DRINK0:[{c:0x8a5a2b,k:'can'},{c:0x5a3a1c,k:'bottle',glass:true,cap:0xc8a040},{c:0x3a1f14,k:'can'},{c:0x7fb6d8,k:'bottle',glass:true,cap:0x2a6ad0},{c:0xc9952e,k:'bottle',glass:true,cap:0xe0e0e0},
     {c:0x9fb54a,k:'bottle',glass:true,cap:0x3f8a3a},{c:0xf0961e,k:'box'},{c:0xb7c98a,k:'can'},{c:0xf2eee4,k:'box'},{c:0xd8eef8,k:'bottle',glass:true,cap:0x3a7ad0}]};
-function floorY(x,z){ if(x>CIN.x0&&x<CIN.x1&&z>CIN.z0&&z<CIN.sz) return z<CIN.rz?CIN.rh:CIN.sh; if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
+function floorY(x,z){ if(x<-100&&STN){ const y=STN.floor(x,z); if(y!=null) return y; } if(x>270&&typeof FARB!=='undefined'&&FARB){ const y=FARB.floor(x,z); if(y!=null) return y; } if(x>CIN.x0&&x<CIN.x1&&z>CIN.z0&&z<CIN.sz) return z<CIN.rz?CIN.rh:CIN.sh; if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
 const SHOJI={open:true,k:1,leaves:[]};
 function zlBlocked(x,z){ return false; }
 const IRS=ZP.irori, IY=JR.rise;
@@ -967,8 +1011,8 @@ ZL_ANIM.push(()=>{ const want=vivLevel(); if(VIV.lights.length&&want!==VIV.level
       const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0375&longitude=121.5637&current=temperature_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Asia%2FTaipei',{signal:c.signal}); clearTimeout(t);
       if(!r.ok) return; const j=await r.json(), k=j&&j.current; if(!k) return;
       live={c:+k.weather_code,cl:+k.cloud_cover,t:+k.temperature_2m,p:+k.precipitation||0};
-      // wind: the service gives where it blows FROM (0 = north); the world has north at −x and east at −z
-      if(Number.isFinite(+k.wind_speed_10m)){ WIND.ls=+k.wind_speed_10m; WIND.lg=Math.max(WIND.ls,+k.wind_gusts_10m||WIND.ls*1.6); const to=((+k.wind_direction_10m||0)+180)*Math.PI/180; WIND.dir=Math.atan2(-Math.sin(to),-Math.cos(to)); WIND.live=true; }
+      // wind: the service gives where it blows FROM (0 = north); the world has north at +x and east at +z
+      if(Number.isFinite(+k.wind_speed_10m)){ WIND.ls=+k.wind_speed_10m; WIND.lg=Math.max(WIND.ls,+k.wind_gusts_10m||WIND.ls*1.6); const to=((+k.wind_direction_10m||0)+180)*Math.PI/180; WIND.dir=Math.atan2(Math.sin(to),Math.cos(to)); WIND.live=true; }
       applyWind(); if(!f) setWeather(live.c,live.cl,live.t,live.p); else showToday(); }catch{} }
   WX.refresh=fetchWeather;
   fetchWeather(); setInterval(fetchWeather,600000); addEventListener('hashchange',fetchWeather);
@@ -1174,7 +1218,7 @@ function sipsLeft(c){ return mySip&&mySip.k===c.key?mySip.l:3; }
 function takeSip(){ let c=cupOf(ME.seat,true); if(!c&&ME.seat<0&&myDrink>=0&&DRINKS[myDrink]) c={g:myCup,liq:coffeeLiquid(),type:'coffee',key:'cf'+myCoffeeAt,name:DRINKS[myDrink][0]}; if(!c){ toast(ME.seat<0?'先坐下或點杯咖啡。':'面前還沒有茶。'); return; }
   const left=sipsLeft(c); if(left<=0){ toast('杯子已經空了。'); return; } if(mySip&&mySip.k===c.key&&(Date.now()-mySip.a)/1000<SIP_T) return;
   mySip={k:c.key,l:left-1,a:Date.now(),s:ME.seat}; pushPresence(true);
-  const txt=SIP_TEXT[c.type==='coffee'?'coffee':'tea'][3-left]; setTimeout(()=>toast(txt(c.name),4500),900);
+  const txt=SIP_TEXT[c.type==='coffee'?'coffee':'tea'][3-left]; setTimeout(()=>toast(txt(c.name),4500),900); if(left===3) setTimeout(()=>FOOD.fx(c.type==='coffee'?['energy']:['energy','warm'],c.name),2400);
   try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch{} noiseBurst(.45,650,.9,.03,1.1); noiseBurst(.04,3400,9,.06,SIP_T-.08); }
 const _sv=new THREE.Vector3(), _sq=new THREE.Quaternion(), _sa=new THREE.Vector3();
 function poseCup(c,st,t,level){ const g=c.g; if(!g.userData.rest||g===myCup) g.userData.rest=g.position.clone(); const R=g.userData.rest;

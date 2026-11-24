@@ -482,6 +482,11 @@ function seatPlace(s){ const k=SEAT_KIND[s.kind]||{}, low=(k.sink??-.42)<=-.6, f
 function poseSeated(av,st){ const f=av&&av.fig; if(!f||!f.userData.sit) return; const key=st?st.kind+(st.x.toFixed(2)):''; if(av.sitKey===key) { if(st) f.userData.sitCut(); return; } av.sitKey=key;
   if(st){ const P=seatPlace(st); f.userData.sit(true,P.sink,P.low); f.userData.sitCut(); } else f.userData.sit(false); }
 function seatApproach(s){ if(s.ap) return s.ap; const k=SEAT_KIND[s.kind], d=k.front?-.62:.7; return {x:s.x+Math.sin(s.yaw)*d, z:s.z+Math.cos(s.yaw)*d}; }
+// a pickable that stands for several seats (the tub's water and stone step = its four places): keep the seat I'm in,
+// otherwise the free one nearest the click; null when all are taken (other players, staff in the bath)
+function groupSeat(u,pt){ if(!u.group) return u.si; if(u.group.includes(ME.seat)) return ME.seat;
+  const free=u.group.filter(si=>!occupied(si)); if(!free.length) return null; if(!pt) return free[0];
+  return free.reduce((a,b)=>Math.hypot(SEATS[a].x-pt.x,SEATS[a].z-pt.z)<=Math.hypot(SEATS[b].x-pt.x,SEATS[b].z-pt.z)?a:b); }
 function addSeat(x,z,yaw,kind,name=null){ SEATS.push({x,z,yaw,kind,name}); return SEATS.length-1; }
 
 /* ---------------- 學鳩齋: entry table under the scroll, plum vase on it right of the axis ---------------- */
@@ -642,13 +647,13 @@ const cuckoo=(()=>{ const g=new THREE.Group(); g.position.set(3.65,2.35,3.96); g
   for(let i=0;i<5;i++){ const st=new THREE.Mesh(new THREE.DodecahedronGeometry(.018,0),new THREE.MeshStandardMaterial({color:0x8a8478})); st.position.set(-.13+i*.06,.115,.06-(i%2)*.1); g.add(st); } }
 const LEAVES=[]; { const leafMat=new THREE.MeshStandardMaterial({color:0x6d7a3a,side:THREE.DoubleSide,roughness:.9}), lg=new THREE.CircleGeometry(.035,5); lg.scale(1,.5,1);
   for(let i=0;i<14;i++){ const m=new THREE.Mesh(lg,leafMat); scene.add(m); LEAVES.push({m,t:Math.random(),x0:-5+Math.random()*10,z0:courtAxis-5+Math.random()*10,dir:.4+Math.random()*.5,ph:Math.random()*6}); } }
-function doorState(key){ let best=myDoors[key]?{o:myDoors[key][0],at:myDoors[key][1]}:null;
+function doorState(key){ if(DOORS[key]&&DOORS[key].room&&doorSleeper(DOORS[key])) return false; let best=myDoors[key]?{o:myDoors[key][0],at:myDoors[key][1]}:null;
   for(const [,o] of others){ const r=o.p&&o.p.dr&&o.p.dr[key]; if(Array.isArray(r)&&r.length===2&&typeof r[1]==='number'&&(!best||r[1]>best.at)) best={o:!!r[0],at:r[1]}; }
   return best?best.o:true; }
-function toggleDoor(key){ const d=DOORS[key]; if(!d) return; const open=!d.open;
+function toggleDoor(key){ const d=DOORS[key]; if(!d) return; if(d.room&&doorSleeper(d)){ toast(NT('door.sleep')); return; } const open=!d.open;
   // don't shut someone out of sight: you can bar the door only from the inside
   if(!open && !d.euro && !(d.inside?d.inside(ME):zoneOf(ME)===key)){ toast('門閂在門內，要從屋裡才能關門上閂。'); return; }
-  myDoors={...myDoors,[key]:[open?1:0,Date.now()]}; pushPresence(); d.open=open; knock(); toast(d.euro?NT('edoor.msg',open?0:1):(open?'拔起門閂，開門。':'關上門，插上門閂。')); }
+  myDoors={...myDoors,[key]:[open?1:0,Date.now()]}; pushPresence(); d.open=open; knock(); toast(d.slide?NT('sdoor.msg',open?0:1):d.euro?NT('edoor.msg',open?0:1):(open?'拔起門閂，開門。':'關上門，插上門閂。')); }
 function knock(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); const t=actx.currentTime; for(const [f,dt] of [[140,0],[95,.35]]){ const o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(.0001,t+dt); g.gain.exponentialRampToValueAtTime(.25,t+dt+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dt+.25); o.connect(g).connect(actx.destination); o.start(t+dt); o.stop(t+dt+.3); } }catch{} }
 function cuckooCall(n){ try{ if(!actx) return; for(let i=0;i<n;i++){ for(const [f,dt] of [[698.5,0],[587.3,.32]]){ const o=actx.createOscillator(), gn=actx.createGain(), t=actx.currentTime+i*1.0+dt; o.type='triangle'; o.frequency.value=f; gn.gain.setValueAtTime(.0001,t); gn.gain.exponentialRampToValueAtTime(.09,t+.03); gn.gain.exponentialRampToValueAtTime(.0001,t+.26); o.connect(gn).connect(actx.destination); o.start(t); o.stop(t+.3); } } }catch{} }
 const BEANS=[['耶加雪菲','衣索比亞・淺焙・花香柑橘'],['阿里山','臺灣・中淺焙・蜂蜜烏龍'],['肯亞 AA','淺中焙・莓果酸甜'],['哥倫比亞','中焙・焦糖堅果'],['巴西喜拉朵','中深焙・可可榛果'],['曼特寧','印尼・深焙・草本黑巧克力']];

@@ -68,14 +68,15 @@ for(let i=0;i<2;i++){
     const h=vrPick(controller);
     if(!h) return;
     if(h.object===vrCard){ closeVRCard(); return; }
-    const u=h.object.userData;
+    let u=h.object.userData;
     if(u.type==='floor' && walkable(h.point.x,h.point.z)){
       standUp(); clearTravel(); closeVRCard();
       const offset=offsetFromRig();
       ME.x=h.point.x-offset.x; ME.z=h.point.z-offset.z;
       pushPresence();
     } else if(u.type==='seat'){
-      const seat=SEATS[u.si];
+      const gsi=groupSeat(u,h.point); if(gsi==null){ vrShow('座位使用中',NT('bath.full')); return; }
+      u={...u,si:gsi}; const seat=SEATS[u.si];
       if(occupied(u.si)){ vrShow('座位使用中','請選另一張椅子。'); return; }
       standUp(); clearTravel();
       const offset=offsetFromRig();
@@ -133,8 +134,8 @@ function step(dt){
   let mx=0,mz=0; if(keys.has('w')||keys.has('arrowup')) mz-=1; if(keys.has('s')||keys.has('arrowdown')) mz+=1; if(keys.has('a')) mx-=1; if(keys.has('d')) mx+=1;
   if(keys.has('arrowleft')) ME.yaw+=dt*1.8; if(keys.has('arrowright')) ME.yaw-=dt*1.8;
   const sprinting=keys.has('shift')||NET.run;
-  if(mx||mz){ const len=Math.hypot(mx,mz)||1; const nx=mx/len, nz=mz/len; const sp=(ME.crouch?1.1:sprinting?4.4:2.2)*dt; const s=Math.sin(ME.yaw), c=Math.cos(ME.yaw); const dx=(nx*c+nz*s)*sp, dz=(-nx*s+nz*c)*sp; tryMove(dx,dz); }
-  else if(ME.path.length){ const t=ME.path[0]; const dx=t.x-ME.x, dz=t.z-ME.z, d=Math.hypot(dx,dz); const sp=(ME.crouch?1.2:NET.run?4.4:2.4)*dt;
+  if(mx||mz){ const len=Math.hypot(mx,mz)||1; const nx=mx/len, nz=mz/len; const sp=(ME.crouch?1.1:sprinting?4.4:2.2)*dt*FOOD.speed(); const s=Math.sin(ME.yaw), c=Math.cos(ME.yaw); const dx=(nx*c+nz*s)*sp, dz=(-nx*s+nz*c)*sp; tryMove(dx,dz); }
+  else if(ME.path.length){ const t=ME.path[0]; const dx=t.x-ME.x, dz=t.z-ME.z, d=Math.hypot(dx,dz); const sp=(ME.crouch?1.2:NET.run?4.4:2.4)*dt*FOOD.speed();
     const want=Math.atan2(-dx,-dz); if(d>0.4 && !ME.faceTo){ let dy=want-ME.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); ME.yaw+=dy*Math.min(1,dt*3.2); }
     if(d<=sp){ ME.x=t.x; ME.z=t.z; ME.path.shift(); if(!ME.path.length){ if(ME.faceTo){ const f=ME.faceTo; ME.targetYaw=Math.atan2(-(f.x-ME.x),-(f.z-ME.z)); ME.targetPitch=Math.atan2(f.y-ME.eye,Math.hypot(f.x-ME.x,f.z-ME.z)); ME.faceTo=null; } const a=ME.afterArrive; ME.afterArrive=null; a&&a(); } }
     else { const ok=tryMove(dx/d*sp,dz/d*sp); if(!ok){ ME.path=[]; ME.afterArrive=null; } } }

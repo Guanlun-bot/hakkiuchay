@@ -42,7 +42,7 @@ for(const [key,title,body] of [
   ['wcm','男廁','米白牆、淺米色大地磚、淺橡木門，一間小便斗、一間免治馬桶，都是到頂的隔間。'],
   ['wcvase','竹花入','一截竹筒掛在牆上，只插一枝：冬梅、春桃、夏荷、秋芒，照臺北的月份自動換。'],
   ['wcbowl','竹筒石缽','通道盡頭的洗手處：花崗石座上的石缽，一支竹管伸到缽的正上方，旁邊壁掛洗手乳，上方一面無框鏡。點竹筒出水，再點一次停；站近了鏡子照得見自己。'],
-  ['kwine','米酒與醋','菜櫥旁的三罈：兩罈米酒、一罈醋，罈口包著布、用紅繩紮緊。素菜的三杯、紅燒都靠它。'],
+  ['kwine','醬油、麻油與醋','菜櫥旁的三罈：一罈醬油、一罈麻油、一罈烏醋，罈口包著布、用紅繩紮緊。宅裡吃蛋奶素，不用酒、不放五辛，紅燒、涼拌都靠這三罈。'],
   ['kwood','柴','劈好的乾柴堆在水缸旁，起灶火時伸手就拿得到。'],
   ['kcab','菜櫥','傳統菜櫥：上層霧面玻璃後放碗盤，中層竹條紗網透氣放剩菜醬菜，三個抽屜收筷匙，下層拉門放鍋子。'],
   ['ktall','冰箱','冰箱和乾糧櫃做成一樣高、一樣的門板，看起來是一整面櫃子。旁邊的乾糧櫃點一下就打開。'],
@@ -50,9 +50,49 @@ for(const [key,title,body] of [
   ['dbasin','洗手台','洗石子的洗手台，白瓷盆、老式黃銅龍頭。飯前洗手，毛巾摺好疊在旁邊的層板上。'],
   ['dcal','日曆','撕一頁過一天的老日曆，走臺北時間：國曆、農曆、星期，每天自動翻頁。'],
   ['kgoven','烤箱','嵌在瓦斯爐下的烤箱，白琺瑯門、深色玻璃窗。蛋撻、菠蘿包、司康、泡芙、蘋果派都從這裡出爐。'],
-  ['kgsteam','蒸籠','三層竹蒸籠疊在瓦斯爐上，燒賣、水晶餃、叉燒包、奶黃包、馬拉糕都用它蒸。有東西在蒸的時候會冒白煙。'],
+  ['duck','綠頭鴨','河裡的綠頭鴨，三兩成群順著水漂，不時一頭扎進水裡、屁股朝天找吃的。公鴨頭頸墨綠、白色頸環、栗色胸口；母鴨一身麻褐。船來了就讓到岸邊，晚上靠著岸邊歇息。春夏之交會有母鴨帶著一串小鴨。'],
+  ['kgsteam','蒸籠','三層竹蒸籠疊在瓦斯爐上，素燒賣、水晶素餃、素叉燒包、奶黃包、馬拉糕都用它蒸。有東西在蒸的時候會冒白煙。'],
   ['kgfry','油炸鍋','檯面上的油炸鍋，油槽、炸籃、溫度旋鈕。春卷、芋角、煎堆、番薯餅、油條都靠它。'],
   ['kgpot','電鍋','檯面上的電鍋，外鍋放一杯水、按下開關，碗粿、紅豆湯圓、豆花都能蒸能熱。'],
+  ['qiedong','茄苳','渡頭邊的老茄苳，樹幹直挺、紅褐色的樹皮一片片剝落，樹冠高而疏，三出的葉子淡綠。阿財常在樹下劈柴。'],
+  ['spoonbill','黑面琵鷺','冬天從北方飛來水田過冬的黑面琵鷺，黑臉、湯匙一樣的長嘴，在淺水裡左右掃著嘴找魚蝦。春天要北返前，頭後長出黃色羽冠、胸前也染成淡黃。人一靠近就飛起來繞一圈。'],
+  ['buffalo','水牛','黑灰色的水牛，角又寬又扁、往後彎，膝蓋以下像穿了灰襪子。早晚在河堤和河岸之間吃草，正午天熱就下河泡水，只露出頭和背；晚上趴在岸邊歇著。'],
+  ['kgmill','石磨','花崗岩的老石磨，上下兩扇，木把手一轉，泡軟的黃豆從磨眼下去，磨成白漿沿著槽從嘴口流進木桶。火師每天早餐前在這裡磨豆漿。'],
+  ["ldcart","布草車","三台帆布布草車：白色衣物、深色衣物、毛巾床單分開放，收衣時推著走，回來先在這裡分類。"],
+  ["ldspot","去漬台","不鏽鋼的去漬台，洗之前先在這裡處理領口、袖口和污漬。台上的竹籃是客人的送洗籃。"],
+  ["lddrop","送洗籃","客人的送洗籃。把衣服放進來，阿莉會收去洗，洗好摺好放在門邊的取件架。"],
+  ["ldshelf","取件架","門邊的取件架，九個格子。洗好摺好的衣物放在這裡，貼著名字等人來拿。"],
+  ["ldbundle","你的衣服","洗好摺好的衣服，貼著你的名字。點一下拿回去。"],
+  ["ldwash","工業洗脫機","兩台前開式工業洗脫機，18 公斤與 11 公斤，洗完直接高速脫水。轉動時圓窗裡的衣服跟著翻滾。"],
+  ["ldsink","深水槽","不鏽鋼深水槽和拉出式噴頭，手洗細緻衣物、先泡髒污用。"],
+  ["ldpump","自動給皂機","牆上三台給皂泵：洗衣精、柔軟精、漂白劑，接管子直接打進洗衣機，每次的量都一樣。"],
+  ["lddry","烘乾機","兩組上下疊的烘乾機，排風管穿牆出去。下雨天或床單毛巾多的時候用。"],
+  ["ldsew","工業縫紉機","工業縫紉機和圓凳。阿莉在這裡補衣服、縫鈕扣、修毛巾邊。"],
+  ["ldiron","蒸氣燙台","吸風式燙衣台配蒸氣鍋爐，熨斗一壓就冒白汽，襯衫、桌巾燙得平整。"],
+  ["ldfold","摺衣台","不鏽鋼摺衣台，上面兩層架子放摺好的衣物，按人分疊。"],
+  ["ldrail","吊衣架","洗好燙好的衣服套上透明防塵袋，掛在兩排吊桿上，等人來拿或送回房。"],
+  ["ldplate","洗衣間","過廳西邊的過水，現在是宅裡的洗衣間，阿莉負責。"],
+  ["ldyard","曬衣場","洗衣間後門外的曬衣場，兩排竹竿架在交叉的竹腳上。晴天上午阿莉把衣服晾出來，下午收；下雨就改用烘乾機。"],
+  ["popcorn","爆米花機","紅色推車爆米花機，玻璃櫃裡的鍋子一直爆，電影開演前後爆得最起勁。點一下拿一桶。"],
+  ["mangotree","芒果樹","宅子四周和往渡頭的木棧道邊種的芒果樹。二、三月開花，四、五月掛青果，六、七月結滿黃熟的芒果，點芒果可以摘一顆。"],
+  ["mango","芒果","熟透的芒果。點一下摘下來。"],
+  ["pathlight","步道燈","從大門到渡頭的木棧道兩側，一對對嵌在木板裡的小圓地燈，暖黃的光不刺眼。天黑跟著燈籠一起亮。"],
+  ["zdesk","帳房櫃檯","許總管的帳房。木頭櫃檯從牆到牆，靠電影院那頭一扇推門進出；正面一格格折角框的面板，檯上是三角名牌、電話、帳簿、算盤、銀行燈和一瓶插花；後面一整面帳本櫃，上方掛著擺鐘。"],
+  ["dlamp","銀行燈","綠色套料玻璃燈罩、黃銅燈座的銀行燈。許總管坐在櫃檯或天黑以後會亮。"],
+  ["dvase","插花","綠色大玻璃瓶裡插著當季的花：冬天梅枝，春天杜鵑，夏天荷葉蓮蓬，秋天芒草。"],
+  ["dplate","名牌","櫃檯上的三角名牌，金底紅框，寫著許總管的職稱和名字。"],
+  ["zcab","帳房後櫃","從牆到牆的一整座木櫃：下面一排排抽屜，上面玻璃門裡排滿了帳本，藍布、褐布、黑布的封面，書背貼著紙籤，頂上一道雕花橫楣。"],
+  ["dclock","擺鐘","帳本櫃上方的老擺鐘：深色木殼、捲雲頂飾、兩根車木柱、黃銅錶圈，下面小窗裡的銅擺一左一右地晃，走的是台北時間。"],
+  ["stnhouse","渡船頭站","宅院北邊第六條田埂上的小車站。檜木色的木造站房，綠色魚鱗瓦屋頂，山牆上開著圓窗，兩邊有深深的雨庇。一座月台、一條鐵軌，鐵軌往西穿過稻田，鑽進山裡的隧道。"],
+  ["stnsign","站名牌","月台上和站房門口的站名牌。"],
+  ["stnboard","時刻表","候車室牆上的列車時刻表。"],
+  ["stnticket","售票口","站長在裡頭賣票。"],
+  ["stnoffice","站務室","站長辦公的地方：書桌、文件櫃，牆角是單線鐵路用的路牌閉塞器。"],
+  ["stntoken","路牌閉塞器","單線鐵路用的閉塞器。列車出站前，站長從這裡取出路牌交給司機，確保同一段路上只有一班車。"],
+  ["stngate","剪票口","進月台前，站長在這裡剪票。"],
+  ["stnbuffer","擋車器","鐵軌的盡頭，紅白相間的擋車器。"],
+  ["stnsignal","號誌","月台西端的號誌機。紅燈停車，綠燈出發。"],
+  ["stntunnel","隧道","山腳下的石砌隧道口，扁額上刻著字。列車從這裡進山，通往另一頭。"],
   ['kgice','剉冰機','老式手搖剉冰機，鑄鐵架子、搖柄轉刀盤，冰磚刨成細雪落進碗裡，再淋黑糖、加紅豆綠豆。'],
   ['kgmortar','石臼','屋外簷下的花崗石臼和木杵。糯米蒸熟倒進臼裡，一人搗、一人翻，搗成麻糬。'],
   ['dcup','菜櫥與茶水櫃','左邊是紗門菜櫥，收剩菜和醬菜；右邊是茶水櫃，熱水瓶、茶壺和杯子，飯後喝茶。'],
@@ -70,9 +110,9 @@ const MEAL_TXT={
   'menu.n':['素陽春麵加蛋，配兩碟小菜','麵線，配兩碟小菜'],
   'wc.f':['女',''],'wc.m':['男',''],
   'act.fire':['生火','熄火'],'act.gas':['點火','關火'],'act.tap':['開水','關水'],'act.noodle':['煮麵爐加熱','煮麵爐關掉'],'act.basin':['開水','關水'],
-  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'bath.seat':['浴缸',''],'wash.seat':['洗身處',''],'wash.hello':['坐下洗身。',''],'sauna.seat':['烤箱',''],'bath.hello':['泡進檜木浴缸。',''],'sauna.hello':['在烤箱坐下，沙漏開始走。',''],'bath.status':['在浴室',''],'act.shower':['淋浴出水','淋浴關水'],'act.wash':['水龍頭打開','水龍頭關上'],'act.bdoor':['玻璃門拉開','玻璃門關上'],'act.sdoor':['烤箱門打開','烤箱門關上'],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
+  'act.door':['門開了','門關上（有人）'],'act.seat':['馬桶蓋掀起：沖洗、烘乾','沖水，蓋子闔上'],'act.spout':['竹筒出水','水停了'],'act.slide':['拉門拉開','拉門關上'],'act.flush':['沖水',''],'act.urinal':['感應沖水',''],'wc.seat':['馬桶',''],'bath.seat':['浴缸',''],'bath.full':['浴缸四個位子都有人了，等一下再來。',''],'wash.seat':['洗身處',''],'wash.hello':['坐下洗身。',''],'sauna.seat':['烤箱',''],'bath.hello':['泡進檜木浴缸。',''],'sauna.hello':['在烤箱坐下，沙漏開始走。',''],'bath.status':['在浴室',''],'act.shower':['淋浴出水','淋浴關水'],'act.wash':['水龍頭打開','水龍頭關上'],'act.bdoor':['玻璃門拉開','玻璃門關上'],'act.sdoor':['烤箱門打開','烤箱門關上'],'wc.hello':['坐下了，門已關上。',''],'wc.status':['在廁所',''],
   'cal.head':['學鳩齋',''],'cal.foot':['學鳩齋','hakkiuchay.space'],
-  'dine.title':['飯桌',''],'dine.intro':['圓桌配四條長凳，一條坐三人。開飯時空位都可以坐，按 E 或點長凳入座。',''],
+  'dine.title':['飯桌',''],'dine.intro':['圓桌配四條長凳，一條坐三人。開飯時空位都可以坐，按 E 或點長凳入座。宅裡吃蛋奶素，不用酒、不放五辛。',''],
   'dine.next':['下一餐：{餐}　{時間}',''],'dine.now':['正在吃{餐}',''],'dine.today':['今日菜單',''],
   'dine.hello':['在飯桌坐下。',''],'dine.status':['在明間吃飯',''],'dine.host':['齋主座',''],
   'huo.call':['吃飯囉！菜上桌了，趁熱。','開飯了，大家來坐。'],
@@ -276,7 +316,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     const hook=(x,z)=>{ const h=new THREE.Mesh(new THREE.TorusGeometry(.018,.003,5,10),iron); h.position.set(x,ry-.045,z); rack.add(h); const h2=h.clone(); h2.position.y-=.03; rack.add(h2); return ry-.075; };
     const pans=[
       ['banana',-.18,-.85],['chili',-.18,-.4],['corn',-.18,.05],['banana',-.18,.5],['chili',-.18,.9],
-      ['corn',.18,-.8],['garlic',.18,-.35],['corn',.18,.1],['chili',.18,.55],['banana',.18,.92]];
+      ['corn',.18,-.8],['mush',.18,-.35],['corn',.18,.1],['chili',.18,.55],['banana',.18,.92]];
     for(const [k,dx,dz] of pans){ const x=tx+dx, z=tz+dz, y=hook(x,z), g=new THREE.Group(); g.position.set(x,y,z); rack.add(g);
       if(k==='wok'){ g.rotation.x=Math.PI/2.1; L([[0,0],[.12,.01],[.17,.05],[.18,.065]],mat(0x232120,.45,{metalness:.5,side:THREE.DoubleSide}),0,-.19,0,g); C(.012,.012,.16,woodDk,0,-.02,0,g,8); }
       if(k==='fry'){ g.rotation.x=Math.PI/2.05; L([[0,0],[.11,0],[.12,.04]],mat(0x2b2b2b,.4,{metalness:.5,side:THREE.DoubleSide}),0,-.25,0,g); C(.012,.012,.18,mat(0x3a2418,.5),0,-.06,0,g,8); }
@@ -291,6 +331,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       if(k==='corn'){ C(.002,.002,.08,mat(0xc9b48a,.8),0,-.04,0,g,4); for(let i=0;i<3;i++){ const a=i*2.1, cg=new THREE.Group(); cg.position.set(Math.cos(a)*.035,-.09,Math.sin(a)*.035); cg.rotation.z=Math.cos(a)*.25; cg.rotation.x=Math.sin(a)*.25; g.add(cg);
           const cob=new THREE.Mesh(new THREE.CapsuleGeometry(.03,.16,4,10),mat(i===1?0xd9952a:0xe8b23a,.65)); cob.position.y=-.14; cg.add(cob);
           for(let h=0;h<3;h++){ const hu=new THREE.Mesh(new THREE.PlaneGeometry(.04,.14),mat(0xd8c49a,.9,{side:THREE.DoubleSide})); hu.position.set(Math.cos(h*2.1)*.02,-.01,Math.sin(h*2.1)*.02); hu.rotation.y=h*2.1; hu.rotation.x=.3; cg.add(hu); } } }
+      if(k==='mush'){ C(.004,.004,.5,mat(0xc9b48a,.8),0,-.25,0,g,4); for(let i=0;i<9;i++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(.034,.026,.014,12),mat(i%3?0x6a4a30:0x7a5838,.8)); s.position.set(Math.cos(i*2.1)*.012,-.05-i*.045,Math.sin(i*2.1)*.012); s.rotation.set(Math.cos(i)*.9,0,Math.sin(i)*.9); g.add(s); } }   // a string of dried shiitake
       if(k==='garlic'){ C(.004,.004,.1,mat(0xd8c9a0,.8),0,-.05,0,g,4); for(let i=0;i<7;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),mat(i%2?0xece4d2:0xd9a0a8,.7)); s.position.set(Math.cos(i*1.7)*.03,-.1-i*.035,Math.sin(i*1.7)*.03); g.add(s); } } } }
   // the food cupboard (菜櫥) against the front wall: textured glass above, slats over green screen, three drawers, sliding doors below
   { const tag={type:'kcab'}, cx=42.62, W=.88, D=.44, H=1.55, zf=4.0-D, zc=4.0-D/2, oak=mat(0xdcb983,.5), oakDk=mat(0xc9a06a,.5);
@@ -306,7 +347,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
     OB(cx-W/2,cx+W/2,zf,4.0);
     // three jars between the cupboard and the rice jar: two of rice wine, one of vinegar, cloth tied over the mouths
     { const jarM=mat(0x5a3422,.35), clothM=mat(0xd8cfba,.9), tagT=ch=>mat(0xffffff,.85,{transparent:true,map:textCanvas(96,96,(g,w,h)=>{ g.clearRect(0,0,w,h); g.translate(w/2,h/2); g.rotate(Math.PI/4); g.fillStyle='#c0352c'; g.fillRect(-30,-30,60,60); g.rotate(-Math.PI/4); g.fillStyle='#1a1614'; g.font=F('700',36); g.textAlign='center'; g.textBaseline='middle'; g.fillText(ch,0,3); })});
-      [[43.27,'酒',.44],[43.58,'酒',.4],[43.88,'醋',.34]].forEach(([x,ch,hh])=>{ const t={type:'kwine'}; L([[0,0],[.1,0],[.14,hh*.35],[.13,hh*.75],[.07,hh*.92],[.075,hh]],jarM,x,0,3.72,scene,t);
+      [[43.27,'醬',.44],[43.58,'油',.4],[43.88,'醋',.34]].forEach(([x,ch,hh])=>{ const t={type:'kwine'}; L([[0,0],[.1,0],[.14,hh*.35],[.13,hh*.75],[.07,hh*.92],[.075,hh]],jarM,x,0,3.72,scene,t);
         const cl=L([[0,hh+.03],[.06,hh+.025],[.09,hh-.01],[.095,hh-.05]],clothM,x,0,3.72,scene,t); const cord=new THREE.Mesh(new THREE.TorusGeometry(.078,.004,4,20),mat(0xa8343a,.6)); cord.rotation.x=Math.PI/2; cord.position.set(x,hh-.015,3.72); scene.add(cord);
         plane(.12,.12,tagT(ch),x,hh*.5,3.72-.142,Math.PI,scene,t); });
       OB(43.12,44.0,3.55,3.95); }
@@ -384,12 +425,13 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
   { const tag={type:'dmenu'}; const c=document.createElement('canvas'); c.width=240; c.height=360; const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
     B(.03,.64,.44,woodDk,41.765,1.66,.84,scene,tag); plane(.4,.6,mat(0xffffff,.9,{map:t}),41.748,1.66,.84,-Math.PI/2,scene,tag); DINE.menu={c,t,day:''};
     // a tear-off day calendar on the other partition: a red board on top, today's page below (Taipei date, lunar date)
-    const ck={type:'dcal'}, cz=3.0, cx=36.62, red=mat(0xb8282a,.5);
-    B(.025,.1,.34,red,cx+.0125,2.06,cz,scene,ck); plane(.32,.08,mat(0xffffff,.6,{transparent:true,map:textCanvas(320,80,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#f2cf6a'; g.font=F('700',44); g.textAlign='center'; g.textBaseline='middle'; g.fillText(NT('cal.head'),w/2,h/2+2); })}),cx+.026,2.06,cz,Math.PI/2,scene,ck);
-    for(const dz of [-.1,0,.1]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.008,.002,5,10),brass); r.position.set(cx+.03,2.01,cz+dz); r.rotation.y=Math.PI/2; scene.add(r); }
-    B(.03,.42,.3,mat(0xf6f3ec,.9),cx+.015,1.79,cz,scene,ck);
-    const cc=document.createElement('canvas'); cc.width=300; cc.height=420; const ct=new THREE.CanvasTexture(cc); ct.colorSpace=THREE.SRGBColorSpace; ct.anisotropy=MAXANI;
-    plane(.3,.42,mat(0xffffff,.85,{map:ct}),cx+.031,1.79,cz,Math.PI/2,scene,ck); DINE.cal={c:cc,t:ct,day:''}; }
+    // (a big one, about 0.6 m wide, so it reads from the table)
+    const ck={type:'dcal'}, cz=3.0, cx=36.62, red=mat(0xb8282a,.5), K=1.8, yT=2.25, hH=.1*K, yH=yT-hH/2, pH=.42*K, yP=yT-hH-pH/2;
+    B(.025,hH,.34*K,red,cx+.0125,yH,cz,scene,ck); plane(.32*K,.08*K,mat(0xffffff,.6,{transparent:true,map:textCanvas(480,120,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#f2cf6a'; g.font=F('700',66); g.textAlign='center'; g.textBaseline='middle'; g.fillText(NT('cal.head'),w/2,h/2+3); })}),cx+.026,yH,cz,Math.PI/2,scene,ck);
+    for(const dz of [-.18,0,.18]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.013,.003,5,10),brass); r.position.set(cx+.03,yT-hH,cz+dz); r.rotation.y=Math.PI/2; scene.add(r); }
+    B(.03,pH,.3*K,mat(0xf6f3ec,.9),cx+.015,yP,cz,scene,ck);
+    const cc=document.createElement('canvas'); cc.width=600; cc.height=840; const ct=new THREE.CanvasTexture(cc); ct.colorSpace=THREE.SRGBColorSpace; ct.anisotropy=MAXANI;
+    plane(.3*K,pH,mat(0xffffff,.85,{map:ct}),cx+.031,yP,cz,Math.PI/2,scene,ck); DINE.cal={c:cc,t:ct,day:''}; }
 
   // ------------------------------------------------------------ 西廂明間後半：廁所
   // A wall behind the two side doors closes off the back of the west 明間; a door on the axis leads into a short corridor
@@ -694,7 +736,7 @@ for(const sp of (NPCP.steam||[])) sp.material.map=SOFT_TEX;
       const tl=new THREE.PointLight(0xffc890,.5,4.5,2); BATH.lights.push([tl,.5]); tl.position.set((tx0+tx1)/2,2.2,(tz0+tz1)/2); scene.add(tl);
       BATH.tubC={x:(tx0+tx1)/2,z:(tz0+tz1)/2,sx:(tx1-tx0)/2-.2,sz:(tz1-tz0)/2-.2};
       for(const [x,z,yaw] of [[tx0+.75,tz1-.5,0],[tx1-.95,tz1-.5,0],[tx0+.75,tz0+.55,Math.PI],[tx1-.95,tz0+.55,Math.PI]]){ const si=addSeat(x,z,yaw,'bath',NT('bath.seat')); SEATS[si].ap={x,z:tz1+.5}; BATH.seats.push(si); }
-      for(const o of [wat,stoneStep]){ o.userData={type:'seat',si:BATH.seats[1]}; pickables.push(o); } }
+      for(const o of [wat,stoneStep]){ o.userData={type:'seat',si:BATH.seats[1],group:BATH.seats}; pickables.push(o); } }
     // ---- the washing place under the bamboo window: two seated places (stool, bucket, a thermostatic bar with a hand
     //      shower on a rail, a shelf of bottles), then a rain shower behind a glass screen with a square head in the ceiling
     { const wt={type:'bathwash'};

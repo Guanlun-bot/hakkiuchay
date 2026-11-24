@@ -20,7 +20,7 @@ function doErrand(n,steps,done){ leaveSpot(n); n.follow=false; n.task=null; n.er
   step(); }
 const nearMe=(d=1.1)=>{ const fx=-Math.sin(ME.yaw), fz=-Math.cos(ME.yaw); const p={x:ME.x+fx*d,z:ME.z+fz*d}; return walkable(p.x,p.z)?p:{x:ME.x,z:ME.z+.8}; };
 const ORDERS={
-  xu:()=>[[NT('ui.o.call'),()=>npcChoices('xu',NPCS.filter(d=>d.id!=='xu').map(d=>[npcName(d.id),()=>{ errandSay('xu'); const k=NPC[d.id]; if(k.lie||k.look) return npcSay('xu',npcLine('xu.findNone')); doErrand(k,[{to:()=>nearMe(1.2),face:()=>ME,dur:20000,on:m=>sayK(m.id,'ui.o.come')}]); }]).concat([[NT('ui.back'),()=>talkMenu('xu')]]))]],
+  xu:()=>[[NT('ui.o.call'),()=>npcChoices('xu',NPCS.filter(d=>d.id!=='xu'&&!d.ext).map(d=>[npcName(d.id),()=>{ errandSay('xu'); const k=NPC[d.id]; if(k.lie||k.look) return npcSay('xu',npcLine('xu.findNone')); doErrand(k,[{to:()=>nearMe(1.2),face:()=>ME,dur:20000,on:m=>sayK(m.id,'ui.o.come')}]); }]).concat([[NT('ui.back'),()=>talkMenu('xu')]]))]],
   yu:()=>[[NT('ui.o.mail'),()=>{ errandSay('yu'); doErrand(NPC.yu,[{to:P(3,1),prop:'mail',act:'unload',drop:true,dur:3000},{to:NP.gate,dur:1000}]); }]],
   chun:()=>[[NT('ui.o.tea'),()=>teaFetch('chun')]],
   lai:()=>[[NT('ui.o.tea'),()=>teaFetch('lai')]],
@@ -52,10 +52,11 @@ function talkMenu(id){ const n=NPC[id], boss=isBoss(), back=[NT('ui.back'),()=>t
   if(boss&&ORDERS[id]) top.push([NT('ui.order'),()=>npcChoices(id,ORDERS[id]().concat([back]))]);
   npcChoices(id,top); }
 window.__npcTalk2=id=>{ const n=NPC[id], VRm=renderer.xr.isPresenting;
+  if(id==='zhan'&&window.__stnTalk) return window.__stnTalk();
   if(id==='li'&&n.pose==='pray'){ say2('li','li.pray'); return true; }
   if(id==='xu'&&n.lead){ npcChoices(id,[[NT('ui.stop'),()=>leadEnd(true)]]); return true; }
   if(id==='chun'&&n.carry==='cake'){ npcSay(id,npcLine('chun.tray')); return true; }
-  if(id==='cai'&&(n.carry==='wood'||n.carry==='water')){ npcSay(id,npcLine(n.carry==='wood'?'cai.stopped':'cai.water')); return true; }
+  if(id==='cai'&&(n.carry==='wood'||n.carry==='water'||n.carry==='both'||n.act==='chop')){ npcSay(id,npcLine(n.act==='chop'?'cai.chop':n.carry==='water'?'cai.water':'cai.stopped')); return true; }
   if(id==='yu'&&!NS.first){ NS.first=true; npcSave(); npcSay(id,npcLine('yu.first')); }
   else if(id==='xu'&&!NS.talked.xu){ NS.talked.xu=true; npcSave(); npcSay(id,npcLine('xu.first')); }
   else greet(id);
@@ -242,7 +243,7 @@ window.__kitchenAct=u=>{ if(u.type==='kgas'){ const G=KGAS[u.i||0]; G.on=!G.on; 
   if(u.type==='wcspout'){ WC.spout.on=!WC.spout.on; toast(NT('act.spout',WC.spout.on?0:1)); return true; } return false; };
 // the calendar page for today in Taipei: 民國 year and 干支, the lunar month and day, the big date, the weekday
 function calPage(){ const C=DINE.cal; if(!C) return; const T=taipeiNow(); if(C.day===T.day) return; C.day=T.day;
-  const [Y,Mo,D]=T.day.split('-').map(Number), g=C.c.getContext('2d'), W=300, H=420, wk='日一二三四五六'[T.dow%7], mon=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][Mo-1];
+  const [Y,Mo,D]=T.day.split('-').map(Number), g=C.c.getContext('2d'), W=300, H=420, _sc=C.c.width/300; g.setTransform(_sc,0,0,_sc,0,0); const wk='日一二三四五六'[T.dow%7], mon=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][Mo-1];
   let lm='', ld='', yn=''; try{ const P=new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{timeZone:'Asia/Taipei',year:'numeric',month:'long',day:'numeric'}).formatToParts(new Date(Date.now()+MEAL_SHIFT*60000));
     for(const p of P){ if(p.type==='month') lm=p.value; if(p.type==='day') ld=p.value; if(p.type==='yearName') yn=p.value; } }catch(e){}
   const cn='〇一二三四五六七八九十', dn=+ld; const lday=!dn?'':dn<=10?'初'+(dn===10?'十':cn[dn]):dn<20?'十'+cn[dn-10]:dn===20?'二十':dn<30?'廿'+cn[dn-20]:'三十';

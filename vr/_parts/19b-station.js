@@ -1,10 +1,10 @@
 // {% raw %}
-// ==== 渡船頭站 — the station house, the platform, the line and the tunnel (layout in STN, near LAND)
+// ==== 渡船頭站 — the station house, the platform and its stretch of the line (layout in STN, near LAND)
 //      After an old white wooden station of the Japanese era: a grey tiled gable roof with a round window in each gable,
 //      white boarded walls, a deep veranda on posts with diagonal braces on both long sides; a waiting room with benches and
-//      the ticket window, the station office behind it; one platform, one track, no footbridge. The track ends in a buffer
-//      at the east end of the platform and runs west across the fields, through level crossings at the dikes, into a cut and
-//      a stone-faced tunnel (the plaque's words in stn.tunnel). Everything is at the same true scale as the house.
+//      the ticket window, the station office behind it; one platform, one track, no footbridge. The track runs through, over
+//      level crossings at the dikes; beyond the fields the branch line goes on (19c) toward 斗安 one way and over 大陂溪 to
+//      磺水嶺 the other. Everything is at the same true scale as the house.
 const STNB={signal:null,chair:-1,benches:[]};
 { const S=STN, M=(c,r=.7,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},o)), TX=S.TX, Y=.9, H=3.2, T=k=>({type:k});
   const boardT=textCanvas(256,256,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,w,0); gr.addColorStop(0,'#d9a766'); gr.addColorStop(.5,'#e3b475'); gr.addColorStop(1,'#d6a160'); g.fillStyle=gr; g.fillRect(0,0,w,h); for(let x=0;x<w;x+=32){ g.fillStyle='rgba(110,60,20,.28)'; g.fillRect(x,0,2,h); g.fillStyle='rgba(255,230,180,.25)'; g.fillRect(x+2,0,1,h); } for(let i=0;i<260;i++){ g.strokeStyle=`rgba(140,80,30,${.05+(i%7)/70})`; g.beginPath(); const x=(i*53)%w; g.moveTo(x,0); g.bezierCurveTo(x+6,h*.3,x-6,h*.6,x+3,h); g.stroke(); } });
@@ -103,18 +103,16 @@ const STNB={signal:null,chair:-1,benches:[]};
   for(const [z0,z1] of [[S.PL.z0,S.HS.z0],[S.HS.z1,S.PL.z1]]){ const L=z1-z0; box(.05,.06,L,trim,S.PL.x0+.05,Y+.85,(z0+z1)/2,G); box(.05,.06,L,trim,S.PL.x0+.05,Y+.45,(z0+z1)/2,G); for(let z=z0;z<=z1;z+=1.2) box(.07,.95,.07,trim,S.PL.x0+.05,Y+.47,z,G); }
   box(S.PL.x1-S.PL.x0,.06,.05,trim,(S.PL.x0+S.PL.x1)/2,Y+.85,S.PL.z0+.03,G); box(S.PL.x1-S.PL.x0,.06,.05,trim,(S.PL.x0+S.PL.x1)/2,Y+.45,S.PL.z0+.03,G);
   // ---- the line: ballast, sleepers, rails from the buffer to the end of the tunnel
-  { const z0=S.RAIL.z0+.2, z1=S.TUN_END, L=z1-z0, zc=(z0+z1)/2;
+  { const z0=S.RAIL.z0, z1=S.RAIL.z1, L=z1-z0, zc=(z0+z1)/2;
     const bal=new THREE.Shape(); bal.moveTo(-1.9,0); bal.lineTo(1.9,0); bal.lineTo(1.3,.2); bal.lineTo(-1.3,.2); bal.closePath();
     const bg=new THREE.ExtrudeGeometry(bal,{depth:L,bevelEnabled:false}); const bT=textCanvas(128,128,(g,w,h)=>{ g.fillStyle='#7a7468'; g.fillRect(0,0,w,h); for(let i=0;i<900;i++){ const v=90+((i*53)%90); g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect((i*37)%w,(i*91)%h,3,3); } }); bT.wrapS=bT.wrapT=THREE.RepeatWrapping; bT.repeat.set(.6,.6);
     const bm=new THREE.Mesh(bg,new THREE.MeshStandardMaterial({map:bT,roughness:1})); bm.position.set(TX,-.02,z0); bm.userData={type:'floor'}; pickables.push(bm); G.add(bm);
     const n=Math.floor(L/.62), sl=new THREE.InstancedMesh(new THREE.BoxGeometry(2.0,.12,.2),M(0x4e3a2a,.9),n), m4=new THREE.Matrix4();
     for(let i=0;i<n;i++){ m4.makeTranslation(TX,.24,z0+.3+i*.62); sl.setMatrixAt(i,m4); } sl.instanceMatrix.needsUpdate=true; G.add(sl);
     for(const sx of [-1,1]){ const r=box(.07,.13,L,steel,TX+sx*.5685,.365,zc,G); box(.14,.02,L,rust,TX+sx*.5685,.31,zc,G); }
-    // the buffer at the east end: a frame of rails and a red-and-white beam
-    { const bz=S.RAIL.z0+.1; for(const sx of [-1,1]){ const p=box(.12,.9,.12,rust,TX+sx*.57,.55,bz,G); } const bb=box(1.7,.35,.2,M(0xb83a2e,.6),TX,.85,bz,G,T('stnbuffer')); for(let i=0;i<4;i++) box(.18,.35,.21,trim,TX-.6+i*.4,.85,bz,G); }
     // level crossings where the dikes cross the line, west of the station: planks and a crossbuck each side
     const xbM=M(0xf2efe6,.6), xbK=M(0x1c1c1c,.6);
-    for(let z=Math.ceil((31-LAND.DIKE.oz)/LAND.DIKE.dz)*LAND.DIKE.dz+LAND.DIKE.oz;z<204;z+=LAND.DIKE.dz){ box(2.6,.06,1.2,M(0x6a5640,.9),TX,.35,z,G,{type:'floor'});
+    for(let z=Math.ceil((31-LAND.DIKE.oz)/LAND.DIKE.dz)*LAND.DIKE.dz+LAND.DIKE.oz;z<S.RAIL.z1-4;z+=LAND.DIKE.dz){ box(2.6,.06,1.2,M(0x6a5640,.9),TX,.35,z,G,{type:'floor'});
       for(const sx of [-1,1]){ const g=new THREE.Group(); g.position.set(TX+sx*2.4,0,z+sx*.9); G.add(g); box(.08,1.9,.08,xbK,0,.95,0,g); for(const r of [.6,-.6]){ const a=box(.9,.12,.03,xbM,0,1.7,0,g); a.rotation.z=r; } } } }
   // ---- the signal at the west end of the platform (a colour-light signal on a mast; it shows red until the train comes)
   { const g=new THREE.Group(); g.position.set(TX+2.2,0,34); G.add(g); box(.14,4.2,.14,M(0x3a3a3a,.5),0,2.1,0,g,T('stnsignal')); box(.5,.9,.3,M(0x1c1c1c,.5),0,4.0,-.05,g,T('stnsignal'));
@@ -122,33 +120,6 @@ const STNB={signal:null,chair:-1,benches:[]};
     const r=new THREE.Mesh(new THREE.CircleGeometry(.1,16),red); r.position.set(0,4.2,.11); g.add(r); const gg=new THREE.Mesh(new THREE.CircleGeometry(.1,16),grn); gg.position.set(0,3.8,.11); g.add(gg);
     for(const y of [4.2,3.8]){ const hood=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.12,16,1,true,0,Math.PI),M(0x1c1c1c,.5,{side:THREE.DoubleSide})); hood.rotation.x=Math.PI/2; hood.position.set(0,y+.02,.17); g.add(hood); }
     STNB.signal={red,grn}; }
-  // ---- the cut and the tunnel: the cut is drawn as a fine piece of ground over the hole made in the far hills; the portal
-  //      is stone, with a plaque (stn.tunnel); inside it darkens, a lamp now and then, black at the end
-  { const F=S.FINE, st=1, nx=Math.round((F.x1-F.x0)/st), nz=Math.round((F.z1-F.z0)/st), pos=new Float32Array((nx+1)*(nz+1)*3), idx=[];
-    for(let j=0;j<=nz;j++) for(let i=0;i<=nx;i++){ const x=F.x0+i*st, z=F.z0+j*st, k=(j*(nx+1)+i)*3; pos[k]=x; pos[k+1]=S.cutH(window.__HILLS.h(x,z),x,z); pos[k+2]=z;
-      if(i<nx&&j<nz){ const cx=x+st/2, cz=z+st/2; if(Math.abs(cx-TX)<4.2&&cz>S.PORTAL-1.2) continue; const a=j*(nx+1)+i, b=a+nx+1; idx.push(a,b,a+1,a+1,b,b+1); } }
-    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
-    const col=new Float32Array(pos.length), N=g.attributes.normal, c=new THREE.Color(), grass=new THREE.Color(.24,.34,.15), rock=new THREE.Color(.42,.39,.33);
-    for(let i=0;i<pos.length/3;i++){ c.copy(grass).lerp(rock,1-THREE.MathUtils.smoothstep(N.getY(i),.45,.75)); col.set([c.r,c.g,c.b],i*3); } g.setAttribute('color',new THREE.BufferAttribute(col,3));
-    const mesh=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2})); mesh.receiveShadow=true; G.add(mesh);
-    // the portal
-    const P=S.PORTAL, hTop=10.2, stT=textCanvas(256,256,(g2,w,h)=>{ g2.fillStyle='#8f8a80'; g2.fillRect(0,0,w,h); for(let y=0;y<h;y+=32) for(let x=((y/32)%2)*32;x<w+64;x+=64){ const v=128+((x*7+y*3)%40); g2.fillStyle=`rgb(${v},${v-4},${v-12})`; g2.fillRect(x-30,y+2,60,28); } }); stT.wrapS=stT.wrapT=THREE.RepeatWrapping; stT.repeat.set(4,4);
-    const stoneW=new THREE.MeshStandardMaterial({map:stT,roughness:.95});
-    const fs=new THREE.Shape(); fs.moveTo(-4.2,-.2); fs.lineTo(4.2,-.2); fs.lineTo(9.3,hTop); fs.lineTo(-9.3,hTop); fs.closePath();
-    const hole=new THREE.Path(); hole.moveTo(-2.3,0); hole.lineTo(-2.3,3.1); hole.absarc(0,3.1,2.3,Math.PI,0,true); hole.lineTo(2.3,0); hole.closePath(); fs.holes.push(hole);
-    const fg=new THREE.ExtrudeGeometry(fs,{depth:.9,bevelEnabled:false}); const face=new THREE.Mesh(fg,stoneW); face.position.set(TX,0,P-.9); face.userData=T('stntunnel'); pickables.push(face); G.add(face);
-    box(19.4,.5,1.2,M(0x7e7a72,.9),TX,hTop+.1,P-.45,G); box(19.0,.25,1.0,M(0x8a867e,.9),TX,hTop-1.2,P-.95,G);
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(2.55,.25,8,24,Math.PI),M(0x7e7a72,.9)); ring.position.set(TX,3.1,P-.95); G.add(ring); for(const sx of [-1,1]) box(.5,3.1,.5,M(0x7e7a72,.9),TX+sx*2.55,1.55,P-.95,G);
-    const plq=new THREE.Mesh(new THREE.PlaneGeometry(2.6,.8),new THREE.MeshStandardMaterial({roughness:.8,map:textCanvas(512,160,(c2,w,h)=>{ c2.fillStyle='#6e6a62'; c2.fillRect(0,0,w,h); c2.strokeStyle='#4a4640'; c2.lineWidth=8; c2.strokeRect(8,8,w-16,h-16); c2.fillStyle='#2a2622'; c2.textAlign='center'; c2.textBaseline='middle'; c2.font='bold 96px "Noto Serif TC",serif'; c2.fillText(String(NT('stn.tunnel',0)||'').split('').join(''),w/2,h/2+4); })}));
-    plq.position.set(TX,7.0,P-.92); plq.rotation.y=Math.PI; plq.userData=T('stntunnel'); pickables.push(plq); G.add(plq);
-    // the tunnel tube: unlit, darker the deeper it goes; a lamp every dozen metres; black at the end
-    const ts=new THREE.Shape(); ts.moveTo(-3.0,-.3); ts.lineTo(3.0,-.3); ts.lineTo(3.0,3.1); ts.absarc(0,3.1,3.0,0,Math.PI,false); ts.lineTo(-3.0,-.3);
-    const th=new THREE.Path(); th.moveTo(-2.3,-.29); th.lineTo(-2.3,3.1); th.absarc(0,3.1,2.3,Math.PI,0,true); th.lineTo(2.3,-.29); th.closePath(); ts.holes.push(th);
-    const TL=S.TUN_END-P+.4, tg=new THREE.ExtrudeGeometry(ts,{depth:TL,bevelEnabled:false,steps:24}); const tp=tg.attributes.position, tc=new Float32Array(tp.count*3);
-    for(let i=0;i<tp.count;i++){ const d=tp.getZ(i)/TL, v=.28*Math.pow(1-d,1.6)+.025; tc.set([v,v*.97,v*.92],i*3); } tg.setAttribute('color',new THREE.BufferAttribute(tc,3));
-    const tube=new THREE.Mesh(tg,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide})); tube.position.set(TX,0,P-.5); G.add(tube);
-    const endP=new THREE.Mesh(new THREE.PlaneGeometry(5,6),new THREE.MeshBasicMaterial({color:0x020202})); endP.position.set(TX,2.7,S.TUN_END+.3); endP.rotation.y=Math.PI; G.add(endP);
-    const lampM=new THREE.MeshBasicMaterial({color:0xffc27a}); for(let z=P+10;z<S.TUN_END-4;z+=12){ box(.12,.18,.3,lampM,TX-2.2,3.0,z,G); } }
   G.traverse(o=>{ if(o.isMesh&&!o.userData.type) o.userData={type:'stnhouse'}; });
 }
 SEAT_KIND.stnb={eye:2.02,pitch:-.05,front:true,sink:-.42+.9,get label(){ return NT('stnb.label'); },get hello(){ return NT('stnb.hello'); },status:()=>NT('stnb.status')};

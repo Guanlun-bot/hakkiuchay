@@ -49,9 +49,9 @@ renderer.xr.enabled = true;
 const MAXANI = renderer.capabilities.getMaxAnisotropy();
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(NIGHT?0x1a2236:0xd8d7d0, 70, 1000);
+scene.fog = new THREE.Fog(NIGHT?0x1a2236:0xd8d7d0, 500, 24000);
 const fovFor=a=>a<1?82:68;
-const camera = new THREE.PerspectiveCamera(fovFor(innerWidth/innerHeight), innerWidth/innerHeight, 0.05, 1700);
+const camera = new THREE.PerspectiveCamera(fovFor(innerWidth/innerHeight), innerWidth/innerHeight, 0.05, 60000);
 const rig = new THREE.Group(); rig.add(camera); scene.add(rig);
 
 await __yield(0.08);

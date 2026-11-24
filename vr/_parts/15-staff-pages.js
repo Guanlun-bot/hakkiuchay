@@ -162,10 +162,17 @@ window.__hasPlan=n=>!!DPLAN[n.id];
 // where each kind of work is done
 const R26=()=>bedOf(NPC.li), P=(x,z)=>({x,z});
 const TASKS={
-  禮拜:{bed:true,pose:'pray'}, 休息:{bed:true,pose:'bedsit'}, 縫補:{bed:true,pose:'mend'}, 摺衣:{bed:true,pose:'mend'}, 補衣:{bed:true,pose:'mend'}, 梳洗:{bed:true,pose:'bedsit'},
+  禮拜:{bed:true,pose:'pray'}, 休息:{bed:true,pose:'bedsit'}, 補衣:{bed:true,pose:'mend'}, 梳洗:{bed:true,pose:'bedsit'},
   午睡:{nap:true},
   收衣:{spots:[P(33.64,19.6),P(34.56,19.6),P(34.1,0),P(29.4,1.2)],act:'load',dur:20000},
-  洗衣:{spots:[P(44.2,6.4),P(43.5,7.0)],act:'wash',dur:60000,face:P(46,6.4)},
+  // 阿莉's work in the laundry (west 前過水): the washers, the dryers, the drying yard (the dryers when it rains), the iron,
+  // the folding table, the sewing machine
+  洗衣:{spots:[{x:28.75,z:17.95},{x:28.75,z:18.95},{x:28.75,z:19.75}],act:'load',dur:40000,face:()=>({x:27,z:NPC.li?NPC.li.z:18.5})},
+  烘衣:{spots:[{x:28.75,z:20.7},{x:28.75,z:21.55}],act:'load',dur:40000,face:()=>({x:27,z:NPC.li?NPC.li.z:21})},
+  曬衣:{spots:[()=>raining()?{x:28.75,z:21.1}:{x:27.4,z:28.2},()=>raining()?{x:28.75,z:20.7}:{x:30.2,z:28.2},()=>raining()?{x:28.75,z:21.55}:{x:31.6,z:29.6}],act:'load',dur:30000},
+  燙衣:{spots:[{x:30.3,z:19.7}],act:'iron',dur:60000,face:{x:32,z:19.7}},
+  摺衣:{spots:[{x:30.25,z:21.0},{x:30.25,z:21.7}],act:'prep',dur:60000,face:{x:32,z:21.3}},
+  縫補:{spots:[{x:30.35,z:18.3}],act:'mend2',dur:60000,face:{x:32,z:18.3}},
   補毛巾:{spots:[P(42.9,22.4),P(43.2,18.2)],act:'load',dur:25000},
   幫忙茶具:{spots:[P(10.4,-2.2)],act:'prep',dur:60000,face:P(10.4,-4.5)},
   聊天:{dine:true},

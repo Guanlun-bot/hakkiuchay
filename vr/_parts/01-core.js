@@ -295,6 +295,7 @@ const stoneCourse=std(stonePaving,4,1,{color:0xa69d90});
 function facadePanel(left,right,bottom,top,z,material,parent=mainHall){
   box(right-left,top-bottom,.30,material,(left+right)/2,(bottom+top)/2,z,parent,BLOCK);
 }
+var PATH_POSTS=null;   // the boardwalk's bollards (solid; set where they are built)
 const WINDOWS=[];   // every square and octagonal window, for the bamboo blinds (buildBlinds)
 function windowBay(left,right,center,width,z,low,high,parent=mainHall){ WINDOWS.push({k:'sq',parent,cx:center,z,w:width,y0:low,y1:high});
   const lo=center-width/2,hi=center+width/2;
@@ -442,7 +443,7 @@ function doorPose(d){ // k: 1 open, 0 shut; barK: 1 bar in, 0 bar stored
 // room-and-door plan): the hall and wing doors, the doors between rooms, and the gate in the low front wall.
 // Each door stands in its own group: the wall at local z=0, the inside toward -z; it is shut (and blocks the way)
 // only by someone inside. All start open.
-const DOOR_BLOCKS=[];
+const DOOR_BLOCKS=[]; let NPC_WALK=false;   // true while the household moves: they open a shut door as they come to it
 function addDoor(key,x,z,rot,half,h,wallT,inside){
   const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
   const pick={type:'door',key}, plank=DOOR_LEAF, iron=new THREE.MeshStandardMaterial({color:0x2a2724,metalness:.6,roughness:.5});

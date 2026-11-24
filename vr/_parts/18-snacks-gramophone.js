@@ -10,13 +10,13 @@
 const KST={
   steam:{at:P(45.3,-2.95),face:P(47,-2.95),act:'steam'}, oven:{at:P(45.35,-2.6),face:P(47,-2.6),act:'load'},
   fry:{at:P(45.3,-1.75),face:P(47,-1.75),act:'cook'}, pan:{at:P(45.3,-2.35),face:P(47,-2.35),act:'cook'},
-  pot:{at:P(45.3,-.95),face:P(47,-.95),act:'prep'}, ice:{at:P(44.75,3.25),face:P(45.2,3.6),act:'prep'},
+  pot:{at:P(45.3,-.95),face:P(47,-.95),act:'prep'}, ice:{at:P(44.97,3.0),face:P(44.97,3.6),act:'prep'},
   mortar:{at:P(43.4,5.55),face:P(43.4,4.85),act:'sweep'}, table:{at:P(43.25,0),face:P(44,0),act:'prep'} };
 // the menu: id, kind, equipment, minutes, the dish's shape and colours
 const SNK=[
   ['mochi','tw','mortar',4,'plate',[0xf4efe6,0x5a4636]],['jiangui','tw','pan',3,'plate',[0xe9e2d0,0xc89a5a]],['fanshu','tw','fry',3,'plate',[0xd98a2e,0xb8742a]],['yuwan','tw','fry',3,'plate',[0x9a86a8,0xc9a96a]],
   ['douhua','tw','pot',2,'bowl',[0xf3ecd9,0xc9a05a]],['tangyuan','tw','pot',4,'bowl',[0x7a3a2a,0xf6f2ea]],['xingren','tw','fry',4,'cup',[0xefe6d2,0xd9a84a]],['runbing','tw','pan',4,'roll',[0xf1e8d2,0x5c8a3a]],
-  ['baoice','tw','ice',2,'ice',[0xf7f7f4,0xb0402e]],['wangue','tw','pot',4,'bowl',[0xd8c7a2,0x7a5a3a]],
+  ['baoice','tw','ice',2,'ice',[0xf7f7f4,0xb0402e]],['mangoice','tw','ice',2,'ice',[0xf7efd8,0xf2a830]],['wangue','tw','pot',4,'bowl',[0xd8c7a2,0x7a5a3a]],
   ['shaomai','hk','steam',5,'basket',[0xf3e6b8,0xe0b040]],['shuijing','hk','steam',5,'basket',[0xeef0e6,0x8ab070]],['chashao','hk','steam',5,'basket',[0xf6f1e4,0xb0503a]],['naihuang','hk','steam',5,'basket',[0xf6f1e4,0xf0c040]],
   ['liusha','hk','steam',5,'basket',[0xf6f1e4,0xe8a030]],['changfen','hk','steam',4,'roll',[0xf3f0e8,0x6a4a2a]],['luobo','hk','pan',4,'plate',[0xe8dcc0,0xc89a5a]],['mati','hk','pan',4,'plate',[0xd8b97a,0xe8d4a0]],
   ['xianzhu','hk','steam',5,'roll',[0xe0c48a,0x8a5a2a]],['chunjuan','hk','fry',3,'roll',[0xd99a40,0xc0802a]],['yujiao','hk','fry',4,'plate',[0xe0b060,0xc49040]],['jiandui','hk','fry',4,'plate',[0xd99a40,0xf2ead8]],
@@ -30,6 +30,7 @@ const SNK=[
 ].map(([id,cat,eq,min,shape,col])=>({id,cat,eq,min,shape,col}));
 const SNKI=Object.fromEntries(SNK.map(s=>[s.id,s]));
 const snName=id=>NT('snack.'+id,0)||id;
+const mangoMonth=()=>new Date(Date.now()+8*3600e3).getUTCMonth()+1, mangoRipe=()=>{ const m=mangoMonth(); return m===6||m===7; };
 // timing of one order (ms from the order): the runner, the cooking, the carrying
 const oTimes=o=>{ const s=SNKI[o.sk]||{min:3}; const cook=o.t0+60000, ready=cook+s.min*60000, served=ready+60000; return {cook,ready,served,gone:served+45*60000}; };
 
@@ -37,6 +38,9 @@ const oTimes=o=>{ const s=SNKI[o.sk]||{min:3}; const cook=o.t0+60000, ready=cook
    on the front-right ring, a deep fryer and an electric rice cooker on the worktop, an iron ice shaver on a stand by the
    rice jar, and a stone mortar outside under the eaves ---- */
 const KGEAR={};
+// the morning soy milk: 火師 is at the stone mill from 65 to 40 minutes before breakfast (then he goes in to cook)
+const MILL={c:{x:44.72,z:4.85}, at:{x:44.72,z:5.6}, run:null, milk:null, stream:null};
+const millTime=()=>{ const T=taipeiNow(), B=MEALS[0].at, r=T.min-B; return r>=-65&&r<-40&&!asleepAt(T.min)?(r+65)/25:-1; };
 { const M=(c,r=.6,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:r},o)), x0=KIT.run.x0;
   const put=(geo,m,x,y,z,par=scene,tag)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); par.add(o); if(tag){ o.userData=tag; pickables.push(o); } return o; };
   const bx=(w,h,d,m,x,y,z,par,tag)=>put(new THREE.BoxGeometry(w,h,d),m,x,y,z,par,tag), cy=(rt,rb,h,m,x,y,z,par,seg=20,tag)=>put(new THREE.CylinderGeometry(rt,rb,h,seg),m,x,y,z,par,tag);
@@ -52,11 +56,17 @@ const KGEAR={};
     for(let i=0;i<3;i++){ const r=put(new THREE.CylinderGeometry(.13,.13,.07,24,1,true),bamboo,0,.035+i*.072,0,g); r.material.side=THREE.DoubleSide; for(const y of [.005,.065]) put(new THREE.TorusGeometry(.13,.006,5,24),bambooD,0,y+i*.072,0,g).rotation.x=Math.PI/2; }
     const lid=put(new THREE.SphereGeometry(.132,20,8,0,Math.PI*2,0,Math.PI/2.6),bamboo,0,.216,0,g); lid.scale.y=.45; put(new THREE.TorusGeometry(.03,.006,5,12),bambooD,0,.262,0,g);
     g.traverse(c=>{ if(c.isMesh){ c.userData=tag; pickables.push(c); } }); KGEAR.steam={x:sx,y:1.24,z:sz}; }
-  // 3 the deep fryer: a steel box, the oil well with a basket, a handle forward, a dial and a lamp
-  { const fx=x0+.24, fz=-1.72; bx(.34,.26,.3,steelM,fx,1.03,fz,scene,TG('fry')); bx(.26,.01,.22,M(0x6a4a1a,.15,{metalness:.2}),fx+.01,1.162,fz);
-    const bk=bx(.2,.06,.16,M(0x9a9ea0,.4,{metalness:.6,wireframe:true}),fx+.01,1.18,fz); const h=cy(.009,.009,.2,black,fx-.2,1.2,fz); h.rotation.z=Math.PI/2.4;
-    const d=cy(.022,.022,.016,black,fx-.176,1.05,fz+.08,scene,14); d.rotation.z=Math.PI/2; bx(.006,.012,.012,M(0xff6a3a,.4,{emissive:0xff4a1a,emissiveIntensity:.5}),fx-.172,1.1,fz-.08);
-    KGEAR.fry={x:fx,y:1.2,z:fz}; }
+  // 3 the fryer, built into the worktop as in a fast-food kitchen: a steel frame flush with the top round one oil well, two
+  //   wire baskets with long handles toward the cook (hung up on the back rail to drain), a steel cover over the well when
+  //   it is not in use; on the front of the counter below, the panel: two thermostats, two timers, a lamp
+  { const fx=x0+.3, fz=-1.72, top=.905, tag=TG('fry'), oil=M(0x6a4a1a,.12,{metalness:.25}), wire=M(0x9a9ea0,.4,{metalness:.6,wireframe:true});
+    bx(.56,.012,.52,steelM,fx,top,fz,scene,tag); bx(.44,.008,.4,M(0x2a2826,.4),fx,top+.004,fz);   // the frame, the well's dark rim
+    const oilP=bx(.4,.004,.36,oil,fx,top-.05,fz,scene,tag); bx(.02,.06,.4,steelM,fx+.21,top+.03,fz);   // the oil, the back rail
+    const baskets=[]; for(const dz of [-.095,.095]){ const g=new THREE.Group(); scene.add(g); const b=put(new THREE.BoxGeometry(.3,.1,.16),wire,0,0,0,g,tag); const h=cy(.01,.01,.26,black,-.27,.05,0,g); h.rotation.z=Math.PI/2-.25; put(new THREE.BoxGeometry(.06,.025,.03),black,-.4,.08,0,g); baskets.push({g,dz}); }
+    const lid=bx(.42,.008,.38,steelM,fx,top+.008,fz,scene,tag);
+    const panel=bx(.006,.16,.46,black,x0-.004,.78,fz,scene,tag); const lamps=[]; for(const dz of [-.12,.12]){ const d=cy(.022,.022,.016,M(0x2a2827,.4),x0-.012,.8,fz+dz,scene,14); d.rotation.z=Math.PI/2; const dg=bx(.004,.025,.06,new THREE.MeshBasicMaterial({color:0x3a1a10}),x0-.01,.74,fz+dz); lamps.push(dg); }
+    const bubbles=[]; for(let i=0;i<14;i++){ const q=put(new THREE.SphereGeometry(.008,6,4),M(0xd9b26a,.3),fx+(Math.random()-.5)*.34,top-.045,fz+(Math.random()-.5)*.3); q.visible=false; bubbles.push(q); }
+    KGEAR.fry={x:fx,y:1.0,z:fz}; KGEAR.fryer={fx,fz,top,baskets,lid,lamps,bubbles}; }
   // 4 the electric rice cooker: a round body, a domed lid with a knob, side handles, a switch
   { const tag=TG('pot'), rx=x0+.22, rz=-.78, g=new THREE.Group(); g.position.set(rx,.9,rz); scene.add(g);
     put(new THREE.CylinderGeometry(.13,.12,.2,28),red,0,.1,0,g); put(new THREE.CylinderGeometry(.131,.131,.012,28),chrome,0,.2,0,g);
@@ -65,7 +75,7 @@ const KGEAR={};
     put(new THREE.BoxGeometry(.02,.03,.03),black,-.13,.05,0,g); put(new THREE.CircleGeometry(.005,8),M(0xff8a3a,.4,{emissive:0xff6a1a,emissiveIntensity:.6}),-.131,.09,0,g).rotation.y=-Math.PI/2;
     g.traverse(c=>{ if(c.isMesh){ c.userData=tag; pickables.push(c); } }); KGEAR.pot={x:rx,y:1.15,z:rz}; }
   // 5 the ice shaver on its own small stand: a cast-iron frame, a wheel with a crank, a bowl under the blade
-  { const tag=TG('ice'), ix=45.2, iz=3.55, g=new THREE.Group(); g.position.set(ix,0,iz); g.rotation.y=Math.PI*.75; scene.add(g);
+  { const tag=TG('ice'), ix=44.97, iz=3.6, g=new THREE.Group(); g.position.set(ix,0,iz); g.rotation.y=Math.PI; scene.add(g);   // right beside the rice jar, the bowl toward the room
     for(const [x,z] of [[-.17,-.17],[.17,-.17],[-.17,.17],[.17,.17]]) put(new THREE.BoxGeometry(.045,.72,.045),wood,x,.36,z,g); put(new THREE.BoxGeometry(.44,.04,.44),wood,0,.74,0,g); put(new THREE.BoxGeometry(.36,.02,.36),wood,0,.18,0,g);
     put(new THREE.BoxGeometry(.24,.03,.2),iron,0,.775,0,g); for(const s of [-1,1]) put(new THREE.BoxGeometry(.03,.42,.04),iron,s*.1,.99,-.06,g); put(new THREE.BoxGeometry(.24,.04,.06),iron,0,1.2,-.06,g);
     put(new THREE.CylinderGeometry(.085,.085,.05,20),M(0xd8dcdc,.2,{metalness:.6}),0,1.06,-.06,g); const wh=put(new THREE.TorusGeometry(.11,.012,6,24),iron,.15,1.1,-.06,g); wh.rotation.y=Math.PI/2;
@@ -74,11 +84,38 @@ const KGEAR={};
   // 6 the stone mortar outside under the eaves, a wooden mallet leaning on it
   { const mx=43.4, mz=4.85; cy(.3,.34,.42,granite,mx,.21,mz,scene,24,TG('mortar')); const bowl=put(new THREE.CircleGeometry(.22,24),M(0x6e6a64,.95),mx,.422,mz); bowl.rotation.x=-Math.PI/2;
     const g=new THREE.Group(); g.position.set(mx+.36,0,mz+.08); g.rotation.z=.32; scene.add(g); put(new THREE.CylinderGeometry(.02,.022,.9,8),wood,0,.45,0,g); const hd=put(new THREE.CylinderGeometry(.075,.075,.26,14),wood,0,.92,0,g); hd.rotation.z=Math.PI/2;
-    OB(mx-.36,mx+.48,mz-.36,mz+.36); KGEAR.mortar={x:mx,y:.5,z:mz}; } }
+    OB(mx-.36,mx+.48,mz-.36,mz+.36); KGEAR.mortar={x:mx,y:.5,z:mz}; }
+  // 7 the stone mill between the mortar and the woodpile, on a low wooden stand: a granite bed with a channel round it and a
+  //   spout, the runner stone on top with a feed hole and an upright wooden handle; a pail under the spout for the soy milk.
+  //   火師 grinds the soaked beans here every morning before breakfast (MILL), the runner turning as he works it.
+  { const cx=44.72, cz=4.85, tag=TG('mill'), g=new THREE.Group(); g.position.set(cx,0,cz); scene.add(g);
+    const granL=M(0xa9aaa4,.95), granD=M(0x8d8e88,.95), soy=M(0xf1ead6,.5);
+    for(const [x,z] of [[-.25,-.25],[.25,-.25],[-.25,.25],[.25,.25]]) put(new THREE.BoxGeometry(.06,.5,.06),wood,x,.25,z,g,tag);
+    put(new THREE.BoxGeometry(.62,.05,.62),wood,0,.52,0,g,tag); put(new THREE.BoxGeometry(.54,.03,.54),wood,0,.12,0,g);
+    // the bed: a thick disc with a raised outer rim, so a channel runs round the runner; the spout toward the woodpile
+    put(new THREE.CylinderGeometry(.34,.36,.12,28),granD,0,.605,0,g,tag);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(.315,.03,6,28),granL); rim.rotation.x=Math.PI/2; rim.position.y=.67; rim.scale.set(1,1,1.6); g.add(rim); rim.userData=tag; pickables.push(rim);
+    put(new THREE.CircleGeometry(.29,28),M(0x9c9d97,.95),0,.666,0,g).rotation.x=-Math.PI/2;
+    const sp=put(new THREE.BoxGeometry(.2,.07,.12),granD,.4,.62,0,g,tag); put(new THREE.BoxGeometry(.16,.01,.06),M(0x7d7e78,.9),.42,.657,0,g);
+    // the runner: turns about its axis
+    const run=new THREE.Group(); run.position.y=.67; g.add(run); put(new THREE.CylinderGeometry(.22,.225,.22,28),granL,0,.11,0,run,tag);
+    put(new THREE.CylinderGeometry(.18,.18,.012,24),granD,0,.221,0,run); put(new THREE.CylinderGeometry(.03,.03,.014,10),M(0x3a3936,.9),.07,.224,0,run);
+    const hd=put(new THREE.CylinderGeometry(.02,.022,.22,10),M(0xc79a68,.6),.17,.33,0,run,tag); for(const y of [.36,.39]) put(new THREE.TorusGeometry(.021,.003,4,12),M(0x8a6440,.6),.17,y,0,run).rotation.x=Math.PI/2;
+    put(new THREE.BoxGeometry(.05,.03,.1),M(0xc79a68,.6),.17,.235,0,run);
+    // the pail, and the white of the milk rising in it while he grinds; a thin white stream from the spout
+    const pail=put(new THREE.CylinderGeometry(.13,.11,.28,16,1,true),M(0x8a6a48,.7,{side:THREE.DoubleSide}),.56,.14,0,g,tag); put(new THREE.CircleGeometry(.11,16),M(0x6a5038,.8),.56,.005,0,g).rotation.x=-Math.PI/2;
+    for(const y of [.05,.23]) put(new THREE.TorusGeometry(.125-y*.07,.006,4,16),M(0x2e2c2a,.5,{metalness:.4}),.56,y,0,g).rotation.x=Math.PI/2;
+    const milk=put(new THREE.CircleGeometry(.118,16),soy,.56,.02,0,g); milk.rotation.x=-Math.PI/2;
+    const stream=put(new THREE.CylinderGeometry(.008,.008,1,6),soy,.5,.4,0,g); stream.visible=false;
+    OB(cx-.34,cx+.72,cz-.34,cz+.34); MILL.run=run; MILL.milk=milk; MILL.stream=stream; } }
 // steam from the steamer while something is in it; a shimmer over the fryer
 { const pm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false}); const puffs=[]; for(let i=0;i<10;i++){ const p=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),pm.clone()); p.visible=false; scene.add(p); puffs.push(p); MEAL_DYN.push(p); }
   ZL_ANIM.push(()=>{ const huo=NPC.huo, L=(HOUSE.orders||[]), now=Date.now(); let at=null;
     for(const o of L){ const T=oTimes(o), s=SNKI[o.sk]; if(s&&now>=T.cook&&now<T.ready&&(s.eq==='steam'||s.eq==='fry'||s.eq==='pot')){ at=KGEAR[s.eq]; break; } }
+    const F=KGEAR.fryer; if(F){ let fry=false, drain=false; for(const o of L){ const T=oTimes(o), s=SNKI[o.sk]; if(s&&s.eq==='fry'){ if(now>=T.cook&&now<T.ready) fry=true; else if(now>=T.ready&&now<T.ready+40000) drain=true; } }
+      const open=fry||drain, tt=performance.now()/1000; F.lid.position.x=F.fx+(open?-.46:0); F.lid.position.y=F.top+(open?.0:.008); F.lid.visible=!open;
+      F.baskets.forEach(({g,dz},i)=>{ if(fry){ g.position.set(F.fx-.01,F.top-.07+Math.sin(tt*3+i)*.004,F.fz+dz); g.rotation.z=0; } else { g.position.set(F.fx+.14,F.top+.09,F.fz+dz); g.rotation.z=.55; } });
+      F.lamps.forEach(l=>l.material.color.setHex(fry?0x4aff7a:drain?0xffb040:0x3a1a10)); F.bubbles.forEach((q,i)=>{ q.visible=fry; if(fry){ const ph=(tt*1.8+i*.37)%1; q.position.y=F.top-.05+ph*.012; q.scale.setScalar(.6+ph); } }); }
     const t=performance.now()/1000; puffs.forEach((p,i)=>{ if(!at){ p.visible=false; return; } const ph=(t*.45+i/puffs.length)%1; p.visible=true; p.position.set(at.x+Math.sin(i*2.3+t)*.05,at.y+ph*.7,at.z+Math.cos(i*1.7)*.05); p.material.opacity=(1-ph)*.3; p.scale.setScalar(.6+ph*1.4); }); }); }
 
 /* ---- the dishes ---- */
@@ -135,10 +172,15 @@ setInterval(()=>{ if(!window.__entered) return; const L=(HOUSE.orders||[]); L.fo
 function orderSnack(sk,via){ const now=Date.now(); const keep=(HOUSE.orders||[]).filter(o=>now<oTimes(o).gone); if(keep.length>=6){ npcSay(via,npcLine('snack.full')); return; }
   const o={id:MY_PID.slice(0,6)+now.toString(36),sk,by:myName,t0:now,via}; hAct({orders:keep.concat([o])}); npcSay(via,npcLine(via==='xu'?'snack.okX':'snack.okC',{菜:snName(sk),分:SNKI[sk].min+2})); }
 // clearing a dish from the tea table: click it
-window.__snackAct=u=>{ const o=(HOUSE.orders||[]).find(o=>o.id===u.oid); if(o) toast(String(NT('snack.eat')).replace('{菜}',snName(o.sk)),2600); };
+const SNB=new Map();
+window.__snackAct=u=>{ const o=(HOUSE.orders||[]).find(o=>o.id===u.oid); if(!o) return; const nm=snName(o.sk), s=SNKI[o.sk]; let left=SNB.has(o.id)?SNB.get(o.id):4;
+  if(left===4) toast(String(NT('snack.eat')).replace('{菜}',nm),2000);
+  left--; SNB.set(o.id,left); try{ noiseBurst(.05,1600,4,.04); }catch{}
+  const k=FOOD.kindOf(nm); if(s&&s.eq==='ice') k.push('cool'); if(s&&(s.eq==='pot'||s.eq==='steam')) k.push('warm'); if(left===3) setTimeout(()=>FOOD.fx(k,nm),600); else if(left>0) toast(NT('food.bited').replace('{名}',nm),1500);
+  if(left<=0){ setTimeout(()=>{ snHide(o.id); toast(NT('food.done').replace('{名}',nm),2200); },600); } };
 // the menu, in a panel: three kinds, a name each
 function snackMenu(via){ const cats=['tw','hk','we'];
-  const body=openPanel(NT('snack.title')||'茶點',`<div class="bp">${cats.map(c=>`<h4>${esc(NT('snack.cat.'+c))}</h4><div class="bl">${SNK.filter(s=>s.cat===c).map(s=>`<button type="button" data-s="${s.id}">${esc(snName(s.id))}</button>`).join('')}</div>`).join('')}<p class="meta">${esc(NT('snack.note'))}</p></div>`);
+  const body=openPanel(NT('snack.title')||'茶點',`<div class="bp">${cats.map(c=>`<h4>${esc(NT('snack.cat.'+c))}</h4><div class="bl">${SNK.filter(s=>s.cat===c&&(s.id!=='mangoice'||mangoRipe())).map(s=>`<button type="button" data-s="${s.id}">${esc(snName(s.id))}</button>`).join('')}</div>`).join('')}<p class="meta">${esc(NT('snack.note'))}</p></div>`);
   body.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ closePanel(); orderSnack(b.dataset.s,via); }); }
 FOOD_EXTRA.push((pane)=>{ const L=(HOUSE.orders||[]).filter(o=>Date.now()<oTimes(o).gone);
   const d=document.createElement('div'); d.innerHTML=`<h4>${esc(NT('snack.title'))}</h4>`+(L.length?L.map(o=>{ const T=oTimes(o), now=Date.now(); const st=now>=T.served?NT('snack.stDone'):now>=T.cook?NT('snack.st',1):NT('snack.st',0); return `<p>${esc(snName(o.sk))}<span class="meta">　${esc(st)}　${esc(o.by||'')}</span></p>`; }).join(''):'')+`<div class="bl"><button type="button" id="bsn">${esc(NT('snack.order'))}</button></div>`;

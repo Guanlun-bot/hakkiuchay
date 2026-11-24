@@ -25,13 +25,17 @@ function sideRoom(name,x0,x1,z0,z1,walls,rise){ const cx=(x0+x1)/2, cz=(z0+z1)/2
     for(const e of [-1,1]){ const f=new THREE.Mesh(new THREE.ShapeGeometry(gable),mWhite(1,1)); f.material.side=THREE.DoubleSide; if(D>W){ f.position.set(cx,0,cz+e*D/2); } else { f.position.set(cx+e*W/2,0,cz); f.rotation.y=Math.PI/2; } scene.add(f); } }
   for(const x of (D>W?[cx]:[x0+W/3,x1-W/3])) for(const z of (D>W?[z0+D/3,z1-D/3]:[cz])) box(.15,.2,.15,M.woodDark,x,3.48,z);
   SIDE_ROOMS.push({name,x0,x1,z0,z1}); }
+// the laundry (west 前過水): its back door in the outer wall, and the drying yard behind the house it opens onto
+const LDRY={door:{x0:27.92,x1:28.92,h:2.4,z:23.75}, yard:{x0:25.2,x1:33.8,z0:26.2,z1:31}};
 { const WZ=4.488, mirror=z=>2*courtAxis-z, hallE=axialHalls[1].hall, hallW=axialHalls[0].hall;
   for(const s of [1,-1]){ const Z=z=>s>0?z:mirror(z), lo=(a,b)=>s>0?[a,b]:[mirror(b),mirror(a)];
     const [za,zb]=lo(-4.3,WZ), outerZ=Z(-4.15);
     // 大房 beside the 正廳
     sideRoom(s>0?'東大房':'西大房',-14.1,-7.636,za,zb,[['x',-13.95,za,zb,true],['z',outerZ,-14.1,-7.636,true]],RISE*3.23/5.62);
     // 前過水 beside the 過廳: the same as the 過水 beside the 南廳, one bay (19.6 m) further south
-    sideRoom(s>0?'前東過水':'前西過水',27.236,31.564,za,zb,[['z',outerZ,27.236,31.564,true]],RISE*2.164/5.62);
+    sideRoom(s>0?'前東過水':'前西過水',27.236,31.564,za,zb,s>0?[['z',outerZ,27.236,31.564,true]]:[['z',outerZ,27.236,LDRY.door.x0,false],['z',outerZ,LDRY.door.x1,31.564,false]],RISE*2.164/5.62);
+    if(s<0){ const D=LDRY.door, w=D.x1-D.x0, cx=(D.x0+D.x1)/2; box(w,3.68-D.h,.3,mWhite(w,1),cx,(D.h+3.68)/2,outerZ,scene,BLOCK);   // the west 前過水 is the laundry: its back door
+      for(const x of [D.x0,D.x1]) box(.1,D.h,.36,M.woodDark,x,D.h/2,outerZ); box(w+.1,.1,.36,M.woodDark,cx,D.h,outerZ); box(w,.06,.34,M.woodDark,cx,.03,outerZ); }
     // 過水間 beside the 南廳
     sideRoom(s>0?'東過水':'西過水',7.636,11.964,za,zb,[['z',outerZ,7.636,11.964,true]],RISE*2.164/5.62);
     // close the slits where a long range's end wall stops short of the side hall's end wall
@@ -216,9 +220,10 @@ const clouds=Array.from({length:9},(_,i)=>{
   return cloud;
 });
 const taipeiClock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+let STAR_DOME=null;   // the star dome follows you about (see the land loop), so the stars cover the whole map
 const starMat=new THREE.PointsMaterial({color:0xe8eeff,size:.45,sizeAttenuation:true,transparent:true,opacity:0,fog:false,depthWrite:false});
 { const pts=[], R=rnd(2026); for(let i=0;i<1400;i++){ const th=R()*Math.PI*2, ph=Math.acos(1-R()*.95); pts.push(95*Math.sin(ph)*Math.cos(th),95*Math.cos(ph),95*Math.sin(ph)*Math.sin(th)); }
-  const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3)); const stars=new THREE.Points(sg,starMat); stars.position.copy(new THREE.Vector3(0,0,courtAxis)); stars.renderOrder=-1; scene.add(stars); }
+  const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3)); const stars=new THREE.Points(sg,starMat); stars.position.copy(new THREE.Vector3(0,0,courtAxis)); stars.renderOrder=-1; stars.frustumCulled=false; scene.add(stars); STAR_DOME=stars; }
 const moon=new THREE.Sprite(new THREE.SpriteMaterial({map:textCanvas(128,128,(g,w,h)=>{ const r=g.createRadialGradient(64,64,0,64,64,64); r.addColorStop(0,'#fffbe8'); r.addColorStop(.42,'#fff4d0'); r.addColorStop(.48,'rgba(255,240,200,.35)'); r.addColorStop(1,'rgba(255,240,200,0)'); g.fillStyle=r; g.fillRect(0,0,w,h); }),fog:false,depthWrite:false,transparent:true,toneMapped:false}));
 moon.scale.set(9,9,1); moon.position.set(courtAxis+60,52,courtAxis-30); scene.add(moon);
 // ---- weather: what the sky over Taipei is doing right now (Open-Meteo, no key). rain 0–1, cloud 0–1.

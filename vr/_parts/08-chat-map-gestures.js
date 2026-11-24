@@ -188,6 +188,7 @@ function tickPeople(dt){ for(const [,o] of others){ const p=o.p||{};
     const ac=Array.isArray(p.ac)?p.ac:null; if(o.acAt===undefined) o.acAt=ac?ac[1]:null; else if(ac&&ac[1]!==o.acAt){ if(ac[0]==='j') o.jt=0; o.acAt=ac[1]; }
     let jy=0; if(o.jt!==undefined&&o.jt<.68){ o.jt+=dt; jy=Math.max(0,Math.sin(Math.PI*Math.min(1,o.jt/.68)))*.55; }
     const cr=p.cr===1&&num(p.s,-1)<0; o.cs=(o.cs??1)+((cr?.66:1)-(o.cs??1))*Math.min(1,dt*8); o.av.g.scale.y=o.cs; o.av.g.children.forEach(c=>{ if(c.isSprite) c.scale.y=(c===o.bub?1.2*160/512:.26)/o.cs; });
+    const fx=Array.isArray(p.fx)?p.fx:null; if(o.fxAt===undefined) o.fxAt=fx?fx[1]:null; else if(fx&&fx[1]!==o.fxAt){ o.fxAt=fx[1]; if(typeof fx[0]==='string'&&Date.now()-fx[1]<15000){ showBubble(o,fx[0].slice(0,20)); o.bubT=3.2; } }
     o.jyNow=jy; }
   if(chatUI.diag.style.display==='block'){ diagT+=dt; if(diagT>.5){ diagT=0; renderDiag(); } } }
 let diagT=0;

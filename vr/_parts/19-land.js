@@ -180,9 +180,9 @@ const CLIFF_SHADE=`
   }`;
 const landLight={uLandSun:{value:sunDirection},uCliffShadows:cliffShadows,uLandDay:{value:0}};
 const wakes={value:[new THREE.Vector4(),new THREE.Vector4()]};
-window.__landWalk=LAND.walk; window.__landOut=p=>!(p.x>LAND.BLOCK.x0&&p.x<LAND.BLOCK.x1&&p.z>LAND.BLOCK.z0&&p.z<LAND.BLOCK.z1)&&!(p.x>LAND.FORE.x0-.1&&p.x<LAND.FORE.x1-.4&&p.z>LAND.FORE.z0&&p.z<LAND.FORE.z1);
+window.__landWalk=(x,z)=>LAND.walk(x,z)||!!(FARB&&FARB.walk(x,z)); window.__landOut=p=>!(p.x>LAND.BLOCK.x0&&p.x<LAND.BLOCK.x1&&p.z>LAND.BLOCK.z0&&p.z<LAND.BLOCK.z1)&&!(p.x>LAND.FORE.x0-.1&&p.x<LAND.FORE.x1-.4&&p.z>LAND.FORE.z0&&p.z<LAND.FORE.z1);
 // paths outside: straight if the line is clear, otherwise along the dike grid (to the nearest crossing, across, along)
-window.__landRoute=(a,b)=>{ if(clearLine(a,b)) return [b]; const D=LAND.DIKE, sx=x=>Math.round((x-D.ox)/D.dx)*D.dx+D.ox, sz=z=>Math.round((z-D.oz)/D.dz)*D.dz+D.oz;
+window.__landRoute=(a,b)=>{ if(clearLine(a,b)) return [b]; if(a.x>270&&b.x>270){ const g=typeof gridPath==='function'?gridPath(a,b):null; return g&&g.length?g:[b]; } const D=LAND.DIKE, sx=x=>Math.round((x-D.ox)/D.dx)*D.dx+D.ox, sz=z=>Math.round((z-D.oz)/D.dz)*D.dz+D.oz;
   const pts=[]; const ia={x:sx(a.x),z:sz(a.z)}, ib={x:sx(b.x),z:sz(b.z)}; if(!clearLine(a,ia)){ pts.push({x:a.x,z:ia.z}); } pts.push(ia,{x:ib.x,z:ia.z},ib); if(!clearLine(ib,b)) pts.push({x:ib.x,z:b.z}); pts.push(b); return pts; };
 // season: the rice always carries ears; green in spring, gold in autumn, pale gold in winter
 function season(){ const mo=(new Date(Date.now()+8*3600e3+MEAL_SHIFT*60000)).getUTCMonth()+1; if(mo>=3&&mo<=5) return {ripe:.18,pale:0,water:.8}; if(mo>=6&&mo<=8) return {ripe:.45,pale:0,water:.45}; if(mo>=9&&mo<=11) return {ripe:1,pale:0,water:.22}; return {ripe:.8,pale:.55,water:.6}; }
@@ -195,6 +195,14 @@ const RICE_GLSL=`uniform float uTime; uniform vec2 uWind; uniform float uAmp; un
 // along the cliff top; 和尚崙 (+52 m) at its north-east end; west of the pool, below the terrace, 公埔's low wetland. A
 // few limestone crags stand on the pool's east wall (港口石灰岩, the pool's cave). Round the paddies on the other sides the
 // 南稜 hills rise layer behind layer; the river runs out through them to the west (upstream) and the east (渡頭).
+// the 坡道 on the far bank: from the north landing (the boats stop there, under 萬善爺廟) up the 12 m low cliff to the
+// 湖濱下階 in two legs, across it, and up the 河階崖 to 老街 in two more; cut into the cliffs, paved, with kerbs.
+// Points are [x, z, height above the pool's bed level as HILLS.raw counts it]; the ground follows it (HILLS.near).
+const RAMP={W:3,P:[[284.2,-40,.85],[285.5,-14,6.2],[287.6,-12.3,6.4],[289.5,-14,6.4],[290.6,-40,12],[296,-44,12],[302.8,-46,12.2],[303.6,-48,12.4],[305.4,-78,20],[307.4,-80.2,20.2],[309.3,-78,20.4],[310.2,-46,27.2],[313,-44,27.3],[320.5,-45,27.3]],
+  STOP:{x:272.55,z:-40}, PIER:{x0:275.6,x1:284.6,z:-40,w:1.6,y:.25}};
+const rampAt=(x,z)=>{ let best=1e9, h=0; const P=RAMP.P; if(x<280||x>325||z<-86||z>-6) return {d:1e9,h:0};
+  for(let i=0;i<P.length-1;i++){ const a=P[i], b=P[i+1], dx=b[0]-a[0], dz=b[1]-a[1], l=dx*dx+dz*dz||1; let t=((x-a[0])*dx+(z-a[1])*dz)/l; t=t<0?0:t>1?1:t; const d=Math.hypot(a[0]+dx*t-x,a[1]+dz*t-z); if(d<best){ best=d; h=a[2]+(b[2]-a[2])*t; } }
+  return {d:best,h}; };
 const HILLS=(()=>{
   const poly=RIVER_BANK, ss=THREE.MathUtils.smoothstep;
   const insideLoop=(x,z)=>{ if(x<95||x>280||z<-100||z>120) return false; let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i][0],zi=poly[i][1],xj=poly[j][0],zj=poly[j][1]; if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi)) c=!c; } return c; };
@@ -207,9 +215,13 @@ const HILLS=(()=>{
   const CRAGS=[[262,134,30,13],[248,152,22,10],[278,158,40,15],[236,131,15,8],[292,142,18,10]];   // x, z, height, radius
   const terraceD=(x,z)=>polyDist(x,z,TERRACE,true);
   const onTerrace=(x,z)=>x>285&&inPolyXZ(x,z,TERRACE);
+  // the cliffs: a talus apron at the foot and a steep face of gravel above, the edge wandering, gullies cut into it
   const near=(x,z)=>{ if(x<200) return 0; let h=0; const d=x>260?terraceD(x,z):999, inT=d<999&&onTerrace(x,z);
-    if(x>268&&z>-100&&z<185&&d<40&&!insideLoop(x,z)) h=12*ss(riverD(x,z),RIVER_HALF_WIDTH+1.2,RIVER_HALF_WIDTH+5)*(1-ss(d,30,40));
-    if(inT) h=Math.max(h,27*ss(d,0,7)+Math.max(0,d-150)*.025+25*ss(Math.hypot(x-HSL.x,z-HSL.z),64,36)+1.4*(fbm(x*.02,z*.02,3)-.5)*ss(d,6,20));
+    if(x>268&&z>-100&&z<185&&d<40&&!insideLoop(x,z)){ const rd=riverD(x,z)+3*(fbm(x*.05+3.1,z*.05,3)-.5), R=RIVER_HALF_WIDTH;
+      h=12*(.28*ss(rd,R+.6,R+3.2)+.72*ss(rd,R+2.4,R+6.2))*(1-ss(d,30,40))+.9*(fbm(x*.03,z*.03,2)-.5)*ss(rd,R+7,R+12); }
+    if(inT){ const dn=d+5*(fbm(x*.035+1.7,z*.035-3.1,3)-.5)-4.5*ss(vnoise(z*.11+5.3,x*.02),.6,.86), f=.22*ss(dn,-1.5,3.5)+.78*ss(dn,2.2,7);
+      h=Math.max(h,27*f+Math.max(0,d-150)*.025+25*(1-ss(Math.hypot(x-HSL.x,z-HSL.z),30,70))+1.4*(fbm(x*.02,z*.02,3)-.5)*ss(d,8,22)); }
+    { const r=rampAt(x,z); if(r.d<RAMP.W/2+3.5){ const k=1-ss(r.d,RAMP.W/2,RAMP.W/2+3.5); h+=(r.h-h)*k; } }
     for(const [cx,cz,ch,cr] of CRAGS){ const q=Math.hypot(x-cx,z-cz)/cr; if(q<1.3){ const n=fbm(x*.15+cx,z*.15,3); h=Math.max(h,ch*(1-ss(q,.5+.25*n,1.2))*(.8+.35*n)); } }
     return h; };
   const F=LAND.FIELD;
@@ -233,6 +245,8 @@ const TEMPLE_AT={x:292,z:-6,nx:-1,nz:0}; LAND.EXCL.push({x:TEMPLE_AT.x,z:TEMPLE_
 // 斗安驛; trees keep off them (TOWN_AT). The buildings are made with the far bank's landmarks further on.
 const TOWN={OLD:[[384,160],[346,99],[329,42],[323,-18],[319,-78]], NEW:[[318,-96],[360,-142],[410,-196],[456,-246]], TEMPLE:{x:322,z:-95}, ZEN:{x:410,z:130}, CHIMNEY:{x:352,z:-276}, TOWER:{x:432,z:-84}};
 function TOWN_AT(x,z){ if(x<300) return false; return polyDist(x,z,TOWN.OLD,false)<18||polyDist(x,z,TOWN.NEW,false)<17||Math.hypot(x-TOWN.TEMPLE.x,z-TOWN.TEMPLE.z)<20||Math.hypot(x-TOWN.ZEN.x,z-TOWN.ZEN.z)<24||Math.hypot(x-TOWN.CHIMNEY.x,z-TOWN.CHIMNEY.z)<26; }
+const FOOT=[];   // footprints on the far bank you cannot walk through: {x,z,hw,hd,yaw}
+var FARB=null;   // the far bank on foot (made with its landmarks): floor(x,z), walk(x,z)
 // ---- water, shared by the river, the ponds and the paddies: ripples from one tileable slope texture drifting in
 // layers; the colour is what you see through the water (bed, darkening and turning green with depth) and what it
 // reflects (the hills and sky, more of it the flatter you look), plus the sun's glitter.
@@ -523,26 +537,42 @@ const PEAKS=[];
       float vnoiseH(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(hashH(i),hashH(i+vec2(1,0)),f.x),mix(hashH(i+vec2(0,1)),hashH(i+vec2(1,1)),f.x),f.y); }
       uniform float uLandDay;
       void main() {`); };
-  // the far bank: grass and fields on the flats, scrub and bare earth down the cliffs, grey limestone on the crags
-  const tintNear=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), c=new THREE.Color();
-    const field=new THREE.Color(.27,.36,.15), field2=new THREE.Color(.36,.37,.19), scrub=new THREE.Color(.15,.25,.10), earth=new THREE.Color(.33,.28,.19), lime=new THREE.Color(.50,.49,.45), wood=new THREE.Color(.13,.24,.10);
+  // the far bank: grass and fields on the flats, scrub down the slopes; on the cliffs' bare faces the terrace's gravel in
+  // layers (grey, sand and dark silt bands, wet and dark at the water), the red soil under the rim; grey limestone on the
+  // crags; the 坡道 paved in grey stone
+  const tintNear=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), c=new THREE.Color(), b=new THREE.Color();
+    const field=new THREE.Color(.27,.36,.15), field2=new THREE.Color(.36,.37,.19), scrub=new THREE.Color(.15,.25,.10), lime=new THREE.Color(.50,.49,.45), wood=new THREE.Color(.13,.24,.10);
+    const gravel=[new THREE.Color(.38,.35,.29),new THREE.Color(.46,.41,.32),new THREE.Color(.29,.27,.23),new THREE.Color(.42,.38,.31)], red=new THREE.Color(.44,.25,.15), wet=new THREE.Color(.20,.19,.16), pave=new THREE.Color(.40,.39,.36), kerb=new THREE.Color(.30,.29,.27);
     for(let i=0;i<P.count;i++){ const x=P.getX(i), y=P.getY(i)+.6, z=P.getZ(i), ny=N.getY(i), p=vnoise(x*.13,z*.13), f=forest(x,z);
       const crag=H.CRAGS.some(([cx,cz,,cr])=>Math.hypot(x-cx,z-cz)<cr*1.3);
       c.copy(field).lerp(field2,ss(vnoise(x*.05,z*.05),.4,.7)); c.lerp(wood,ss(f,.5,.7)*.6);
-      c.lerp(scrub,(1-ss(ny,.6,.9))); c.lerp(earth,(1-ss(ny,.35,.55))*.6);
+      c.lerp(scrub,(1-ss(ny,.62,.9))*.9);
+      const bare=(1-ss(ny,.4,.66))*(1-.8*ss(vnoise(x*.08+7,z*.05+y*.06),.45,.75));   // a few shrubs cling even to the face
+      if(bare>0&&!crag){ const band=y*1.15+1.6*(H.fbm(x*.02,z*.02,2)-.5), k=Math.floor(band)&3; b.copy(gravel[k]).lerp(gravel[(k+1)&3],band-Math.floor(band));
+        b.multiplyScalar(.86+.28*vnoise(x*.7,y*2.3+z*.7)); if(y>23.5&&y<27.2) b.lerp(red,ss(y,23.5,25.2)*.85); if(y<1.4) b.lerp(wet,1-ss(y,.3,1.4));
+        if(y>9.5&&y<12.6&&x<300) b.lerp(red,ss(y,9.5,11)*(1-ss(y,11.6,12.6))*.6);
+        c.lerp(b,bare); }
       if(crag) c.lerp(lime,(1-ss(ny,.55,.85))*.9);
+      if(x>300&&(polyDist(x,z,TOWN.OLD,false)<3.4||polyDist(x,z,TOWN.NEW,false)<4.2)) c.setRGB(.31,.31,.30).multiplyScalar(.92+.16*vnoise(x*.9,z*.9));   // the streets
+      const r=rampAt(x,z); if(r.d<RAMP.W/2+.6) c.copy(r.d<RAMP.W/2-.2?pave:kerb).multiplyScalar(.9+.2*vnoise(x*1.7,z*1.7));
       c.multiplyScalar(.84+.32*p); col.set([c.r,c.g,c.b],i*3); }
     g.setAttribute('color',new THREE.BufferAttribute(col,3)); };
   // the far bank in detail (the cliffs, the terrace, 和尚崙, the crags) on its own fine grid; the far ranges keep their
   // polar grid with a hole where the fine one lies
   const NEAR={x0:204,x1:640,z0:-440,z1:330};
-  const isl=grid(NEAR.x0,NEAR.x1,NEAR.z0,NEAR.z1,2); tintNear(isl.g);
+  const isl=grid(NEAR.x0,NEAR.x1,NEAR.z0,NEAR.z1,2);
+  // the cliffs over the pool and round 公埔 on a 1 m grid of their own, cut out of the 2 m one
+  const FINE={x0:266,x1:352,z0:-300,z1:196}, fine=grid(FINE.x0,FINE.x1,FINE.z0,FINE.z1,1);
+  { const Hh={x0:FINE.x0+2.5,x1:FINE.x1-2.5,z0:FINE.z0+2.5,z1:FINE.z1-2.5}, P=isl.g.attributes.position, I=isl.g.index.array, keep=[];
+    for(let i=0;i<I.length;i+=3){ if([I[i],I[i+1],I[i+2]].every(v=>{ const x=P.getX(v), z=P.getZ(v); return x>Hh.x0&&x<Hh.x1&&z>Hh.z0&&z<Hh.z1; })) continue; keep.push(I[i],I[i+1],I[i+2]); }
+    isl.g.setIndex(keep); }
+  tintNear(isl.g); tintNear(fine.g);
   const farG=polar(185,1000,1.02,420); tint(farG,true);
   { const Hh={x0:NEAR.x0+3,x1:NEAR.x1-3,z0:NEAR.z0+3,z1:NEAR.z1-3}, P=farG.attributes.position, I=farG.index.array, keep=[];
     for(let i=0;i<I.length;i+=3){ if([I[i],I[i+1],I[i+2]].every(v=>{ const x=P.getX(v), z=P.getZ(v); return x>Hh.x0&&x<Hh.x1&&z>Hh.z0&&z<Hh.z1; })) continue; keep.push(I[i],I[i+1],I[i+2]); }
     farG.setIndex(keep); }
   if(typeof STN!=='undefined'&&STN.HOLE){ const Hh=STN.HOLE, P=farG.attributes.position, I=farG.index.array, keep=[]; for(let i=0;i<I.length;i+=3){ const cx=(P.getX(I[i])+P.getX(I[i+1])+P.getX(I[i+2]))/3, cz=(P.getZ(I[i])+P.getZ(I[i+1])+P.getZ(I[i+2]))/3; if(cx>Hh.x0&&cx<Hh.x1&&cz>Hh.z0&&cz<Hh.z1) continue; keep.push(I[i],I[i+1],I[i+2]); } farG.setIndex(keep); }
-  for(const g of [isl.g,farG]){ const m=new THREE.Mesh(g,hm); m.receiveShadow=true; scene.add(m); reflect(m); }
+  for(const g of [isl.g,fine.g,farG]){ const m=new THREE.Mesh(g,hm); m.receiveShadow=true; scene.add(m); reflect(m); }
   // the summits: the crags and 和尚崙 (for the hill shadows on the water and the fields)
   for(const [x,z,h,r] of H.CRAGS) PEAKS.push({x,z,H:H.h(x,z),R:r*1.1});
   PEAKS.push({x:H.HSL.x,z:H.HSL.z,H:H.h(H.HSL.x,H.HSL.z),R:40});
@@ -551,9 +581,9 @@ const PEAKS=[];
   // trees: woods down the cliffs, over 和尚崙 and on the crags; a few on the terrace between the fields; none on the streets
   const broad=[], fir=[];
   for(let k=0;k<60000&&broad.length+fir.length<6500;k++){ const x=NEAR.x0+RAND()*(NEAR.x1-NEAR.x0), z=NEAR.z0+RAND()*(NEAR.z1-NEAR.z0); const y=H.h(x,z); if(y<1.5) continue;
-    if(typeof TOWN_AT==='function'&&TOWN_AT(x,z)) continue;
+    if(typeof TOWN_AT==='function'&&TOWN_AT(x,z)) continue; if(rampAt(x,z).d<RAMP.W/2+2) continue;
     const sl=H.slope(x,z), f=forest(x,z), hill=Math.hypot(x-H.HSL.x,z-H.HSL.z)<70, steep=sl<.8;
-    if(!(steep||hill||RAND()<.06)) continue; if(!steep&&!hill&&f<.55) continue; if(RAND()>(steep?.8:hill?.55:.5)) continue;
+    if(!(steep||hill||RAND()<.06)) continue; if(!steep&&!hill&&f<.55) continue; if(RAND()>(steep?.4:hill?.55:.5)) continue;
     (RAND()<.12&&y>30?fir:broad).push([x,y,z,f]); }
   const place=(geo,list,scale,base,var2)=>{ const im=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial({color:0xffffff}),list.length), m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), v=new THREE.Vector3(), c=new THREE.Color(), up=new THREE.Vector3(0,1,0);
     list.forEach(([x,y,z,f],i)=>{ const sz=scale[0]+hash2(x,z)*scale[1]; q.setFromAxisAngle(up,hash2(z,x)*6.28); s.set(sz,sz*(.8+hash2(x*2,z)*.5),sz); v.set(x,y+sz*base,z); m.compose(v,q,s); im.setMatrixAt(i,m);
@@ -601,7 +631,10 @@ const PEAKS=[];
   const row=(P,step,newSt)=>along(P,step,(x,z,tx,tz)=>{ const nx=-tz, nz=tx, yaw=Math.atan2(-tz,tx);
     for(const side of [1,-1]){ k++; const r=hash2(x*.37+side,z*.41), w=step-.6-r*.8, d=9+hash2(z,x)*4, off=4.2+d/2, cx=x+nx*side*off, cz=z+nz*side*off;
       if(H.terraceD(cx,cz)<5||!H.onTerrace(cx,cz)) continue;   // keep back from the cliff edge
-      const y0=Math.min(H.h(cx,cz),H.h(cx+tx*w/2,cz+tz*w/2),H.h(cx-tx*w/2,cz-tz*w/2))-.3;
+      if(rampAt(cx,cz).d<w/2+d/2+3) continue;                  // and off the top of the 坡道
+      const hs=[H.h(cx,cz),H.h(cx+tx*w/2,cz+tz*w/2),H.h(cx-tx*w/2,cz-tz*w/2),H.h(cx+nx*d/2,cz+nz*d/2),H.h(cx-nx*d/2,cz-nz*d/2)]; if(Math.max(...hs)-Math.min(...hs)>1.6) continue;   // not over a gully
+      FOOT.push({x:cx,z:cz,hw:w/2,hd:d/2,yaw});
+      const y0=Math.min(...hs)-.3;
       const old=!newSt&&r<.22, floors=old?1:newSt?(3+Math.floor(hash2(x,z*1.7)*3)):(2+Math.floor(hash2(x*2.1,z)*3)), hh=old?3.6:floors*3.3+.4;
       put(new THREE.BoxGeometry(w,hh,d),old?BRICK:WALLS[k%WALLS.length],cx,y0+hh/2,cz,yaw);
       if(old) put(gable(w+.4,d+.8,1.6),TILE,cx,y0+hh,cz,yaw);
@@ -609,18 +642,23 @@ const PEAKS=[];
         if(hash2(cz,cx)<.7){ const t=new THREE.CylinderGeometry(.6,.6,1.4,10); put(t,hash2(x,z)<.5?0xc9ccd0:0x4a78a8,cx+nx*side*(d/2-1.5),y0+hh+1.3,cz+nz*side*(d/2-1.5),0); }
         // the front arcade (亭仔腳) on the street side
         put(new THREE.BoxGeometry(w,.25,1.2),0x7a756c,cx-nx*side*(d/2-.6),y0+3.2,cz-nz*side*(d/2-.6),yaw); }
+      // the shop front and the windows on the street, smaller windows at the back
+      { const fx=cx-nx*side*(d/2+.03), fz=cz-nz*side*(d/2+.03), bx=cx+nx*side*(d/2+.03), bz=cz+nz*side*(d/2+.03);
+        put(new THREE.BoxGeometry(w-.8,2.7,.08),old?0x4a3226:0x3b3732,fx,y0+1.35,fz,yaw);
+        for(let f=1;f<floors;f++){ put(new THREE.BoxGeometry(w-1.6,1.15,.08),0x56606a,fx,y0+f*3.3+1.7,fz,yaw); put(new THREE.BoxGeometry(w*.45,1,.08),0x56606a,bx,y0+f*3.3+1.7,bz,yaw); } }
       // lit windows at night: a few on the faces toward the pool
       for(let f=0;f<Math.min(floors,3);f++) if(hash2(x+f,z-f)<.55) lamps.push([cx,y0+1.6+f*3.3,cz,0]);
     } });
   row(TOWN.OLD,7,false); row(TOWN.NEW,8,true);
   // a handful of taller buildings near 新街's head: the township office, the farmers' association, an apartment block
-  for(const [x,z,w,d,f,c] of [[372,-150,18,12,4,0xd8d2c4],[402,-206,22,14,5,0xc8c2b8],[338,-130,14,12,4,0xe4dfd2]]){ if(!H.onTerrace(x,z)) continue; const y0=H.h(x,z)-.3, hh=f*3.4; put(new THREE.BoxGeometry(w,hh,d),c,x,y0+hh/2,z,Math.atan2(46,42)); for(let i=0;i<f;i++) lamps.push([x,y0+1.7+i*3.4,z,1]); }
+  for(const [x,z,w,d,f,c] of [[372,-150,18,12,4,0xd8d2c4],[402,-206,22,14,5,0xc8c2b8],[338,-130,14,12,4,0xe4dfd2]]){ if(!H.onTerrace(x,z)) continue; const y0=H.h(x,z)-.3, hh=f*3.4; put(new THREE.BoxGeometry(w,hh,d),c,x,y0+hh/2,z,Math.atan2(46,42)); FOOT.push({x,z,hw:w/2,hd:d/2,yaw:Math.atan2(46,42)}); for(let i=0;i<f;i++) lamps.push([x,y0+1.7+i*3.4,z,1]); }
   // 斗安宮: red-brick halls under orange tiled roofs with swallowtail ridges, its back to the pool, facing 新街
   { const T=TOWN.TEMPLE, y0=H.h(T.x,T.z)-.2, yaw=Math.PI*.75;   // its front toward 新街 (north-west)
     put(new THREE.BoxGeometry(24,.4,30),0xb8b0a0,T.x,y0+.2,T.z,yaw);   // the 廟埕
     for(const [dz,w,d,h] of [[-6,14,8,5.2],[5,12,7,4.4]]){ const c=new THREE.Vector3(0,0,dz).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
       put(new THREE.BoxGeometry(w,h,d),0xa8402c,T.x+c.x,y0+h/2,T.z+c.z,yaw); put(gable(w+1.2,d+1.6,2.6),0xd0662e,T.x+c.x,y0+h,T.z+c.z,yaw);
       for(const s of [-1,1]){ const e=new THREE.Vector3(s*(w/2+.4),0,dz).applyAxisAngle(new THREE.Vector3(0,1,0),yaw); const tip=new THREE.ConeGeometry(.25,1.6,5); tip.rotateZ(-s*.9); put(tip,0x6a6a6a,T.x+e.x,y0+h+2.7,T.z+e.z,yaw); } }
+    for(const [dz,w,d] of [[-6,14,8],[5,12,7]]){ const c=new THREE.Vector3(0,0,dz).applyAxisAngle(new THREE.Vector3(0,1,0),yaw); FOOT.push({x:T.x+c.x,z:T.z+c.z,hw:w/2+.6,hd:d/2+.6,yaw}); }
     lamps.push([T.x,y0+3,T.z,2]); }
   // 湧安禪寺 on 和尚崙: a two-storey hall in yellow ochre and grey tiles; 林和尚's pagoda beside it; the 鳳梨祖師堂
   { const Z=TOWN.ZEN, y0=H.h(Z.x,Z.z)-.3, yaw=-Math.PI/4;   // facing the pool
@@ -628,10 +666,12 @@ const PEAKS=[];
     const px=Z.x-10, pz=Z.z+14, py=H.h(px,pz)-.2; for(let i=0;i<5;i++){ const s=2.2-i*.32; put(new THREE.CylinderGeometry(s*.55,s*.62,1.1,8),0xb8b2a6,px,py+.55+i*1.25,pz,0); put(new THREE.CylinderGeometry(s*.9,s*.75,.3,8),0x6a6660,px,py+1.2+i*1.25,pz,0); }
     put(new THREE.ConeGeometry(.5,1.6,8),0x8a8070,px,py+7.3,pz,0);
     const fx=Z.x+8, fz=Z.z+18, fy=H.h(fx,fz)-.2; put(new THREE.BoxGeometry(6,3.4,5),0xa8402c,fx,fy+1.7,fz,yaw); put(gable(6.8,6,1.8),0xd0662e,fx,fy+3.4,fz,yaw);
+    FOOT.push({x:Z.x,z:Z.z,hw:9.4,hd:6.4,yaw},{x:px,z:pz,hw:1.4,hd:1.4,yaw:0},{x:fx,z:fz,hw:3.4,hd:2.9,yaw});
     lamps.push([Z.x,y0+4,Z.z,2]); }
   // the sugar mill's chimney over 公埔 (closed in 1987) and two of its sheds; the water tower
   { const C=TOWN.CHIMNEY, y0=H.h(C.x,C.z)-.3; put(new THREE.CylinderGeometry(1.1,2.1,38,14),0x8a4c3a,C.x,y0+19,C.z,0); put(new THREE.CylinderGeometry(1.25,1.25,.8,14),0x5a3a2e,C.x,y0+37.6,C.z,0);
-    for(const [dx,dz] of [[10,8],[14,-10]]){ const y=H.h(C.x+dx,C.z+dz)-.3; put(new THREE.BoxGeometry(26,7,12),0x8c8a84,C.x+dx,y+3.5,C.z+dz,.7); put(gable(27,13,2.4),0x7a5a48,C.x+dx,y+7,C.z+dz,.7); }
+    for(const [dx,dz] of [[10,8],[14,-10]]){ const y=H.h(C.x+dx,C.z+dz)-.3; put(new THREE.BoxGeometry(26,7,12),0x8c8a84,C.x+dx,y+3.5,C.z+dz,.7); put(gable(27,13,2.4),0x7a5a48,C.x+dx,y+7,C.z+dz,.7); FOOT.push({x:C.x+dx,z:C.z+dz,hw:13.3,hd:6.3,yaw:.7}); }
+    FOOT.push({x:C.x,z:C.z,hw:2.3,hd:2.3,yaw:0},{x:TOWN.TOWER.x,z:TOWN.TOWER.z,hw:2,hd:2,yaw:0});
     const W=TOWN.TOWER, wy=H.h(W.x,W.z)-.3; put(new THREE.CylinderGeometry(1.4,1.8,20,10),0xc8c4bc,W.x,wy+10,W.z,0); put(new THREE.CylinderGeometry(4.5,3.2,6,16),0xd8d4cc,W.x,wy+23,W.z,0); }
   // two bridges over 大陂溪: downstream toward 渡頭 斗安大橋 (1968, four lanes since 1986, concrete on round piers);
   // upstream past 公埔 the 縱貫線's 大陂溪橋 (rebuilt 1950, widened to 1,067 mm in 1982), steel girders on stone piers
@@ -655,7 +695,46 @@ const PEAKS=[];
   const roof=new THREE.Mesh(new THREE.CylinderGeometry(.01,4.4,1.8,4,1),tile); roof.rotation.y=Math.PI/4; roof.scale.set(1.35,1,.9); roof.position.set(0,4.4,-1); T.add(roof);
   const door=new THREE.Mesh(new THREE.PlaneGeometry(1.3,2),new THREE.MeshLambertMaterial({color:0x2a160e})); door.position.set(0,1.3,1.02); T.add(door);
   const plinth=new THREE.Mesh(new THREE.BoxGeometry(8,.5,6.5),stone); plinth.position.set(0,.1,0); T.add(plinth);
-  for(const x of [-1.2,1.2]){ const l=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),new THREE.MeshLambertMaterial({color:0xc8302a,emissive:0x601010})); l.scale.y=1.2; l.position.set(x,2.6,1.2); T.add(l); } reflect(T); }
+  for(const x of [-1.2,1.2]){ const l=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),new THREE.MeshLambertMaterial({color:0xc8302a,emissive:0x601010})); l.scale.y=1.2; l.position.set(x,2.6,1.2); T.add(l); } reflect(T);
+  FOOT.push({x:TA.x,z:TA.z,hw:3.4,hd:3.2,yaw:0}); }
+// ---- the far bank on foot. The boats stop at a plank pier under 萬善爺廟; the 坡道 climbs from its foot (RAMP), with a
+// low stone parapet where the ground falls away below it. Where you can walk over there is worked out once on a 1 m grid:
+// dry ground that is not too steep (the cliffs are not), off the houses and temples, plus the pier and the ramp itself.
+// floorY() asks FARB.floor for the height of the ground under you.
+{ const H=HILLS, ss=THREE.MathUtils.smoothstep, PI=RAMP.PIER, parts=[], col=(g,hex)=>{ const c=new THREE.Color(hex), n=g.attributes.position.count, a=new Float32Array(n*3); for(let i=0;i<n;i++) a.set([c.r,c.g,c.b],i*3); g.setAttribute('color',new THREE.BufferAttribute(a,3)); return g; };
+  const put=(g,hex,x,y,z,yaw)=>{ g=g.index?g.toNonIndexed():g; col(g,hex); if(yaw) g.rotateY(yaw); g.translate(x,y,z); parts.push(g); };
+  // the pier: planks on piles, a mooring post at the end
+  put(new THREE.BoxGeometry(PI.x1-PI.x0,.14,PI.w*2),0x7a5c40,(PI.x0+PI.x1)/2,PI.y-.07,PI.z,0);
+  for(let x=PI.x0+.3;x<PI.x1;x+=1.8) for(const s of [-1,1]) put(new THREE.CylinderGeometry(.1,.12,1.6,7),0x4c3828,x,PI.y-.85,PI.z+s*(PI.w-.15),0);
+  for(let x=PI.x0+.2;x<PI.x1;x+=.5) put(new THREE.BoxGeometry(.04,.01,PI.w*2-.1),0x4e3a28,x,PI.y+.005,PI.z,0);
+  put(new THREE.CylinderGeometry(.13,.13,1.1,8),0x5a4430,PI.x0+.25,PI.y+.5,PI.z-PI.w+.2,0);
+  // along the ramp: a parapet of dressed stone where the side drops more than a metre, a post every few metres
+  const P=RAMP.P, W=RAMP.W;
+  for(let i=0;i<P.length-1;i++){ const a=P[i], b=P[i+1], L=Math.hypot(b[0]-a[0],b[1]-a[1]), tx=(b[0]-a[0])/L, tz=(b[1]-a[1])/L, nx=-tz, nz=tx, yaw=Math.atan2(-tz,tx);
+    for(let s=.6;s<L-.3;s+=1.2){ const x=a[0]+tx*s, z=a[1]+tz*s, y=a[2]+(b[2]-a[2])*s/L-.6;
+      for(const side of [-1,1]){ const ex=x+nx*side*(W/2+.15), ez=z+nz*side*(W/2+.15); if(rampAt(ex+nx*side*1.6,ez+nz*side*1.6).d<W/2+.2) continue;   // the next leg is right there
+        if(H.h(ex+nx*side*2.2,ez+nz*side*2.2)<y-1){ put(new THREE.BoxGeometry(1.12,.5,.26),0xb3ada2,ex,y+.22,ez,yaw); if(Math.round(s/1.2)%4===0) put(new THREE.BoxGeometry(.32,.72,.32),0xa29c90,ex,y+.33,ez,yaw); } } } }
+  const m=new THREE.Mesh(mergeGeo(parts),new THREE.MeshLambertMaterial({vertexColors:true})); m.receiveShadow=true; m.traverse(o=>o.userData={type:'floor'}); pickables.push(m); scene.add(m); reflect(m);
+  // the walk grid
+  const G={x0:270,z0:-300,nx:200,nz:530}, NX=G.nx+1, hy=new Float32Array(NX*(G.nz+1)), ok=new Uint8Array(G.nx*G.nz);
+  for(let j=0;j<=G.nz;j++) for(let i=0;i<=G.nx;i++) hy[j*NX+i]=H.h(G.x0+i,G.z0+j);
+  for(let j=0;j<G.nz;j++) for(let i=0;i<G.nx;i++){ const a=hy[j*NX+i], b=hy[j*NX+i+1], c=hy[(j+1)*NX+i], d=hy[(j+1)*NX+i+1];
+    const steep=Math.max(Math.abs(a-b),Math.abs(c-d),Math.abs(a-c),Math.abs(b-d))>.62, wet=(a+b+c+d)/4<-.12;
+    ok[j*G.nx+i]=(!steep&&!wet)||rampAt(G.x0+i+.5,G.z0+j+.5).d<W/2-.1?1:0; }
+  for(const f of FOOT){ const c=Math.cos(f.yaw), s=Math.sin(f.yaw), R=Math.hypot(f.hw,f.hd)+1;
+    for(let z=Math.floor(f.z-R);z<=f.z+R;z++) for(let x=Math.floor(f.x-R);x<=f.x+R;x++){ const i=x-G.x0, j=z-G.z0; if(i<0||j<0||i>=G.nx||j>=G.nz) continue;
+      const dx=x+.5-f.x, dz=z+.5-f.z, u=dx*c-dz*s, v=dx*s+dz*c; if(Math.abs(u)<f.hw+.35&&Math.abs(v)<f.hd+.35) ok[j*G.nx+i]=0; } }
+  // for clicking where to walk: the ground in 32 m tiles at 2 m, unseen (the raycast skips the tiles you are not pointing at)
+  { const pm=new THREE.MeshBasicMaterial({visible:false}), T=32, S=2;
+    for(let tz=0;tz<G.nz;tz+=T) for(let tx=0;tx<G.nx;tx+=T){ const n=T/S, pos=[], idx=[];
+      for(let j=0;j<=n;j++) for(let i=0;i<=n;i++){ const gi=Math.min(G.nx,tx+i*S), gj=Math.min(G.nz,tz+j*S); pos.push(G.x0+gi,hy[gj*NX+gi],G.z0+gj); if(i<n&&j<n){ const a=j*(n+1)+i; idx.push(a,a+n+1,a+1,a+1,a+n+1,a+n+2); } }
+      const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeBoundingSphere();
+      const t=new THREE.Mesh(g,pm); t.userData={type:'floor'}; t.updateMatrixWorld(); pickables.push(t); } }
+  const onPier=(x,z)=>x>PI.x0-.1&&x<PI.x1+.4&&Math.abs(z-PI.z)<PI.w-.25;
+  const cell=(x,z)=>{ const i=Math.floor(x-G.x0), j=Math.floor(z-G.z0); return i>=0&&j>=0&&i<G.nx&&j<G.nz?j*G.nx+i:-1; };
+  FARB={ walk:(x,z)=>{ if(x<PI.x0-.2) return false; if(onPier(x,z)) return true; const k=cell(x,z); return k>=0&&ok[k]===1; },
+    floor:(x,z)=>{ if(x<PI.x0-.2) return null; if(onPier(x,z)&&x<PI.x1) return PI.y; const fx=x-G.x0, fz=z-G.z0, i=Math.floor(fx), j=Math.floor(fz); if(i<0||j<0||i>=G.nx||j>=G.nz) return null;
+      const u=fx-i, v=fz-j, k=j*NX+i; return (hy[k]*(1-u)+hy[k+1]*u)*(1-v)+(hy[k+NX]*(1-u)+hy[k+NX+1]*u)*v; } }; }
 // ---- 阿財's round outside: the jetty for water, the road, the dike up to the banyan; a chopping stump with split wood
 //      under the tree, and his pole and buckets set down beside it while he works
 { const C=CAI, st=new THREE.MeshLambertMaterial({color:0x6e5a42}), cut=new THREE.MeshLambertMaterial({color:0xc9a878}), wd=new THREE.MeshLambertMaterial({color:0x7b5b3e});
@@ -905,7 +984,10 @@ const EGRETS=[]; { const wm=new THREE.MeshLambertMaterial({color:0xf6f4ee}), bk=
     for(const s of [-1,1]){ const hn=new THREE.Mesh(new THREE.ConeGeometry(.025,.16,4),dk); hn.position.set(.3,.84,s*.04); hn.rotation.z=.6; g.add(hn); } }); }
 // ---- sampans on the loop: a fixed timetable everyone shares; forty seconds at the jetty each round
 const BOATS=[]; const BOAT_V=2.4, DWELL=40, RLEN=RIVER.getLength(); const uDock=(()=>{ let best=0,bd=1e9; for(let i=0;i<500;i++){ const p=RIVER.getPointAt(i/500), d=Math.hypot(p.x-(LAND.DOCK.x1+3),p.z-(LAND.DOCK.z0+LAND.DOCK.z1)/2); if(d<bd){ bd=d; best=i/500; } } return best; })();
-const CYCLE=RLEN/BOAT_V+DWELL;
+const uFar=(()=>{ let best=0,bd=1e9; for(let i=0;i<2000;i++){ const p=RIVER.getPointAt(i/2000), d=Math.hypot(p.x-RAMP.STOP.x,p.z-RAMP.STOP.z); if(d<bd){ bd=d; best=i/2000; } } return best; })();
+// the round: forty seconds at the house's jetty, row on to the pier under 萬善爺廟, forty seconds there, row on round home
+const LEG1=((uFar-uDock+1)%1)*RLEN/BOAT_V, LEG2=((uDock-uFar+1)%1)*RLEN/BOAT_V, CYCLE=2*DWELL+LEG1+LEG2;
+const BOAT_AP=[{x:(LAND.DOCK.x0+LAND.DOCK.x1)/2+2.5,z:(LAND.DOCK.z0+LAND.DOCK.z1)/2},{x:RAMP.PIER.x0+.9,z:RAMP.PIER.z}];
 { const hull=new THREE.MeshLambertMaterial({color:0x5e4a36}), in2=new THREE.MeshLambertMaterial({color:0x8a7052});
   for(let b=0;b<2;b++){ const g=new THREE.Group(); scene.add(g); ZL_DYN.push(g);
     const sh=new THREE.Shape(); sh.moveTo(-3.2,0); sh.quadraticCurveTo(-2.4,.55,0,.62); sh.quadraticCurveTo(2.4,.55,3.2,0); sh.quadraticCurveTo(2.4,-.55,0,-.62); sh.quadraticCurveTo(-2.4,-.55,-3.2,0);
@@ -919,10 +1001,14 @@ const CYCLE=RLEN/BOAT_V+DWELL;
     const seats=[]; for(const x of [-1.4,-.3,.8,1.9]){ const si=addSeat(0,0,0,'boat'); SEATS[si].boat=b; SEATS[si].bx=x; seats.push(si); }
     reflect(g); BOATS.push({g,rower,oar,lamp,seats,wake:wakes.value[b],off:b*CYCLE/2}); } }
 SEAT_KIND.boat={eye:.95,pitch:0,front:true,sink:-.45,label:'遊潭',hello:NT('boat.hello'),status:()=>NT('boat.status')};
-function boatState(B,t){ const ph=(((t/1000+B.off)%CYCLE)+CYCLE)%CYCLE; if(ph<DWELL) return {u:uDock,dock:true,left:DWELL-ph}; const u=(uDock+(ph-DWELL)*BOAT_V/RLEN)%1; return {u,dock:false}; }
+function boatState(B,t){ let ph=(((t/1000+B.off)%CYCLE)+CYCLE)%CYCLE;
+  if(ph<DWELL) return {u:uDock,dock:true,at:0,left:DWELL-ph}; ph-=DWELL;
+  if(ph<LEG1) return {u:(uDock+ph*BOAT_V/RLEN)%1,dock:false,at:1}; ph-=LEG1;
+  if(ph<DWELL) return {u:uFar,dock:true,at:1,left:DWELL-ph}; ph-=DWELL;
+  return {u:(uFar+ph*BOAT_V/RLEN)%1,dock:false,at:0}; }
 window.__boatAct=u=>{ const B=BOATS[u.b]; if(!B) return; const st=boatState(B,Date.now()); const p=RIVER.getPointAt(st.u);
   if(ME.seat>=0&&SEATS[ME.seat].kind==='boat') return; if(!st.dock){ toast(NT('boat.wait'),3500); return; } if(Math.hypot(ME.x-p.x,ME.z-p.z)>14){ toast(NT('boat.far'),3000); return; }
-  const si=B.seats.find(s=>!occupied(s)); if(si==null){ toast(NT('boat.full')); return; } const s=SEATS[si]; s.ap={x:(LAND.DOCK.x0+LAND.DOCK.x1)/2+2.5,z:(LAND.DOCK.z0+LAND.DOCK.z1)/2}; ME.path=[];
+  const si=B.seats.find(s=>!occupied(s)); if(si==null){ toast(NT('boat.full')); return; } const s=SEATS[si]; s.ap=BOAT_AP[st.at]; ME.path=[];
   ME.seat=si; ME.x=s.x; ME.z=s.z; ME.yaw=s.yaw; ME.pitch=0; pushPresence(); toast(NT('boat.hello'),4000); };
 // ---- 綠頭鴨 on the river: little flocks that drift along the water by a shared clock (everyone sees the same birds),
 //      paddle on the spot, now and then up-end to feed; they give way to the sampans and rest by the bank at night;
@@ -1025,8 +1111,9 @@ ZL_ANIM.push(dt=>{ dt=dt||.016; const now=Date.now(), t=performance.now()/1000; 
     B.wake.set(p.x,p.z,st.dock?0:d.x,st.dock?0:d.z);
     const P=B.rower.userData.parts; const row=st.dock?0:Math.sin(t*1.6+B.off); P.legs[0].rotation.x=row*.35; P.legs[1].rotation.x=-row*.2; P.arms[0].rotation.x=.6+row*.3; P.arms[1].rotation.x=.6-row*.3; B.oar.rotation.y=row*.25;
     B.lamp.material.emissiveIntensity=(SKY_DAY<.35||inCave)?1.6:0;
-    const c=Math.cos(yaw), s=Math.sin(yaw); B.seats.forEach(si=>{ const S=SEATS[si]; S.x=B.g.position.x+c*S.bx; S.z=B.g.position.z-s*S.bx; S.yaw=yaw-Math.PI/2; S.ap=S.ap||{x:(LAND.DOCK.x0+LAND.DOCK.x1)/2+2.5,z:(LAND.DOCK.z0+LAND.DOCK.z1)/2}; });
-    if(ME.seat>=0&&SEATS[ME.seat].boat===BOATS.indexOf(B)){ const S=SEATS[ME.seat], P2=seatPlace(S); ME.x=P2.x; ME.z=P2.z; if(st.dock&&st.left<6&&!B.warned){ B.warned=true; toast(NT('boat.leave'),3000); } if(!st.dock) B.warned=false; } }
+    const c=Math.cos(yaw), s=Math.sin(yaw); B.seats.forEach(si=>{ const S=SEATS[si]; S.x=B.g.position.x+c*S.bx; S.z=B.g.position.z-s*S.bx; S.yaw=yaw-Math.PI/2; S.ap=BOAT_AP[st.at]; });
+    if(ME.seat>=0&&SEATS[ME.seat].boat===BOATS.indexOf(B)){ const S=SEATS[ME.seat], P2=seatPlace(S); ME.x=P2.x; ME.z=P2.z; if(st.dock&&st.at===1&&B.lastAt!==1) toast(NT('boat.arrive'),6000); if(st.dock&&st.left<6&&!B.warned){ B.warned=true; toast(NT('boat.leave'),3000); } if(!st.dock) B.warned=false; }
+    B.lastAt=st.dock?st.at:-1; }
   if(now-landT<120) return; landT=now; const T=taipeiNow(), m=T.min, dS=Math.min(1,(now%1e9)/1e9);
   // folk: weeding, walking the dikes, going home at dusk; the buffalo by the hour
   for(const f of FOLK){ const P=f.P, ph=t+f.ph, home=m>=1080||m<330;

@@ -1,11 +1,13 @@
 // {% raw %}
-/* ================= 宅外：稻田與寧平山水 =================
-   The house stands in rice fields. Paddies run out on every side, cut by raised dikes you can walk (a narrow packed-earth path
-   separates the walls from the nearest paddies, a dirt road runs from the front court to a jetty); a clear green river loops round an island of
-   varied green mountain ranges with rolling shoulders and wooded slopes; beyond, peak after peak in fading layers. The rice always
-   carries ears, its colour follows the month; it waves in the live wind. Sampans go round the loop on a fixed timetable
-   (everyone sees the same boats) and you can ride. Farmers, a buffalo and its herd boy, egrets, goats on the cliffs, a
-   pavilion on one peak and a little temple under a cliff; fireflies over the paddies at night. */
+/* ================= 宅外：斗灣潭南岸的稻田（約 2000 年的斗安）=================
+   The house stands in rice fields on the south shore of 斗灣潭 and faces it (north is +x). Paddies run out on every side,
+   cut by raised dikes you can walk (a narrow packed-earth path separates the walls from the nearest paddies, a boardwalk
+   runs from the front court to the jetty); a levee follows the pool's shore. Across the pool the far bank: the 湖濱下階
+   with 萬善爺廟, the 河階崖 and 斗安街 along its top, 和尚崙 with 湧安禪寺, limestone crags on the pool's east wall,
+   the sugar mill's chimney over 公埔; 大陂溪 comes in from the west and leaves for 渡頭 in the east; the 南稜 hills
+   round the other sides. The rice always carries ears, its colour follows the month; it waves in the live wind. Sampans
+   row round the pool on a fixed timetable (everyone sees the same boats) and you can ride. Farmers, the buffalo and the
+   herd boy, egrets, goats on the crags; fireflies over the paddies at night. */
 // Render the outdoor scenery at reduced resolution from the mirrored viewpoint.
 const outdoorReflection={
   layer:5, target:null, camera:new THREE.PerspectiveCamera(), matrix:new THREE.Matrix4(),
@@ -59,9 +61,19 @@ function reflectOutdoors(){
 }
 const RIVER_BANK=[];
 const RIVER_HALF_WIDTH=9;
-const RIVER=new THREE.CatmullRomCurve3([[100,10],[101,58],[108,108],[126,148],[152,172],[180,178],[206,166],[224,140],[234,104],[240,52],[238,0],[226,-46],[198,-72],[160,-80],[128,-70],[108,-44],[100,-16]].map(([x,z])=>new THREE.Vector3(x,0,z)),true,'catmullrom',.5);
+// 斗灣潭 in front of the house (north, +x): RIVER is the round the boats row inside the pool, close along its banks,
+// and the shoreline strip; the pool's deep water fills the inside. 大陂溪 comes in from the west (RIVER_IN, along the
+// foot of the far terrace) and leaves eastward for 渡頭 (RIVER_OUT).
+const RIVER=new THREE.CatmullRomCurve3([[100,10],[100,50],[102,85],[112,103],[132,112],[172,114],[215,113],[248,110],[265,99],[272,76],[274,30],[273,-20],[271,-60],[262,-80],[242,-90],[195,-92],[145,-91],[117,-86],[104,-72],[100,-42],[100,-14]].map(([x,z])=>new THREE.Vector3(x,0,z)),true,'catmullrom',.5);
 for(let i=0;i<480;i++){ const p=RIVER.getPointAt(i/480); RIVER_BANK.push([p.x,p.z]); }
 const RIVER_CELL=16, RIVER_GRID=new Map();
+const RIVER_IN=[[195,-92],[192,-128],[184,-175],[176,-240],[180,-320],[190,-420],[196,-560],[204,-720],[214,-900],[226,-1100]];
+const RIVER_OUT=[[214,113],[214,150],[208,205],[202,280],[208,370],[222,480],[238,620],[252,780],[268,960],[282,1120]];
+const RIVER_W2=12;   // half the width of 大陂溪 above and below the pool
+const segDist=(px,pz,a,b)=>{ const dx=b[0]-a[0], dz=b[1]-a[1], l=dx*dx+dz*dz||1; let t=((px-a[0])*dx+(pz-a[1])*dz)/l; t=t<0?0:t>1?1:t; return Math.hypot(a[0]+dx*t-px,a[1]+dz*t-pz); };
+const polyDist=(x,z,P,closed)=>{ let d=1e9; const n=P.length; for(let i=0;i<(closed?n:n-1);i++){ const q=segDist(x,z,P[i],P[(i+1)%n]); if(q<d) d=q; } return d; };
+const inPolyXZ=(x,z,P)=>{ let c=false; for(let i=0,j=P.length-1;i<P.length;j=i++){ const xi=P[i][0],zi=P[i][1],xj=P[j][0],zj=P[j][1]; if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi)) c=!c; } return c; };
+const riverOpenD=(x,z)=>Math.min(polyDist(x,z,RIVER_IN,false),polyDist(x,z,RIVER_OUT,false));
 for(const p of RIVER_BANK){ const key=`${Math.floor(p[0]/RIVER_CELL)},${Math.floor(p[1]/RIVER_CELL)}`; if(!RIVER_GRID.has(key)) RIVER_GRID.set(key,[]); RIVER_GRID.get(key).push(p); }
 const LAND=(()=>{
   const C={x:19,z:9.8}, BLOCK={x0:-15.6,x1:46.9,z0:-6.6,z1:26.2}, FORE={x0:46.9,x1:53.55,z0:-4.55,z1:24.15};   // the front court with its low walls: the paths outside stop at the wall
@@ -84,27 +96,28 @@ const LAND=(()=>{
   const walk=(x,z)=>(inBlock(x,z)&&gatePass(x,z))||(!inBlock(x,z)&&(!inFore(x,z)||eavePass(x,z))&&(inYard(x,z)||onRoad(x,z)||onDock(x,z)||onDike(x,z)||onLevee(x,z)||gatePass(x,z)||eavePass(x,z)));
   
   const riverDistance2=(x,z)=>{ let d=1e9; for(const p of RIVER_BANK){ const dx=x-p[0], dz=z-p[1], q=dx*dx+dz*dz; if(q<d)d=q; } return d; };
-  const nearRiver=(x,z)=>{ if(x<95||x>246) return false; const d=riverDistance2(x,z); return d>(RIVER_HALF_WIDTH+1.5)**2&&d<(RIVER_HALF_WIDTH+34)**2; };
+  const nearRiver=(x,z)=>{ if(x<95||x>262) return false; const d=riverDistance2(x,z); return d>(RIVER_HALF_WIDTH+1.5)**2&&d<(RIVER_HALF_WIDTH+34)**2; };
   const inRiver=(x,z)=>{ const gx=Math.floor(x/RIVER_CELL), gz=Math.floor(z/RIVER_CELL), max=(RIVER_HALF_WIDTH+2.5)**2; for(let ix=gx-1;ix<=gx+1;ix++) for(let iz=gz-1;iz<=gz+1;iz++){ const pts=RIVER_GRID.get(`${ix},${iz}`); if(!pts) continue; for(const p of pts){ const dx=x-p[0], dz=z-p[1]; if(dx*dx+dz*dz<max) return true; } } return false; };
   // the river's levee: an earthen bank that follows the river on the outer side, LEVEE metres from mid-stream. The paddies stop
   // at it; between it and the water there is only grass and reeds, and the island inside the loop has no paddies at all.
   // Drawn once into top-down masks (2 px a metre) so the rice, the dikes, the ground and the walking can look them up cheaply.
   const LEVEE=RIVER_HALF_WIDTH+7, LW=1.1;
   const MASK=(()=>{ const pts=RIVER_BANK, M=LEVEE+4, PX=2;
-    const x0=Math.min(...pts.map(p=>p[0]))-M, x1=Math.max(...pts.map(p=>p[0]))+M, z0=Math.min(...pts.map(p=>p[1]))-M, z1=Math.max(...pts.map(p=>p[1]))+M;
+    const x0=Math.min(...pts.map(p=>p[0]))-M, x1=Math.max(...pts.map(p=>p[0]))+M, z0=FIELD.z0-20, z1=FIELD.z1+20;
     const W=Math.ceil((x1-x0)*PX), H=Math.ceil((z1-z0)*PX);
     const draw=fn=>{ const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d'); c.lineJoin=c.lineCap='round';
-      const path=()=>{ c.beginPath(); pts.forEach((p,i)=>{ const X=(p[0]-x0)*PX, Y=(p[1]-z0)*PX; i?c.lineTo(X,Y):c.moveTo(X,Y); }); c.closePath(); };
-      const stroke=(r,col)=>{ c.strokeStyle=col; c.lineWidth=r*2*PX; path(); c.stroke(); }, fill=col=>{ c.fillStyle=col; path(); c.fill(); };
-      fn(stroke,fill); const d=c.getImageData(0,0,W,H).data, a=new Uint8Array(W*H); for(let i=0;i<W*H;i++) a[i]=d[i*4]; return a; };
-    const noRice=draw((stroke,fill)=>{ fill('#fff'); stroke(LEVEE-LW,'#fff'); });                         // the island, the river, the grass bank
-    const levee=draw((stroke,fill)=>{ stroke(LEVEE+LW,'#fff'); stroke(LEVEE-LW,'#000'); fill('#000'); });  // the levee's crown, outer side only
-    const water=draw(stroke=>stroke(RIVER_HALF_WIDTH+.5,'#fff'));                                       // the riverbed
+      const path=(P,closed)=>{ c.beginPath(); P.forEach((p,i)=>{ const X=(p[0]-x0)*PX, Y=(p[1]-z0)*PX; i?c.lineTo(X,Y):c.moveTo(X,Y); }); if(closed) c.closePath(); };
+      const stroke=(r,col)=>{ c.strokeStyle=col; c.lineWidth=r*2*PX; path(pts,true); c.stroke(); }, fill=col=>{ c.fillStyle=col; path(pts,true); c.fill(); };
+      const rivers=(r,col)=>{ c.strokeStyle=col; c.lineWidth=r*2*PX; for(const P of [RIVER_IN,RIVER_OUT]){ path(P,false); c.stroke(); } };
+      fn(stroke,fill,rivers); const d=c.getImageData(0,0,W,H).data, a=new Uint8Array(W*H); for(let i=0;i<W*H;i++) a[i]=d[i*4]; return a; };
+    const noRice=draw((stroke,fill,rivers)=>{ fill('#fff'); stroke(LEVEE-LW,'#fff'); rivers(RIVER_W2+7,'#fff'); });            // the pool, its grass bank, the river in and out
+    const levee=draw((stroke,fill,rivers)=>{ stroke(LEVEE+LW,'#fff'); stroke(LEVEE-LW,'#000'); fill('#000'); rivers(RIVER_W2+4,'#000'); });   // the levee's crown, outer side only, open where the river runs in and out
+    const water=draw((stroke,fill,rivers)=>{ stroke(RIVER_HALF_WIDTH+.5,'#fff'); fill('#fff'); rivers(RIVER_W2+.5,'#fff'); });   // the bed
     const at=(a,x,z)=>{ const X=Math.floor((x-x0)*PX), Y=Math.floor((z-z0)*PX); return X>=0&&Y>=0&&X<W&&Y<H&&a[Y*W+X]>127; };
     return {x0,z0,x1,z1,W,H,noRice,levee,water,at}; })();
   const noRice=(x,z)=>MASK.at(MASK.noRice,x,z), onLevee=(x,z)=>inField(x,z)&&!inPond(x,z)&&MASK.at(MASK.levee,x,z);
   const EXCL=[], EXR=[], inExcl=(x,z)=>EXCL.some(e=>(x-e.x)**2+(z-e.z)**2<e.r*e.r)||EXR.some(r=>x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1);
-  const paddy=(x,z)=>!inExcl(x,z)&&inField(x,z)&&!inYard(x,z)&&!inBlock(x,z)&&!inFore(x,z)&&!onRoad(x,z)&&!onDock(x,z)&&!inPond(x,z)&&!noRice(x,z)&&dikeX(x)>DIKE.w+.15&&dikeZ(z)>DIKE.w+.15&&(x<95||nearRiver(x,z));
+  const paddy=(x,z)=>!inExcl(x,z)&&inField(x,z)&&!inYard(x,z)&&!inBlock(x,z)&&!inFore(x,z)&&!onRoad(x,z)&&!onDock(x,z)&&!inPond(x,z)&&!noRice(x,z)&&dikeX(x)>DIKE.w+.15&&dikeZ(z)>DIKE.w+.15&&x<262;
   return {C,BLOCK,FORE,YARD,FIELD,DIKE,ROAD,DOCK,PONDS,GY,walk,paddy,inPond,inYard,onRoad,onDock,inRiver,EXCL,EXR,inExcl,LEVEE,MASK,noRice,onLevee};
 })();
 // the trees round the house stand on their own ground: no paddy or dike under them (the 茄苳 by the bamboo, the mangoes)
@@ -177,49 +190,49 @@ function season(){ const mo=(new Date(Date.now()+8*3600e3+MEAL_SHIFT*60000)).get
 const RICE_GLSL=`uniform float uTime; uniform vec2 uWind; uniform float uAmp; uniform float uRipe; uniform float uPale;
   float waveAt(vec2 p){ vec2 d=normalize(uWind+vec2(1e-4)); float a=dot(p,d); return .62*sin(a*.21-uTime*1.7)+.38*sin(dot(p,vec2(-d.y,d.x))*.13+a*.33-uTime*2.6); }
   vec3 riceCol(float ear){ vec3 g=vec3(.30,.50,.14), y=vec3(.80,.60,.12), e=vec3(.70,.47,.10), p=vec3(.78,.70,.50); vec3 c=mix(g,mix(y,e,ear),clamp(uRipe*(.7+.3*ear)+ear*.15,0.,1.)); return mix(c,p,uPale*.7); }`;
-// ---- the hills, as a height function: one range on the island inside the river's loop, its spurs running down to the
-// water, two summits; beyond the fields, ranges rising layer behind layer into the haze. Trees, the pavilion, the temple
-// and the goats all stand on this ground.
+// ---- the land beyond the paddies, as a height function. Across 斗灣潭 (north, +x) the far bank: the 湖濱下階 a low cliff
+// (12 m) above the water, then the 河階崖 up to the 中階 (+27 m over the pool) where 斗安老街 runs north-east to south-west
+// along the cliff top; 和尚崙 (+52 m) at its north-east end; west of the pool, below the terrace, 公埔's low wetland. A
+// few limestone crags stand on the pool's east wall (港口石灰岩, the pool's cave). Round the paddies on the other sides the
+// 南稜 hills rise layer behind layer; the river runs out through them to the west (upstream) and the east (渡頭).
 const HILLS=(()=>{
   const poly=RIVER_BANK, ss=THREE.MathUtils.smoothstep;
-  const insideLoop=(x,z)=>{ if(x<95||x>245||z<-85||z>185) return false; let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i][0],zi=poly[i][1],xj=poly[j][0],zj=poly[j][1]; if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi)) c=!c; } return c; };
-  const riverD=(x,z)=>{ if(x<20||x>330||z<-170||z>270) return 999; let d=1e9; for(const p of poly){ const dx=x-p[0], dz=z-p[1], q=dx*dx+dz*dz; if(q<d) d=q; } return Math.sqrt(d); };
+  const insideLoop=(x,z)=>{ if(x<95||x>280||z<-100||z>120) return false; let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const xi=poly[i][0],zi=poly[i][1],xj=poly[j][0],zj=poly[j][1]; if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi)) c=!c; } return c; };
+  const riverD=(x,z)=>{ if(x<20||x>360||z<-190||z>210) return 999; let d=1e9; for(const p of poly){ const dx=x-p[0], dz=z-p[1], q=dx*dx+dz*dz; if(q<d) d=q; } return Math.sqrt(d); };
   const fbm=(x,z,o)=>{ let s=0,a=.5,f=1; for(let i=0;i<o;i++){ s+=a*vnoise(x*f+i*17.3,z*f-i*9.1); a*=.5; f*=2.02; } return s; };
   const ridged=(x,z,o)=>{ let s=0,a=.55,f=1,w=1; for(let i=0;i<o;i++){ let n=1-Math.abs(vnoise(x*f+i*31.7,z*f+i*11.3)*2-1); n*=n*w; w=Math.min(1,n*1.8); s+=n*a; a*=.5; f*=2.07; } return s; };
-  // the island's crest line, south to north, wandering
-  const spine=new THREE.CatmullRomCurve3([[150,-44],[161,-8],[175,30],[167,70],[183,108],[171,148]].map(([x,z])=>new THREE.Vector3(x,0,z)));
-  const SP=[]; { let L=0, prev=null; for(let i=0;i<=200;i++){ const p=spine.getPoint(i/200); if(prev) L+=p.distanceTo(prev); SP.push([p.x,p.z,L]); prev=p; } }
-  const spineAt=(x,z)=>{ let best=1e9,bi=0; for(let i=0;i<SP.length;i++){ const dx=x-SP[i][0], dz=z-SP[i][1], q=dx*dx+dz*dz; if(q<best){ best=q; bi=i; } }
-    const a=SP[Math.max(0,bi-1)], b=SP[Math.min(SP.length-1,bi+1)], tx=b[0]-a[0], tz=b[1]-a[1], tl=Math.hypot(tx,tz)||1;
-    let s=SP[bi][2]; if(bi===0||bi===SP.length-1) s+=((x-SP[bi][0])*tx+(z-SP[bi][1])*tz)/tl*(bi===0?1:1);
-    return [s,((x-SP[bi][0])*tz-(z-SP[bi][1])*tx)/tl]; };
-  const island=(x,z,rd)=>{ if(!insideLoop(x,z)) return 0; const env=Math.pow(ss(rd,16,125),.7); if(env<=0) return 0;
-    const [s,d]=spineAt(x,z);
-    const crest=24+20*fbm(s*.012+4.1,1.3,3)+24*Math.exp(-(((s-158)/32)**2))+12*Math.exp(-(((s-52)/26)**2));
-    const W=34+14*vnoise(s*.02,7.7);
-    const warp=fbm(x*.028,z*.028,2);
-    const spur=ridged(s*.05+warp*1.3,Math.abs(d)*.017+warp*.4,4);
-    const ad=Math.abs(d), core=Math.exp(-((ad/W)**2)*1.1), skirt=Math.exp(-((ad/(W*2.3))**2));
-    return env*(crest*core*(.5+.8*spur)+crest*.34*skirt*spur)+env*3.5*(fbm(x*.09,z*.09,3)-.5); };
+  // the 中階 terrace, its edge (the cliff top) from 和尚崙 round past 斗安宮 and 公埔 to the west
+  const TERRACE=[[372,178],[330,110],[312,45],[306,-20],[300,-85],[292,-140],[298,-200],[325,-262],[360,-330],[400,-430],[460,-560],[540,-720],[1400,-900],[1400,330],[700,330],[520,290],[430,230]];
+  const HSL={x:410,z:130};   // 和尚崙
+  const CRAGS=[[262,134,30,13],[248,152,22,10],[278,158,40,15],[236,131,15,8],[292,142,18,10]];   // x, z, height, radius
+  const terraceD=(x,z)=>polyDist(x,z,TERRACE,true);
+  const onTerrace=(x,z)=>x>285&&inPolyXZ(x,z,TERRACE);
+  const near=(x,z)=>{ if(x<200) return 0; let h=0; const d=x>260?terraceD(x,z):999, inT=d<999&&onTerrace(x,z);
+    if(x>268&&z>-100&&z<185&&d<40&&!insideLoop(x,z)) h=12*ss(riverD(x,z),RIVER_HALF_WIDTH+1.2,RIVER_HALF_WIDTH+5)*(1-ss(d,30,40));
+    if(inT) h=Math.max(h,27*ss(d,0,7)+Math.max(0,d-150)*.025+25*ss(Math.hypot(x-HSL.x,z-HSL.z),64,36)+1.4*(fbm(x*.02,z*.02,3)-.5)*ss(d,6,20));
+    for(const [cx,cz,ch,cr] of CRAGS){ const q=Math.hypot(x-cx,z-cz)/cr; if(q<1.3){ const n=fbm(x*.15+cx,z*.15,3); h=Math.max(h,ch*(1-ss(q,.5+.25*n,1.2))*(.8+.35*n)); } }
+    return h; };
   const F=LAND.FIELD;
   const far=(x,z,rd)=>{ const ox=Math.max(F.x0-x,0,x-F.x1), oz=Math.max(F.z0-z,0,z-F.z1), e=Math.hypot(ox,oz); if(e<4) return 0;
-    const env=ss(e,4,110)*ss(rd,34,96); if(env<=0||insideLoop(x,z)) return 0;
+    let env=ss(e,4,110)*ss(rd,34,96); if(env<=0||insideLoop(x,z)) return 0;
+    env*=1-ss(x,215,300)*(1-ss(z,-760,-640))*(1-ss(z,760,880));   // no ranges on the far bank and the plain toward 渡頭
+    if(env>0) env*=ss(riverOpenD(x,z),45,170);                    // the river's valleys, in from the west and out to the east
+    if(env<=0) return 0;
     const wx=x+90*(fbm(x*.003,z*.003,3)-.5), wz=z+90*(fbm(z*.003+5,x*.003,3)-.5);
     const r=ridged(wx*.0062,wz*.0062,5), band=.5+.5*Math.cos((e+70*(fbm(wx*.004,wz*.004,2)-.5))*.034), big=fbm(wx*.0025+9,wz*.0025,3);
     return env*(28+e*.2)*(.22+.85*r)*(.55+.45*band)*(.6+.7*big); };
-  const raw=(x,z)=>{ const rd=riverD(x,z); return Math.max(island(x,z,rd),far(x,z,rd)); };
-  const h=(x,z)=>raw(x,z)-.6;     // a little under the paddies where the hills give out
+  const raw=(x,z)=>{ const rd=riverD(x,z); return Math.max(near(x,z),far(x,z,rd)); };
+  const h=(x,z)=>raw(x,z)-.6;     // a little under the paddies where the land gives out
   const slope=(x,z)=>{ const gx=(h(x+1,z)-h(x-1,z))/2, gz=(h(x,z+1)-h(x,z-1))/2; return 1/Math.sqrt(1+gx*gx+gz*gz); };
-  return {h,raw,island,far,insideLoop,riverD,fbm,ridged,slope};
+  return {h,raw,near,far,insideLoop,riverD,fbm,ridged,slope,TERRACE,HSL,CRAGS,terraceD,onTerrace};
 })();
 window.__HILLS=HILLS;
-// the temple stands at the foot of the steepest rise above the inner bank, facing the water
-const TEMPLE_AT=(()=>{ let best=null; for(let i=0;i<RIVER_BANK.length;i+=6){ const [bx,bz]=RIVER_BANK[i], [cx,cz]=RIVER_BANK[(i+2)%RIVER_BANK.length]; let nx=-(cz-bz), nz=cx-bx; const l=Math.hypot(nx,nz)||1; nx/=l; nz/=l;
-    if(!HILLS.insideLoop(bx+nx*20,bz+nz*20)){ nx=-nx; nz=-nz; } if(!HILLS.insideLoop(bx+nx*20,bz+nz*20)) continue;
-    if(Math.hypot(bx-90,bz-10)<40) continue;
-    const near=HILLS.h(bx+nx*17,bz+nz*17), up=HILLS.h(bx+nx*36,bz+nz*36), sc=up-4*Math.max(0,near);
-    if(!best||sc>best.sc) best={sc,x:bx+nx*17,z:bz+nz*17,nx,nz}; }
-  if(best) LAND.EXCL.push({x:best.x,z:best.z,r:10}); return best; })();
+// 萬善爺廟 stands on the 湖濱下階 under the cliff, facing the pool (south, −x)
+const TEMPLE_AT={x:292,z:-6,nx:-1,nz:0}; LAND.EXCL.push({x:TEMPLE_AT.x,z:TEMPLE_AT.z,r:8});
+// 斗安街 on the far bank's terrace: 老街 along the cliff top from 和尚崙 to 斗安宮, 新街 from the temple north-west toward
+// 斗安驛; trees keep off them (TOWN_AT). The buildings are made with the far bank's landmarks further on.
+const TOWN={OLD:[[384,160],[346,99],[329,42],[323,-18],[319,-78]], NEW:[[318,-96],[360,-142],[410,-196],[456,-246]], TEMPLE:{x:322,z:-95}, ZEN:{x:410,z:130}, CHIMNEY:{x:352,z:-276}, TOWER:{x:432,z:-84}};
+function TOWN_AT(x,z){ if(x<300) return false; return polyDist(x,z,TOWN.OLD,false)<18||polyDist(x,z,TOWN.NEW,false)<17||Math.hypot(x-TOWN.TEMPLE.x,z-TOWN.TEMPLE.z)<20||Math.hypot(x-TOWN.ZEN.x,z-TOWN.ZEN.z)<24||Math.hypot(x-TOWN.CHIMNEY.x,z-TOWN.CHIMNEY.z)<26; }
 // ---- water, shared by the river, the ponds and the paddies: ripples from one tileable slope texture drifting in
 // layers; the colour is what you see through the water (bed, darkening and turning green with depth) and what it
 // reflects (the hills and sky, more of it the flatter you look), plus the sun's glitter.
@@ -362,32 +375,34 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
   for(let x=D.x0+.4;x<D.x1;x+=.45){ const pl=new THREE.Mesh(new THREE.BoxGeometry(.04,.005,D.z1-D.z0-.1),new THREE.MeshLambertMaterial({color:0x4e3a28})); pl.position.set(x,.003,(D.z0+D.z1)/2); scene.add(pl); }
   const post=new THREE.Mesh(new THREE.BoxGeometry(.12,1.6,.12),wood); post.position.set(D.x0+.4,.8,D.z1-.3); scene.add(post);
   const sign=new THREE.Mesh(new THREE.PlaneGeometry(.5,.8),new THREE.MeshLambertMaterial({map:textCanvas(64,104,(g,w,h)=>{ g.fillStyle='#d8bf94'; g.fillRect(0,0,w,h); g.fillStyle='#3a2a1e'; g.font='700 30px "Noto Serif TC",serif'; g.textAlign='center'; g.fillText('渡',w/2,46); g.fillText('頭',w/2,86); })})); sign.position.set(D.x0+.4,1.3,D.z1-.23); scene.add(sign); sign.userData={type:'jetty'}; pickables.push(sign); }
-// ---- the river: clear green water round the island, sandy and pebbly where it is shallow by the banks, deep jade in
-// the channel; the ripples flow downstream, the boats leave wakes, the hills stand in it
-// Sample the shoreline once for the water, the banks and the reeds.
+// ---- the water. 斗灣潭: the shoreline strip along the boats' round, sandy and pebbly in the shallows by the banks, and
+// the pool's deep jade inside it (11 m at the deepest); 大陂溪 running in from the west and out to the east, shallow at
+// both banks. The ripples drift downstream, the boats leave wakes, the cliffs and the sky stand in it.
 {
-  const samples=600;
+  const samples=600, ss=THREE.MathUtils.smoothstep;
   const dockCenter=RIVER.getPointAt(0);
   const shore=Array.from({length:samples+1},(_,i)=>{
     const u=i/samples, p=RIVER.getPointAt(u), d=RIVER.getTangentAt(u);
     const angle=u*Math.PI*2;
     const bend=.48*Math.sin(angle*7)+.25*Math.sin(angle*19);
-    const atDock=1-THREE.MathUtils.smoothstep(p.distanceTo(dockCenter),5,14);
+    const atDock=1-ss(p.distanceTo(dockCenter),5,14);
     const width=RIVER_HALF_WIDTH+THREE.MathUtils.lerp(bend,.15,atDock);
     return {p,d,nx:-d.z,nz:d.x,width};
   });
-  function riverStrip(profile,flow){
-    const pos=[], uv=[], fl=[], idx=[];
-    const columns=profile.length;
-    shore.forEach(({p,d,nx,nz,width},row)=>{
+  // which side of the round is the pool (the inside): the bank, the reeds and the shallows are on the other side only
+  const OUT=(()=>{ const s=shore[0]; return HILLS.insideLoop(s.p.x+s.nx*20,s.p.z+s.nz*20)?-1:1; })();
+  // the open river: samples along a polyline, the same record as the shore's
+  const openShore=P=>{ const c=new THREE.CatmullRomCurve3(P.map(([x,z])=>new THREE.Vector3(x,0,z)),false,'catmullrom',.5), n=Math.max(60,Math.round(c.getLength()/3));
+    return Array.from({length:n+1},(_,i)=>{ const u=i/n, p=c.getPointAt(u), d=c.getTangentAt(u); return {p,d,nx:-d.z,nz:d.x,width:RIVER_W2+1.2*Math.sin(u*37)+.7*Math.sin(u*91)}; }); };
+  const RIV=[openShore(RIVER_IN).reverse().map(s=>({...s,d:s.d.clone().negate(),nx:s.d.z,nz:-s.d.x})),openShore(RIVER_OUT)];   // both flow from west to east
+  function strip(S,profile,flow){
+    const pos=[], uv=[], fl=[], idx=[], columns=profile.length, rows=S.length-1;
+    S.forEach(({p,d,nx,nz,width},row)=>{
       profile.forEach(([side,offset,height],col)=>{
         const r=side*(width+offset);
         pos.push(p.x+nx*r,height,p.z+nz*r);
-        uv.push(col/(columns-1),row/samples); fl.push(d.x,d.z);
-        if(row<samples&&col<columns-1){
-          const i=row*columns+col;
-          idx.push(i,i+1,i+columns,i+1,i+columns+1,i+columns);
-        }
+        uv.push(col/(columns-1),row/rows); fl.push(d.x,d.z);
+        if(row<rows&&col<columns-1){ const i=row*columns+col; idx.push(i,i+1,i+columns,i+1,i+columns+1,i+columns); }
       });
     });
     const g=new THREE.BufferGeometry();
@@ -398,61 +413,74 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
     g.computeVertexNormals();
     return g;
   }
-  const waterMat=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide});
-  waterMat.onBeforeCompile=sh=>{
-    Object.assign(sh.uniforms,landLight,WATER_U,{uTime:U.uTime,uWind:U.uWind,uAmp:U.uAmp,uWakes:wakes});
-    sh.vertexShader='attribute vec2 flow; varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow;\n'+sh.vertexShader.replace(
-      '#include <project_vertex>','#include <project_vertex>\n vRW=(modelMatrix*vec4(transformed,1.)).xyz; vRUV=uv; vFlow=flow;');
-    sh.fragmentShader='varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow;\nuniform float uTime, uAmp; uniform vec2 uWind; uniform vec4 uWakes[2];\n'+CLIFF_SHADE+WATER_GLSL+sh.fragmentShader.replace('#include <opaque_fragment>',`
-      vec2 p=vRW.xz, fl=normalize(vFlow+vec2(1e-5))*.5;
-      float ph0=fract(uTime*.045), ph1=fract(uTime*.045+.5), bl=abs(2.*ph0-1.);
-      vec2 drift=uWind*.5;
-      vec2 s=mix(ripples(p-fl*ph0*22.,drift,uTime),ripples(p-fl*ph1*22.+vec2(13.7,7.3),drift,uTime),bl);
-      float wake=0.; vec2 ws=vec2(0.);
-      for(int i=0;i<2;i++){
-        vec4 boat=uWakes[i]; vec2 dl=p-boat.xy; float back=-dot(dl,boat.zw); vec2 side=vec2(-boat.w,boat.z); float acr=dot(dl,side);
-        float crest=exp(-abs(abs(acr)-.33*back-.15)*4.)*(.5+.5*sin(back*7.-uTime*3.));
-        float k=crest*smoothstep(.3,2.,back)*(1.-smoothstep(4.,16.,back))*smoothstep(.5,.9,length(boat.zw));
-        wake+=k; ws+=side*sign(acr)*k*.5; }
-      float amp=.075+.11*uAmp;
-      vec3 n=normalize(vec3(-s.x*amp-ws.x,1.,-s.y*amp-ws.y));
-      float edge=min(vRUV.x,1.-vRUV.x)*2.;
-      float depth=.08+2.6*pow(smoothstep(0.,.8,edge),.85);
-      vec2 bp=p+n.xz*depth*1.4;
-      vec3 bed=mix(vec3(.36,.33,.24),vec3(.22,.23,.16),smoothstep(-.2,.7,wN(bp*.035).x));
-      bed*=.78+.42*smoothstep(.1,.9,abs(wN(bp*.9).y));
-      float ca=pow(clamp(1.-abs(wN(bp*.21+uTime*.025).x+wN(bp*.29-uTime*.02).y)*.9,0.,1.),7.);
-      float shade=cliffShade(vRW);
-      bed*=1.+ca*.7*(1.-smoothstep(.15,1.2,depth))*uLandDay*(1.-shade);
-      vec3 col=shadeWater(vRW,n,depth,bed,vec3(.60,.21,.18),vec3(.018,.07,.062),shade,.04);
-      col+=wake*.05*uWaterLight;
-      col=mix(col,vec3(.78,.80,.74)*uWaterLight,(1.-smoothstep(0.,.03,edge))*.28);
-      outgoingLight=col;
-      #include <opaque_fragment>`);
-  };
-  const water=new THREE.Mesh(riverStrip([[1,.15,-.1],[-1,.15,-.1]],true),waterMat);
-  scene.add(water);
-  ZL_DYN.push(water);
+  // kind 0: the pool's shoreline strip (shallow at the outer edge only); 1: the open river (shallow at both banks);
+  // 2: the pool's deep water (depth per vertex)
+  const waterMat=kind=>{ const m=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}); m.customProgramCacheKey=()=>'landWater'+kind;   // the three kinds share onBeforeCompile's source text: without this they would share one program
+    const depthGLSL=kind===2?'float depth=vDep;':kind===1?'float edge=min(vRUV.x,1.-vRUV.x)*2.; float depth=.08+2.2*pow(smoothstep(0.,.8,edge),.85);'
+      :`float edge=clamp(vRUV.x*1.6,0.,1.); float depth=.08+2.6*pow(smoothstep(0.,.8,edge),.85);`;
+    m.onBeforeCompile=sh=>{
+      Object.assign(sh.uniforms,landLight,WATER_U,{uTime:U.uTime,uWind:U.uWind,uAmp:U.uAmp,uWakes:wakes});
+      sh.vertexShader='attribute vec2 flow; attribute float dep; varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow; varying float vDep;\n'+sh.vertexShader.replace(
+        '#include <project_vertex>','#include <project_vertex>\n vRW=(modelMatrix*vec4(transformed,1.)).xyz; vRUV=uv; vFlow=flow; vDep=dep;');
+      sh.fragmentShader='varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow; varying float vDep;\nuniform float uTime, uAmp; uniform vec2 uWind; uniform vec4 uWakes[2];\n'+CLIFF_SHADE+WATER_GLSL+sh.fragmentShader.replace('#include <opaque_fragment>',`
+        vec2 p=vRW.xz, fl=normalize(vFlow+vec2(1e-5))*${kind===2?'.12':'.5'};
+        float ph0=fract(uTime*.045), ph1=fract(uTime*.045+.5), bl=abs(2.*ph0-1.);
+        vec2 drift=uWind*.5;
+        vec2 s=mix(ripples(p-fl*ph0*22.,drift,uTime),ripples(p-fl*ph1*22.+vec2(13.7,7.3),drift,uTime),bl);
+        float wake=0.; vec2 ws=vec2(0.);
+        for(int i=0;i<2;i++){
+          vec4 boat=uWakes[i]; vec2 dl=p-boat.xy; float back=-dot(dl,boat.zw); vec2 side=vec2(-boat.w,boat.z); float acr=dot(dl,side);
+          float crest=exp(-abs(abs(acr)-.33*back-.15)*4.)*(.5+.5*sin(back*7.-uTime*3.));
+          float k=crest*smoothstep(.3,2.,back)*(1.-smoothstep(4.,16.,back))*smoothstep(.5,.9,length(boat.zw));
+          wake+=k; ws+=side*sign(acr)*k*.5; }
+        float amp=.075+.11*uAmp;
+        vec3 n=normalize(vec3(-s.x*amp-ws.x,1.,-s.y*amp-ws.y));
+        ${depthGLSL}
+        vec2 bp=p+n.xz*min(depth,3.)*1.4;
+        vec3 bed=mix(vec3(.36,.33,.24),vec3(.22,.23,.16),smoothstep(-.2,.7,wN(bp*.035).x));
+        bed*=.78+.42*smoothstep(.1,.9,abs(wN(bp*.9).y));
+        float ca=pow(clamp(1.-abs(wN(bp*.21+uTime*.025).x+wN(bp*.29-uTime*.02).y)*.9,0.,1.),7.);
+        float shade=cliffShade(vRW);
+        bed*=1.+ca*.7*(1.-smoothstep(.15,1.2,depth))*uLandDay*(1.-shade);
+        vec3 col=shadeWater(vRW,n,depth,bed,vec3(.60,.21,.18),vec3(.018,.07,.062),shade,.04);
+        col+=wake*.05*uWaterLight;
+        ${kind===2?'':`col=mix(col,vec3(.78,.80,.74)*uWaterLight,(1.-smoothstep(0.,.03,edge))*.28);`}
+        outgoingLight=col;
+        #include <opaque_fragment>`);
+    }; return m; };
+  const water=new THREE.Mesh(strip(shore,[[OUT,.15,-.1],[-OUT,3-RIVER_HALF_WIDTH,-.1]],true),waterMat(0)); scene.add(water); ZL_DYN.push(water);   // from the outer bank to 3 m inside the round; the deep water takes over there
+  // the pool's deep water: a grid inside the round, its depth growing from the strip's 2.7 m to 11 m in the middle
+  { const st=3, pos=[], dep=[], uv=[], fl=[], idx=[], X0=96, Z0=-96, NX=Math.ceil((280-X0)/st), NZ=Math.ceil((120-Z0)/st), id=new Int32Array((NX+1)*(NZ+1)).fill(-1);
+    for(let j=0;j<=NZ;j++) for(let i=0;i<=NX;i++){ const x=X0+i*st, z=Z0+j*st; if(!HILLS.insideLoop(x,z)&&HILLS.riverD(x,z)>6) continue; id[j*(NX+1)+i]=pos.length/3; pos.push(x,-.104,z); uv.push(0,0); fl.push(0,0); dep.push(2.7+8.3*ss(HILLS.riverD(x,z),RIVER_HALF_WIDTH,80)); }
+    for(let j=0;j<NZ;j++) for(let i=0;i<NX;i++){ const a=id[j*(NX+1)+i], b=id[j*(NX+1)+i+1], c=id[(j+1)*(NX+1)+i], d=id[(j+1)*(NX+1)+i+1]; if(a>=0&&b>=0&&c>=0&&d>=0) idx.push(a,c,b,b,c,d); }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); g.setAttribute('flow',new THREE.Float32BufferAttribute(fl,2)); g.setAttribute('dep',new THREE.Float32BufferAttribute(dep,1)); g.setIndex(idx); g.computeVertexNormals();
+    const pool=new THREE.Mesh(g,waterMat(2)); scene.add(pool); ZL_DYN.push(pool); }
+  for(const S of RIV){ const w=new THREE.Mesh(strip(S,[[1,.15,-.103],[-1,.15,-.103]],true),waterMat(1)); scene.add(w); ZL_DYN.push(w); }
   const bankMat=new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide});
-  for(const side of [1,-1]){
-    const g=riverStrip([[side,-.25,-.16],[side,.25,-.09],[side,.9,-.06],[side,1.9,-.175]]); const c=[], wet=new THREE.Color(0x4e4632), dry=new THREE.Color(0x7a6f4c), grass=new THREE.Color(0x5d7038);
+  const bank=(S,side)=>{
+    const g=strip(S,[[side,-.25,-.16],[side,.25,-.09],[side,.9,-.06],[side,1.9,-.175]]); const c=[], wet=new THREE.Color(0x4e4632), dry=new THREE.Color(0x7a6f4c), grass=new THREE.Color(0x5d7038);
     for(let i=0;i<g.attributes.position.count;i++){ const col=i%4; const k=[wet,wet.clone().lerp(dry,.5),dry,grass][col].clone().multiplyScalar(.88+.24*hash2(i*.37,i*.11)); c.push(k.r,k.g,k.b); }
     g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));
-    const bank=new THREE.Mesh(g,bankMat); scene.add(bank); reflect(bank);
-  }
+    const b=new THREE.Mesh(g,bankMat); scene.add(b); reflect(b); };
+  bank(shore,OUT);
+  // the open river's banks start where it leaves the pool's strip
+  const clear=S=>S.filter(s=>HILLS.riverD(s.p.x,s.p.z)>RIVER_HALF_WIDTH+RIVER_W2+3);
+  const RIVB=RIV.map(clear);
+  for(const S of RIVB) for(const side of [1,-1]) bank(S,side);
   const reeds=[];
   const rg=new THREE.ConeGeometry(.06,1.1,4);
   rg.translate(0,.55,0);
-  for(const {p,nx,nz,width} of shore.slice(0,-1)){
-    for(const side of [1,-1]){
-      if(RAND()>=.55) continue;
+  const addReeds=(S,sides,p0)=>{ for(const {p,nx,nz,width} of S.slice(0,-1)){
+    for(const side of sides){
+      if(RAND()>=p0) continue;
       const r=(width+.2+RAND()*1.2)*side;
       const x=p.x+nx*r, z=p.z+nz*r, height=.55+RAND()*.85;
       const dock=LAND.DOCK;
       if(x<dock.x1+.65&&x>dock.x0&&z>dock.z0-.6&&z<dock.z1+.6) continue;
+      if(HILLS.near(x,z)>1.5) continue;   // none up the cliffs and the crags
       reeds.push([x,z,height]);
-    }
-  }
+    } } };
+  addReeds(shore,[OUT],.55); for(const S of RIVB) addReeds(S,[1,-1],.35);
   const rm=new THREE.InstancedMesh(rg,new THREE.MeshLambertMaterial({color:0xffffff}),reeds.length);
   const mm=new THREE.Matrix4(), rc=new THREE.Color();
   reeds.forEach(([x,z,h],i)=>{
@@ -462,8 +490,8 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
   });
   scene.add(rm); reflect(rm);
 }
-// ---- the hills as meshes: a fine grid over the island, a polar grid for the far ranges; coloured by height, slope and
-// woodland; far slopes fade blue into the haze. Trees on the island; summits for the pavilion and the hill shadows.
+// ---- the land as meshes: a fine grid over the far bank, a polar grid for the far ranges; coloured by height, slope and
+// woodland; far slopes fade blue into the haze. Trees down the cliffs and over 和尚崙; summits for the hill shadows.
 const PEAKS=[];
 { const ss=THREE.MathUtils.smoothstep, H=HILLS;
   const forest=(x,z)=>H.fbm(x*.03+3.3,z*.03-1.1,3);
@@ -495,20 +523,38 @@ const PEAKS=[];
       float vnoiseH(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(hashH(i),hashH(i+vec2(1,0)),f.x),mix(hashH(i+vec2(0,1)),hashH(i+vec2(1,1)),f.x),f.y); }
       uniform float uLandDay;
       void main() {`); };
-  const isl=grid(96,246,-86,186,1.5); tint(isl.g,false);
+  // the far bank: grass and fields on the flats, scrub and bare earth down the cliffs, grey limestone on the crags
+  const tintNear=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), c=new THREE.Color();
+    const field=new THREE.Color(.27,.36,.15), field2=new THREE.Color(.36,.37,.19), scrub=new THREE.Color(.15,.25,.10), earth=new THREE.Color(.33,.28,.19), lime=new THREE.Color(.50,.49,.45), wood=new THREE.Color(.13,.24,.10);
+    for(let i=0;i<P.count;i++){ const x=P.getX(i), y=P.getY(i)+.6, z=P.getZ(i), ny=N.getY(i), p=vnoise(x*.13,z*.13), f=forest(x,z);
+      const crag=H.CRAGS.some(([cx,cz,,cr])=>Math.hypot(x-cx,z-cz)<cr*1.3);
+      c.copy(field).lerp(field2,ss(vnoise(x*.05,z*.05),.4,.7)); c.lerp(wood,ss(f,.5,.7)*.6);
+      c.lerp(scrub,(1-ss(ny,.6,.9))); c.lerp(earth,(1-ss(ny,.35,.55))*.6);
+      if(crag) c.lerp(lime,(1-ss(ny,.55,.85))*.9);
+      c.multiplyScalar(.84+.32*p); col.set([c.r,c.g,c.b],i*3); }
+    g.setAttribute('color',new THREE.BufferAttribute(col,3)); };
+  // the far bank in detail (the cliffs, the terrace, 和尚崙, the crags) on its own fine grid; the far ranges keep their
+  // polar grid with a hole where the fine one lies
+  const NEAR={x0:204,x1:640,z0:-440,z1:330};
+  const isl=grid(NEAR.x0,NEAR.x1,NEAR.z0,NEAR.z1,2); tintNear(isl.g);
   const farG=polar(185,1000,1.02,420); tint(farG,true);
+  { const Hh={x0:NEAR.x0+3,x1:NEAR.x1-3,z0:NEAR.z0+3,z1:NEAR.z1-3}, P=farG.attributes.position, I=farG.index.array, keep=[];
+    for(let i=0;i<I.length;i+=3){ if([I[i],I[i+1],I[i+2]].every(v=>{ const x=P.getX(v), z=P.getZ(v); return x>Hh.x0&&x<Hh.x1&&z>Hh.z0&&z<Hh.z1; })) continue; keep.push(I[i],I[i+1],I[i+2]); }
+    farG.setIndex(keep); }
   if(typeof STN!=='undefined'&&STN.HOLE){ const Hh=STN.HOLE, P=farG.attributes.position, I=farG.index.array, keep=[]; for(let i=0;i<I.length;i+=3){ const cx=(P.getX(I[i])+P.getX(I[i+1])+P.getX(I[i+2]))/3, cz=(P.getZ(I[i])+P.getZ(I[i+1])+P.getZ(I[i+2]))/3; if(cx>Hh.x0&&cx<Hh.x1&&cz>Hh.z0&&cz<Hh.z1) continue; keep.push(I[i],I[i+1],I[i+2]); } farG.setIndex(keep); }
   for(const g of [isl.g,farG]){ const m=new THREE.Mesh(g,hm); m.receiveShadow=true; scene.add(m); reflect(m); }
-  // summits of the island, highest first
-  { const P=isl.g.attributes.position, nx=isl.nx, nz=isl.nz, Y=(i,j)=>P.getY(j*(nx+1)+i), c=[];
-    for(let j=6;j<nz-6;j+=2) for(let i=6;i<nx-6;i+=2){ const y=Y(i,j); if(y<18) continue; let top=true; for(let b=-6;b<=6&&top;b+=2) for(let a=-6;a<=6;a+=2) if((a||b)&&Y(i+a,j+b)>y){ top=false; break; } if(top) c.push({x:P.getX(j*(nx+1)+i),z:P.getZ(j*(nx+1)+i),H:y}); }
-    c.sort((a,b)=>b.H-a.H); for(const s of c){ if(PEAKS.every(p=>Math.hypot(p.x-s.x,p.z-s.z)>26)) PEAKS.push({x:s.x,z:s.z,H:s.H,R:22}); if(PEAKS.length>=9) break; } }
+  // the summits: the crags and 和尚崙 (for the hill shadows on the water and the fields)
+  for(const [x,z,h,r] of H.CRAGS) PEAKS.push({x,z,H:H.h(x,z),R:r*1.1});
+  PEAKS.push({x:H.HSL.x,z:H.HSL.z,H:H.h(H.HSL.x,H.HSL.z),R:40});
+  PEAKS.sort((a,b)=>b.H-a.H);
   cliffShadows.value.forEach((shadow,i)=>{ const P=PEAKS[i]; if(P) shadow.set(P.x,P.z,P.R*1.3,P.H); else shadow.set(1e5,1e5,1,1); });
-  // trees: broadleaf crowns and a few firs, in the woods, thinning on steep and high ground
+  // trees: woods down the cliffs, over 和尚崙 and on the crags; a few on the terrace between the fields; none on the streets
   const broad=[], fir=[];
-  for(let k=0;k<26000&&broad.length+fir.length<6500;k++){ const x=98+RAND()*146, z=-84+RAND()*268; if(!H.insideLoop(x,z)) continue; const y=H.h(x,z); if(y<1.2) continue;
-    const f=forest(x,z), sl=H.slope(x,z); if(f>.62||sl<.42||RAND()>(.6-f*.5)*(1-ss(y,55,85)*.6)) continue;
-    (RAND()<.2&&y>20?fir:broad).push([x,y,z,f]); }
+  for(let k=0;k<60000&&broad.length+fir.length<6500;k++){ const x=NEAR.x0+RAND()*(NEAR.x1-NEAR.x0), z=NEAR.z0+RAND()*(NEAR.z1-NEAR.z0); const y=H.h(x,z); if(y<1.5) continue;
+    if(typeof TOWN_AT==='function'&&TOWN_AT(x,z)) continue;
+    const sl=H.slope(x,z), f=forest(x,z), hill=Math.hypot(x-H.HSL.x,z-H.HSL.z)<70, steep=sl<.8;
+    if(!(steep||hill||RAND()<.06)) continue; if(!steep&&!hill&&f<.55) continue; if(RAND()>(steep?.8:hill?.55:.5)) continue;
+    (RAND()<.12&&y>30?fir:broad).push([x,y,z,f]); }
   const place=(geo,list,scale,base,var2)=>{ const im=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial({color:0xffffff}),list.length), m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), v=new THREE.Vector3(), c=new THREE.Color(), up=new THREE.Vector3(0,1,0);
     list.forEach(([x,y,z,f],i)=>{ const sz=scale[0]+hash2(x,z)*scale[1]; q.setFromAxisAngle(up,hash2(z,x)*6.28); s.set(sz,sz*(.8+hash2(x*2,z)*.5),sz); v.set(x,y+sz*base,z); m.compose(v,q,s); im.setMatrixAt(i,m);
       im.setColorAt(i,c.setHex(var2[0]).lerp(new THREE.Color(var2[1]),hash2(x*.7,z*1.3)).multiplyScalar(.82+.3*hash2(y,x))); });
@@ -541,21 +587,75 @@ const PEAKS=[];
     }
   });
 }
-// ---- a pavilion on the highest summit, a small temple at the foot of the steepest slope above the water
-{ const red=new THREE.MeshLambertMaterial({color:0x8a3424}), tile=new THREE.MeshLambertMaterial({color:0x4a3a32}), stone=new THREE.MeshLambertMaterial({color:0xb9b2a4});
-  const P=PEAKS[0]||{x:170,z:120,H:60}, top=Math.min(...[[0,0],[-2.2,-2.2],[2.2,-2.2],[-2.2,2.2],[2.2,2.2]].map(([a,b])=>HILLS.h(P.x+a,P.z+b)));
-  const g=new THREE.Group(); g.position.set(P.x,top,P.z); scene.add(g);
-  for(const [x,z] of [[-1.6,-1.6],[1.6,-1.6],[-1.6,1.6],[1.6,1.6]]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,2.6,8),red); c.position.set(x,1.3+.4,z); g.add(c); }
-  const r1=new THREE.Mesh(new THREE.ConeGeometry(3.2,1.2,4),tile); r1.rotation.y=Math.PI/4; r1.position.y=3.4; g.add(r1); const r2=new THREE.Mesh(new THREE.ConeGeometry(2.0,1.1,4),tile); r2.rotation.y=Math.PI/4; r2.position.y=4.3; g.add(r2);
-  const base=new THREE.Mesh(new THREE.BoxGeometry(4.4,2.4,4.4),stone); base.position.y=-.8; g.add(base);
-  const TA=TEMPLE_AT||{x:120,z:60,nx:1,nz:0};
-  const T=new THREE.Group(); T.position.set(TA.x,0,TA.z); T.rotation.y=Math.atan2(-TA.nx,-TA.nz); scene.add(T);
-  const wall=new THREE.Mesh(new THREE.BoxGeometry(8,4,5),new THREE.MeshLambertMaterial({color:0xb04a32})); wall.position.set(0,2.4,-1); T.add(wall);
-  const roof=new THREE.Mesh(new THREE.CylinderGeometry(.01,5.6,2.2,4,1),tile); roof.rotation.y=Math.PI/4; roof.scale.set(1.35,1,.9); roof.position.set(0,5.4,-1); T.add(roof);
-  const door=new THREE.Mesh(new THREE.PlaneGeometry(1.6,2.4),new THREE.MeshLambertMaterial({color:0x2a160e})); door.position.set(0,1.6,1.52); T.add(door);
-  const plinth=new THREE.Mesh(new THREE.BoxGeometry(10,.5,8),stone); plinth.position.set(0,.1,0); T.add(plinth);
-  for(let i=0;i<3;i++){ const s=new THREE.Mesh(new THREE.BoxGeometry(4,.18,.6),stone); s.position.set(0,.25-i*.12,4.3+i*.6); T.add(s); }
-  for(const x of [-1.5,1.5]){ const l=new THREE.Mesh(new THREE.SphereGeometry(.25,10,8),new THREE.MeshLambertMaterial({color:0xc8302a,emissive:0x601010})); l.scale.y=1.2; l.position.set(x,3.1,1.7); T.add(l); } reflect(g); reflect(T); }
+// ---- the far bank's landmarks (as it was about 2000): 斗安街's houses — mostly three- and four-storey 透天 in white, grey and
+// tile, a few old one-storey brick shops with tiled roofs, water tanks on the flat roofs, lit windows at night; 斗安宮 at the
+// south-west end of 老街; 湧安禪寺, the pagoda of 林和尚 and the 鳳梨祖師堂 on 和尚崙; the closed sugar mill's chimney
+// over 公埔; the water tower; 萬善爺廟 on the 湖濱下階 under the cliff, facing the pool.
+{ const H=HILLS, ss=THREE.MathUtils.smoothstep, colorize=(g,hex)=>{ const c=new THREE.Color(hex), n=g.attributes.position.count, a=new Float32Array(n*3); for(let i=0;i<n;i++) a.set([c.r,c.g,c.b],i*3); g.setAttribute('color',new THREE.BufferAttribute(a,3)); return g; };
+  const gable=(w,d,h)=>{ const s=new THREE.Shape(); s.moveTo(-d/2,0); s.lineTo(0,h); s.lineTo(d/2,0); s.lineTo(-d/2,0); const g=new THREE.ExtrudeGeometry(s,{depth:w,bevelEnabled:false}); g.rotateY(Math.PI/2); g.translate(-w/2,0,0); return g; };   // ridge along local x
+  const parts=[], lamps=[];
+  const put=(g,hex,x,y,z,yaw)=>{ g=g.index?g.toNonIndexed():g; colorize(g,hex); g.rotateY(yaw); g.translate(x,y,z); parts.push(g); };
+  const along=(P,step,fn)=>{ for(let i=0;i<P.length-1;i++){ const a=P[i], b=P[i+1], L=Math.hypot(b[0]-a[0],b[1]-a[1]), tx=(b[0]-a[0])/L, tz=(b[1]-a[1])/L; for(let s=step/2;s<L;s+=step) fn(a[0]+tx*s,a[1]+tz*s,tx,tz); } };
+  const WALLS=[0xe9e6dc,0xd9d6cc,0xcfc6b2,0xbfb9ae,0xe0d4bc,0xc9c3b6,0xa9a59c,0xd8cfc0], BRICK=0x9a5a44, TILE=0x8a4a36;
+  let k=0;
+  const row=(P,step,newSt)=>along(P,step,(x,z,tx,tz)=>{ const nx=-tz, nz=tx, yaw=Math.atan2(-tz,tx);
+    for(const side of [1,-1]){ k++; const r=hash2(x*.37+side,z*.41), w=step-.6-r*.8, d=9+hash2(z,x)*4, off=4.2+d/2, cx=x+nx*side*off, cz=z+nz*side*off;
+      if(H.terraceD(cx,cz)<5||!H.onTerrace(cx,cz)) continue;   // keep back from the cliff edge
+      const y0=Math.min(H.h(cx,cz),H.h(cx+tx*w/2,cz+tz*w/2),H.h(cx-tx*w/2,cz-tz*w/2))-.3;
+      const old=!newSt&&r<.22, floors=old?1:newSt?(3+Math.floor(hash2(x,z*1.7)*3)):(2+Math.floor(hash2(x*2.1,z)*3)), hh=old?3.6:floors*3.3+.4;
+      put(new THREE.BoxGeometry(w,hh,d),old?BRICK:WALLS[k%WALLS.length],cx,y0+hh/2,cz,yaw);
+      if(old) put(gable(w+.4,d+.8,1.6),TILE,cx,y0+hh,cz,yaw);
+      else { put(new THREE.BoxGeometry(w-.2,.6,d-.2),0x8f8a80,cx,y0+hh+.3,cz,yaw);   // parapet
+        if(hash2(cz,cx)<.7){ const t=new THREE.CylinderGeometry(.6,.6,1.4,10); put(t,hash2(x,z)<.5?0xc9ccd0:0x4a78a8,cx+nx*side*(d/2-1.5),y0+hh+1.3,cz+nz*side*(d/2-1.5),0); }
+        // the front arcade (亭仔腳) on the street side
+        put(new THREE.BoxGeometry(w,.25,1.2),0x7a756c,cx-nx*side*(d/2-.6),y0+3.2,cz-nz*side*(d/2-.6),yaw); }
+      // lit windows at night: a few on the faces toward the pool
+      for(let f=0;f<Math.min(floors,3);f++) if(hash2(x+f,z-f)<.55) lamps.push([cx,y0+1.6+f*3.3,cz,0]);
+    } });
+  row(TOWN.OLD,7,false); row(TOWN.NEW,8,true);
+  // a handful of taller buildings near 新街's head: the township office, the farmers' association, an apartment block
+  for(const [x,z,w,d,f,c] of [[372,-150,18,12,4,0xd8d2c4],[402,-206,22,14,5,0xc8c2b8],[338,-130,14,12,4,0xe4dfd2]]){ if(!H.onTerrace(x,z)) continue; const y0=H.h(x,z)-.3, hh=f*3.4; put(new THREE.BoxGeometry(w,hh,d),c,x,y0+hh/2,z,Math.atan2(46,42)); for(let i=0;i<f;i++) lamps.push([x,y0+1.7+i*3.4,z,1]); }
+  // 斗安宮: red-brick halls under orange tiled roofs with swallowtail ridges, its back to the pool, facing 新街
+  { const T=TOWN.TEMPLE, y0=H.h(T.x,T.z)-.2, yaw=Math.PI*.75;   // its front toward 新街 (north-west)
+    put(new THREE.BoxGeometry(24,.4,30),0xb8b0a0,T.x,y0+.2,T.z,yaw);   // the 廟埕
+    for(const [dz,w,d,h] of [[-6,14,8,5.2],[5,12,7,4.4]]){ const c=new THREE.Vector3(0,0,dz).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
+      put(new THREE.BoxGeometry(w,h,d),0xa8402c,T.x+c.x,y0+h/2,T.z+c.z,yaw); put(gable(w+1.2,d+1.6,2.6),0xd0662e,T.x+c.x,y0+h,T.z+c.z,yaw);
+      for(const s of [-1,1]){ const e=new THREE.Vector3(s*(w/2+.4),0,dz).applyAxisAngle(new THREE.Vector3(0,1,0),yaw); const tip=new THREE.ConeGeometry(.25,1.6,5); tip.rotateZ(-s*.9); put(tip,0x6a6a6a,T.x+e.x,y0+h+2.7,T.z+e.z,yaw); } }
+    lamps.push([T.x,y0+3,T.z,2]); }
+  // 湧安禪寺 on 和尚崙: a two-storey hall in yellow ochre and grey tiles; 林和尚's pagoda beside it; the 鳳梨祖師堂
+  { const Z=TOWN.ZEN, y0=H.h(Z.x,Z.z)-.3, yaw=-Math.PI/4;   // facing the pool
+    put(new THREE.BoxGeometry(18,7,12),0xd8b86a,Z.x,y0+3.5,Z.z,yaw); put(gable(19.5,14,3.2),0x5a5a5e,Z.x,y0+7,Z.z,yaw); put(new THREE.BoxGeometry(12,3.2,8),0xd8b86a,Z.x,y0+8.8,Z.z,yaw); put(gable(13,9.6,2.4),0x5a5a5e,Z.x,y0+10.4,Z.z,yaw);
+    const px=Z.x-10, pz=Z.z+14, py=H.h(px,pz)-.2; for(let i=0;i<5;i++){ const s=2.2-i*.32; put(new THREE.CylinderGeometry(s*.55,s*.62,1.1,8),0xb8b2a6,px,py+.55+i*1.25,pz,0); put(new THREE.CylinderGeometry(s*.9,s*.75,.3,8),0x6a6660,px,py+1.2+i*1.25,pz,0); }
+    put(new THREE.ConeGeometry(.5,1.6,8),0x8a8070,px,py+7.3,pz,0);
+    const fx=Z.x+8, fz=Z.z+18, fy=H.h(fx,fz)-.2; put(new THREE.BoxGeometry(6,3.4,5),0xa8402c,fx,fy+1.7,fz,yaw); put(gable(6.8,6,1.8),0xd0662e,fx,fy+3.4,fz,yaw);
+    lamps.push([Z.x,y0+4,Z.z,2]); }
+  // the sugar mill's chimney over 公埔 (closed in 1987) and two of its sheds; the water tower
+  { const C=TOWN.CHIMNEY, y0=H.h(C.x,C.z)-.3; put(new THREE.CylinderGeometry(1.1,2.1,38,14),0x8a4c3a,C.x,y0+19,C.z,0); put(new THREE.CylinderGeometry(1.25,1.25,.8,14),0x5a3a2e,C.x,y0+37.6,C.z,0);
+    for(const [dx,dz] of [[10,8],[14,-10]]){ const y=H.h(C.x+dx,C.z+dz)-.3; put(new THREE.BoxGeometry(26,7,12),0x8c8a84,C.x+dx,y+3.5,C.z+dz,.7); put(gable(27,13,2.4),0x7a5a48,C.x+dx,y+7,C.z+dz,.7); }
+    const W=TOWN.TOWER, wy=H.h(W.x,W.z)-.3; put(new THREE.CylinderGeometry(1.4,1.8,20,10),0xc8c4bc,W.x,wy+10,W.z,0); put(new THREE.CylinderGeometry(4.5,3.2,6,16),0xd8d4cc,W.x,wy+23,W.z,0); }
+  // two bridges over 大陂溪: downstream toward 渡頭 斗安大橋 (1968, four lanes since 1986, concrete on round piers);
+  // upstream past 公埔 the 縱貫線's 大陂溪橋 (rebuilt 1950, widened to 1,067 mm in 1982), steel girders on stone piers
+  { const span=(P,i,len,deckW,deckY,deckC,pierC,pierStep,girder)=>{ const a=P[i], b=P[i+1], tx=b[0]-a[0], tz=b[1]-a[1], L=Math.hypot(tx,tz), cx=a[0]+tx*.5, cz=a[1]+tz*.5, yaw=Math.atan2(-tz/L,tx/L)+Math.PI/2;   // across the stream
+      put(new THREE.BoxGeometry(len,1.1,deckW),deckC,cx,deckY,cz,yaw);
+      if(girder) for(const s of [-1,1]){ const o=new THREE.Vector3(0,0,s*(deckW/2-.3)).applyAxisAngle(new THREE.Vector3(0,1,0),yaw); put(new THREE.BoxGeometry(len,1.8,.35),0x5a5048,cx+o.x,deckY+1.4,cz+o.z,yaw); }
+      else for(const s of [-1,1]){ const o=new THREE.Vector3(0,0,s*(deckW/2-.2)).applyAxisAngle(new THREE.Vector3(0,1,0),yaw); put(new THREE.BoxGeometry(len,.9,.3),0xc8c4bc,cx+o.x,deckY+1,cz+o.z,yaw); }
+      for(let d=-len/2+pierStep/2;d<len/2;d+=pierStep){ const o=new THREE.Vector3(d,0,0).applyAxisAngle(new THREE.Vector3(0,1,0),yaw); put(new THREE.CylinderGeometry(girder?1.6:1.1,girder?1.9:1.2,deckY+1.5,10),pierC,cx+o.x,(deckY-1.5)/2,cz+o.z,0); } };
+    span(RIVER_OUT,6,80,19,7,0xbdb8ae,0xa8a39a,13,false);
+    span(RIVER_IN,5,76,5.4,8,0x6a625a,0x9a948a,19,true); }
+  const town=new THREE.Mesh(mergeGeo(parts),new THREE.MeshLambertMaterial({vertexColors:true})); town.receiveShadow=true; scene.add(town); reflect(town);
+  // night windows: small warm points round the houses (the township is still awake at ten)
+  { const N=lamps.length, pos=new Float32Array(N*3); lamps.forEach(([x,y,z],i)=>pos.set([x+(hash2(i,1)-.5)*4,y,z+(hash2(1,i)-.5)*4],i*3));
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const m=new THREE.PointsMaterial({color:0xffd59a,size:1.1,transparent:true,opacity:0,depthWrite:false,sizeAttenuation:true}); const pts=new THREE.Points(g,m); scene.add(pts);
+    ZL_ANIM.push(()=>{ const T=taipeiNow().min, late=T>=1410||T<300; m.opacity=SKY_DAY<.4?(late?.35:.9)*(1-SKY_DAY/.4):0; }); }
+  // 萬善爺廟: a small red temple with a dark doorway and two lanterns, on the 下階 under the cliff, facing the pool
+  const TA=TEMPLE_AT, red=new THREE.MeshLambertMaterial({color:0x8a3424}), tile=new THREE.MeshLambertMaterial({color:0x4a3a32}), stone=new THREE.MeshLambertMaterial({color:0xb9b2a4});
+  const T=new THREE.Group(); T.position.set(TA.x,H.h(TA.x,TA.z)+.4,TA.z); T.rotation.y=Math.atan2(-TA.nx,-TA.nz); scene.add(T);
+  const wall=new THREE.Mesh(new THREE.BoxGeometry(6,3.2,4),new THREE.MeshLambertMaterial({color:0xb04a32})); wall.position.set(0,1.9,-1); T.add(wall);
+  const roof=new THREE.Mesh(new THREE.CylinderGeometry(.01,4.4,1.8,4,1),tile); roof.rotation.y=Math.PI/4; roof.scale.set(1.35,1,.9); roof.position.set(0,4.4,-1); T.add(roof);
+  const door=new THREE.Mesh(new THREE.PlaneGeometry(1.3,2),new THREE.MeshLambertMaterial({color:0x2a160e})); door.position.set(0,1.3,1.02); T.add(door);
+  const plinth=new THREE.Mesh(new THREE.BoxGeometry(8,.5,6.5),stone); plinth.position.set(0,.1,0); T.add(plinth);
+  for(const x of [-1.2,1.2]){ const l=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),new THREE.MeshLambertMaterial({color:0xc8302a,emissive:0x601010})); l.scale.y=1.2; l.position.set(x,2.6,1.2); T.add(l); } reflect(T); }
 // ---- 阿財's round outside: the jetty for water, the road, the dike up to the banyan; a chopping stump with split wood
 //      under the tree, and his pole and buckets set down beside it while he works
 { const C=CAI, st=new THREE.MeshLambertMaterial({color:0x6e5a42}), cut=new THREE.MeshLambertMaterial({color:0xc9a878}), wd=new THREE.MeshLambertMaterial({color:0x7b5b3e});
@@ -797,7 +897,7 @@ const EGRETS=[]; { const wm=new THREE.MeshLambertMaterial({color:0xf6f4ee}), bk=
   for(let i=0;i<10;i++){ let x,z; do{ x=-160+RAND()*240; z=-150+RAND()*320; }while(!LAND.paddy(x,z)||Math.hypot(x-LAND.C.x,z-LAND.C.z)<45); const g=bird(); g.position.set(x,LAND.GY,z); g.rotation.y=RAND()*6.28; EGRETS.push({g,x,z,fly:false}); }
   for(let i=0;i<5;i++){ const g=bird(); g.userData.wings.forEach(w=>w.visible=true); g.children.slice(5,7).forEach(l=>l.visible=false); EGRETS.push({g,fly:true,ph:i*.6}); } }
 { const gm=new THREE.MeshLambertMaterial({color:0xe8e2d6}), dk=new THREE.MeshLambertMaterial({color:0x3a3430});
-  const spots=[]; for(let k=0;k<4000&&spots.length<5;k++){ const x=110+RAND()*120, z=-60+RAND()*230, y=HILLS.h(x,z), sl=HILLS.slope(x,z); if(HILLS.insideLoop(x,z)&&y>10&&y<45&&sl<.75&&sl>.5&&spots.every(q=>Math.hypot(q[0]-x,q[1]-z)>30)) spots.push([x,z,y,RAND()*6.28]); }
+  const spots=[]; for(let k=0;k<4000&&spots.length<5;k++){ const x=225+RAND()*80, z=115+RAND()*65, y=HILLS.h(x,z), sl=HILLS.slope(x,z); if(!HILLS.insideLoop(x,z)&&y>6&&y<42&&sl<.8&&sl>.45&&spots.every(q=>Math.hypot(q[0]-x,q[1]-z)>12)) spots.push([x,z,y,RAND()*6.28]); }
   spots.forEach(([x,z,y,a],pi)=>{
     const g=new THREE.Group(); g.position.set(x,y-.1,z); g.rotation.y=-a; g.scale.setScalar(1.6); scene.add(g);
     const b=new THREE.Mesh(new THREE.BoxGeometry(.55,.28,.22),pi%2?gm:dk); b.position.y=.5; g.add(b); const h=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,.14),pi%2?gm:dk); h.position.set(.32,.7,0); g.add(h);
@@ -818,7 +918,7 @@ const CYCLE=RLEN/BOAT_V+DWELL;
     const lamp=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),new THREE.MeshLambertMaterial({color:0xfff0c8,emissive:0xffa040,emissiveIntensity:0})); lamp.position.set(2.9,.75,0); g.add(lamp);
     const seats=[]; for(const x of [-1.4,-.3,.8,1.9]){ const si=addSeat(0,0,0,'boat'); SEATS[si].boat=b; SEATS[si].bx=x; seats.push(si); }
     reflect(g); BOATS.push({g,rower,oar,lamp,seats,wake:wakes.value[b],off:b*CYCLE/2}); } }
-SEAT_KIND.boat={eye:.95,pitch:0,front:true,sink:-.45,label:'遊河',hello:NT('boat.hello'),status:()=>NT('boat.status')};
+SEAT_KIND.boat={eye:.95,pitch:0,front:true,sink:-.45,label:'遊潭',hello:NT('boat.hello'),status:()=>NT('boat.status')};
 function boatState(B,t){ const ph=(((t/1000+B.off)%CYCLE)+CYCLE)%CYCLE; if(ph<DWELL) return {u:uDock,dock:true,left:DWELL-ph}; const u=(uDock+(ph-DWELL)*BOAT_V/RLEN)%1; return {u,dock:false}; }
 window.__boatAct=u=>{ const B=BOATS[u.b]; if(!B) return; const st=boatState(B,Date.now()); const p=RIVER.getPointAt(st.u);
   if(ME.seat>=0&&SEATS[ME.seat].kind==='boat') return; if(!st.dock){ toast(NT('boat.wait'),3500); return; } if(Math.hypot(ME.x-p.x,ME.z-p.z)>14){ toast(NT('boat.far'),3000); return; }

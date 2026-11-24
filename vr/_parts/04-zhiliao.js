@@ -1011,8 +1011,8 @@ ZL_ANIM.push(()=>{ const want=vivLevel(); if(VIV.lights.length&&want!==VIV.level
       const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0375&longitude=121.5637&current=temperature_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Asia%2FTaipei',{signal:c.signal}); clearTimeout(t);
       if(!r.ok) return; const j=await r.json(), k=j&&j.current; if(!k) return;
       live={c:+k.weather_code,cl:+k.cloud_cover,t:+k.temperature_2m,p:+k.precipitation||0};
-      // wind: the service gives where it blows FROM (0 = north); the world has north at −x and east at −z
-      if(Number.isFinite(+k.wind_speed_10m)){ WIND.ls=+k.wind_speed_10m; WIND.lg=Math.max(WIND.ls,+k.wind_gusts_10m||WIND.ls*1.6); const to=((+k.wind_direction_10m||0)+180)*Math.PI/180; WIND.dir=Math.atan2(-Math.sin(to),-Math.cos(to)); WIND.live=true; }
+      // wind: the service gives where it blows FROM (0 = north); the world has north at +x and east at +z
+      if(Number.isFinite(+k.wind_speed_10m)){ WIND.ls=+k.wind_speed_10m; WIND.lg=Math.max(WIND.ls,+k.wind_gusts_10m||WIND.ls*1.6); const to=((+k.wind_direction_10m||0)+180)*Math.PI/180; WIND.dir=Math.atan2(Math.sin(to),Math.cos(to)); WIND.live=true; }
       applyWind(); if(!f) setWeather(live.c,live.cl,live.t,live.p); else showToday(); }catch{} }
   WX.refresh=fetchWeather;
   fetchWeather(); setInterval(fetchWeather,600000); addEventListener('hashchange',fetchWeather);

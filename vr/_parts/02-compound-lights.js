@@ -259,7 +259,8 @@ function updateSky(){
   skyTop.set('#091629').lerp(new THREE.Color('#167bc8'),day);
   skyHorizon.set('#20324b').lerp(new THREE.Color('#a9d8f3'),day).lerp(new THREE.Color('#f6aa74'),warm);
   scene.fog.color.copy(skyHorizon);
-  daylight.position.set(skyCenter.x+11,Math.max(2,29*altitude),courtAxis-29*Math.cos(angle));
+  // north is +x, east +z (the house sits south of 斗灣潭 and faces it): the sun rises over +z and stands in the −x sky at noon
+  daylight.position.set(skyCenter.x-11,Math.max(2,29*altitude),courtAxis+29*Math.cos(angle));
   daylight.intensity=1.55*THREE.MathUtils.smoothstep(altitude,0,.30);
   daylight.color.set('#fff5e6').lerp(new THREE.Color('#ffa760'),warm);
   ambientSky.userData.base=.53+.68*day; ambientSky.intensity=ambientSky.userData.base*(ambientSky.userData.k??1);

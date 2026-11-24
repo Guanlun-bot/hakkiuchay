@@ -81,7 +81,7 @@ const helpUI=(()=>{ const css=document.createElement('style'); css.textContent=`
   function toggle(on){ render(); on=on??!box.classList.contains('on'); box.classList.toggle('on',on); hb.classList.toggle('on',on); if(on&&document.pointerLockElement===canvas) document.exitPointerLock(); }
   return {toggle}; })();
 
-// the compound in plan, north (−x) up, east (−z) right; the same drawing serves the small round map and the big one
+// the compound in plan, 正廳 (−x, south) up, the gate (north) down; the same drawing serves the small round map and the big one
 const HPLAN={ blds:[], yards:[[-5.5,5.5,4.3,15.3],[14.1,25.1,4.3,15.3],[33.7,46.84,4.3,15.3],[46.84,53.3,-4.3,23.9]], labels:[] };
 for(const cx of [0,19.6,39.2]) HPLAN.blds.push([cx-7.64,cx+7.64,-4.3,4.3],[cx-7.64,cx+7.64,15.3,23.9]);
 for(const [a,b] of [[-14.1,-5.5],[5.5,14.1],[25.1,33.7]]) HPLAN.blds.push([a,b,4.3,15.3]);
@@ -98,17 +98,17 @@ function drawPlan(g,W,H,{cx,cz,scale,round=false,labels=false}){ const S=scale, 
   if(labels) for(const [k,x,z] of HPLAN.labels){ g.fillStyle=ink; g.fillText(HT(k),X(z),Y(x)); }
   for(const [k,x,z] of POIS){ g.fillStyle=night?'#d8b56a':'#8a6a2e'; g.beginPath(); g.arc(X(z),Y(x),labels?4:3,0,Math.PI*2); g.fill(); if(labels){ g.fillText(HT(k),X(z),Y(x)-12); } }
   for(const [,o] of others){ const p=o.av.g.position, c=/^#[0-9a-f]{6}$/i.test(o.p.c)?o.p.c:'#888'; g.fillStyle=c; g.beginPath(); g.arc(X(p.z),Y(p.x),labels?5:4,0,Math.PI*2); g.fill(); g.strokeStyle=ink; g.lineWidth=1; g.stroke(); }
-  // you: a dot and the way you are looking (north up: the screen's up is −x, right is −z)
+  // you: a dot and the way you are looking (正廳 up: the screen's up is −x, right is −z)
   const px=X(ME.z), py=Y(ME.x), fx=Math.cos(ME.yaw), fy=-Math.sin(ME.yaw);   // forward (−sin yaw, −cos yaw) in (x,z) lands on screen as (cos yaw, −sin yaw)
   const ang=Math.atan2(fy,fx); g.fillStyle=night?'rgba(240,236,225,.22)':'rgba(31,29,26,.18)'; g.beginPath(); g.moveTo(px,py); g.arc(px,py,labels?40:26,ang-.55,ang+.55); g.closePath(); g.fill();
   g.fillStyle=ink; g.beginPath(); g.arc(px,py,labels?5:4,0,Math.PI*2); g.fill(); }
 // the small map: the house's own plan view (roofs cut away, as in 宅院平面) seen from straight above, a rectangle that
-// follows you, north up; drawn into a texture a few times a second and copied to a little canvas with the people on top.
+// follows you, 正廳 up; drawn into a texture a few times a second and copied to a little canvas with the people on top.
 // Click it for the whole compound, click there to go.
 const mapUI=(()=>{ const tr=$('#hud-tr'), W=140, H=296, DPR=2; tr.innerHTML=`<canvas width="${W*DPR}" height="${H*DPR}" style="width:${W}px;height:${H}px;display:block"></canvas>`; const c=tr.querySelector('canvas'), g=c.getContext('2d');
   if(LS.get('hk-map')==='off') tr.classList.add('mmoff');
   /* the small map is the plan view itself (宅院平面: walls cut at 2.35 m, the even plan light, no haze), seen whole from
-     straight above, upright like the plan view: north (正廳) at the top, the gate at the bottom, east on the right */
+     straight above, upright like the plan view: the 正廳 (south) at the top, the gate (north) at the bottom */
   const cam=new THREE.PerspectiveCamera(30,W/H,1,200), C={x:19.6,z:9.8}, SPAN_X=72, SPAN_Z=34;
   const r=Math.max(SPAN_X, SPAN_Z/(W/H))/2/Math.tan(THREE.MathUtils.degToRad(cam.fov/2))+2.35;
   cam.up.set(-1,0,0); cam.position.set(C.x,r,C.z); cam.lookAt(C.x,0,C.z); cam.updateProjectionMatrix(); cam.updateMatrixWorld();

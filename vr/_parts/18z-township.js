@@ -85,6 +85,8 @@ var TWP=(()=>{
     { const sharp=my>300&&mx>560, w=sharp?sm(sd,-.3,.7):sm(sd,-10,10); if(w>0){ const eT=45+25*bump(Math.hypot(mx-700,my-238)/30)+1.5*(fbm(mx*.08,my*.08,2)-.5); e=e+(eT-e)*w; } }
     // 公埔: the old lake bed (1912), a flat damp hollow at 19–22 m south-west of the pool
     { const k=((mx-612)/64)**2+((my-442)/34)**2; if(k<1.2){ const w=1-sm(k,.55,1.1); e=e+(20.2+1.6*(fbm(mx*.09,my*.09,2)-.5)-e)*w; } }
+    // 公埔堤防 (1986): a low flood bank along the old lake bed's south side, (588,470)–(668,470)
+    { const d=segD(mx,my,588,470,668,470)[0]; if(d<5) e+=3.4*(1-sm(d,1.6,5)); }
     // 宮ノ台 (the shrine's knoll on the 中階) and 伯公崗 (the 福德祠's knoll, a Hakka graveyard, in 福尾)
     e+=13*bump(Math.hypot(mx-540,my-250)/9)+8*bump(Math.hypot(mx-462,my-350)/8);
     // 1951: where the lake undercut the cliff's foot, the edge of the 中階 under the old street's north-east end slid away;
@@ -187,6 +189,8 @@ var TWP=(()=>{
     for(const R of RIVERS){ const B=R.box; if(x<B[0]||x>B[1]||z<B[2]||z>B[3]) continue; const [d,w]=riverAt(x,z,R), hw=R.hw;
       if(d<hw+70){ const bed=R.brook?(d<hw+9?w-.6:w-.6+(d-hw-9)*.35):d<hw?w-R.dep*(1-(d/hw)**2)-.3:w+.4+(d-hw)*.22; if(bed<e) e=bed; } }   // the brooks are narrower than the 20 m grid: a broad wet floor keeps them in sight
     { const d=polyD(x,z,POOL_L), inside=inPoly(x,z,POOL_L); const bed=inside?POOL_Y-1.4-9.6*sm(d,0,130):POOL_Y+.5+d*.2; if(inside||d<70) e=Math.min(e,bed); }
+    // 河口沙洲: a shoal just inside 大陂溪's mouth, near (1560,274) (l coords), may break the surface at low flow
+    { const d=Math.hypot(x-1560,z-274); if(d<70) e=Math.max(e,-.3+.9*(1-(d/70)**2)); }
     // the house's fields: flat and just under the paddies' own ground, easing out to the land round them
     const fo=fieldOut(x,z); if(fo<45) e=E0-.42+(e-(E0-.42))*sm(fo,0,45);
     return e; }

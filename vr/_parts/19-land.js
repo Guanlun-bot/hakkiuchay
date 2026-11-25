@@ -344,19 +344,19 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
 {
   const ss=THREE.MathUtils.smoothstep, E0=TWP.E0;
   function strip(S,profile,flow){
-    const pos=[], uv=[], fl=[], idx=[], columns=profile.length, rows=S.length-1;
-    S.forEach(({p,d,nx,nz,width},row)=>{
+    const pos=[], uv=[], fl=[], rp=[], idx=[], columns=profile.length, rows=S.length-1;
+    S.forEach(({p,d,nx,nz,width,rapid},row)=>{
       profile.forEach(([side,offset,height],col)=>{
         const r=side*(width+offset);
         pos.push(p.x+nx*r,p.y+height,p.z+nz*r);
-        uv.push(col/(columns-1),row/rows); fl.push(d.x,d.z);
+        uv.push(col/(columns-1),row/rows); fl.push(d.x,d.z); rp.push(rapid||0);
         if(row<rows&&col<columns-1){ const i=row*columns+col; idx.push(i,i+1,i+columns,i+1,i+columns+1,i+columns); }
       });
     });
     const g=new THREE.BufferGeometry();
     g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-    if(flow) g.setAttribute('flow',new THREE.Float32BufferAttribute(fl,2));
+    if(flow){ g.setAttribute('flow',new THREE.Float32BufferAttribute(fl,2)); g.setAttribute('rapid',new THREE.Float32BufferAttribute(rp,1)); }
     g.setIndex(idx);
     g.computeVertexNormals();
     return g;
@@ -366,9 +366,9 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
     const depthGLSL=kind===2?'float depth=min(vDep,4.5);':'float edge=min(vRUV.x,1.-vRUV.x)*2.; float depth=.08+2.2*pow(smoothstep(0.,.8,edge),.85);';
     m.onBeforeCompile=sh=>{
       Object.assign(sh.uniforms,landLight,WATER_U,{uTime:U.uTime,uWind:U.uWind,uAmp:U.uAmp,uWakes:wakes});
-      sh.vertexShader='attribute vec2 flow; attribute float dep; varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow; varying float vDep;\n'+sh.vertexShader.replace(
-        '#include <project_vertex>','#include <project_vertex>\n vRW=(modelMatrix*vec4(transformed,1.)).xyz; vRUV=uv; vFlow=flow; vDep=dep;');
-      sh.fragmentShader='varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow; varying float vDep;\nuniform float uTime, uAmp; uniform vec2 uWind; uniform vec4 uWakes[2];\n'+CLIFF_SHADE+WATER_GLSL+sh.fragmentShader.replace('#include <opaque_fragment>',`
+      sh.vertexShader='attribute vec2 flow; attribute float dep; attribute float rapid; varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow; varying float vDep; varying float vRapid;\n'+sh.vertexShader.replace(
+        '#include <project_vertex>','#include <project_vertex>\n vRW=(modelMatrix*vec4(transformed,1.)).xyz; vRUV=uv; vFlow=flow; vDep=dep; vRapid=rapid;');
+      sh.fragmentShader='varying vec3 vRW; varying vec2 vRUV; varying vec2 vFlow; varying float vDep; varying float vRapid;\nuniform float uTime, uAmp; uniform vec2 uWind; uniform vec4 uWakes[2];\n'+CLIFF_SHADE+WATER_GLSL+sh.fragmentShader.replace('#include <opaque_fragment>',`
         vec2 p=vRW.xz, fl=normalize(vFlow+vec2(1e-5))*${kind===2?'.12':'.5'};
         float ph0=fract(uTime*.045), ph1=fract(uTime*.045+.5), bl=abs(2.*ph0-1.);
         vec2 drift=uWind*.5;
@@ -390,24 +390,35 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
         bed*=1.+ca*.7*(1.-smoothstep(.15,1.2,depth))*uLandDay*(1.-shade);
         vec3 col=shadeWater(vRW,n,depth,bed,vec3(.60,.21,.18),vec3(.018,.07,.062),shade,.04);
         col+=wake*.05*uWaterLight;
-        ${kind===2?'':`col=mix(col,vec3(.78,.80,.74)*uWaterLight,(1.-smoothstep(0.,.03,edge))*.28);`}
+        ${kind===2?'':`col=mix(col,vec3(.78,.80,.74)*uWaterLight,(1.-smoothstep(0.,.03,edge))*.28);
+        col=mix(col,vec3(.92,.94,.92)*uWaterLight,clamp(vRapid,0.,1.)*.6);`}
         outgoingLight=col;
         #include <opaque_fragment>`);
     }; return m; };
-  // a course sampled every ~6 m: {p (with the water's y), d (downstream), nx, nz (to the left bank), width}
-  const course=R=>{ const c=new THREE.CatmullRomCurve3(R.P.map(([x,z,w])=>new THREE.Vector3(x,w-E0,z)),false,'catmullrom',.5), m=Math.max(8,Math.round(c.getLength()/6)), out=[];
-    for(let i=0;i<=m;i++){ const u=i/m, p=c.getPointAt(u), t=c.getTangentAt(u), l=Math.hypot(t.x,t.z)||1; out.push({p,d:new THREE.Vector3(t.x/l,0,t.z/l),nx:-t.z/l,nz:t.x/l,width:R.hw+(R.brook?.3:1.2)*Math.sin(u*37)+(R.brook?.2:.7)*Math.sin(u*91)}); } return out; };
+  // 扇面辮狀河床: 大陂溪 ('up') spreads wide over loose gravel between 190–480 (map mx), 355–455 (map my), narrowest at both ends
+  const fanWide=(x,z)=>{ const [mx,my]=TWP.l2m(x,z); if(my<355||my>455||mx<190||mx>480) return 0; return 38*ss(mx,190,300)*(1-ss(mx,400,480)); };
+  // a course sampled every ~6 m: {p (with the water's y), d (downstream), nx, nz (to the left bank), width, rapid (0–1: how fast the bed falls here, so rapids and falls run white with foam)}
+  const course=R=>{ const c=new THREE.CatmullRomCurve3(R.P.map(([x,z,w])=>new THREE.Vector3(x,w-E0,z)),false,'catmullrom',.5), m=Math.max(8,Math.round(c.getLength()/6)), out=[], segLen=c.getLength()/m;
+    let prevY=null;
+    for(let i=0;i<=m;i++){ const u=i/m, p=c.getPointAt(u), t=c.getTangentAt(u), l=Math.hypot(t.x,t.z)||1;
+      const fan=R.id==='up'?fanWide(p.x,p.z):0, width=R.hw+fan+(R.brook?.3:1.2)*Math.sin(u*37)+(R.brook?.2:.7)*Math.sin(u*91);
+      const slope=prevY==null?0:Math.max(0,(prevY-p.y)/segLen), rapid=ss(slope,.09,.4);
+      out.push({p,d:new THREE.Vector3(t.x/l,0,t.z/l),nx:-t.z/l,nz:t.x/l,width,rapid}); prevY=p.y; } return out; };
   const runs=(S,keep)=>{ const out=[]; let cur=null; for(const s of S){ if(keep(s)){ if(!cur){ cur=[]; out.push(cur); } cur.push(s); } else cur=null; } return out.filter(r=>r.length>1); };
   const COURSES=TWP.RIVERS.map(course);
   const rivM=waterMat(1);
-  for(const S of COURSES){ const w=new THREE.Mesh(strip(S,[[1,.15,0],[-1,.15,0]],true),rivM); scene.add(w); ZL_DYN.push(w); }
+  const RIVER_MESHES=[];
+  COURSES.forEach((S,ri)=>{ const w=new THREE.Mesh(strip(S,[[1,.15,0],[-1,.15,0]],true),rivM); scene.add(w); ZL_DYN.push(w); RIVER_MESHES.push({m:w,brook:!!TWP.RIVERS[ri].brook}); });
   // 斗灣潭: a grid over its bed, its depth from the bed's height
+  let poolMesh=null;
   { const st=6, P=TWP.POOL_L, xs=P.map(p=>p[0]), zs=P.map(p=>p[1]), X0=Math.min(...xs)-8, Z0=Math.min(...zs)-8, NX=Math.ceil((Math.max(...xs)+8-X0)/st), NZ=Math.ceil((Math.max(...zs)+8-Z0)/st);
     const pos=[], dep=[], uv=[], fl=[], idx=[], id=new Int32Array((NX+1)*(NZ+1)).fill(-1), Y=TWP.POOL_Y-E0;
     for(let j=0;j<=NZ;j++) for(let i=0;i<=NX;i++){ const x=X0+i*st, z=Z0+j*st; if(!TWP.inPoly(x,z,P)&&TWP.polyD(x,z,P)>7) continue; id[j*(NX+1)+i]=pos.length/3; pos.push(x,Y,z); uv.push(0,0); fl.push(0,0); dep.push(Math.max(.05,TWP.POOL_Y-TWP.heightAt(x,z))); }
     for(let j=0;j<NZ;j++) for(let i=0;i<NX;i++){ const a=id[j*(NX+1)+i], b=id[j*(NX+1)+i+1], c=id[(j+1)*(NX+1)+i], d=id[(j+1)*(NX+1)+i+1]; if(a>=0&&b>=0&&c>=0&&d>=0) idx.push(a,c,b,b,c,d); }
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); g.setAttribute('flow',new THREE.Float32BufferAttribute(fl,2)); g.setAttribute('dep',new THREE.Float32BufferAttribute(dep,1)); g.setIndex(idx); g.computeVertexNormals();
-    const pool=new THREE.Mesh(g,waterMat(2)); scene.add(pool); ZL_DYN.push(pool); }
+    poolMesh=new THREE.Mesh(g,waterMat(2)); scene.add(poolMesh); ZL_DYN.push(poolMesh); }
+  // 水位跟著天氣漲落: a modest rise in rain (WX.rain, set in 04-zhiliao from the weather fetch), the brooks flashier than the river
+  ZL_ANIM.push(()=>{ const ry=WX.rain*.4; for(const r of RIVER_MESHES) r.m.position.y=ry*(r.brook?1.3:1); if(poolMesh) poolMesh.position.y=ry*.6; });
   // the sea: a 250 m grid from just inside the coast out past the horizon, its depth from the sea floor
   { const st=250, pos=[], dep=[], uv=[], fl=[], idx=[], E1=TWP.m2g(905,0)[0], nE=Math.ceil((32000-E1)/st), nN=Math.ceil(64000/st), Y=-E0;
     for(let j=0;j<=nN;j++) for(let i=0;i<=nE;i++){ const E=E1+i*st, N=-32000+j*st, [x,z]=TWP.toL(E,N); pos.push(x,Y,z); uv.push(0,0); fl.push(0,0); dep.push(Math.min(60,Math.max(-2,-TWP.heightAt(x,z)))); }

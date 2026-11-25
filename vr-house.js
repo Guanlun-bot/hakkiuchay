@@ -8750,7 +8750,7 @@ var TWP=(()=>{
     // 公埔: the old lake bed (1912), a flat damp hollow at 19–22 m south-west of the pool
     { const k=((mx-612)/64)**2+((my-442)/34)**2; if(k<1.2){ const w=1-sm(k,.55,1.1); e=e+(20.2+1.6*(fbm(mx*.09,my*.09,2)-.5)-e)*w; } }
     // 公埔堤防 (1986): a low flood bank along the old lake bed's south side, (588,470)–(668,470)
-    { const d=segD(mx,my,588,470,668,470)[0]; if(d<5) e+=3.4*(1-sm(d,1.6,5)); }
+    { const d=segD(mx,my,588,470,668,470)[0]; if(d<5) e+=4.2*(1-sm(d,1.2,4.2)); }
     // 宮ノ台 (the shrine's knoll on the 中階) and 伯公崗 (the 福德祠's knoll, a Hakka graveyard, in 福尾)
     e+=13*bump(Math.hypot(mx-540,my-250)/9)+8*bump(Math.hypot(mx-462,my-350)/8);
     // 1951: where the lake undercut the cliff's foot, the edge of the 中階 under the old street's north-east end slid away;
@@ -8909,14 +8909,15 @@ var TWP=(()=>{
     {id:'ind',w:5,P:[['m',560,270],['m',450,250],['m',300,260],['m',175,320],['m',150,380],['m',115,540],['m',100,700]].map(L)},
     {id:'old',w:6,street:1,P:[['m',698,248],['m',668,272],['m',642,296],['m',616,326]].map(L)},
     {id:'new',w:8,street:1,P:[['m',616,326],['m',592,314],['m',562,303]].map(L)},
-    {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)}];
+    {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)},
+    {id:'dyke',w:3.5,P:[['m',588,470],['m',628,470],['m',668,470]].map(L)}];   /* 公埔堤防's top: a concrete path */
   // 鄉界 (鄉志): north along a creek to 金港, west on the 中央山脈's main ridge through 三叉嶺, south on 南稜's crest
   const BOUND=(()=>{ const P=[]; for(let my=-330;my<=752;my+=12) P.push([coastX(my),my]);
     for(const q of [[880,745],[860,738]]) P.push(q); for(let mx=840;mx>=-40;mx-=20) P.push([mx,700+14*Math.sin(mx*.021)+8*Math.sin(mx*.057)]);
     for(const q of [[-300,742],[-700,770],[-1100,790],[-1460,800],[-1480,700],[-1470,395],[-1490,100],[-1505,-260],[-1200,-285],[-800,-300],[-300,-330]]) P.push(q);
     for(const q of [[100,-350],[300,-345],[500,-330],[700,-335],[870,-322]]) P.push(q);   // 北界沿界溪 (jg)，和金港的界
     return P; })();
-  return {DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
+  return {riverAt,DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
     PLACES,place,RAIL,RAIL_TUNNEL,RAIL_OWN,TRUNK,ROADS,sm,fbm,vn,h2,segD,inPoly,polyD};
 })();
 // 
@@ -9318,7 +9319,7 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
         #include <opaque_fragment>`);
     }; return m; };
   // 扇面辮狀河床: 大陂溪 ('up') spreads wide over loose gravel between 190–480 (map mx), 355–455 (map my), narrowest at both ends
-  const fanWide=(x,z)=>{ const [mx,my]=TWP.l2m(x,z); if(my<355||my>455||mx<190||mx>480) return 0; return 38*ss(mx,190,300)*(1-ss(mx,400,480)); };
+  const fanWide=(x,z)=>{ const [mx,my]=TWP.l2m(x,z); if(my<355||my>455||mx<190||mx>480) return 0; return 14*ss(mx,190,300)*(1-ss(mx,400,480)); };   /* the water itself stays a few threads; the bed round it is stones (colour()) */
   // a course sampled every ~6 m: {p (with the water's y), d (downstream), nx, nz (to the left bank), width, rapid (0–1: how fast the bed falls here, so rapids and falls run white with foam)}
   const course=R=>{ const c=new THREE.CatmullRomCurve3(R.P.map(([x,z,w])=>new THREE.Vector3(x,w-E0,z)),false,'catmullrom',.5), m=Math.max(8,Math.round(c.getLength()/6)), out=[], segLen=c.getLength()/m;
     let prevY=null;
@@ -9438,6 +9439,9 @@ const PEAKS=[];
       c.lerp(rk,(1-ss(ny,.42,.62))*.7);
       // landslides: raw scars here and there on the steep mountainsides
       if(mx<175&&e>300&&ny<.85){ const sl=TWP.fbm(x*.006+11,z*.006-4,3); if(sl>.7) c.lerp(C.slide,ss(sl,.7,.76)*(1-ss(ny,.85,.95))*.85); }
+      // 扇面辮狀河床: on the fan 大陂溪 runs in threads over a broad bed of grey stones and bars
+      if(mx>185&&mx<485&&my>350&&my<475){ const R=TWP.RIVERS.find(r=>r.id==='up'), d=TWP.riverAt(x,z,R)[0], bw=R.hw+22+60*ss(mx,190,300)*(1-ss(mx,400,480));
+        if(d<bw){ const br=TWP.fbm(x*.03,z*.03,2); c.lerp(new THREE.Color(.62,.60,.54).multiplyScalar(.9+.2*br),(1-ss(d,bw*.75,bw))*.9); } }
       // the fan's dry channels: grass and stones
       if(mx>190&&mx<480&&my>360&&my<450) for(const D of TWP.DRYCH) for(let i=0;i<D.length-1;i++){ const d=TWP.segD(mx,my,D[i][0],D[i][1],D[i+1][0],D[i+1][1])[0]; if(d<3){ c.lerp(C.stones,(1-ss(d,.5,3))*.6); break; } } }
     for(const v of VILL){ const d=Math.hypot(x-v.x,z-v.z); if(d<v.r*1.2) c.lerp(C.vill,(1-ss(d,v.r*.5,v.r*1.2))*.55); }

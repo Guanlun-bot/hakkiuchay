@@ -396,7 +396,7 @@ function mergeGeo(gs){ const pos=[], nor=[], col=[]; let hasCol=false; for(const
         #include <opaque_fragment>`);
     }; return m; };
   // 扇面辮狀河床: 大陂溪 ('up') spreads wide over loose gravel between 190–480 (map mx), 355–455 (map my), narrowest at both ends
-  const fanWide=(x,z)=>{ const [mx,my]=TWP.l2m(x,z); if(my<355||my>455||mx<190||mx>480) return 0; return 38*ss(mx,190,300)*(1-ss(mx,400,480)); };
+  const fanWide=(x,z)=>{ const [mx,my]=TWP.l2m(x,z); if(my<355||my>455||mx<190||mx>480) return 0; return 14*ss(mx,190,300)*(1-ss(mx,400,480)); };   /* the water itself stays a few threads; the bed round it is stones (colour()) */
   // a course sampled every ~6 m: {p (with the water's y), d (downstream), nx, nz (to the left bank), width, rapid (0–1: how fast the bed falls here, so rapids and falls run white with foam)}
   const course=R=>{ const c=new THREE.CatmullRomCurve3(R.P.map(([x,z,w])=>new THREE.Vector3(x,w-E0,z)),false,'catmullrom',.5), m=Math.max(8,Math.round(c.getLength()/6)), out=[], segLen=c.getLength()/m;
     let prevY=null;
@@ -516,6 +516,9 @@ const PEAKS=[];
       c.lerp(rk,(1-ss(ny,.42,.62))*.7);
       // landslides: raw scars here and there on the steep mountainsides
       if(mx<175&&e>300&&ny<.85){ const sl=TWP.fbm(x*.006+11,z*.006-4,3); if(sl>.7) c.lerp(C.slide,ss(sl,.7,.76)*(1-ss(ny,.85,.95))*.85); }
+      // 扇面辮狀河床: on the fan 大陂溪 runs in threads over a broad bed of grey stones and bars
+      if(mx>185&&mx<485&&my>350&&my<475){ const R=TWP.RIVERS.find(r=>r.id==='up'), d=TWP.riverAt(x,z,R)[0], bw=R.hw+22+60*ss(mx,190,300)*(1-ss(mx,400,480));
+        if(d<bw){ const br=TWP.fbm(x*.03,z*.03,2); c.lerp(new THREE.Color(.62,.60,.54).multiplyScalar(.9+.2*br),(1-ss(d,bw*.75,bw))*.9); } }
       // the fan's dry channels: grass and stones
       if(mx>190&&mx<480&&my>360&&my<450) for(const D of TWP.DRYCH) for(let i=0;i<D.length-1;i++){ const d=TWP.segD(mx,my,D[i][0],D[i][1],D[i+1][0],D[i+1][1])[0]; if(d<3){ c.lerp(C.stones,(1-ss(d,.5,3))*.6); break; } } }
     for(const v of VILL){ const d=Math.hypot(x-v.x,z-v.z); if(d<v.r*1.2) c.lerp(C.vill,(1-ss(d,v.r*.5,v.r*1.2))*.55); }

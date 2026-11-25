@@ -86,7 +86,7 @@ var TWP=(()=>{
     // 公埔: the old lake bed (1912), a flat damp hollow at 19–22 m south-west of the pool
     { const k=((mx-612)/64)**2+((my-442)/34)**2; if(k<1.2){ const w=1-sm(k,.55,1.1); e=e+(20.2+1.6*(fbm(mx*.09,my*.09,2)-.5)-e)*w; } }
     // 公埔堤防 (1986): a low flood bank along the old lake bed's south side, (588,470)–(668,470)
-    { const d=segD(mx,my,588,470,668,470)[0]; if(d<5) e+=3.4*(1-sm(d,1.6,5)); }
+    { const d=segD(mx,my,588,470,668,470)[0]; if(d<5) e+=4.2*(1-sm(d,1.2,4.2)); }
     // 宮ノ台 (the shrine's knoll on the 中階) and 伯公崗 (the 福德祠's knoll, a Hakka graveyard, in 福尾)
     e+=13*bump(Math.hypot(mx-540,my-250)/9)+8*bump(Math.hypot(mx-462,my-350)/8);
     // 1951: where the lake undercut the cliff's foot, the edge of the 中階 under the old street's north-east end slid away;
@@ -245,14 +245,15 @@ var TWP=(()=>{
     {id:'ind',w:5,P:[['m',560,270],['m',450,250],['m',300,260],['m',175,320],['m',150,380],['m',115,540],['m',100,700]].map(L)},
     {id:'old',w:6,street:1,P:[['m',698,248],['m',668,272],['m',642,296],['m',616,326]].map(L)},
     {id:'new',w:8,street:1,P:[['m',616,326],['m',592,314],['m',562,303]].map(L)},
-    {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)}];
+    {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)},
+    {id:'dyke',w:3.5,P:[['m',588,470],['m',628,470],['m',668,470]].map(L)}];   /* 公埔堤防's top: a concrete path */
   // 鄉界 (鄉志): north along a creek to 金港, west on the 中央山脈's main ridge through 三叉嶺, south on 南稜's crest
   const BOUND=(()=>{ const P=[]; for(let my=-330;my<=752;my+=12) P.push([coastX(my),my]);
     for(const q of [[880,745],[860,738]]) P.push(q); for(let mx=840;mx>=-40;mx-=20) P.push([mx,700+14*Math.sin(mx*.021)+8*Math.sin(mx*.057)]);
     for(const q of [[-300,742],[-700,770],[-1100,790],[-1460,800],[-1480,700],[-1470,395],[-1490,100],[-1505,-260],[-1200,-285],[-800,-300],[-300,-330]]) P.push(q);
     for(const q of [[100,-350],[300,-345],[500,-330],[700,-335],[870,-322]]) P.push(q);   // 北界沿界溪 (jg)，和金港的界
     return P; })();
-  return {DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
+  return {riverAt,DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
     PLACES,place,RAIL,RAIL_TUNNEL,RAIL_OWN,TRUNK,ROADS,sm,fbm,vn,h2,segD,inPoly,polyD};
 })();
 // {% endraw %}

@@ -490,7 +490,7 @@ const PEAKS=[];
     const farm=(1-ss(e,220,420))*(1-slopeK)*(1-ss(f,.6,.72));
     c.copy(C.wood).lerp(C.wood2,ss(f,.35,.65)); c.lerp(C.high,ss(e,1200,2200)*.7); c.lerp(C.rock,ss(e,2300,2800)*.6);
     if(farm>0){ const k=plot<.55?C.paddy:plot<.75?C.ripe:plot<.9?C.cane:C.fallow; c.lerp(k,farm); }
-    c.lerp(C.rock,(1-ss(ny,.55,.75))*.75);
+    c.lerp(C.rock,(1-ss(ny,.42,.62))*.7);   // bare rock only on the steepest faces; the rest stays wooded
     for(const v of VILL){ const d=Math.hypot(x-v.x,z-v.z); if(d<v.r*1.2) c.lerp(C.vill,(1-ss(d,v.r*.5,v.r*1.2))*.55); }
     if(w&&!w.sea) c.lerp(C.bank,.4);
     return c; };

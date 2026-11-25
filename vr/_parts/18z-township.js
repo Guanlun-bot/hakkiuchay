@@ -128,6 +128,8 @@ var TWP=(()=>{
       let eW=B+A*(1-flat)*(vf*(.62+.7*(r-.5))-.5)+3*(fbm(mx*.05,my*.05,2)-.5);
       eW=Math.min(eW,2860-1.1*Math.max(0,ds-12));   // nothing higher than 三叉嶺
       e=e+(eW-e)*wB; } }
+    // 大陂圳的三處水利構造: 陂頭攔河堰 (引水口)、吳厝斗門、三分水總分水閘 — each a small sill astride the channel (after the 戊案 west blend, so it isn't overwritten)
+    for(const [gx,gy,h] of [[190,405,1.6],[262,365,1.1],[370,332,1.3]]){ const d=Math.hypot(mx-gx,my-gy); if(d<2.2) e+=h*(1-sm(d,.5,2.2)); }
     // 三叉嶺: three ridges meet at the summit, the 中央山脈's main ridge running north and south and the spur east toward 箭竹山稜
     if(mx<-850) for(const [bx,by,hb] of [[-1505,-320,2380],[-1450,1080,2420],[-980,372,2120]]){ const [d,t]=segD(mx,my,SANCHA.mx,SANCHA.my,bx,by), w=70+40*t;
       if(d<w){ const hh=(2840+(hb-2840)*t)*(1-.42*Math.pow(d/w,1.25))*(.96+.08*fbm(mx*.03,my*.03,2)); if(hh>e) e=e+(Math.min(hh,2860)-e)*(1-sm(d,w*.6,w)); } }
@@ -163,7 +165,16 @@ var TWP=(()=>{
       for(let k=0;k<n;k++){ const t=k/n, x=a[0]+(b[0]-a[0])*t, z=a[1]+(b[1]-a[1])*t; let w=a[2]+(b[2]-a[2])*t; if(fieldOut(x,z)>60) w=Math.min(w,landL(x,z)-.8); w=Math.min(w,last); last=w; Q.push([x,z,w]); } }
     const e=R.P[R.P.length-1]; Q.push([e[0],e[1],Math.min(e[2],last)]); R.P=Q; }
   // the brooks: their water just under the land (worked out once the land is known), flowing into the river nearest their mouth
-  const BROOKS=[['jq',[[60,340],[90,360],[130,385],[150,404]]],['qz',[[120,230],[140,300],[150,360],[165,405]]],['ht',[[95,560],[100,500],[115,460],[130,412]]],['bs',[[0,380],[60,388],[120,398],[150,404]]],['hs',[[832,333],[822,348],[812,358]]]];
+  const BROOKS=[['jq',[[60,340],[90,360],[130,385],[150,404]]],['qz',[[120,230],[140,300],[150,360],[165,405]]],['ht',[[95,560],[100,500],[115,460],[130,412]]],['bs',[[0,380],[60,388],[120,398],[150,404]]],['hs',[[832,333],[822,348],[812,358]]],
+    // 大陂圳: 陂頭 (攔河堰，引大陂溪水) → 吳厝 (吳厝斗門) → 三分水 (總分水閘)，再分北／中／南三圳；路線照鄉志輿圖
+    ['dpz',[[190,405],[262,365],[370,332]]], ['dpz_n',[[370,332],[388,258]]], ['dpz_c',[[370,332],[475,342]]], ['dpz_s',[[370,332],[450,350],[540,345],[612,335],[600,370],[600,400],[615,425]]],
+    // 加碼支流: 三叉溪、箭竹溪、腦寮溝、茄苳坑；公埔濕地的殘留水道與公埔坑溪；河階湧泉、潭東壁冷泉；磺水嶺東崖瀑布；北界溪與另一條獨立小溪；伏流的消失溪 (遠離其他水體，不接到任何河，自己消失)
+    ['sc',[[-1440,340],[-1380,370],[-1310,400],[-1260,435]]], ['jz',[[-680,320],[-660,360],[-645,395],[-635,420]]], ['nl',[[158,255],[168,300],[172,350],[178,400]]], ['qd',[[718,430],[730,395],[742,365]]],
+    ['gpw',[[612,442],[628,420],[640,405]]], ['gpk',[[560,505],[580,480],[598,460],[612,443]]],
+    ['yq1',[[662,352],[655,363],[649,374]]], ['yq2',[[705,342],[696,355],[686,368]]], ['dl',[[664,382],[658,384]]],
+    ['hsf',[[903,392],[925,391],[945,390],[958,389],[963,389]]],
+    ['jg',[[-300,-315],[-100,-335],[100,-350],[300,-345],[500,-330],[700,-335],[870,-322]]], ['nb2',[[790,-195],[830,-200],[865,-205],[895,-210],[915,-213]]],
+    ['fl',[[330,560],[355,580],[378,598]]]];
   const POOL_L=POOL.map(([a,b])=>m2l(a,b)), POOL_Y=18;
   for(const [id,pts] of BROOKS){ const P=pts.map(([a,b])=>m2l(a,b));
     let best=null, bd=1e9; const [ex,ez]=P[P.length-1]; for(const R of RIVERS) for(let i=0;i<R.P.length-1;i++){ const a=R.P[i], b=R.P[i+1], [d,t]=segD(ex,ez,a[0],a[1],b[0],b[1]); if(d<bd){ bd=d; best=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]; } }
@@ -171,7 +182,7 @@ var TWP=(()=>{
     // every 30 m along, the water just under the land, never running uphill
     const Q=[]; let last=1e9; for(let i=0;i<P.length-1;i++){ const [ax,az]=P[i], [bx,bz]=P[i+1], n=Math.max(1,Math.ceil(Math.hypot(bx-ax,bz-az)/30)); for(let k=0;k<n;k++){ const x=ax+(bx-ax)*k/n, z=az+(bz-az)*k/n, w=Math.min(last-.05,landL(x,z)-1.2); last=w; Q.push([x,z,w]); } }
     Q.push([...P[P.length-1],best&&bd<600?Math.max(best[2],last-.05):last-.05]);
-    RIVERS.push({id,hw:id==='hs'?3:4.5,dep:1,P:Q,brook:true}); }
+    RIVERS.push({id,hw:id==='hs'?3:id.startsWith('dpz')?2.6:4.5,dep:1,P:Q,brook:true}); }
   for(const R of RIVERS){ let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const [x,z] of R.P){ x0=Math.min(x0,x); x1=Math.max(x1,x); z0=Math.min(z0,z); z1=Math.max(z1,z); } R.box=[x0-80,x1+80,z0-80,z1+80]; }
   // where the nearest river is: distance from the centre line and the water's height there
   // each river's segments in 150 m cells (with 95 m to spare round each), so a point only looks at the few near it
@@ -238,7 +249,8 @@ var TWP=(()=>{
   // 鄉界 (鄉志): north along a creek to 金港, west on the 中央山脈's main ridge through 三叉嶺, south on 南稜's crest
   const BOUND=(()=>{ const P=[]; for(let my=-330;my<=752;my+=12) P.push([coastX(my),my]);
     for(const q of [[880,745],[860,738]]) P.push(q); for(let mx=840;mx>=-40;mx-=20) P.push([mx,700+14*Math.sin(mx*.021)+8*Math.sin(mx*.057)]);
-    for(const q of [[-300,742],[-700,770],[-1100,790],[-1460,800],[-1480,700],[-1470,395],[-1490,100],[-1505,-260],[-1200,-285],[-800,-300],[-300,-330],[100,-358],[400,-322],[700,-340]]) P.push(q);
+    for(const q of [[-300,742],[-700,770],[-1100,790],[-1460,800],[-1480,700],[-1470,395],[-1490,100],[-1505,-260],[-1200,-285],[-800,-300],[-300,-330]]) P.push(q);
+    for(const q of [[100,-350],[300,-345],[500,-330],[700,-335],[870,-322]]) P.push(q);   // 北界沿界溪 (jg)，和金港的界
     return P; })();
   return {DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
     PLACES,place,RAIL,RAIL_TUNNEL,RAIL_OWN,TRUNK,ROADS,sm,fbm,vn,h2,segD,inPoly,polyD};

@@ -16,7 +16,10 @@ function buildBlinds(){ try{
   slatT.wrapS=slatT.wrapT=THREE.RepeatWrapping;
   const bindM=new THREE.MeshStandardMaterial({color:0x7a4a2a,roughness:.85}), rollM=new THREE.MeshStandardMaterial({color:0x4f321d,roughness:.6}), headM=new THREE.MeshStandardMaterial({color:0x6e4226,roughness:.9});
   scene.updateMatrixWorld(true);
-  const solids=[]; scene.traverse(o=>{ if(o.isMesh&&o.visible&&!o.userData.blind) solids.push(o); });
+  // only the house's own pieces: the township's ground, water and roads are huge and would make every ray slow
+  const solids=[], _bs=new THREE.Sphere(), BS=new Map();   /* userData is often shared between pieces, so the spheres live here */ scene.traverse(o=>{ if(!o.isMesh||!o.visible||o.userData.blind) return; const g=o.geometry; if(!g.boundingSphere) g.computeBoundingSphere(); _bs.copy(g.boundingSphere).applyMatrix4(o.matrixWorld);
+    if(_bs.radius<120&&Math.hypot(_bs.center.x-19,_bs.center.z-10)<_bs.radius+60){ solids.push(o); BS.set(o,o.isInstancedMesh?(o.computeBoundingSphere(),o.boundingSphere.clone().applyMatrix4(o.matrixWorld)):_bs.clone()); } });
+  let near=solids;   // per window: only what lies within reach of its rays
   const rc=new THREE.Raycaster(), UP=new THREE.Vector3(0,1,0);
   const oct=r=>[...Array(8)].map((_,k)=>{ const a=Math.PI/8+k*Math.PI/4; return [Math.cos(a)*r,Math.sin(a)*r]; });
   for(const W of WINDOWS){ const P=W.parent; P.updateMatrixWorld(true); const q=P.getWorldQuaternion(new THREE.Quaternion()), ws=P.getWorldScale(new THREE.Vector3());
@@ -31,14 +34,15 @@ function buildBlinds(){ try{
     // that the side with a roof over it); an
     // octagon's, in a partition between the 明間 and a 北間/南間, is the 北間/南間 (away from the wing's middle, local x 0).
     // n points there; the slats hang just on that side of the bars or lattice, and look the same from both sides.
+    near=solids.filter(o=>{ const b=BS.get(o); return b.center.distanceTo(c)<b.radius+11; });
     if(W.k==='oct'){ if((W.x||0)<0) n.negate(); }
     else if(Math.abs(W.z)>.5){ if(W.z>0) n.negate(); }   // a wall of a whole building: the inside is toward its middle (local z 0)
-    else { const roofed=s=>{ rc.set(c.clone().addScaledVector(n,s*2.4),UP); rc.far=9; return rc.intersectObjects(solids,false).length>0; }; if(roofed(-1)&&!roofed(1)) n.negate(); }
+    else { const roofed=s=>{ rc.set(c.clone().addScaledVector(n,s*2.4),UP); rc.far=9; return rc.intersectObjects(near,false).length>0; }; if(roofed(-1)&&!roofed(1)) n.negate(); }
     off=W.k==='oct'?.05:.12;
     u=new THREE.Vector3().crossVectors(UP,n).normalize();   // across, so that (across, up, toward the roll's side) is a proper rotation
     // walled up or lined over? look through the opening from both sides
     let blocked=0; for(const [du,dv] of samples){ for(const s of [1,-1]){ const o=c.clone().addScaledVector(u,du).addScaledVector(UP,dv).addScaledVector(n,s*.7);
-        rc.set(o,n.clone().multiplyScalar(-s)); rc.far=1.0; if(rc.intersectObjects(solids,false).length){ blocked++; break; } } }
+        rc.set(o,n.clone().multiplyScalar(-s)); rc.far=1.0; if(rc.intersectObjects(near,false).length){ blocked++; break; } } }
     if(blocked>=Math.ceil(samples.length*.6)) continue;
     // two blinds, one on each face of the window, the bars or lattice between them; the same in every way, each with its
     // own roll and head on its own side, and they go up and down together. g: x across, y up, z through the wall.
@@ -147,5 +151,7 @@ buildBlinds();
   for(const ci of CASES.keys()) buildCase(ci);
   buildCabinets(); buildPerimeterShelves(); buildPlaques();
   optimizeScene();
+  // get every material's shader ready in the background, so the first look at a new corner does not freeze the frame
+  try{ if(renderer.compileAsync) await renderer.compileAsync(scene,camera); }catch{}
 })();
 // {% endraw %}

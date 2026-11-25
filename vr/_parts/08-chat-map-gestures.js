@@ -4,7 +4,7 @@ const NET={st:'',run:false,peers:null,errs:0};
 // chat: the last line each person said rides along in their shared state; new lines show in the log and over their head
 const HUD_TXT={'chat.all':'全齋','chat.jin':'同進','chat.ph':'說點什麼，Enter 送出，Esc 取消','chat.btn':'聊天 (Enter)',
   'place.xjz':'學鳩齋','place.zlj':'知了間','place.zt':'正廳','place.j3':'第三進','place.nt':'南廳','place.j2':'第二進','place.gt':'過廳','place.j1':'第一進','place.qt':'前庭',
-  'help.btn':'? 操作說明 (H)','help.title':'操作說明','help.keys':'Tab 選單｜WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 小地圖｜X 許總管｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動',
+  'help.btn':'? 操作說明 (H)','help.title':'操作說明','help.keys':'Tab 選單｜WASD 移動｜Shift 奔跑｜空白鍵 跳躍｜Z 蹲下｜E 互動・入座｜V 第三人稱｜右鍵＋滾輪 放大｜左鍵 互動・揮拳｜M 麥克風｜C 抽菸｜G 微動作｜N 全鄉地圖（點地方可傳送）｜空白鍵連按兩下 飛行（空白鍵上升、Z 下降）｜X 許總管｜H 操作說明｜Enter 聊天｜Esc 釋放滑鼠｜VR 手把扳機 指向互動・搖桿 移動',
   'smoke.cig':'紙菸','smoke.pipe':'菸斗','smoke.cigar':'雪茄','smoke.longpipe':'旱菸桿','emote.btn':'微動作 (G)','emote.bow':'作揖','emote.behind':'負手','emote.think':'沉思','emote.clap':'撫掌','map.title':'宅院平面・點一下就過去','map.close':'關閉','map.tea':'茶席','map.books':'書櫃','hud.join':'進來了','hud.leave':'離開了'};
 const HT=k=>(window.HK_LOOK&&window.HK_LOOK.labels[k])||HUD_TXT[k]||'';
 const chatUI=(()=>{ const css=document.createElement('style'); css.textContent=`
@@ -131,8 +131,8 @@ const mapUI=(()=>{ const tr=$('#hud-tr'), W=140, H=296, DPR=2; tr.innerHTML=`<ca
   function teleport(x,z){ if(ME.seat>=0) standUp(); let best=null; for(let r=0;r<3&&!best;r+=.25) for(let a=0;a<Math.PI*2;a+=Math.PI/8){ const px=x+Math.cos(a)*r, pz=z+Math.sin(a)*r; if(walkable(px,pz)){ best={x:px,z:pz}; break; } }
     if(!best){ toast('那裡走不進去'); return; } ME.x=best.x; ME.z=best.z; ME.path=[]; ME.targetYaw=null; if(VIEW.mode!=='walk') setView('walk'); pushPresence(true); }
   let t=9, mt=0;
-  function tick(dt){ if(!window.__entered) return; const hide=tr.classList.contains('mmoff')||VIEW.mode==='plan'; tr.style.visibility=VIEW.mode==='plan'?'hidden':''; if(hide) return;
-    t+=dt; mt+=dt; if(t>2||!base){ t=0; shoot(); } if(base&&mt>.1){ mt=0; marks(); } }
+  function tick(dt){ if(!window.__entered) return; const away=typeof TWP!=='undefined'&&TWP.fieldOut(ME.x,ME.z)>60, hide=tr.classList.contains('mmoff')||VIEW.mode==='plan'||away; tr.style.visibility=VIEW.mode==='plan'||away?'hidden':''; if(hide) return;   /* far out in the township the house's plan means nothing: N shows the whole map */
+    t+=dt; mt+=dt; if(t>20||!base){ t=0; shoot(); }   /* the plan hardly changes; a full render plus a pixel read stalls the frame */ if(base&&mt>.1){ mt=0; marks(); } }
   function toggle(){ tr.classList.toggle('mmoff'); LS.set('hk-map',tr.classList.contains('mmoff')?'off':'on'); }
   return {tick,toggle,teleport}; })();
 ZL_ANIM.push(dt=>mapUI.tick(dt||.016));

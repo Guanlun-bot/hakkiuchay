@@ -259,8 +259,9 @@ function updateSky(){
   skyTop.set('#091629').lerp(new THREE.Color('#167bc8'),day);
   skyHorizon.set('#20324b').lerp(new THREE.Color('#a9d8f3'),day).lerp(new THREE.Color('#f6aa74'),warm);
   scene.fog.color.copy(skyHorizon);
-  // north is +x, east +z (the house sits south of 斗灣潭 and faces it): the sun rises over +z and stands in the −x sky at noon
-  daylight.position.set(skyCenter.x-11,Math.max(2,29*altitude),courtAxis+29*Math.cos(angle));
+  // north-east is +x, south-east +z (the gate faces north-east down 大陂溪): the sun rises in the east (+x+z) and stands
+  // in the south (−x+z) at noon
+  { const R2=Math.SQRT1_2, ea=29*Math.cos(angle), so=11; daylight.position.set(skyCenter.x+R2*(ea-so),Math.max(2,29*altitude),courtAxis+R2*(ea+so)); }
   daylight.intensity=1.55*THREE.MathUtils.smoothstep(altitude,0,.30);
   daylight.color.set('#fff5e6').lerp(new THREE.Color('#ffa760'),warm);
   ambientSky.userData.base=.53+.68*day; ambientSky.intensity=ambientSky.userData.base*(ambientSky.userData.k??1);
@@ -272,7 +273,7 @@ function updateSky(){
   cloudMaterial.opacity=.36+.36*day;
   starMat.opacity=Math.max(0,1-day*1.6); moon.visible=day<.5; moon.material.opacity=1-day*2;
   { const c=WX.cloud, r=WX.rain, grey=new THREE.Color('#8f979d').lerp(new THREE.Color('#2a2f38'),1-day), g2=new THREE.Color('#aab1b5').lerp(new THREE.Color('#333944'),1-day);   /* overcast and rain: the sky greys over, the sun goes in */
-    skyTop.lerp(grey,c*.9); skyHorizon.lerp(g2,c*.85); scene.fog.color.copy(skyHorizon); scene.fog.near=PLAN_FOG?400:70-50*r; scene.fog.far=PLAN_FOG?500:1000-760*r;
+    skyTop.lerp(grey,c*.9); skyHorizon.lerp(g2,c*.85); scene.fog.color.copy(skyHorizon); scene.fog.near=PLAN_FOG?400:500-420*r; scene.fog.far=PLAN_FOG?500:24000*(1-.9*r);
     daylight.intensity*=1-.8*c; ambientSky.userData.base*=1-.22*c; ambientSky.intensity=ambientSky.userData.base*(ambientSky.userData.k??1); ambientSky.color.copy(skyHorizon);
     sunDisk.visible=sunDisk.visible&&c<.6; cloudMaterial.color.lerp(new THREE.Color('#5d646b').lerp(new THREE.Color('#2c3038'),1-day),c*.8); cloudMaterial.opacity=Math.min(.95,cloudMaterial.opacity+.3*c);
     starMat.opacity*=1-c; moon.material.opacity*=1-.8*c; }

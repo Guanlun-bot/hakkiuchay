@@ -134,14 +134,14 @@ function step(dt){
   let mx=0,mz=0; if(keys.has('w')||keys.has('arrowup')) mz-=1; if(keys.has('s')||keys.has('arrowdown')) mz+=1; if(keys.has('a')) mx-=1; if(keys.has('d')) mx+=1;
   if(keys.has('arrowleft')) ME.yaw+=dt*1.8; if(keys.has('arrowright')) ME.yaw-=dt*1.8;
   const sprinting=keys.has('shift')||NET.run;
-  if(mx||mz){ const len=Math.hypot(mx,mz)||1; const nx=mx/len, nz=mz/len; const sp=(ME.crouch?1.1:sprinting?4.4:2.2)*dt*FOOD.speed(); const s=Math.sin(ME.yaw), c=Math.cos(ME.yaw); const dx=(nx*c+nz*s)*sp, dz=(-nx*s+nz*c)*sp; tryMove(dx,dz); }
+  if(mx||mz){ const len=Math.hypot(mx,mz)||1; const nx=mx/len, nz=mz/len; const sp=ME.fly?(sprinting?60:14)*dt:(ME.crouch?1.1:sprinting?4.4:2.2)*dt*FOOD.speed(); const s=Math.sin(ME.yaw), c=Math.cos(ME.yaw); const dx=(nx*c+nz*s)*sp, dz=(-nx*s+nz*c)*sp; if(ME.fly){ ME.x+=dx; ME.z+=dz; } else tryMove(dx,dz); }
   else if(ME.path.length){ const t=ME.path[0]; const dx=t.x-ME.x, dz=t.z-ME.z, d=Math.hypot(dx,dz); const sp=(ME.crouch?1.2:NET.run?4.4:2.4)*dt*FOOD.speed();
     const want=Math.atan2(-dx,-dz); if(d>0.4 && !ME.faceTo){ let dy=want-ME.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); ME.yaw+=dy*Math.min(1,dt*3.2); }
     if(d<=sp){ ME.x=t.x; ME.z=t.z; ME.path.shift(); if(!ME.path.length){ if(ME.faceTo){ const f=ME.faceTo; ME.targetYaw=Math.atan2(-(f.x-ME.x),-(f.z-ME.z)); ME.targetPitch=Math.atan2(f.y-ME.eye,Math.hypot(f.x-ME.x,f.z-ME.z)); ME.faceTo=null; } const a=ME.afterArrive; ME.afterArrive=null; a&&a(); } }
-    else { const ok=tryMove(dx/d*sp,dz/d*sp); if(!ok){ ME.path=[]; ME.afterArrive=null; } } }
+    else if(ME.fly){ const f=Math.min(d,sp*6); ME.x+=dx/d*f; ME.z+=dz/d*f; } else { const ok=tryMove(dx/d*sp,dz/d*sp); if(!ok){ ME.path=[]; ME.afterArrive=null; } } }
   ME.vx=dt>0?(ME.x-prevX)/dt:0; ME.vz=dt>0?(ME.z-prevZ)/dt:0;
   const isMoving=(ME.vx*ME.vx+ME.vz*ME.vz)>0.04 && ME.seat<0;
-  if(isMoving && !(ME.jy>0)){
+  if(isMoving && !(ME.jy>0) && !ME.fly){
     ME.walkBob=(ME.walkBob||0)+dt*(sprinting?11:7.5);
     ME.stepTimer=(ME.stepTimer||0)+dt;
     if(ME.stepTimer>=(sprinting?0.28:0.38)){ ME.stepTimer=0; playStep(); }
@@ -154,6 +154,7 @@ function step(dt){
   if(ME.targetYaw!=null){ let dy=ME.targetYaw-ME.yaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); ME.yaw+=dy*Math.min(1,dt*5); ME.pitch+=(ME.targetPitch-ME.pitch)*Math.min(1,dt*5); if(Math.abs(dy)<0.01){ ME.targetYaw=null; } }
   const wasAir=ME.jy>0;
   const eyeT=ME.seat>=0?SEAT_KIND[SEATS[ME.seat].kind].eye:(ME.crouch?1.05:1.6)+floorY(ME.x,ME.z); ME.eb=(ME.eb??ME.eye); ME.eb+=(eyeT-ME.eb)*Math.min(1,dt*6); if(ME.jv||ME.jy){ ME.jv-=9.8*dt; ME.jy=Math.max(0,(ME.jy||0)+ME.jv*dt); if(ME.jy===0){ ME.jv=0; if(wasAir) playStep(); } } ME.eye=ME.eb+(ME.jy||0);
+  if(ME.fly&&window.__flyStep){ window.__flyStep(dt); ME.eye=ME.fy; ME.eb=ME.fy; ME.jv=0; ME.jy=0; }
   applyCamera();
   // Zoom FOV lerp
   if(VIEW.mode!=='walk'||renderer.xr.isPresenting){ targetFov=baseFov; isRightMouseDown=false; }
@@ -186,7 +187,7 @@ function step(dt){
     ME.av.g.visible=show3P;
     if(show3P){
       const st=ME.seat>=0&&SEATS[ME.seat]?SEATS[ME.seat]:null, spot=st&&SEAT_SPOT[st.kind];
-      let ay=floorY(ME.x,ME.z); if(st) ay=seatPlace(st).y;
+      let ay=ME.fly?ME.fy-1.6:floorY(ME.x,ME.z); if(st) ay=seatPlace(st).y;
       const wBob=(isMoving&&!(ME.jy>0))?Math.abs(Math.sin((ME.walkBob||0)*1.2))*0.03:0;
       ME.av.g.position.set(ME.x,ay+(ME.jy||0)+wBob,ME.z);
       ME.av.g.rotation.y=ME.yaw; poseSeated(ME.av,st);
@@ -224,7 +225,7 @@ function step(dt){
   }
   // others (velocity prediction + smooth interpolation + walking bob + coffee sip + punch knockback)
   const nowMs=performance.now(), nowEpoch=Date.now(), rAlpha=1-Math.exp(-16*dt), yAlpha=1-Math.exp(-18*dt);
-  for(const [,o] of others){ const p=o.p; const s=num(p.s,-1); let x=num(p.x), z=num(p.z), r=num(p.r), y=floorY(x,z);
+  for(const [,o] of others){ const p=o.p; const s=num(p.s,-1); let x=num(p.x), z=num(p.z), r=num(p.r), y=num(p.fy)>0?num(p.fy)-1.6:floorY(x,z);
     if(s>=0&&SEATS[s]){ const P=seatPlace(SEATS[s]); x=P.x; z=P.z; r=P.yaw; y=P.y; }
     else { const lead=Math.min(0.18,Math.max(0,(nowMs-(o.lastNet||nowMs))/1000)); x+=num(p.vx)*lead; z+=num(p.vz)*lead; }
     // remote punch hit notification

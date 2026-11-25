@@ -27,5 +27,6 @@
 {% include_relative _parts/19a-zhang-phone.js %}
 {% include_relative _parts/19b-station.js %}
 {% include_relative _parts/19c-township-build.js %}
+{% include_relative _parts/19d-cave.js %}
 {% include_relative _parts/20-blinds.js %}
 {% include_relative _parts/21-tmap-fly.js %}

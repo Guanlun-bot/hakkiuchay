@@ -83,6 +83,8 @@ var TWP=(()=>{
     if(mx>590&&mx<745&&my>335&&my<400&&sd<0&&sd>-18) e=e+(30+1.2*(fbm(mx*.2,my*.2,2)-.5)-e)*sm(sd,-13.6,-12.3);
     // the 中階 terrace (45 m) with 和尚崙 (70 m) at its north-east end: a sharp cliff on the side of the pool, gentle elsewhere
     { const sharp=my>300&&mx>560, w=sharp?sm(sd,-.3,.7):sm(sd,-10,10); if(w>0){ const eT=45+25*bump(Math.hypot(mx-700,my-238)/30)+1.5*(fbm(mx*.08,my*.08,2)-.5); e=e+(eT-e)*w; } }
+    // 天坑: where the cave's roof fell in, a round pit down to the underground river's pool
+    { const d=Math.hypot(mx-790,my-470); if(d<4.5) e=Math.min(e,1+(e-1)*sm(d,1.6,4.5)); }
     // 公埔: the old lake bed (1912), a flat damp hollow at 19–22 m south-west of the pool
     { const k=((mx-612)/64)**2+((my-442)/34)**2; if(k<1.2){ const w=1-sm(k,.55,1.1); e=e+(20.2+1.6*(fbm(mx*.09,my*.09,2)-.5)-e)*w; } }
     // 公埔堤防 (1986): a low flood bank along the old lake bed's south side, (588,470)–(668,470)
@@ -227,7 +229,7 @@ var TWP=(()=>{
     PL('house','house',0,0,{l:[0,0]}), PL('dou','town',640,300,{n:70,r:9}), PL('hsl','vil',700,238,{n:6,r:4}), PL('gp','vil',630,430,{n:22,r:6}), PL('zhl','vil',548,478,{n:16,r:4}),
     PL('fw','vil',476,330,{n:38,r:7}), PL('ry','vil',418,370,{n:12,r:4,jp:1}), PL('sfs','vil',340,320,{n:14,r:4}), PL('xfw','vil',392,250,{n:30,r:7}), PL('wc','vil',262,352,{n:24,r:5}),
     PL('bt','sight',186,400), PL('qlc','vil',146,330,{n:20,r:4}), PL('dh','school',505,310), PL('ly','vil',922,312,{n:30,r:3.5}), PL('qzw','sight',100,250), PL('zx','vil',86,520,{n:16,r:5}),
-    PL('dt','vil',752,338), PL('kll','vil',812,420,{n:26,r:6}), PL('hsj','vil',838,333,{n:16,r:3}), PL('pool','sight',647,385), PL('sancha','sight',-1470,395), PL('jzs','sight',-650,360), PL('wyk','sight',889,352), PL('gnd','sight',540,250), PL('bgg','sight',462,350), PL('s1951','sight',690,350), PL('hpk','sight',903,392), PL('chim','sight',575,402),
+    PL('dt','vil',752,338), PL('kll','vil',812,420,{n:26,r:6}), PL('hsj','vil',838,333,{n:16,r:3}), PL('pool','sight',647,385), PL('sancha','sight',-1470,395), PL('jzs','sight',-650,360), PL('wyk','sight',889,352), PL('gnd','sight',540,250), PL('tk','sight',786,465), PL('hsd','sight',972,606), PL('amk','sight',652,380), PL('bgg','sight',462,350), PL('s1951','sight',690,350), PL('hpk','sight',903,392), PL('chim','sight',575,402),
     PL('t_dag','temple',612,334), PL('t_yas','temple',707,228), PL('t_fl','temple',722,250), PL('t_fx','temple',488,318), PL('t_sz','temple',362,340), PL('t_bj','temple',562,458),
     PL('t_ws','temple',652,367), PL('t_sx','temple',800,384), PL('t_ys','temple',845,342), PL('t_ym','temple',400,236), PL('t_wu','temple',270,342), PL('t_bg','temple',146,334),
     PL('c_kl','church',826,426), PL('c_zx','church',128,552), PL('c_dou','church',600,286),
@@ -253,7 +255,9 @@ var TWP=(()=>{
     for(const q of [[-300,742],[-700,770],[-1100,790],[-1460,800],[-1480,700],[-1470,395],[-1490,100],[-1505,-260],[-1200,-285],[-800,-300],[-300,-330]]) P.push(q);
     for(const q of [[100,-350],[300,-345],[500,-330],[700,-335],[870,-322]]) P.push(q);   // 北界沿界溪 (jg)，和金港的界
     return P; })();
-  return {riverAt,DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
+  // 鐘乳石伏流's course (for the map): the lake's east wall, under the lowland, 磺水嶺南段, the sea cave
+  const CAVE_ROUTE=[[661,389],[700,415],[745,445],[790,470],[840,505],[893,550],[945,592],[975,610]];
+  return {CAVE_ROUTE,riverAt,DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
     PLACES,place,RAIL,RAIL_TUNNEL,RAIL_OWN,TRUNK,ROADS,sm,fbm,vn,h2,segD,inPoly,polyD};
 })();
 // {% endraw %}

@@ -276,7 +276,7 @@ function makeAvatarOld(color){ const g=new THREE.Group(); const body=new THREE.M
 
 /* ---------------- navigation ---------------- */
 const ME={x:-4.9,z:courtAxis,yaw:-Math.PI/2,pitch:-0.04,seat:-1,eye:1.6,path:[],faceTo:null,afterArrive:null,av:null};
-function walkable(x,z){
+function walkable(x,z){ if(window.__caveWalk){ const c=window.__caveWalk(x,z); if(c!==undefined) return c; }
   const inRoom = x>-7.25*roomWidthScale && x<7.2*roomWidthScale && z>-3.25 && z<3.94;
   const axisZ=z-courtAxis;
   const inYard = Math.abs(x)<5.25 && Math.abs(axisZ)<5.25;
@@ -451,7 +451,7 @@ canvas.addEventListener('wheel',e=>{
     else if(e.deltaY>0&&targetFov<baseFov) targetFov=Math.min(baseFov,targetFov+step);
   }
 },{passive:false});
-const ACTION_TYPES=new Set(['phone','ledger','abacus','dbell','mango','cooler','popcorn','lddrop','ldbundle','gramo','snackdish','blind','alarm','sampan','jetty','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
+const ACTION_TYPES=new Set(['cave','phone','ledger','abacus','dbell','mango','cooler','popcorn','lddrop','ldbundle','gramo','snackdish','blind','alarm','sampan','jetty','cinescreen','cinefridge','cineswitch','npc','seat','door','shoji','modern','gongfu','gffan','irori','tin','fire','floorlamp','vivlamp','shelf','case','post','cab','dtable','dmenu','kgas','ktap','kpantry','kfire','knood','kbasin','wcdoor','wcseat','wcspout','wcslide','wcuri','bathlatch','bathshower','bathwash','bathdoor','bathsdoor','clsboard','clslaptop','clsproj','clsscreen']);
 function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.type]&&String(VRT[u.type].body||'').trim()){ showText(VRT[u.type].title||'',vrParas(VRT[u.type].body)); return; } switch(u.type){
   case 'floor': break;
   case 'npc': npcTalk(u.id); break;
@@ -467,6 +467,7 @@ function act(h){ const u=h.object.userData; if(!ACTION_TYPES.has(u.type)&&VRT[u.
   case 'clsboard': case 'clslaptop': case 'clsproj': case 'clsscreen': if(window.__clsAct) window.__clsAct(u); break;
   case 'blind': window.__blindAct?.(u); break;
   case 'sampan': window.__boatAct?.(u); break;
+  case 'cave': window.__caveAct?.(u); break;
   case 'snackdish': window.__snackAct?.(u); break;
   case 'gramo': window.__gramoAct?.(u); break;
   case 'jetty': toast(NT('boat.jetty'),5000); break;

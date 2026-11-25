@@ -277,7 +277,7 @@ const CIN={x0:12.24,x1:16.88,z0:15.6,z1:23.6,xc:14.56,rz:17.6,sz:17.9,rh:.45,sh:
     {c:0xf4f2ec,k:'box'},{c:0xf0e6f0,k:'bottle',cap:0xd04a7a},{c:0xff5a3a,k:'bottle',cap:0xe02a2a},{c:0xefe6d2,k:'box'},{c:0xe0d0a8,k:'box'},{c:0xf0961e,k:'box'},{c:0xd6e8a0,k:'box'},{c:0xb7c98a,k:'can'},{c:0x6ab0e0,k:'bottle',cap:0x2050a0},{c:0xd8eef8,k:'bottle',glass:true,cap:0x3a7ad0}],
   DRINK0:[{c:0x8a5a2b,k:'can'},{c:0x5a3a1c,k:'bottle',glass:true,cap:0xc8a040},{c:0x3a1f14,k:'can'},{c:0x7fb6d8,k:'bottle',glass:true,cap:0x2a6ad0},{c:0xc9952e,k:'bottle',glass:true,cap:0xe0e0e0},
     {c:0x9fb54a,k:'bottle',glass:true,cap:0x3f8a3a},{c:0xf0961e,k:'box'},{c:0xb7c98a,k:'can'},{c:0xf2eee4,k:'box'},{c:0xd8eef8,k:'bottle',glass:true,cap:0x3a7ad0}]};
-function floorY(x,z){ if(x<-100&&STN){ const y=STN.floor(x,z); if(y!=null) return y; } if(typeof TWP!=='undefined'&&TWP.floorY){ const y=TWP.floorY(x,z); if(y!=null) return y; } if(x>CIN.x0&&x<CIN.x1&&z>CIN.z0&&z<CIN.sz) return z<CIN.rz?CIN.rh:CIN.sh; if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
+function floorY(x,z){ if(window.__caveFloor){ const y=window.__caveFloor(x,z); if(y!=null) return y; } if(x<-100&&STN){ const y=STN.floor(x,z); if(y!=null) return y; } if(typeof TWP!=='undefined'&&TWP.floorY){ const y=TWP.floorY(x,z); if(y!=null) return y; } if(x>CIN.x0&&x<CIN.x1&&z>CIN.z0&&z<CIN.sz) return z<CIN.rz?CIN.rh:CIN.sh; if(x>CLS_PLAT.x0&&x<CLS_PLAT.x1&&z>CLS_PLAT.z0&&z<CLS_PLAT.z1) return CLS_PLAT.h; return (x>TATAMI.x0&&x<TATAMI.x1&&z>TATAMI.z0&&z<TATAMI.z1)?TATAMI.h:0; }
 const SHOJI={open:true,k:1,leaves:[]};
 function zlBlocked(x,z){ return false; }
 const IRS=ZP.irori, IY=JR.rise;

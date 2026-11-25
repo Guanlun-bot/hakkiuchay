@@ -109,8 +109,9 @@ var TWP=(()=>{
         if(u>=0){ const base=Ch*(.3*sm(u,0,.5)+.7*Math.pow(u,1.05)), g=gul(my,11,.3,mx), cut=Ch*.16*sm(u,.04,.45)*(1-sm(u,.8,1));
           h=8+(base-8)*(.9+.2*fbm(mx*.07,my*.07,3))-cut*(1-g); }
         else if(u>-.35){ const g=gul(my,11,.3,mx); h=8+(10+8*g)*Math.exp(u*9)*(1-g*.5); } }   // the fans at the foot
-      else { const v=Math.min(1,(mx-Cx)/Math.max(8,cX-Cx)), g=gul(my,9,.7,mx), cut=Ch*.1*sm(v,.1,.5)*(1-sm(v,.85,1));
-        h=Ch*(1-.72*Math.pow(v,1.5))*(.9+.2*fbm(mx*.07+5,my*.07,3))-cut*(1-g); }   // still high at the shore: the sea cliff
+      else { const nth=1-sm(my,335,375), eF=cX+(906-cX)*nth;   /* the north end leaves a strip of shore for 羅灣 and its harbour */
+        if(mx<eF){ const v=Math.min(1,(mx-Cx)/Math.max(8,eF-Cx)), g=gul(my,9,.7,mx), cut=Ch*.1*sm(v,.1,.5)*(1-sm(v,.85,1));
+          h=Ch*(1-(.72+.28*nth)*Math.pow(v,1.5))*(.9+.2*fbm(mx*.07+5,my*.07,3))-cut*(1-g); } }   // still high at the shore: the sea cliff
       // the crest itself: crags
       h+=Ch*.04*(ridged(mx*.09,my*.09,2)-.5)*Math.max(0,1-Math.abs(mx-Cx)/12);
       const fade=1-sm(my,700,760);
@@ -242,13 +243,63 @@ var TWP=(()=>{
   const RAIL_TUNNEL=[14];   // the segment(s) under 磺水嶺 (index of the start point): 望洋隧道
   const RAIL_OWN=[-109,-12,-109,152];   // 渡頭站's own track (19b) runs here: the line is not drawn over it
   const TRUNK=[[565,-700],[560,0],[560,270],[548,420],[548,470],[540,660],[532,1100]].map(([a,b])=>m2l(a,b));
+  // switchbacks: where a stretch would climb steeper than the road may, it is routed over the ground (A* on an 18 m grid,
+  // the steepness held to the road's limit, water crossed only where it must be) so it winds and doubles back up the slope
+  const route=(a,b,maxG)=>{ const C=2, m=50, x0=Math.min(a[0],b[0])-m, y0=Math.min(a[1],b[1])-m, W=Math.ceil((Math.max(a[0],b[0])+m-x0)/C)+1, H=Math.ceil((Math.max(a[1],b[1])+m-y0)/C)+1;
+    const hc=new Float32Array(W*H).fill(NaN), wet=new Int8Array(W*H).fill(-1);
+    const hh=k=>{ if(isNaN(hc[k])){ const x=x0+(k%W)*C, y=y0+Math.floor(k/W)*C; hc[k]=elevM(x,y); } return hc[k]; };
+    const ww=k=>{ if(wet[k]<0){ const x=x0+(k%W)*C, y=y0+Math.floor(k/W)*C, [lx,lz]=m2l(x,y); wet[k]=water(lx,lz)?1:0; } return wet[k]; };
+    const ix=p=>Math.round((p[0]-x0)/C)+Math.round((p[1]-y0)/C)*W, s0=ix(a), s1=ix(b);
+    const D=[[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1],[2,1],[1,2],[-2,1],[-1,2],[2,-1],[1,-2],[-2,-1],[-1,-2]];
+    const g=new Float32Array(W*H).fill(Infinity), from=new Int32Array(W*H).fill(-1), heap=[]; g[s0]=0;
+    const push=(k,f)=>{ heap.push([f,k]); let i=heap.length-1; while(i>0){ const p=(i-1)>>1; if(heap[p][0]<=heap[i][0]) break; [heap[p],heap[i]]=[heap[i],heap[p]]; i=p; } };
+    const pop=()=>{ const top=heap[0], l=heap.pop(); if(heap.length){ heap[0]=l; let i=0; for(;;){ const a2=2*i+1, b2=a2+1; let m2=i; if(a2<heap.length&&heap[a2][0]<heap[m2][0]) m2=a2; if(b2<heap.length&&heap[b2][0]<heap[m2][0]) m2=b2; if(m2===i) break; [heap[m2],heap[i]]=[heap[i],heap[m2]]; i=m2; } } return top; };
+    const hx=s1%W, hy=Math.floor(s1/W), heur=k=>Math.hypot(k%W-hx,Math.floor(k/W)-hy)*C*S;
+    push(s0,heur(s0)); let n=0;
+    while(heap.length&&n++<160000){ const [,k]=pop(); if(k===s1) break; const kx=k%W, ky=Math.floor(k/W), e0=hh(k);
+      for(const [dx,dy] of D){ const nx=kx+dx, ny=ky+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue; const q=nx+ny*W, len=Math.hypot(dx,dy)*C*S, gr=Math.abs(hh(q)-e0)/len;
+        if(gr>maxG*1.6) continue; let c=len*(1+(gr>maxG?30*(gr-maxG)/maxG:0)+.4*gr/maxG)+(ww(q)?len*6:0);
+        if(g[k]+c<g[q]){ g[q]=g[k]+c; from[q]=k; push(q,g[q]+heur(q)); } } }
+    if(from[s1]<0) return null; const out=[]; for(let k=s1;k>=0&&k!==s0;k=from[k]) out.push([x0+(k%W)*C,y0+Math.floor(k/W)*C]); out.push(a); out.reverse(); out[out.length-1]=b;
+    // pull it tight (keep the turns)
+    const keep=[out[0]]; for(let i=1;i<out.length-1;i++){ const p=keep[keep.length-1], q=out[i+1], r=out[i], cr=Math.abs((q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]))/Math.max(1e-6,Math.hypot(q[0]-p[0],q[1]-p[1])); if(cr>.9||Math.hypot(r[0]-p[0],r[1]-p[1])>40) keep.push(r); } keep.push(b); return keep; };
+  const zig=(P,maxG)=>{ const out=[P[0]]; for(let i=0;i<P.length-1;i++){ const a=P[i], b=P[i+1], D=Math.hypot(b[0]-a[0],b[1]-a[1])*S, dh=Math.abs(elevM(b[0],b[1])-elevM(a[0],a[1]));
+      const r=D>1&&dh/D>maxG*.8?route(a,b,maxG):null; if(r) for(let j=1;j<r.length;j++) out.push(r[j]); else out.push(b); } return out; };
+  // the road network (鄉志 路名): cls p 省道, c 縣道, i 產業道路, v 村裡的路, st 街, path 步道; n = the name's key (rd.<n>)
+  const RD=(id,cls,n,P,o={})=>{ const W={p:7.5,c:6,i:4,v:3.6,st:6,path:1.8}[cls], G={p:.07,c:.08,i:.12,v:.14,st:.12,path:.6}[cls];
+    const key=cls+JSON.stringify(P), B=typeof ROADS_BAKED!=='undefined'&&ROADS_BAKED[id], M=B&&B.k===key?B.m:zig(P,G);   /* routed once and kept in 18y-roads-baked.js (tools/bake-roads.mjs) */
+    return {id,cls,n,key,M,w:o.w||W,street:cls==='st'?1:0,P:M.map(q=>m2l(q[0],q[1]))}; };
+  const ROADS2=[
+    RD('c25','c','c25',[[562,303],[520,318],[476,330],[418,348],[372,345],[340,320],[300,335],[262,352],[225,375],[186,400],[165,370],[146,330]]),
+    RD('c26','c','c26',[[340,320],[366,286],[392,250],[440,185],[520,125],[600,118],[690,120]]),
+    RD('c27','c','c27',[[616,326],[612,360],[622,400],[630,430],[600,452],[562,458],[548,478]]),
+    RD('c29','c','c29',[[778,352],[795,345],[812,338],[838,333],[848,302],[862,276],[890,268],[910,288],[922,312]]),
+    RD('jqk','i','jqk',[[146,330],[112,302],[75,318],[35,300],[-15,322]]),
+    RD('htx','i','htx',[[186,400],[172,432],[140,468],[108,500],[86,520]]),
+    RD('qzw','i','qzw',[[146,330],[125,292],[100,250]]),
+    RD('hbc','v','hbc',[[476,330],[478,372],[482,420],[486,470],[470,520]]),
+    RD('kll','v','kll',[[795,345],[800,384],[812,420],[826,426],[840,440]]),
+    RD('ty','v','ty',[[812,338],[826,324],[842,312],[850,318]]),
+    RD('wyb','path','wyb',[[842,312],[862,326],[889,352]]),
+    RD('hsl','st','hsl',[[698,248],[707,228],[722,250]]),
+    RD('gnd','st','gnd',[[562,303],[548,272],[540,250]]),
+    RD('kd','st','kd',[[642,340],[668,346],[690,342]]),
+    RD('dtj','st','dtj',[[742,358],[752,338],[762,350]]),
+    RD('fx','st','fx',[[476,330],[488,318]]),
+    RD('fx2','v','fx2',[[476,330],[462,350]]),
+    RD('ry','st','ry',[[418,348],[430,356],[418,370],[405,382]]),
+    RD('xf','v','xf',[[392,250],[400,236]]),
+    RD('wcv','v','wcv',[[262,352],[270,342],[256,340]]),
+    RD('zxv','v','zxv',[[86,520],[106,536],[128,552]]),
+    RD('gk','st','gk',[[922,312],[943,300],[958,300]]),
+    RD('ys','st','ys',[[922,312],[945,326],[960,340]]),
+    RD('dh','v','dh',[[520,318],[505,310]])];
   const ROADS=[
-    {id:'hw',w:7,P:[['m',700,-700],['m',700,0],['m',690,120],['m',660,220],['m',640,300],['l',-382,-515],['l',-240,-250],['l',-215,110],['l',-55,150],['l',-35,215],['l',-191,836],['l',-449,1608],['l',-1412,2700],['m',872,900]].map(L)},
-    {id:'ind',w:5,P:[['m',560,270],['m',450,250],['m',300,260],['m',175,320],['m',150,380],['m',115,540],['m',100,700]].map(L)},
-    {id:'old',w:6,street:1,P:[['m',698,248],['m',668,272],['m',642,296],['m',616,326]].map(L)},
-    {id:'new',w:8,street:1,P:[['m',616,326],['m',592,314],['m',562,303]].map(L)},
-    {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)},
-    {id:'dyke',w:3.5,P:[['m',588,470],['m',628,470],['m',668,470]].map(L)}];   /* 公埔堤防's top: a concrete path */
+    {id:'hw',w:7.5,cls:'p',n:'hw',P:[['m',700,-700],['m',700,0],['m',690,120],['m',660,220],['m',640,300],['l',-382,-515],['l',-240,-250],['l',-215,110],['l',-55,150],['l',-35,215],['l',-191,836],['l',-449,1608],['l',-1412,2700],['m',872,900]].map(L)},
+    {id:'old',w:6,cls:'st',n:'old',street:1,P:[['m',698,248],['m',668,272],['m',642,296],['m',616,326]].map(L)},
+    {id:'new',w:8,cls:'st',n:'new',street:1,P:[['m',616,326],['m',592,314],['m',562,303]].map(L)},
+    {id:'stn',w:4,cls:'v',n:'stn',P:[['l',-133,-8],['l',-225,-8]].map(L)},
+    {id:'dyke',w:3.5,cls:'v',n:'dyke',P:[['m',588,470],['m',628,470],['m',668,470]].map(L)},...ROADS2];   /* dyke: 公埔堤防's top, a concrete path */
   // 鄉界 (鄉志): north along a creek to 金港, west on the 中央山脈's main ridge through 三叉嶺, south on 南稜's crest
   const BOUND=(()=>{ const P=[]; for(let my=-330;my<=752;my+=12) P.push([coastX(my),my]);
     for(const q of [[880,745],[860,738]]) P.push(q); for(let mx=840;mx>=-40;mx-=20) P.push([mx,700+14*Math.sin(mx*.021)+8*Math.sin(mx*.057)]);

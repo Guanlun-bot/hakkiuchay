@@ -61,7 +61,16 @@
   for(const R of TWP.ROADS){ const S=profile(sample(R.P,3),5,2.6,.09,3);
     for(const s of S){ if(TWP.fieldOut(s.x,s.z)<1&&!s.bridge&&s.dy<1) s.y=Math.max(s.y,-.2); else if(!s.bridge) s.y+=.3; }
     lineMeshes.push(bank(S,R.w/2+.4,0x6f6a52));
-    const hw=R.w/2; lineMeshes.push(ribbon(S,[[-hw-.4,-.15],[-hw,.06],[hw,.06],[hw+.4,-.15]],R.street?0x75716a:0x6b6b6c,.12));
+    const hw=R.w/2, cls=R.cls||'v', SURF={p:0x4c4c4f,c:0x545456,i:0x8f8b84,v:0x7d7a72,st:0x75716a,path:0x8b7b5c}[cls];
+    lineMeshes.push(ribbon(S,[[-hw-.4,-.15],[-hw,.06],[hw,.06],[hw+.4,-.15]],SURF,.12));
+    // paint: a yellow centre line on the 省道 and 縣道, white edge lines on the 省道
+    if(cls==='p'||cls==='c') lineMeshes.push(ribbon(S,[[-.09,.075],[.09,.075]],0xd6b33c,0));
+    if(cls==='p') for(const o of [-hw+.35,hw-.35]) lineMeshes.push(ribbon(S,[[o-.07,.075],[o+.07,.075]],0xe8e6e0,0));
+    // guardrails where the ground falls away beside the road, concrete gutters where it rises (the uphill side drains)
+    if(cls!=='st') S.forEach((s,i)=>{ if(s.bridge||i%2) return; const yaw=Math.atan2(-s.tz,s.tx), nx=-s.tz, nz=s.tx;
+      for(const sd of [-1,1]){ const gx=s.x+nx*sd*(hw+3), gz=s.z+nz*sd*(hw+3), gy=TWP.heightAt(gx,gz)-TWP.E0;
+        if(s.y-gy>2.2&&cls!=='path'){ put(new THREE.BoxGeometry(6.1,.32,.08),0xb9bcbd,s.x+nx*sd*(hw+.35),s.y+.62,s.z+nz*sd*(hw+.35),yaw); put(new THREE.BoxGeometry(.12,.75,.12),0x8f9293,s.x+nx*sd*(hw+.42),s.y+.38,s.z+nz*sd*(hw+.42),yaw); }
+        else if(gy-s.y>1.5&&cls!=='path') put(new THREE.BoxGeometry(6.1,.1,.55),0xa9a59c,s.x+nx*sd*(hw+.45),s.y+.02,s.z+nz*sd*(hw+.45),yaw); } });
     bridgeBits(S,R.w+.6,0xbdb8ae,0xa8a39a,8);
     // a parapet along each side where the road stands up off the ground
     S.forEach((s,i)=>{ if(s.dy>1.4&&i%2===0){ const yaw=Math.atan2(-s.tz,s.tx); for(const sd of [-1,1]) put(new THREE.BoxGeometry(6.1,.9,.25),0xc8c4bc,s.x-s.tz*sd*(hw+.1),s.y+.55,s.z+s.tx*sd*(hw+.1),yaw); } });

@@ -28,6 +28,7 @@
 | `19-land.js` | 宅外：稻田、大陂溪與小溪、斗灣潭、海、全鄉地形網格、遊船、樹、水牛、鳥 |
 | `19a-zhang-phone.js` | 帳房與電話 |
 | `19b-station.js` | 渡船頭站：站房、月台、站內鐵軌、站長 |
+| `18y-roads-baked.js` | 道路算好的路線（`tools/bake-roads.mjs` 產生） |
 | `19c-township-build.js` | 全鄉的房子、廟、車站、鐵道、道路與橋；田外怎麼走 |
 | `19d-cave.js` | 鐘乳石伏流暗河：天坑、坐船、大廳、海蝕洞 |
 | `20-blinds.js` | 竹簾 |

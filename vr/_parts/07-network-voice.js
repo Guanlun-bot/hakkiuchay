@@ -52,7 +52,7 @@ function tryPunchCharacter(){
   myHit={to:hit.k,kx:+kx.toFixed(2),kz:+kz.toFixed(2),at:Date.now()};
   pushPresence(true);
 }
-function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),vx:+(ME.vx||0).toFixed(2),vz:+(ME.vz||0).toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sk:mySmokeType,em:myEmote,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0,lt:myLight,ht:myHit,bt:(window.__cineBt??-1),fx:myFx,fy:ME.fly?+ME.fy.toFixed(1):0,pid:(typeof MY_PID==='string'?MY_PID:'')}; }
+function presenceObj(){ return {n:myName.slice(0,12),c:myColor,x:+ME.x.toFixed(2),z:+ME.z.toFixed(2),r:+ME.yaw.toFixed(2),vx:+(ME.vx||0).toFixed(2),vz:+(ME.vz||0).toFixed(2),s:ME.seat,m:focusMode,e:focusEnd,rd:ME.reading>=0?ME.reading:-1,dk:myDrink,bn:myDrink>=0?myBean:-1,dr:myDoors,rec:myRec,gf:myGF,ir:myIR,md:myMD,sp:mySip,av:myLook,sm:mySmoke,sk:mySmokeType,em:myEmote,sn:mySnack,cm:myChat,ac:myAct,cr:ME.crouch?1:0,lt:myLight,ht:myHit,bt:(window.__cineBt??-1),fx:myFx,fy:ME.fly?+ME.fy.toFixed(1):0,cy:(typeof CAVE!=='undefined'&&CAVE.on)?+floorY(ME.x,ME.z).toFixed(2):null,pid:(typeof MY_PID==='string'?MY_PID:'')}; }
 function pushPresence(force){ if(!room) return; const o=presenceObj(); const k=JSON.stringify(o); if(!force&&k===lastSent) return; lastSent=k; room.presence(o).catch(()=>{}); }
 function str(v,n){ return typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').slice(0,n):''; }
 function num(v,d=0){ return typeof v==='number'&&isFinite(v)?v:d; }

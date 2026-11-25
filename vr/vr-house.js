@@ -22,6 +22,7 @@
 {% include_relative _parts/16-talk.js %}
 {% include_relative _parts/17-steward.js %}
 {% include_relative _parts/18-snacks-gramophone.js %}
+{% include_relative _parts/18y-roads-baked.js %}
 {% include_relative _parts/18z-township.js %}
 {% include_relative _parts/19-land.js %}
 {% include_relative _parts/19a-zhang-phone.js %}

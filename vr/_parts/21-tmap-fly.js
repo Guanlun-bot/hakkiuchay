@@ -94,7 +94,8 @@ const TMAP=(()=>{ const MX0=-1600, MY0=-60, MX1=1080, MY1=720, K=1.1;   /* west 
     b.fillStyle='rgb(150,195,220)'; path(TWP.POOL_L); b.closePath(); b.fill();
     for(const R of TWP.RIVERS){ b.strokeStyle='rgb(120,175,210)'; b.lineWidth=Math.max(1.2,R.hw*2/TWP.S*K); path(R.P); b.stroke(); }
     // roads, the lines
-    for(const R of TWP.ROADS){ b.strokeStyle=R.street?'rgba(60,50,45,.85)':R.id==='hw'?'rgba(200,70,50,.9)':'rgba(200,120,60,.85)'; b.lineWidth=R.id==='hw'?2.4:R.street?2.2:1.6; path(R.P); b.stroke(); }
+    { const ST={p:['rgba(200,70,50,.95)',2.8],c:['rgba(214,140,50,.95)',2.1],i:['rgba(150,110,70,.9)',1.5],v:['rgba(110,100,90,.85)',1.2],st:['rgba(60,50,45,.9)',2.2],path:['rgba(120,100,70,.9)',1.1]};
+      for(const R of TWP.ROADS){ const [c,w]=ST[R.cls||'v']; b.strokeStyle=c; b.lineWidth=w; if(R.cls==='path') b.setLineDash([4,3]); path(R.P); b.stroke(); b.setLineDash([]); } }
     const rail=(P,w)=>{ b.strokeStyle='#1d2226'; b.lineWidth=w; path(P); b.stroke(); b.strokeStyle='#f4f1ea'; b.lineWidth=w*.45; b.setLineDash([6,6]); path(P); b.stroke(); b.setLineDash([]); };
     rail(TWP.TRUNK,4); rail(TWP.RAIL,3);
     return c; }
@@ -105,6 +106,11 @@ const TMAP=(()=>{ const MX0=-1600, MY0=-60, MX1=1080, MY1=720, K=1.1;   /* west 
   const SYM={town:'■',vil:'■',school:'■',temple:'卍',church:'✝',station:'●',sight:'△',house:'◆'};
   function draw(){ if(!open) return; if(!base) base=makeBase(); const V=view(); g.setTransform(1,0,0,1,0,0); g.fillStyle='#c9dbe3'; g.fillRect(0,0,V.w,V.h);
     const [ox,oy]=scr(MX0,MY0,V); g.imageSmoothingEnabled=true; g.drawImage(base,ox,oy,BW*zoom*V.dpr,BH*zoom*V.dpr);
+    // road names along the roads, as you come closer: at the middle of each 省道, 縣道 and 產業道路 (streets nearer still)
+    { g.textBaseline='middle'; g.textAlign='center'; for(const R of TWP.ROADS){ const c=R.cls||'v'; if(!(c==='p'||c==='c'&&zoom>.7||c==='i'&&zoom>1.2||(c==='st'||c==='path')&&zoom>2.4)) continue; const t=NT('rd.'+R.n); if(!t) continue;
+        const k=Math.floor(R.P.length/2), [ax,az]=R.P[Math.max(0,k-1)], [bx,bz]=R.P[Math.min(R.P.length-1,k+1)], [m1,n1]=TWP.l2m(ax,az), [m2,n2]=TWP.l2m(bx,bz), [X1,Y1]=scr(m1,n1,V), [X2,Y2]=scr(m2,n2,V);
+        let ang=Math.atan2(Y2-Y1,X2-X1); if(ang>Math.PI/2) ang-=Math.PI; if(ang<-Math.PI/2) ang+=Math.PI;
+        g.save(); g.translate((X1+X2)/2,(Y1+Y2)/2); g.rotate(ang); g.font=font(10.5*V.dpr); g.lineWidth=3*V.dpr; g.strokeStyle='rgba(244,241,234,.9)'; g.fillStyle=c==='p'?'#9c2f22':'#6b4a25'; g.strokeText(t,0,-7*V.dpr); g.fillText(t,0,-7*V.dpr); g.restore(); } }
     // names: villages always, the rest as you come closer
     g.textBaseline='middle'; const z=zoom;
     for(const p of TWP.PLACES){ const show=p.kind==='town'||p.kind==='vil'||p.kind==='house'||(p.kind==='station'&&z>.9)||z>1.6; if(!show) continue;

@@ -225,7 +225,7 @@ function step(dt){
   }
   // others (velocity prediction + smooth interpolation + walking bob + coffee sip + punch knockback)
   const nowMs=performance.now(), nowEpoch=Date.now(), rAlpha=1-Math.exp(-16*dt), yAlpha=1-Math.exp(-18*dt);
-  for(const [,o] of others){ const p=o.p; const s=num(p.s,-1); let x=num(p.x), z=num(p.z), r=num(p.r), y=num(p.fy)>0?num(p.fy)-1.6:floorY(x,z);
+  for(const [,o] of others){ const p=o.p; const s=num(p.s,-1); let x=num(p.x), z=num(p.z), r=num(p.r), y=(p.cy!=null&&isFinite(p.cy))?+p.cy:num(p.fy)>0?num(p.fy)-1.6:floorY(x,z);   /* cy: down in the 暗河 */
     if(s>=0&&SEATS[s]){ const P=seatPlace(SEATS[s]); x=P.x; z=P.z; r=P.yaw; y=P.y; }
     else { const lead=Math.min(0.18,Math.max(0,(nowMs-(o.lastNet||nowMs))/1000)); x+=num(p.vx)*lead; z+=num(p.vz)*lead; }
     // remote punch hit notification

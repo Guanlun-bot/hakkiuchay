@@ -5313,7 +5313,7 @@ Object.assign(NPC_TXT,{
   'twp.wc':['吳厝','扇頂 110 公尺，吳家無窗槍樓、刺竹圍仔。'],'twp.bt':['陂頭','大陂圳引水口，135 公尺。'],'twp.qlc':['芎寮','山腳的南路客聚落，鍾屋、九芎坑，山海支線的終點。'],
   'twp.dh':['斗安高中','前身是農業補習學校。'],'twp.ly':['羅灣','磺水嶺東北麓的漁港，山海支線的東端。'],'twp.qzw':['羌仔窩','芎蕉寮北側的山窩。'],'twp.zx':['中興','黃藤溪谷，布農族集團移住地。'],
   'twp.dt':['渡頭','大陂溪口西岸的渡船頭。'],'twp.kll':['卡拉洛安','阿美族部落，東岸低地。'],'twp.hsj':['磺水嶺溫泉街','西坡山腰的階梯湯街，斗灣湯、藥師堂。'],
-  'twp.sancha':['三叉嶺','全鄉最高峰，2,860 公尺，大陂溪的源頭。'],'twp.jzs':['箭竹山稜','海拔兩千公尺上下的雲霧林帶，布農舊社，1934 年移住後無人居住。'],'twp.wyk':['望洋隘口','磺水嶺主峰北邊的鞍部，海拔約 450 公尺；翻過去是海崖、海蝕平台與黑沙灘。'],'twp.hpk':['磺水嶺主峰','海拔約 700 公尺。西坡是斷層崖，崖腳湧出溫泉；東坡直落海崖，山伸進海裡成岬角。'],
+  'twp.sancha':['三叉嶺','全鄉最高峰，2,860 公尺，大陂溪的源頭。'],'twp.jzs':['箭竹山稜','海拔兩千公尺上下的雲霧林帶，布農舊社，1934 年移住後無人居住。'],'twp.wyk':['望洋隘口','磺水嶺主峰北邊的鞍部，海拔約 450 公尺；翻過去是海崖、海蝕平台與黑沙灘。'],'twp.gnd':['宮ノ台','中階台地上的小丘，1938 年斗安神社鎮座於此，今存鳥居、石燈籠與參道。'],'twp.bgg':['伯公崗','福尾九庄之一，福德祠所在的小崗，四周是客家墓地。'],'twp.s1951':['崁頂崩崖','1951 年辛卯地震，湖水淘空的崖腳崩落，老街東北段三間屋子隨土石滑下；崖面至今缺一角。'],'twp.hpk':['磺水嶺主峰','海拔約 700 公尺。西坡是斷層崖，崖腳湧出溫泉；東坡直落海崖，山伸進海裡成岬角。'],
   'twp.pool':['斗灣潭','大陂溪的方形曲流潭，約四公頃，潭面海拔 18 公尺，最深 11 公尺。'],'twp.chim':['糖廠煙囪','1914 年的糖廠，今公埔文化園區。'],
   'twp.t_dag':['斗安宮','開漳聖王，全鄉唯一做醮。'],'twp.t_yas':['湧安禪寺','和尚崙上，未年水陸大法會。'],'twp.t_fl':['鳳梨祖師堂','正月初六鳳梨山。'],'twp.t_fx':['福興宮','三山國王。'],
   'twp.t_sz':['水閘廟','水德星君、林和尚祿位。'],'twp.t_bj':['北極殿','玄天上帝。'],'twp.t_ws':['萬善爺廟','湖濱下階，夜拜。'],'twp.t_sx':['水仙宮','水仙尊王，十月初十竹筏競渡。'],
@@ -8706,6 +8706,13 @@ var TWP=(()=>{
   const RIDGE=[[278,866,30,846],[296,876,160,848],[314,884,320,847],[332,888,480,846],[352,889,450,843],[372,897,600,837],[392,903,700,832],[418,905,660,830],[440,903,610,834],
     [468,897,540,836],[492,889,500,832],[545,881,520,822],[610,873,560,812],[700,866,600,805],[780,860,600,800]]
   const fract=v=>v-Math.floor(v);
+  const DRYCH=[[[205,412],[270,398],[340,392],[410,398],[470,404]],[[215,408],[290,383],[350,372],[420,378],[470,382]],[[230,404],[300,414],[380,428],[440,440]]];
+  // ravines: 0 in a ravine's bed, 1 on the spur between (spacing sp, wandering)
+  const gul=(a,sp,ph,b)=>{ const q=a/sp+ph+1.3*fbm(a*.03+ph,b*.015,2)+.4*Math.sin(a*.021+ph*5); return 1-(1-Math.pow(Math.abs(fract(q)-.5)*2,1.6))*(.35+.9*fbm(Math.floor(q)*1.7+ph,3.1,2)); };
+  const lerpT=(T,x)=>{ if(x<=T[0][0]) return T[0][1]; for(let i=0;i<T.length-1;i++) if(x<=T[i+1][0]){ const k=(x-T[i][0])/(T[i+1][0]-T[i][0]); return T[i][1]+(T[i+1][1]-T[i][1])*k*k*(3-2*k); } return T[T.length-1][1]; };
+  // 南稜: where its foot meets the river's plain, and its crest height, west to east
+  const SFOOT=[[-40,440],[100,432],[200,445],[300,482],[400,492],[500,500],[560,508],[650,502],[750,482],[820,462],[880,452]];
+  const SCREST=[[-40,900],[100,720],[200,600],[300,520],[400,450],[500,380],[600,330],[700,350],[780,470],[860,600],[900,600]];
   const ridgeAt=my=>{ if(my<RIDGE[0][0]||my>RIDGE[RIDGE.length-1][0]) return null; let i=0; while(RIDGE[i+1][0]<my) i++; const a=RIDGE[i], b=RIDGE[i+1], t=(my-a[0])/(b[0]-a[0]), k=t*t*(3-2*t);
     const L=(p,q)=>p+(q-p)*k; return [L(a[1],b[1]), L(a[2],b[2]), L(a[3],b[3])+3*Math.sin(my*.13)+2*Math.sin(my*.047)]; };
   const SPURS=[[887,332,858,298,440,30,15],[887,332,908,300,440,25,13],[882,312,866,280,260,15,11],[886,320,895,290,330,20,10]];
@@ -8719,14 +8726,14 @@ var TWP=(()=>{
   // the west's heights (鄉志 戊): villages and summits the rise passes through, plus a few to hold the slopes' sides
   const WEST=[[476,330,100],[392,250,120],[340,320,235],[262,352,410],[186,400,570],[146,330,655],[-650,360,2030],[-1470,395,2860],
     [420,462,106],[500,465,46],[560,470,27],[300,200,190],[230,130,300],[200,50,380],[350,80,165],
-    [120,60,760],[120,650,760],[-650,0,1960],[-650,750,1960],[-1470,0,2450],[-1470,800,2450]];
+    [120,60,760],[120,650,700],[-650,0,1960],[-650,750,1960],[-1470,0,2450],[-1470,800,2450]];
   const westB=(()=>{ const n=WEST.length, P=WEST.map(([x,y])=>[x/100,y/100]), f=r2=>r2>1e-12?r2*Math.log(r2)*.5:0, N=n+3, M=[...Array(N)].map(()=>new Float64Array(N+1));
     for(let i=0;i<n;i++){ for(let j=0;j<n;j++) M[i][j]=f((P[i][0]-P[j][0])**2+(P[i][1]-P[j][1])**2); M[i][n]=1; M[i][n+1]=P[i][0]; M[i][n+2]=P[i][1]; M[n][i]=1; M[n+1][i]=P[i][0]; M[n+2][i]=P[i][1]; M[i][N]=WEST[i][2]; }
     for(let c=0;c<N;c++){ let b=c; for(let r=c+1;r<N;r++) if(Math.abs(M[r][c])>Math.abs(M[b][c])) b=r; [M[c],M[b]]=[M[b],M[c]]; for(let r=0;r<N;r++) if(r!==c){ const k=M[r][c]/M[c][c]; if(k) for(let q=c;q<=N;q++) M[r][q]-=k*M[c][q]; } }
     const w=M.map((row,i)=>row[N]/row[i]);
     return (mx,my)=>{ const x=mx/100, y=my/100; let v=w[n]+w[n+1]*x+w[n+2]*y; for(let i=0;i<n;i++) v+=w[i]*f((x-P[i][0])**2+(y-P[i][1])**2); return v; }; })();
   // the villages sit on their own gentler ground (no ridges or gullies under the houses)
-  const WFLAT=[[476,330,14],[392,250,14],[340,320,11],[262,352,12],[186,400,10],[146,330,10]];
+  const WFLAT=[[86,520,10],[476,330,14],[392,250,14],[340,320,11],[262,352,12],[186,400,10],[146,330,10]];
   const westFlat=(mx,my)=>{ let f=0; for(const [x,y,r] of WFLAT){ const d=Math.hypot(mx-x,my-y); if(d<r*2) f=Math.max(f,1-sm(d,r,r*2)); } return f; };
   // west of 吳厝 (鄉志 戊): rice terraces on the lower slopes, tea gardens higher up toward 芎寮; [paddy, tea] weights
   const agri=(mx,my)=>{ if(mx<80||mx>275||my<230||my>500) return [0,0]; const band=sm(my,235,265)*(1-sm(my,470,495)), patch=sm(fbm(mx*.045+7,my*.045,3),.3,.42);
@@ -8740,18 +8747,29 @@ var TWP=(()=>{
     if(mx>590&&mx<745&&my>335&&my<400&&sd<0&&sd>-18) e=e+(30+1.2*(fbm(mx*.2,my*.2,2)-.5)-e)*sm(sd,-13.6,-12.3);
     // the 中階 terrace (45 m) with 和尚崙 (70 m) at its north-east end: a sharp cliff on the side of the pool, gentle elsewhere
     { const sharp=my>300&&mx>560, w=sharp?sm(sd,-.3,.7):sm(sd,-10,10); if(w>0){ const eT=45+25*bump(Math.hypot(mx-700,my-238)/30)+1.5*(fbm(mx*.08,my*.08,2)-.5); e=e+(eT-e)*w; } }
+    // 公埔: the old lake bed (1912), a flat damp hollow at 19–22 m south-west of the pool
+    { const k=((mx-612)/64)**2+((my-442)/34)**2; if(k<1.2){ const w=1-sm(k,.55,1.1); e=e+(20.2+1.6*(fbm(mx*.09,my*.09,2)-.5)-e)*w; } }
+    // 宮ノ台 (the shrine's knoll on the 中階) and 伯公崗 (the 福德祠's knoll, a Hakka graveyard, in 福尾)
+    e+=13*bump(Math.hypot(mx-540,my-250)/9)+8*bump(Math.hypot(mx-462,my-350)/8);
+    // 1951: where the lake undercut the cliff's foot, the edge of the 中階 under the old street's north-east end slid away;
+    // a bitten-out scallop in the cliff and the slumped earth lying on the 下階 below it
+    { const d=Math.hypot(mx-690,my-347); if(d<9&&e>30) e=Math.min(e,30+15*sm(d,3.5,9));
+      const d2=Math.hypot((mx-690)/1.4,my-357); if(d2<6) e=Math.max(e,30+3.2*(1-(d2/6)**2)); }
+    // the fan's dry channels: old braids of the river, a couple of metres down, grass and stones
+    if(mx>190&&mx<480&&my>360&&my<450) for(const C of DRYCH) for(let i=0;i<C.length-1;i++){ const d=segD(mx,my,C[i][0],C[i][1],C[i+1][0],C[i+1][1])[0]; if(d<3.2){ e-=2.2*(1-sm(d,.6,3.2))*(1-westFlat(mx,my)); break; } }
+    // dunes behind the beach along the north coast, up to 羅灣
+    if(my<292&&my>-400){ const dc=coastX(my)-mx; if(dc>1.5&&dc<15) e=Math.max(e,2.2+5.5*bump(Math.abs(dc-7)/6.5)*(.55+.6*fbm(my*.09,mx*.2,2))); }
     // 磺水嶺 (鄉志): main peak ~700 m, 望洋隘口 ~450 m between it and a lesser knob to the north; the west face a fault
     // scarp (steep below, gullied into triangular facets, its foot wandering, little fans at the gullies' mouths where
     // the hot springs come up), the east face falling to sea cliffs; the north end tapering in spurs toward 羅灣, the
     // south end joining 南稜 and rising with it
     { const hw=ridgeAt(my); if(hw){ const [Cx,Ch,Fw]=hw, cX=coastX(my);
-      const gul=(a,sp,ph)=>{ const q=a/sp+ph+1.3*fbm(a*.03+ph,mx*.015,2)+.4*Math.sin(a*.021+ph*5); return 1-(1-Math.pow(Math.abs(fract(q)-.5)*2,1.6))*(.35+.9*fbm(Math.floor(q)*1.7+ph,3.1,2)); };   // 0 in a gully's bed, 1 on the spur between
       let h=-1e9;
       if(mx<Cx){ const u=(mx-Fw)/(Cx-Fw);
-        if(u>=0){ const base=Ch*(.3*sm(u,0,.5)+.7*Math.pow(u,1.05)), g=gul(my,11,.3), cut=Ch*.16*sm(u,.04,.45)*(1-sm(u,.8,1));
+        if(u>=0){ const base=Ch*(.3*sm(u,0,.5)+.7*Math.pow(u,1.05)), g=gul(my,11,.3,mx), cut=Ch*.16*sm(u,.04,.45)*(1-sm(u,.8,1));
           h=8+(base-8)*(.9+.2*fbm(mx*.07,my*.07,3))-cut*(1-g); }
-        else if(u>-.35){ const g=gul(my,11,.3); h=8+(10+8*g)*Math.exp(u*9)*(1-g*.5); } }   // the fans at the foot
-      else { const v=Math.min(1,(mx-Cx)/Math.max(8,cX-Cx)), g=gul(my,9,.7), cut=Ch*.1*sm(v,.1,.5)*(1-sm(v,.85,1));
+        else if(u>-.35){ const g=gul(my,11,.3,mx); h=8+(10+8*g)*Math.exp(u*9)*(1-g*.5); } }   // the fans at the foot
+      else { const v=Math.min(1,(mx-Cx)/Math.max(8,cX-Cx)), g=gul(my,9,.7,mx), cut=Ch*.1*sm(v,.1,.5)*(1-sm(v,.85,1));
         h=Ch*(1-.72*Math.pow(v,1.5))*(.9+.2*fbm(mx*.07+5,my*.07,3))-cut*(1-g); }   // still high at the shore: the sea cliff
       // the crest itself: crags
       h+=Ch*.04*(ridged(mx*.09,my*.09,2)-.5)*Math.max(0,1-Math.abs(mx-Cx)/12);
@@ -8772,7 +8790,18 @@ var TWP=(()=>{
       let eW=B+A*(1-flat)*(vf*(.62+.7*(r-.5))-.5)+3*(fbm(mx*.05,my*.05,2)-.5);
       eW=Math.min(eW,2860-1.1*Math.max(0,ds-12));   // nothing higher than 三叉嶺
       e=e+(eW-e)*wB; } }
-    { const s=my-470+12*Math.sin(mx*.02); if(s>0) e+=600*(1-Math.exp(-s/260))*(.55+.8*r)*(1-sm(mx,880,960))*(1-sm(165-mx,0,200)); }
+    // 三叉嶺: three ridges meet at the summit, the 中央山脈's main ridge running north and south and the spur east toward 箭竹山稜
+    if(mx<-850) for(const [bx,by,hb] of [[-1505,-320,2380],[-1450,1080,2420],[-980,372,2120]]){ const [d,t]=segD(mx,my,SANCHA.mx,SANCHA.my,bx,by), w=70+40*t;
+      if(d<w){ const hh=(2840+(hb-2840)*t)*(1-.42*Math.pow(d/w,1.25))*(.96+.08*fbm(mx*.03,my*.03,2)); if(hh>e) e=e+(Math.min(hh,2860)-e)*(1-sm(d,w*.6,w)); } }
+    // 南稜 (鄉志): the hills south of the river, 300–600 m, their crest the township's southern line; low by 公埔 and
+    // higher both ways, joining 磺水嶺 in the east and the 中央山脈 in the west; ravines run down north to the river
+    { const fy=lerpT(SFOOT,mx), cy=700+14*Math.sin(mx*.021)+8*Math.sin(mx*.057), t=(my-fy)/(cy-fy);
+      if(t>0&&mx>-40){ const Hs=lerpT(SCREST,mx), base=e, q=Math.min(t,1);
+        let h=t<=1?base+(Hs-base)*Math.pow(sm(q,0,1),.85):Hs-(Hs-160)*sm((my-cy)/130,0,1);
+        const g=gul(mx,52,.4,my), cut=h*.22*sm(t,.12,.6)*(1-sm(t,.88,1));
+        h=h*(.93+.14*r)-cut*(1-g);
+        const w=sm(t,0,.12)*sm(mx,-40,160);
+        e=mx<165?Math.max(e,h*w+e*(1-w)):e+(h-e)*w; } }
     { const s=-40-my; if(s>0) e+=240*(1-Math.exp(-s/380))*(.5+.8*r)*(1-sm(mx,820,900))*(1-sm(165-mx,0,200)); }
     // the sea
     { const dc=coastX(my)-mx; if(dc<5) e=Math.min(e,dc>0?(dc<2.6?1.4+dc*.2:1.4+.52+(dc-2.6)*60):1.4+dc*.5); }   // a narrow shore (beach, or rock platform under the cliffs), then the sea
@@ -8847,7 +8876,7 @@ var TWP=(()=>{
     PL('house','house',0,0,{l:[0,0]}), PL('dou','town',640,300,{n:70,r:9}), PL('hsl','vil',700,238,{n:6,r:4}), PL('gp','vil',630,430,{n:22,r:6}), PL('zhl','vil',548,478,{n:16,r:4}),
     PL('fw','vil',476,330,{n:38,r:7}), PL('ry','vil',418,370,{n:12,r:4,jp:1}), PL('sfs','vil',340,320,{n:14,r:4}), PL('xfw','vil',392,250,{n:30,r:7}), PL('wc','vil',262,352,{n:24,r:5}),
     PL('bt','sight',186,400), PL('qlc','vil',146,330,{n:20,r:4}), PL('dh','school',505,310), PL('ly','vil',922,312,{n:30,r:3.5}), PL('qzw','sight',100,250), PL('zx','vil',86,520,{n:16,r:5}),
-    PL('dt','vil',752,338), PL('kll','vil',812,420,{n:26,r:6}), PL('hsj','vil',838,333,{n:16,r:3}), PL('pool','sight',647,385), PL('sancha','sight',-1470,395), PL('jzs','sight',-650,360), PL('wyk','sight',889,352), PL('hpk','sight',903,392), PL('chim','sight',575,402),
+    PL('dt','vil',752,338), PL('kll','vil',812,420,{n:26,r:6}), PL('hsj','vil',838,333,{n:16,r:3}), PL('pool','sight',647,385), PL('sancha','sight',-1470,395), PL('jzs','sight',-650,360), PL('wyk','sight',889,352), PL('gnd','sight',540,250), PL('bgg','sight',462,350), PL('s1951','sight',690,350), PL('hpk','sight',903,392), PL('chim','sight',575,402),
     PL('t_dag','temple',612,334), PL('t_yas','temple',707,228), PL('t_fl','temple',722,250), PL('t_fx','temple',488,318), PL('t_sz','temple',362,340), PL('t_bj','temple',562,458),
     PL('t_ws','temple',652,367), PL('t_sx','temple',800,384), PL('t_ys','temple',845,342), PL('t_ym','temple',400,236), PL('t_wu','temple',270,342), PL('t_bg','temple',146,334),
     PL('c_kl','church',826,426), PL('c_zx','church',128,552), PL('c_dou','church',600,286),
@@ -8866,7 +8895,12 @@ var TWP=(()=>{
     {id:'old',w:6,street:1,P:[['m',698,248],['m',668,272],['m',642,296],['m',616,326]].map(L)},
     {id:'new',w:8,street:1,P:[['m',616,326],['m',592,314],['m',562,303]].map(L)},
     {id:'stn',w:4,P:[['l',-133,-8],['l',-225,-8]].map(L)}];
-  return {agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
+  // 鄉界 (鄉志): north along a creek to 金港, west on the 中央山脈's main ridge through 三叉嶺, south on 南稜's crest
+  const BOUND=(()=>{ const P=[]; for(let my=-330;my<=752;my+=12) P.push([coastX(my),my]);
+    for(const q of [[880,745],[860,738]]) P.push(q); for(let mx=840;mx>=-40;mx-=20) P.push([mx,700+14*Math.sin(mx*.021)+8*Math.sin(mx*.057)]);
+    for(const q of [[-300,742],[-700,770],[-1100,790],[-1460,800],[-1480,700],[-1470,395],[-1490,100],[-1505,-260],[-1200,-285],[-800,-300],[-300,-330],[100,-358],[400,-322],[700,-340]]) P.push(q);
+    return P; })();
+  return {DRYCH,BOUND,agri,S,HX,HY,E0,NORTH,EAST,toL,toG,m2l,l2m,m2g,g2m,elevM,elevL,heightAt,water,gridH,G,G2,SPIT,RIDGE,SANCHA,RIVERS,POOL,POOL_L,POOL_Y,TERR,coastX,FIELD,fieldOut,
     PLACES,place,RAIL,RAIL_TUNNEL,RAIL_OWN,TRUNK,ROADS,sm,fbm,vn,h2,segD,inPoly,polyD};
 })();
 // 
@@ -9326,12 +9360,16 @@ const PEAKS=[];
   const upward=g=>{ const N=g.attributes.normal; let s=0; for(let i=0;i<N.count;i+=7) s+=N.getY(i); if(s>=0) return; const I=g.index.array; for(let i=0;i<I.length;i+=3){ const t=I[i+1]; I[i+1]=I[i+2]; I[i+2]=t; } g.index.needsUpdate=true; g.computeVertexNormals(); };
   const hm=new THREE.MeshLambertMaterial({vertexColors:true});
   hm.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,landLight,{uSkyH:WATER_U.uSkyH});
-    sh.vertexShader='varying vec3 vHW;\nattribute vec2 agri;\nvarying vec2 vAg;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHW=(modelMatrix*vec4(transformed,1.)).xyz; vAg=agri;');
-    sh.fragmentShader='varying vec3 vHW;\nvarying vec2 vAg;\nuniform vec3 uSkyH;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    sh.vertexShader='varying vec3 vHW;\nattribute vec3 agri;\nvarying vec3 vAg;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHW=(modelMatrix*vec4(transformed,1.)).xyz; vAg=agri;');
+    sh.fragmentShader='varying vec3 vHW;\nvarying vec3 vAg;\nuniform vec3 uSkyH;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
       float grain=vnoiseH(vHW.xz*.9)*.5+vnoiseH(vHW.xz*3.1)*.3+vnoiseH(vHW.xz*.07)*.4;
       diffuseColor.rgb*=.88+.2*grain;
       // terraces and tea (west of 吳厝): lines along the contours, the paddies' banks every 2.4 m of height, the tea's rows
       // every third of a metre; they fade out where they would be finer than a pixel
+      // the terrace cliffs: beds of gravel, sand and red earth, a metre or two each
+      if(vAg.z>.01){ float bz=vHW.y/1.6+.4*vnoiseH(vHW.xz*.05), lay=hashH(vec2(floor(bz),3.7));
+        vec3 bed=lay<.4?vec3(.56,.46,.33):lay<.7?vec3(.66,.58,.44):vec3(.58,.36,.24);
+        diffuseColor.rgb=mix(diffuseColor.rgb,bed*(.85+.2*grain),vAg.z*(1.-smoothstep(.3,.8,fwidth(bz)))*.9); }
       if(vAg.x+vAg.y>.01){
         float hy=vHW.y/2.4, fw=fwidth(hy), t=fract(hy), crisp=1.-smoothstep(.12,.35,fw);
         float lot=hashH(vec2(floor(hy),floor((vHW.x+vHW.z)/38.)));
@@ -9352,7 +9390,9 @@ const PEAKS=[];
   const VILL=TWP.PLACES.filter(p=>p.n).map(p=>({x:p.x,z:p.z,r:(p.r||5)*TWP.S}));
   const C={paddy:new THREE.Color(.30,.43,.16),ripe:new THREE.Color(.55,.50,.22),fallow:new THREE.Color(.44,.38,.24),cane:new THREE.Color(.36,.47,.20),
     wood:new THREE.Color(.15,.27,.12),wood2:new THREE.Color(.21,.33,.15),high:new THREE.Color(.40,.43,.27),rock:new THREE.Color(.45,.42,.36),sand:new THREE.Color(.74,.68,.52),black:new THREE.Color(.27,.26,.25),
-    vill:new THREE.Color(.47,.45,.40),bank:new THREE.Color(.40,.45,.24),wet:new THREE.Color(.25,.23,.18)};
+    vill:new THREE.Color(.47,.45,.40),bank:new THREE.Color(.40,.45,.24),wet:new THREE.Color(.25,.23,.18),
+    conif:new THREE.Color(.11,.21,.13),grass:new THREE.Color(.50,.51,.27),slate:new THREE.Color(.31,.33,.35),andes:new THREE.Color(.40,.36,.32),
+    lime:new THREE.Color(.70,.68,.61),gravel:new THREE.Color(.55,.44,.31),slide:new THREE.Color(.52,.47,.38),stones:new THREE.Color(.50,.50,.38)};
   const c=new THREE.Color();
   const colour=(x,e,z,ny)=>{ const f=TWP.fbm(x*.0035+3.3,z*.0035-1.1,3), plot=TWP.h2(Math.floor((x+z)/80),Math.floor((x-z)/60)), slopeK=1-ss(ny,.8,.95);
     const w=TWP.water(x,z);
@@ -9360,16 +9400,27 @@ const PEAKS=[];
     if(e<2.6&&(w&&w.sea||e<2)){ const [mx,my]=TWP.l2m(x,z); return c.copy(mx>845&&my>300&&my<560?C.black:C.sand).lerp(C.wet,ss(-e,0,3)); }   // 磺水嶺's foot: black sand and rock platform
     // farmland where it is flat enough and not too high
     const farm=(1-ss(e,220,420))*(1-slopeK)*(1-ss(f,.6,.72));
-    c.copy(C.wood).lerp(C.wood2,ss(f,.35,.65)); c.lerp(C.high,ss(e,1200,2200)*.7); c.lerp(C.rock,ss(e,2300,2800)*.6);
+    // the mountains' belts: broadleaf low down, mixed higher, then conifers, and 箭竹 grass on the tops
+    c.copy(C.wood).lerp(C.wood2,ss(f,.35,.65)); c.lerp(C.high,ss(e,1100,1800)*.5); c.lerp(C.conif,ss(e,1700,2300)*.8); c.lerp(C.grass,ss(e,2450,2700)*.85);
     if(farm>0){ const k=plot<.55?C.paddy:plot<.75?C.ripe:plot<.9?C.cane:C.fallow; c.lerp(k,farm); }
-    c.lerp(C.rock,(1-ss(ny,.42,.62))*.7);   // bare rock only on the steepest faces; the rest stays wooded
+    // bare rock only on the steepest faces, its kind by where it is: slate in the 中央山脈, andesite on 磺水嶺 with pale
+    // coral limestone in patches (and the pool's east wall), gravel and red earth in the terrace cliffs
+    { const [mx,my]=TWP.l2m(x,z); let rk=C.rock; if(mx<170) rk=C.slate; else if(mx>820&&my>280&&my<800) rk=TWP.fbm(x*.02,z*.02,2)>.62?C.lime:C.andes;
+      else if(mx>500&&mx<750&&my>180&&my<410&&e<80) rk=C.gravel;
+      if(mx>655&&mx<700&&my>362&&my<412&&e<45) rk=C.lime;
+      c.lerp(rk,(1-ss(ny,.42,.62))*.7);
+      // landslides: raw scars here and there on the steep mountainsides
+      if(mx<175&&e>300&&ny<.85){ const sl=TWP.fbm(x*.006+11,z*.006-4,3); if(sl>.7) c.lerp(C.slide,ss(sl,.7,.76)*(1-ss(ny,.85,.95))*.85); }
+      // the fan's dry channels: grass and stones
+      if(mx>190&&mx<480&&my>360&&my<450) for(const D of TWP.DRYCH) for(let i=0;i<D.length-1;i++){ const d=TWP.segD(mx,my,D[i][0],D[i][1],D[i+1][0],D[i+1][1])[0]; if(d<3){ c.lerp(C.stones,(1-ss(d,.5,3))*.6); break; } } }
     for(const v of VILL){ const d=Math.hypot(x-v.x,z-v.z); if(d<v.r*1.2) c.lerp(C.vill,(1-ss(d,v.r*.5,v.r*1.2))*.55); }
     if(w&&!w.sea) c.lerp(C.bank,.4);
     return c; };
-  const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), ag=new Float32Array(P.count*2);
+  const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), ag=new Float32Array(P.count*3);
     for(let i=0;i<P.count;i++){ const x=P.getX(i), z=P.getZ(i), e=P.getY(i)+E0, cc=colour(x,e,z,N.getY(i)); col[i*3]=cc.r; col[i*3+1]=cc.g; col[i*3+2]=cc.b;
-      const [mx,my]=TWP.l2m(x,z), w=TWP.agri(mx,my); if(TWP.water(x,z)){ w[0]=w[1]=0; } ag[i*2]=w[0]; ag[i*2+1]=w[1]; }
-    g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setAttribute('agri',new THREE.BufferAttribute(ag,2)); };
+      const [mx,my]=TWP.l2m(x,z), w=TWP.agri(mx,my); if(TWP.water(x,z)){ w[0]=w[1]=0; } ag[i*3]=w[0]; ag[i*3+1]=w[1];
+      ag[i*3+2]=(mx>500&&mx<750&&my>180&&my<410&&e>14&&e<80)?1-ss(N.getY(i),.6,.85):0; }   // the terrace cliffs show their layers
+    g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setAttribute('agri',new THREE.BufferAttribute(ag,3)); };
   // the township, tile by tile (and west of it the 中央山脈 to 三叉嶺 on TWP.G2's 50 m grid); the house's fields are left out
   const tiles=(GG,T)=>{ const W=GG.nE+1; for(let tj=0;tj<GG.nN;tj+=T) for(let ti=0;ti<GG.nE;ti+=T){ const ni=Math.min(T,GG.nE-ti), nj=Math.min(T,GG.nN-tj), pos=new Float32Array((ni+1)*(nj+1)*3), idx=[], inF=new Uint8Array((ni+1)*(nj+1));
     for(let j=0;j<=nj;j++) for(let i=0;i<=ni;i++){ const E=GG.E0+(ti+i)*GG.st, N=GG.N0+(tj+j)*GG.st, [x,z]=TWP.toL(E,N), k=j*(ni+1)+i; pos[k*3]=x; pos[k*3+1]=GG.h[(tj+j)*W+ti+i]-E0; pos[k*3+2]=z; inF[k]=TWP.fieldOut(x,z)<.01?1:0; }
@@ -9387,6 +9438,7 @@ const PEAKS=[];
     const m=new THREE.Mesh(g,hm); scene.add(m); reflect(m); }
   cliffShadows.value.forEach(s=>s.set(1e5,1e5,1,1));
   // woods: up the slopes, over 磺水嶺 and 和尚崙, on the range's foot; a few trees round the villages
+  const LEAN=new THREE.Quaternion(), ZAX=new THREE.Vector3(0,0,1);
   const crown=new THREE.IcosahedronGeometry(1,0), cone=new THREE.ConeGeometry(.75,2.8,6); cone.translate(0,.4,0);
   const broad=[], fir=[], R0={E0:TWP.G2.E0,E1:G.E0+G.nE*G.st,N0:G.N0,N1:G.N0+G.nN*G.st};
   for(let k=0;k<400000&&broad.length+fir.length<16000;k++){ const E=R0.E0+RAND()*(R0.E1-R0.E0), N=R0.N0+RAND()*(R0.N1-R0.N0), [x,z]=TWP.toL(E,N);
@@ -9396,10 +9448,14 @@ const PEAKS=[];
     if(farm&&RAND()>.03) continue; if(!farm&&RAND()>.6) continue;
     (e>600&&RAND()<.5?fir:broad).push([x,e-E0,z]); }
   const place=(geo,list,scale,base,var2)=>{ const im=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial({color:0xffffff}),Math.max(1,list.length)), m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), v=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0);
-    list.forEach(([x,y,z],i)=>{ const sz=scale[0]+hash2(x,z)*scale[1]; q.setFromAxisAngle(up,hash2(z,x)*6.28); s.set(sz,sz*(.8+hash2(x*2,z)*.5),sz); v.set(x,y+sz*base,z); m.compose(v,q,s); im.setMatrixAt(i,m);
+    list.forEach(([x,y,z],i)=>{ const sz=scale[0]+hash2(x,z)*scale[1]; q.setFromAxisAngle(up,hash2(z,x)*6.28);
+      { const [mx,my]=TWP.l2m(x,z), dc=TWP.coastX(my)-mx, lean=.3*(1-ss(dc,14,110)); if(lean>.01) q.premultiply(LEAN.setFromAxisAngle(ZAX,lean*(.7+.5*hash2(x*3,z)))); }   /* the sea wind bends them south-west */ s.set(sz,sz*(.8+hash2(x*2,z)*.5),sz); v.set(x,y+sz*base,z); m.compose(v,q,s); im.setMatrixAt(i,m);
       im.setColorAt(i,cc.setHex(var2[0]).lerp(new THREE.Color(var2[1]),hash2(x*.7,z*1.3)).multiplyScalar(.82+.3*hash2(y,x))); });
-    im.castShadow=false; scene.add(im); reflect(im); return im; };
+    im.castShadow=false; im.frustumCulled=false; scene.add(im); reflect(im); return im; };   // spread over the whole township: never cull the lot by one sphere
   place(crown,broad,[3.2,3.4],.6,[0x2f4d22,0x4a6a2c]); place(cone,fir,[3.5,2.5],.6,[0x24391c,0x33502a]);
+  // the windbreak: two rows of 木麻黃 behind the dunes along the north coast
+  { const belt=[]; for(let my=-330;my<290;my+=1.15) for(const off of [17.5,20.5]){ const mx=TWP.coastX(my)-off+1.2*(hash2(my,off)-.5), [x,z]=TWP.m2l(mx,my), e=TWP.heightAt(x,z); if(e<1.5||TWP.water(x,z)) continue; belt.push([x,e-E0,z]); }
+    place(cone,belt,[3.2,1.6],.6,[0x34503a,0x4a6648]); }
   const cloudGroups=[];
   const cloudMaterial=new THREE.MeshBasicMaterial({color:0xd7e7ec,transparent:true,opacity:.20,depthWrite:false,side:THREE.DoubleSide});
   for(let i=0;i<14;i++){
@@ -9414,6 +9470,16 @@ const PEAKS=[];
     }
     scene.add(cloud); reflect(cloud); cloudGroups.push({cloud,baseX:x,baseZ:z,phase:i*.77});
   }
+  // 山嵐 (鄉志: the foothills' cloud belt): soft sheets of mist lying along the mountainside in the afternoons,
+  // thicker when it is cloudy; thin in the morning, gone at night
+  { const cv=document.createElement('canvas'); cv.width=cv.height=128; const cx=cv.getContext('2d'), gr=cx.createRadialGradient(64,64,6,64,64,62);
+    gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.55,'rgba(255,255,255,.55)'); gr.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=gr; cx.fillRect(0,0,128,128);
+    const mistMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),color:0xeef2f2,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}), sheet=new THREE.PlaneGeometry(1,1); sheet.rotateX(-Math.PI/2);
+    const mist=new THREE.Group(); scene.add(mist);
+    for(let i=0;i<30;i++){ const mx=-80-RAND()*1250, my=150+RAND()*520, [x,z]=TWP.m2l(mx,my), e=TWP.elevM(mx,my), y=Math.max(e+60,900+RAND()*700)-E0;
+      const m=new THREE.Mesh(sheet,mistMat); m.position.set(x,y,z); m.scale.set(1800+RAND()*2200,1,900+RAND()*1200); m.rotation.y=RAND()*3.14; m.renderOrder=2; mist.add(m); }
+    let mt=0; ZL_ANIM.push(dt=>{ mt-=dt; if(mt>0) return; mt=4; const [hh,mm]=taipeiClock.format(new Date()).split(':').map(Number), h=hh+mm/60;
+      const day=ss(h,11,14)*(1-ss(h,18,20))+.25*ss(h,5,7)*(1-ss(h,9,11)); mistMat.opacity=day*(.22+.3*WX.cloud); mist.visible=mistMat.opacity>.01; }); }
   ZL_ANIM.push(dt=>{
     const t=performance.now()/1000, cover=.35+WX.cloud*.65;
     for(const item of cloudGroups){
@@ -10351,6 +10417,9 @@ ZL_ANIM.push(()=>{ const T=taipeiNow(); if(STNB.hands){ STNB.hands.h.rotation.z=
       if(best&&bd<60){ const s=best, yaw=Math.atan2(-s.tz,s.tx), nx=-s.tz, nz=s.tx, px=s.x+nx*4.2, pz=s.z+nz*4.2, hx=s.x+nx*10.5, hz=s.z+nz*10.5;
         put(new THREE.BoxGeometry(60,.9,4),0xa59a84,px,s.y+.45,pz,yaw); put(new THREE.BoxGeometry(12,3.6,7),0xd9a766,hx,s.y+1.8+.4,hz,yaw); put(gable(12.8,8.4,2.2),0x3f6a5c,hx,s.y+4.2,hz,yaw);
         foot(hx,hz,6,3.5,yaw); lamps.push([hx,s.y+2,hz]); p.x=hx+nx*7; p.z=hz+nz*7; } } }
+  // 箭竹山稜: the Bunun's old houses, left in 1934 — low walls of stacked slate, no roofs, the bamboo grown round them
+  { const J=TWP.PLACES.find(p=>p.id==='jzs'); if(J) for(let i=0;i<9;i++){ const a=i*2.4+TWP.h2(i,7)*1.2, rr=18+i*9, x=J.x+Math.cos(a)*rr, z=J.z+Math.sin(a)*rr, y=yAt(x,z), yaw=TWP.h2(i,3)*3.1, w=6+TWP.h2(i,1)*3, d=5+TWP.h2(i,2)*2, h=.7+TWP.h2(i,4)*.9;
+      for(const [ox,oz,ww,dd] of [[0,-d/2,w,.6],[0,d/2,w,.6],[-w/2,0,.6,d],[w/2,0,.6,d*.55]]){ const [dx,dz]=rot(ox,oz,yaw); put(new THREE.BoxGeometry(ww,h*(.6+.5*TWP.h2(ox+i,oz)),dd),0x5b5d5c,x+dx,y+h/2-.2,z+dz,yaw); } } }
   const town=new THREE.Mesh(mergeGeo(parts),new THREE.MeshLambertMaterial({vertexColors:true})); town.receiveShadow=true; scene.add(town); reflect(town);
   const lm=new THREE.MeshLambertMaterial({vertexColors:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
   for(const g of lineMeshes){ const m=new THREE.Mesh(g,lm); m.receiveShadow=true; scene.add(m); reflect(m); }
@@ -10611,6 +10680,8 @@ const TMAP=(()=>{ const MX0=-1600, MY0=-60, MX1=1080, MY1=720, K=1.1;   /* west 
     const tmp=document.createElement('canvas'); tmp.width=w; tmp.height=h; tmp.getContext('2d').putImageData(img,0,0); b.imageSmoothingEnabled=true; b.drawImage(tmp,0,0,BW,BH);
     const path=P=>{ b.beginPath(); P.forEach(([x,z],i)=>{ const [mx,my]=TWP.l2m(x,z), [X,Y]=toB(mx,my); i?b.lineTo(X,Y):b.moveTo(X,Y); }); };
     b.lineJoin=b.lineCap='round';
+    // 鄉界
+    b.beginPath(); TWP.BOUND.forEach(([mx,my],i)=>{ const [X,Y]=toB(mx,my); i?b.lineTo(X,Y):b.moveTo(X,Y); }); b.closePath(); b.strokeStyle='rgba(120,60,110,.75)'; b.lineWidth=2; b.setLineDash([10,4,2,4]); b.stroke(); b.setLineDash([]);
     // water
     b.fillStyle='rgb(150,195,220)'; path(TWP.POOL_L); b.closePath(); b.fill();
     for(const R of TWP.RIVERS){ b.strokeStyle='rgb(120,175,210)'; b.lineWidth=Math.max(1.2,R.hw*2/TWP.S*K); path(R.P); b.stroke(); }

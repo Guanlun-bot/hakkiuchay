@@ -86,6 +86,8 @@ const TMAP=(()=>{ const MX0=-1600, MY0=-60, MX1=1080, MY1=720, K=1.1;   /* west 
     const tmp=document.createElement('canvas'); tmp.width=w; tmp.height=h; tmp.getContext('2d').putImageData(img,0,0); b.imageSmoothingEnabled=true; b.drawImage(tmp,0,0,BW,BH);
     const path=P=>{ b.beginPath(); P.forEach(([x,z],i)=>{ const [mx,my]=TWP.l2m(x,z), [X,Y]=toB(mx,my); i?b.lineTo(X,Y):b.moveTo(X,Y); }); };
     b.lineJoin=b.lineCap='round';
+    // 鄉界
+    b.beginPath(); TWP.BOUND.forEach(([mx,my],i)=>{ const [X,Y]=toB(mx,my); i?b.lineTo(X,Y):b.moveTo(X,Y); }); b.closePath(); b.strokeStyle='rgba(120,60,110,.75)'; b.lineWidth=2; b.setLineDash([10,4,2,4]); b.stroke(); b.setLineDash([]);
     // water
     b.fillStyle='rgb(150,195,220)'; path(TWP.POOL_L); b.closePath(); b.fill();
     for(const R of TWP.RIVERS){ b.strokeStyle='rgb(120,175,210)'; b.lineWidth=Math.max(1.2,R.hw*2/TWP.S*K); path(R.P); b.stroke(); }

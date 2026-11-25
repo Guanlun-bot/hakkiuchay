@@ -454,12 +454,16 @@ const PEAKS=[];
   const upward=g=>{ const N=g.attributes.normal; let s=0; for(let i=0;i<N.count;i+=7) s+=N.getY(i); if(s>=0) return; const I=g.index.array; for(let i=0;i<I.length;i+=3){ const t=I[i+1]; I[i+1]=I[i+2]; I[i+2]=t; } g.index.needsUpdate=true; g.computeVertexNormals(); };
   const hm=new THREE.MeshLambertMaterial({vertexColors:true});
   hm.onBeforeCompile=sh=>{ Object.assign(sh.uniforms,landLight,{uSkyH:WATER_U.uSkyH});
-    sh.vertexShader='varying vec3 vHW;\nattribute vec2 agri;\nvarying vec2 vAg;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHW=(modelMatrix*vec4(transformed,1.)).xyz; vAg=agri;');
-    sh.fragmentShader='varying vec3 vHW;\nvarying vec2 vAg;\nuniform vec3 uSkyH;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    sh.vertexShader='varying vec3 vHW;\nattribute vec3 agri;\nvarying vec3 vAg;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHW=(modelMatrix*vec4(transformed,1.)).xyz; vAg=agri;');
+    sh.fragmentShader='varying vec3 vHW;\nvarying vec3 vAg;\nuniform vec3 uSkyH;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
       float grain=vnoiseH(vHW.xz*.9)*.5+vnoiseH(vHW.xz*3.1)*.3+vnoiseH(vHW.xz*.07)*.4;
       diffuseColor.rgb*=.88+.2*grain;
       // terraces and tea (west of 吳厝): lines along the contours, the paddies' banks every 2.4 m of height, the tea's rows
       // every third of a metre; they fade out where they would be finer than a pixel
+      // the terrace cliffs: beds of gravel, sand and red earth, a metre or two each
+      if(vAg.z>.01){ float bz=vHW.y/1.6+.4*vnoiseH(vHW.xz*.05), lay=hashH(vec2(floor(bz),3.7));
+        vec3 bed=lay<.4?vec3(.56,.46,.33):lay<.7?vec3(.66,.58,.44):vec3(.58,.36,.24);
+        diffuseColor.rgb=mix(diffuseColor.rgb,bed*(.85+.2*grain),vAg.z*(1.-smoothstep(.3,.8,fwidth(bz)))*.9); }
       if(vAg.x+vAg.y>.01){
         float hy=vHW.y/2.4, fw=fwidth(hy), t=fract(hy), crisp=1.-smoothstep(.12,.35,fw);
         float lot=hashH(vec2(floor(hy),floor((vHW.x+vHW.z)/38.)));
@@ -480,7 +484,9 @@ const PEAKS=[];
   const VILL=TWP.PLACES.filter(p=>p.n).map(p=>({x:p.x,z:p.z,r:(p.r||5)*TWP.S}));
   const C={paddy:new THREE.Color(.30,.43,.16),ripe:new THREE.Color(.55,.50,.22),fallow:new THREE.Color(.44,.38,.24),cane:new THREE.Color(.36,.47,.20),
     wood:new THREE.Color(.15,.27,.12),wood2:new THREE.Color(.21,.33,.15),high:new THREE.Color(.40,.43,.27),rock:new THREE.Color(.45,.42,.36),sand:new THREE.Color(.74,.68,.52),black:new THREE.Color(.27,.26,.25),
-    vill:new THREE.Color(.47,.45,.40),bank:new THREE.Color(.40,.45,.24),wet:new THREE.Color(.25,.23,.18)};
+    vill:new THREE.Color(.47,.45,.40),bank:new THREE.Color(.40,.45,.24),wet:new THREE.Color(.25,.23,.18),
+    conif:new THREE.Color(.11,.21,.13),grass:new THREE.Color(.50,.51,.27),slate:new THREE.Color(.31,.33,.35),andes:new THREE.Color(.40,.36,.32),
+    lime:new THREE.Color(.70,.68,.61),gravel:new THREE.Color(.55,.44,.31),slide:new THREE.Color(.52,.47,.38),stones:new THREE.Color(.50,.50,.38)};
   const c=new THREE.Color();
   const colour=(x,e,z,ny)=>{ const f=TWP.fbm(x*.0035+3.3,z*.0035-1.1,3), plot=TWP.h2(Math.floor((x+z)/80),Math.floor((x-z)/60)), slopeK=1-ss(ny,.8,.95);
     const w=TWP.water(x,z);
@@ -488,16 +494,27 @@ const PEAKS=[];
     if(e<2.6&&(w&&w.sea||e<2)){ const [mx,my]=TWP.l2m(x,z); return c.copy(mx>845&&my>300&&my<560?C.black:C.sand).lerp(C.wet,ss(-e,0,3)); }   // 磺水嶺's foot: black sand and rock platform
     // farmland where it is flat enough and not too high
     const farm=(1-ss(e,220,420))*(1-slopeK)*(1-ss(f,.6,.72));
-    c.copy(C.wood).lerp(C.wood2,ss(f,.35,.65)); c.lerp(C.high,ss(e,1200,2200)*.7); c.lerp(C.rock,ss(e,2300,2800)*.6);
+    // the mountains' belts: broadleaf low down, mixed higher, then conifers, and 箭竹 grass on the tops
+    c.copy(C.wood).lerp(C.wood2,ss(f,.35,.65)); c.lerp(C.high,ss(e,1100,1800)*.5); c.lerp(C.conif,ss(e,1700,2300)*.8); c.lerp(C.grass,ss(e,2450,2700)*.85);
     if(farm>0){ const k=plot<.55?C.paddy:plot<.75?C.ripe:plot<.9?C.cane:C.fallow; c.lerp(k,farm); }
-    c.lerp(C.rock,(1-ss(ny,.42,.62))*.7);   // bare rock only on the steepest faces; the rest stays wooded
+    // bare rock only on the steepest faces, its kind by where it is: slate in the 中央山脈, andesite on 磺水嶺 with pale
+    // coral limestone in patches (and the pool's east wall), gravel and red earth in the terrace cliffs
+    { const [mx,my]=TWP.l2m(x,z); let rk=C.rock; if(mx<170) rk=C.slate; else if(mx>820&&my>280&&my<800) rk=TWP.fbm(x*.02,z*.02,2)>.62?C.lime:C.andes;
+      else if(mx>500&&mx<750&&my>180&&my<410&&e<80) rk=C.gravel;
+      if(mx>655&&mx<700&&my>362&&my<412&&e<45) rk=C.lime;
+      c.lerp(rk,(1-ss(ny,.42,.62))*.7);
+      // landslides: raw scars here and there on the steep mountainsides
+      if(mx<175&&e>300&&ny<.85){ const sl=TWP.fbm(x*.006+11,z*.006-4,3); if(sl>.7) c.lerp(C.slide,ss(sl,.7,.76)*(1-ss(ny,.85,.95))*.85); }
+      // the fan's dry channels: grass and stones
+      if(mx>190&&mx<480&&my>360&&my<450) for(const D of TWP.DRYCH) for(let i=0;i<D.length-1;i++){ const d=TWP.segD(mx,my,D[i][0],D[i][1],D[i+1][0],D[i+1][1])[0]; if(d<3){ c.lerp(C.stones,(1-ss(d,.5,3))*.6); break; } } }
     for(const v of VILL){ const d=Math.hypot(x-v.x,z-v.z); if(d<v.r*1.2) c.lerp(C.vill,(1-ss(d,v.r*.5,v.r*1.2))*.55); }
     if(w&&!w.sea) c.lerp(C.bank,.4);
     return c; };
-  const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), ag=new Float32Array(P.count*2);
+  const paint=g=>{ const P=g.attributes.position, N=g.attributes.normal, col=new Float32Array(P.count*3), ag=new Float32Array(P.count*3);
     for(let i=0;i<P.count;i++){ const x=P.getX(i), z=P.getZ(i), e=P.getY(i)+E0, cc=colour(x,e,z,N.getY(i)); col[i*3]=cc.r; col[i*3+1]=cc.g; col[i*3+2]=cc.b;
-      const [mx,my]=TWP.l2m(x,z), w=TWP.agri(mx,my); if(TWP.water(x,z)){ w[0]=w[1]=0; } ag[i*2]=w[0]; ag[i*2+1]=w[1]; }
-    g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setAttribute('agri',new THREE.BufferAttribute(ag,2)); };
+      const [mx,my]=TWP.l2m(x,z), w=TWP.agri(mx,my); if(TWP.water(x,z)){ w[0]=w[1]=0; } ag[i*3]=w[0]; ag[i*3+1]=w[1];
+      ag[i*3+2]=(mx>500&&mx<750&&my>180&&my<410&&e>14&&e<80)?1-ss(N.getY(i),.6,.85):0; }   // the terrace cliffs show their layers
+    g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setAttribute('agri',new THREE.BufferAttribute(ag,3)); };
   // the township, tile by tile (and west of it the 中央山脈 to 三叉嶺 on TWP.G2's 50 m grid); the house's fields are left out
   const tiles=(GG,T)=>{ const W=GG.nE+1; for(let tj=0;tj<GG.nN;tj+=T) for(let ti=0;ti<GG.nE;ti+=T){ const ni=Math.min(T,GG.nE-ti), nj=Math.min(T,GG.nN-tj), pos=new Float32Array((ni+1)*(nj+1)*3), idx=[], inF=new Uint8Array((ni+1)*(nj+1));
     for(let j=0;j<=nj;j++) for(let i=0;i<=ni;i++){ const E=GG.E0+(ti+i)*GG.st, N=GG.N0+(tj+j)*GG.st, [x,z]=TWP.toL(E,N), k=j*(ni+1)+i; pos[k*3]=x; pos[k*3+1]=GG.h[(tj+j)*W+ti+i]-E0; pos[k*3+2]=z; inF[k]=TWP.fieldOut(x,z)<.01?1:0; }
@@ -515,6 +532,7 @@ const PEAKS=[];
     const m=new THREE.Mesh(g,hm); scene.add(m); reflect(m); }
   cliffShadows.value.forEach(s=>s.set(1e5,1e5,1,1));
   // woods: up the slopes, over 磺水嶺 and 和尚崙, on the range's foot; a few trees round the villages
+  const LEAN=new THREE.Quaternion(), ZAX=new THREE.Vector3(0,0,1);
   const crown=new THREE.IcosahedronGeometry(1,0), cone=new THREE.ConeGeometry(.75,2.8,6); cone.translate(0,.4,0);
   const broad=[], fir=[], R0={E0:TWP.G2.E0,E1:G.E0+G.nE*G.st,N0:G.N0,N1:G.N0+G.nN*G.st};
   for(let k=0;k<400000&&broad.length+fir.length<16000;k++){ const E=R0.E0+RAND()*(R0.E1-R0.E0), N=R0.N0+RAND()*(R0.N1-R0.N0), [x,z]=TWP.toL(E,N);
@@ -524,10 +542,14 @@ const PEAKS=[];
     if(farm&&RAND()>.03) continue; if(!farm&&RAND()>.6) continue;
     (e>600&&RAND()<.5?fir:broad).push([x,e-E0,z]); }
   const place=(geo,list,scale,base,var2)=>{ const im=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial({color:0xffffff}),Math.max(1,list.length)), m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), v=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0);
-    list.forEach(([x,y,z],i)=>{ const sz=scale[0]+hash2(x,z)*scale[1]; q.setFromAxisAngle(up,hash2(z,x)*6.28); s.set(sz,sz*(.8+hash2(x*2,z)*.5),sz); v.set(x,y+sz*base,z); m.compose(v,q,s); im.setMatrixAt(i,m);
+    list.forEach(([x,y,z],i)=>{ const sz=scale[0]+hash2(x,z)*scale[1]; q.setFromAxisAngle(up,hash2(z,x)*6.28);
+      { const [mx,my]=TWP.l2m(x,z), dc=TWP.coastX(my)-mx, lean=.3*(1-ss(dc,14,110)); if(lean>.01) q.premultiply(LEAN.setFromAxisAngle(ZAX,lean*(.7+.5*hash2(x*3,z)))); }   /* the sea wind bends them south-west */ s.set(sz,sz*(.8+hash2(x*2,z)*.5),sz); v.set(x,y+sz*base,z); m.compose(v,q,s); im.setMatrixAt(i,m);
       im.setColorAt(i,cc.setHex(var2[0]).lerp(new THREE.Color(var2[1]),hash2(x*.7,z*1.3)).multiplyScalar(.82+.3*hash2(y,x))); });
-    im.castShadow=false; scene.add(im); reflect(im); return im; };
+    im.castShadow=false; im.frustumCulled=false; scene.add(im); reflect(im); return im; };   // spread over the whole township: never cull the lot by one sphere
   place(crown,broad,[3.2,3.4],.6,[0x2f4d22,0x4a6a2c]); place(cone,fir,[3.5,2.5],.6,[0x24391c,0x33502a]);
+  // the windbreak: two rows of 木麻黃 behind the dunes along the north coast
+  { const belt=[]; for(let my=-330;my<290;my+=1.15) for(const off of [17.5,20.5]){ const mx=TWP.coastX(my)-off+1.2*(hash2(my,off)-.5), [x,z]=TWP.m2l(mx,my), e=TWP.heightAt(x,z); if(e<1.5||TWP.water(x,z)) continue; belt.push([x,e-E0,z]); }
+    place(cone,belt,[3.2,1.6],.6,[0x34503a,0x4a6648]); }
   const cloudGroups=[];
   const cloudMaterial=new THREE.MeshBasicMaterial({color:0xd7e7ec,transparent:true,opacity:.20,depthWrite:false,side:THREE.DoubleSide});
   for(let i=0;i<14;i++){
@@ -542,6 +564,16 @@ const PEAKS=[];
     }
     scene.add(cloud); reflect(cloud); cloudGroups.push({cloud,baseX:x,baseZ:z,phase:i*.77});
   }
+  // 山嵐 (鄉志: the foothills' cloud belt): soft sheets of mist lying along the mountainside in the afternoons,
+  // thicker when it is cloudy; thin in the morning, gone at night
+  { const cv=document.createElement('canvas'); cv.width=cv.height=128; const cx=cv.getContext('2d'), gr=cx.createRadialGradient(64,64,6,64,64,62);
+    gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.55,'rgba(255,255,255,.55)'); gr.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=gr; cx.fillRect(0,0,128,128);
+    const mistMat=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),color:0xeef2f2,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}), sheet=new THREE.PlaneGeometry(1,1); sheet.rotateX(-Math.PI/2);
+    const mist=new THREE.Group(); scene.add(mist);
+    for(let i=0;i<30;i++){ const mx=-80-RAND()*1250, my=150+RAND()*520, [x,z]=TWP.m2l(mx,my), e=TWP.elevM(mx,my), y=Math.max(e+60,900+RAND()*700)-E0;
+      const m=new THREE.Mesh(sheet,mistMat); m.position.set(x,y,z); m.scale.set(1800+RAND()*2200,1,900+RAND()*1200); m.rotation.y=RAND()*3.14; m.renderOrder=2; mist.add(m); }
+    let mt=0; ZL_ANIM.push(dt=>{ mt-=dt; if(mt>0) return; mt=4; const [hh,mm]=taipeiClock.format(new Date()).split(':').map(Number), h=hh+mm/60;
+      const day=ss(h,11,14)*(1-ss(h,18,20))+.25*ss(h,5,7)*(1-ss(h,9,11)); mistMat.opacity=day*(.22+.3*WX.cloud); mist.visible=mistMat.opacity>.01; }); }
   ZL_ANIM.push(dt=>{
     const t=performance.now()/1000, cover=.35+WX.cloud*.65;
     for(const item of cloudGroups){

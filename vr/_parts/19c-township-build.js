@@ -105,6 +105,9 @@
       if(best&&bd<60){ const s=best, yaw=Math.atan2(-s.tz,s.tx), nx=-s.tz, nz=s.tx, px=s.x+nx*4.2, pz=s.z+nz*4.2, hx=s.x+nx*10.5, hz=s.z+nz*10.5;
         put(new THREE.BoxGeometry(60,.9,4),0xa59a84,px,s.y+.45,pz,yaw); put(new THREE.BoxGeometry(12,3.6,7),0xd9a766,hx,s.y+1.8+.4,hz,yaw); put(gable(12.8,8.4,2.2),0x3f6a5c,hx,s.y+4.2,hz,yaw);
         foot(hx,hz,6,3.5,yaw); lamps.push([hx,s.y+2,hz]); p.x=hx+nx*7; p.z=hz+nz*7; } } }
+  // 箭竹山稜: the Bunun's old houses, left in 1934 — low walls of stacked slate, no roofs, the bamboo grown round them
+  { const J=TWP.PLACES.find(p=>p.id==='jzs'); if(J) for(let i=0;i<9;i++){ const a=i*2.4+TWP.h2(i,7)*1.2, rr=18+i*9, x=J.x+Math.cos(a)*rr, z=J.z+Math.sin(a)*rr, y=yAt(x,z), yaw=TWP.h2(i,3)*3.1, w=6+TWP.h2(i,1)*3, d=5+TWP.h2(i,2)*2, h=.7+TWP.h2(i,4)*.9;
+      for(const [ox,oz,ww,dd] of [[0,-d/2,w,.6],[0,d/2,w,.6],[-w/2,0,.6,d],[w/2,0,.6,d*.55]]){ const [dx,dz]=rot(ox,oz,yaw); put(new THREE.BoxGeometry(ww,h*(.6+.5*TWP.h2(ox+i,oz)),dd),0x5b5d5c,x+dx,y+h/2-.2,z+dz,yaw); } } }
   const town=new THREE.Mesh(mergeGeo(parts),new THREE.MeshLambertMaterial({vertexColors:true})); town.receiveShadow=true; scene.add(town); reflect(town);
   const lm=new THREE.MeshLambertMaterial({vertexColors:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
   for(const g of lineMeshes){ const m=new THREE.Mesh(g,lm); m.receiveShadow=true; scene.add(m); reflect(m); }
